@@ -3,6 +3,7 @@
 
 #include "Backend.hpp"
 #include "Display.hpp"
+#include "Renderer.hpp"
 
 class Server
 {
@@ -12,6 +13,7 @@ public:
 private:
     Display m_dpy;
     Backend m_backend;
+    Renderer m_renderer;
 };
 
 #endif

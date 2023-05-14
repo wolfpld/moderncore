@@ -2,6 +2,7 @@ project('ModernCore', 'c', 'cpp', default_options: ['cpp_std=c++20'])
 
 compiler = meson.get_compiler('cpp')
 
+pixman = dependency('pixman-1')
 vulkan = dependency('vulkan')
 wayland = dependency('wayland-server')
 wlroots = dependency('wlroots')
@@ -20,6 +21,7 @@ executable('mcore',
     'src/Display.cpp',
     'src/Logs.cpp',
     'src/MCore.cpp',
+    'src/Renderer.cpp',
     'src/Server.cpp',
-    dependencies: [vulkan, wayland, wlroots]
+    dependencies: [pixman, vulkan, wayland, wlroots]
 )

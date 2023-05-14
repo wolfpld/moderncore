@@ -1,6 +1,7 @@
-#include <stdio.h>
+#include "Logs.hpp"
 
 int main()
 {
-    printf( "Modern Core\n" );
+    SetupLogging();
+    return 0;
 }

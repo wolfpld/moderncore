@@ -15,6 +15,7 @@ compile_args = compiler.get_supported_arguments([
 add_project_arguments(compile_args, language: ['c', 'cpp'])
 
 executable('mcore',
+    'src/Logs.cpp',
     'src/MCore.cpp',
     dependencies: [vulkan, wlroots]
 )

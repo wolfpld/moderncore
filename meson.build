@@ -3,6 +3,7 @@ project('ModernCore', 'c', 'cpp', default_options: ['cpp_std=c++20'])
 compiler = meson.get_compiler('cpp')
 
 vulkan = dependency('vulkan')
+wlroots = dependency('wlroots')
 
 if get_option('buildtype').startswith('debug')
     add_project_arguments('-DDEBUG', language: 'cpp')
@@ -15,5 +16,5 @@ add_project_arguments(compile_args, language: ['c', 'cpp'])
 
 executable('mcore',
     'src/MCore.cpp',
-    dependencies: [vulkan]
+    dependencies: [vulkan, wlroots]
 )

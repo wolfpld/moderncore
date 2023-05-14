@@ -11,6 +11,8 @@ public:
     Display();
     ~Display();
 
+    operator wl_display* () const { return m_dpy; }
+
 private:
     struct wl_display* m_dpy;
 };

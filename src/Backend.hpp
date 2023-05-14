@@ -10,7 +10,7 @@ class Display;
 class Backend
 {
 public:
-    Backend( const Display& dpy );
+    explicit Backend( const Display& dpy );
     ~Backend();
 
 private:

@@ -19,6 +19,7 @@ void LogCallback( enum wlr_log_importance importance, const char* fmt, va_list a
     }
 
     vprintf( fmt, args );
+    printf( "\n" );
 }
 
 void SetupLogging()

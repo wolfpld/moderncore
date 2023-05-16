@@ -19,6 +19,7 @@ add_project_arguments(compile_args, language: ['c', 'cpp'])
 executable('mcore',
     'src/Allocator.cpp',
     'src/Backend.cpp',
+    'src/Compositor.cpp',
     'src/Display.cpp',
     'src/Logs.cpp',
     'src/MCore.cpp',

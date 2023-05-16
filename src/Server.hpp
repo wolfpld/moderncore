@@ -3,6 +3,7 @@
 
 #include "Allocator.hpp"
 #include "Backend.hpp"
+#include "Compositor.hpp"
 #include "Display.hpp"
 #include "Renderer.hpp"
 
@@ -16,6 +17,7 @@ private:
     Backend m_backend;
     Renderer m_renderer;
     Allocator m_allocator;
+    Compositor m_compositor;
 };
 
 #endif

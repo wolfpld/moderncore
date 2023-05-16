@@ -6,11 +6,12 @@ extern "C" {
 };
 
 class Backend;
+class Display;
 
 class Renderer
 {
 public:
-    explicit Renderer( const Backend& backend );
+    Renderer( const Backend& backend, const Display& dpy );
     ~Renderer();
 
 private:

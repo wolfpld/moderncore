@@ -1,6 +1,7 @@
 #ifndef __SERVER_HPP__
 #define __SERVER_HPP__
 
+#include "Allocator.hpp"
 #include "Backend.hpp"
 #include "Display.hpp"
 #include "Renderer.hpp"
@@ -14,6 +15,7 @@ private:
     Display m_dpy;
     Backend m_backend;
     Renderer m_renderer;
+    Allocator m_allocator;
 };
 
 #endif

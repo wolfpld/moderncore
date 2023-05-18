@@ -17,3 +17,8 @@ Backend::~Backend()
 {
     wlr_backend_destroy( m_backend );
 }
+
+void Backend::Start()
+{
+    CheckPanic( wlr_backend_start( m_backend ), "Unable to start wlr_backend!" );
+}

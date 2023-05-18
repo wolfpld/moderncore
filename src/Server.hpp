@@ -6,6 +6,7 @@
 #include "Compositor.hpp"
 #include "DataDeviceManager.hpp"
 #include "Display.hpp"
+#include "Output.hpp"
 #include "Renderer.hpp"
 #include "Subcompositor.hpp"
 
@@ -22,6 +23,7 @@ private:
     Compositor m_compositor;
     Subcompositor m_subcompositor;
     DataDeviceManager m_ddm;
+    Output m_output;
 };
 
 #endif

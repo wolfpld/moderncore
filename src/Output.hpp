@@ -15,6 +15,8 @@ public:
     explicit Output( const Backend& backend );
     ~Output();
 
+    struct wlr_output_layout* GetLayout() const { return m_layout; }
+
 private:
     struct wlr_output_layout* m_layout;
     struct wl_list m_outputs;

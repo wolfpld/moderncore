@@ -26,6 +26,7 @@ executable('mcore',
     'src/MCore.cpp',
     'src/Output.cpp',
     'src/Renderer.cpp',
+    'src/Scene.cpp',
     'src/Server.cpp',
     'src/Subcompositor.cpp',
     dependencies: [pixman, vulkan, wayland, wlroots]

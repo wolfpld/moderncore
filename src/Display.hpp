@@ -11,6 +11,8 @@ public:
     Display();
     ~Display();
 
+    const char* Socket() const { return m_socket; }
+
     operator wl_display* () const { return m_dpy; }
 
 private:

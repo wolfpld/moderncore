@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include "Server.hpp"
 
 Server::Server()
@@ -9,4 +11,5 @@ Server::Server()
     , m_ddm( m_dpy )
     , m_output( m_backend )
 {
+    setenv( "WAYLAND_DISPLAY", m_dpy.Socket(), 1 );
 }

@@ -4,8 +4,10 @@
 #include "Allocator.hpp"
 #include "Backend.hpp"
 #include "Compositor.hpp"
+#include "DataDeviceManager.hpp"
 #include "Display.hpp"
 #include "Renderer.hpp"
+#include "Subcompositor.hpp"
 
 class Server
 {
@@ -18,6 +20,8 @@ private:
     Renderer m_renderer;
     Allocator m_allocator;
     Compositor m_compositor;
+    Subcompositor m_subcompositor;
+    DataDeviceManager m_ddm;
 };
 
 #endif

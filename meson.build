@@ -20,10 +20,12 @@ executable('mcore',
     'src/Allocator.cpp',
     'src/Backend.cpp',
     'src/Compositor.cpp',
+    'src/DataDeviceManager.cpp',
     'src/Display.cpp',
     'src/Logs.cpp',
     'src/MCore.cpp',
     'src/Renderer.cpp',
     'src/Server.cpp',
+    'src/Subcompositor.cpp',
     dependencies: [pixman, vulkan, wayland, wlroots]
 )

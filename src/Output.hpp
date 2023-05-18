@@ -4,6 +4,7 @@
 #include <wayland-server-core.h>
 
 extern "C" {
+    struct wlr_output;
     struct wlr_output_layout;
 };
 
@@ -16,6 +17,8 @@ public:
     ~Output();
 
     struct wlr_output_layout* GetLayout() const { return m_layout; }
+
+    void NewOutput( struct wlr_output* output );
 
 private:
     struct wlr_output_layout* m_layout;

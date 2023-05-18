@@ -1,7 +1,6 @@
-#include <assert.h>
-
 #include "DataDeviceManager.hpp"
 #include "Display.hpp"
+#include "Panic.hpp"
 
 extern "C" {
 #define WLR_USE_UNSTABLE
@@ -11,5 +10,5 @@ extern "C" {
 DataDeviceManager::DataDeviceManager( const Display& dpy )
     : m_ddm( wlr_data_device_manager_create( dpy ) )
 {
-    assert( m_ddm );
+    CheckPanic( m_ddm, "Failed to create wlr_data_device_manager!" );
 }

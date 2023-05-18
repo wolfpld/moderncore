@@ -1,7 +1,6 @@
-#include <assert.h>
-
 #include "Compositor.hpp"
 #include "Display.hpp"
+#include "Panic.hpp"
 #include "Renderer.hpp"
 
 extern "C" {
@@ -12,5 +11,5 @@ extern "C" {
 Compositor::Compositor( const Display& dpy, const Renderer& renderer )
     : m_compositor( wlr_compositor_create( dpy, renderer ) )
 {
-    assert( m_compositor );
+    CheckPanic( m_compositor, "Failed to create wlr_compositor!" );
 }

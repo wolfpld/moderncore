@@ -1,7 +1,6 @@
-#include <assert.h>
-
 #include "Backend.hpp"
 #include "Display.hpp"
+#include "Panic.hpp"
 
 extern "C" {
 #define WLR_USE_UNSTABLE
@@ -11,7 +10,7 @@ extern "C" {
 Backend::Backend( const Display& dpy )
     : m_backend( wlr_backend_autocreate( dpy ) )
 {
-    assert( m_backend );
+    CheckPanic( m_backend, "Failed to create wlr_backend!" );
 }
 
 Backend::~Backend()

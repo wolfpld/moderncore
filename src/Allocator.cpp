@@ -1,7 +1,6 @@
-#include <assert.h>
-
 #include "Allocator.hpp"
 #include "Backend.hpp"
+#include "Panic.hpp"
 #include "Renderer.hpp"
 
 extern "C" {
@@ -12,7 +11,7 @@ extern "C" {
 Allocator::Allocator( const Backend& backend, const Renderer& renderer )
     : m_allocator( wlr_allocator_autocreate( backend, renderer ) )
 {
-    assert( m_allocator );
+    CheckPanic( m_allocator, "Failed to create wlr_allocator!" );
 }
 
 Allocator::~Allocator()

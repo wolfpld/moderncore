@@ -1,7 +1,6 @@
-#include <assert.h>
-
 #include "Backend.hpp"
 #include "Display.hpp"
+#include "Panic.hpp"
 #include "Renderer.hpp"
 
 extern "C" {
@@ -14,7 +13,7 @@ extern "C" {
 Renderer::Renderer( const Backend& backend, const Display& dpy )
     : m_renderer( wlr_renderer_autocreate( backend ) )
 {
-    assert( m_renderer );
+    CheckPanic( m_renderer, "Failed to create wlr_renderer!" );
     wlr_renderer_init_wl_display( m_renderer, dpy );
 }
 

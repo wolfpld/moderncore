@@ -1,6 +1,5 @@
-#include <assert.h>
-
 #include "Display.hpp"
+#include "Panic.hpp"
 #include "Subcompositor.hpp"
 
 extern "C" {
@@ -11,5 +10,5 @@ extern "C" {
 Subcompositor::Subcompositor( const Display& dpy )
     : m_subcompositor( wlr_subcompositor_create( dpy ) )
 {
-    assert( m_subcompositor );
+    CheckPanic( m_subcompositor, "Failed to create wlr_subcompositor!" );
 }

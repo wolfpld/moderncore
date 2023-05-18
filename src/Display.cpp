@@ -1,12 +1,12 @@
-#include <assert.h>
 #include <wayland-server-core.h>
 
 #include "Display.hpp"
+#include "Panic.hpp"
 
 Display::Display()
     : m_dpy( wl_display_create() )
 {
-    assert( m_dpy );
+    CheckPanic( m_dpy, "Failed to create wl_display!" );
 }
 
 Display::~Display()

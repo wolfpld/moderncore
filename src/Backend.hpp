@@ -13,6 +13,8 @@ public:
     explicit Backend( const Display& dpy );
     ~Backend();
 
+    struct wlr_backend* Get() const { return m_backend; }
+
     operator wlr_backend* () const { return m_backend; }
 
 private:

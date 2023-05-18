@@ -15,6 +15,7 @@ public:
 
 private:
     struct wl_display* m_dpy;
+    const char* m_socket;
 };
 
 #endif

@@ -13,6 +13,7 @@ files = [
     'src/Scene.cpp',
     'src/Server.cpp',
     'src/Subcompositor.cpp',
+    'src/XdgShell.cpp',
 ]
 
 compiler = meson.get_compiler('cpp')

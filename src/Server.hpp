@@ -9,6 +9,7 @@
 #include "Output.hpp"
 #include "Renderer.hpp"
 #include "Subcompositor.hpp"
+#include "XdgShell.hpp"
 
 class Server
 {
@@ -24,6 +25,7 @@ private:
     Subcompositor m_subcompositor;
     DataDeviceManager m_ddm;
     Output m_output;
+    XdgShell m_xdgShell;
 };
 
 #endif

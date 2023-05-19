@@ -21,6 +21,34 @@ pixman = dependency('pixman-1')
 vulkan = dependency('vulkan')
 wayland = dependency('wayland-server')
 wlroots = dependency('wlroots')
+wl_proto = dependency('wayland-protocols')
+wl_scanner = dependency('wayland-scanner')
+
+wl_proto_dir = wl_proto.get_variable('pkgdatadir')
+wl_scanner_bin = find_program(wl_scanner.get_variable('wayland_scanner'))
+
+protocols = {
+    'xdg-shell': wl_proto_dir / 'stable/xdg-shell/xdg-shell.xml',
+}
+
+foreach name, path : protocols
+    code = custom_target(
+        name.underscorify() + '_c',
+        input: path,
+        output: '@BASENAME@-protocol.c',
+        command: [wl_scanner_bin, 'private-code', '@INPUT@', '@OUTPUT@']
+    )
+    files += code
+
+    header = custom_target(
+        name.underscorify() + '_h',
+        input: path,
+        output: '@BASENAME@-protocol.h',
+        command: [wl_scanner_bin, 'server-header', '@INPUT@', '@OUTPUT@']
+    )
+    files += header
+endforeach
+
 
 if get_option('buildtype').startswith('debug')
     add_project_arguments('-DDEBUG', language: 'cpp')

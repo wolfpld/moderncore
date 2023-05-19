@@ -12,11 +12,6 @@ extern "C" {
 
 static Output* s_instance;
 
-static void NewOutputCallback( struct wl_listener* listener, void* data )
-{
-    s_instance->NewOutput( (struct wlr_output*)data );
-}
-
 Output::Output( const Backend& backend )
     : m_layout( wlr_output_layout_create() )
 {
@@ -26,7 +21,7 @@ Output::Output( const Backend& backend )
     s_instance = this;
 
     wl_list_init( &m_outputs );
-    m_newOutput.notify = NewOutputCallback;
+    m_newOutput.notify = []( struct wl_listener* listener, void* data ){ s_instance->NewOutput( (struct wlr_output*)data ); };
     wl_signal_add( &backend.Get()->events.new_output, &m_newOutput );
 }
 

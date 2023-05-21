@@ -1,8 +1,6 @@
 #ifndef __OUTPUT_HPP__
 #define __OUTPUT_HPP__
 
-#include <wayland-server-core.h>
-
 #include "Listener.hpp"
 
 extern "C" {
@@ -24,7 +22,6 @@ private:
     void NewOutput( wlr_output* output );
 
     wlr_output_layout* m_layout;
-    wl_list m_outputs;
     Listener<wlr_output> m_newOutput;
 };
 

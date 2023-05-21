@@ -15,8 +15,6 @@ Output::Output( const Backend& backend )
     , m_newOutput( backend.Get()->events.new_output, [this](auto v){ NewOutput( v ); } )
 {
     CheckPanic( m_layout, "Failed to create wlr_output_layout!" );
-
-    wl_list_init( &m_outputs );
 }
 
 Output::~Output()

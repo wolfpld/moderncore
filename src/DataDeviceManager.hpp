@@ -12,7 +12,7 @@ class DataDeviceManager
 public:
     explicit DataDeviceManager( const Display& dpy );
 
-    operator wlr_data_device_manager* () const { return m_ddm; }
+    [[nodiscard]] operator wlr_data_device_manager* () const { return m_ddm; }
 
 private:
     wlr_data_device_manager* m_ddm;

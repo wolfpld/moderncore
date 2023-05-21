@@ -15,9 +15,9 @@ public:
 
     void Start();
 
-    wlr_backend* Get() const { return m_backend; }
+    [[nodiscard]] wlr_backend* Get() const { return m_backend; }
 
-    operator wlr_backend* () const { return m_backend; }
+    [[nodiscard]] operator wlr_backend* () const { return m_backend; }
 
 private:
     wlr_backend* m_backend;

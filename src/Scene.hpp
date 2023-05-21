@@ -10,7 +10,7 @@ class Scene
 public:
     Scene();
 
-    operator wlr_scene* () const { return m_scene; }
+    [[nodiscard]] operator wlr_scene* () const { return m_scene; }
 
 private:
     wlr_scene* m_scene;

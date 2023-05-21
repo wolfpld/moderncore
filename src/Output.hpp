@@ -16,7 +16,7 @@ public:
     explicit Output( const Backend& backend );
     ~Output();
 
-    wlr_output_layout* GetLayout() const { return m_layout; }
+    [[nodiscard]] wlr_output_layout* GetLayout() const { return m_layout; }
 
 private:
     void NewOutput( wlr_output* output );

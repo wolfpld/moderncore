@@ -12,7 +12,7 @@ class Subcompositor
 public:
     explicit Subcompositor( const Display& dpy );
 
-    operator wlr_subcompositor* () const { return m_subcompositor; }
+    [[nodiscard]] operator wlr_subcompositor* () const { return m_subcompositor; }
 
 private:
     wlr_subcompositor* m_subcompositor;

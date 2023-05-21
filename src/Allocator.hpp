@@ -14,7 +14,7 @@ public:
     Allocator( const Backend& backend, const Renderer& renderer );
     ~Allocator();
 
-    operator wlr_allocator* () const { return m_allocator; }
+    [[nodiscard]] operator wlr_allocator* () const { return m_allocator; }
 
 private:
     wlr_allocator* m_allocator;

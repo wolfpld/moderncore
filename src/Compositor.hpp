@@ -13,7 +13,7 @@ class Compositor
 public:
     Compositor( const Display& dpy, const Renderer& renderer );
 
-    operator wlr_compositor* () const { return m_compositor; }
+    [[nodiscard]] operator wlr_compositor* () const { return m_compositor; }
 
 private:
     wlr_compositor* m_compositor;

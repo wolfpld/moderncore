@@ -1,7 +1,7 @@
 #ifndef __CURSOR_HPP__
 #define __CURSOR_HPP__
 
-#include <wayland-server-core.h>
+#include "Listener.hpp"
 
 extern "C" {
     struct wlr_cursor;
@@ -28,11 +28,11 @@ private:
     wlr_cursor* m_cursor;
     wlr_xcursor_manager* m_manager;
 
-    wl_listener m_motion;
-    wl_listener m_motionAbsolute;
-    wl_listener m_button;
-    wl_listener m_axis;
-    wl_listener m_frame;
+    Listener<wlr_pointer_motion_event> m_motion;
+    Listener<wlr_pointer_motion_absolute_event> m_motionAbsolute;
+    Listener<wlr_pointer_button_event> m_button;
+    Listener<wlr_pointer_axis_event> m_axis;
+    Listener<void> m_frame;
 };
 
 #endif

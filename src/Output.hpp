@@ -3,6 +3,8 @@
 
 #include <wayland-server-core.h>
 
+#include "Listener.hpp"
+
 extern "C" {
     struct wlr_output;
     struct wlr_output_layout;
@@ -23,7 +25,7 @@ private:
 
     wlr_output_layout* m_layout;
     wl_list m_outputs;
-    wl_listener m_newOutput;
+    Listener<wlr_output> m_newOutput;
 };
 
 #endif

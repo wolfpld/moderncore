@@ -4,6 +4,7 @@
 #include "Allocator.hpp"
 #include "Backend.hpp"
 #include "Compositor.hpp"
+#include "Cursor.hpp"
 #include "DataDeviceManager.hpp"
 #include "Display.hpp"
 #include "Output.hpp"
@@ -26,6 +27,7 @@ private:
     DataDeviceManager m_ddm;
     Output m_output;
     XdgShell m_xdgShell;
+    Cursor m_cursor;
 };
 
 #endif

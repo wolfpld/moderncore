@@ -4,6 +4,7 @@ files = [
     'src/Allocator.cpp',
     'src/Backend.cpp',
     'src/Compositor.cpp',
+    'src/Cursor.cpp',
     'src/DataDeviceManager.cpp',
     'src/Display.cpp',
     'src/Logs.cpp',

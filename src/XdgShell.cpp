@@ -18,7 +18,6 @@ XdgShell::XdgShell( const Display& dpy )
     CheckPanic( !s_instance, "Creating a second instance of Output!" );
     s_instance = this;
 
-    wl_list_init( &m_views );
     m_newXdgSurface.notify = []( wl_listener*, void* data ){ s_instance->NewSurface( (wlr_xdg_surface*)data ); };
     wl_signal_add( &m_xdgShell->events.new_surface, &m_newXdgSurface );
 }

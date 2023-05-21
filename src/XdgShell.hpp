@@ -21,7 +21,6 @@ private:
 
     wlr_xdg_shell* m_xdgShell;
     wl_listener m_newXdgSurface;
-    wl_list m_views;
 };
 
 #endif

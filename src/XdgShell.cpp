@@ -25,6 +25,7 @@ XdgShell::XdgShell( const Display& dpy )
 
 XdgShell::~XdgShell()
 {
+    wl_list_remove( &m_newXdgSurface.link );
     s_instance = nullptr;
 }
 

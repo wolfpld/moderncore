@@ -27,6 +27,7 @@ Output::Output( const Backend& backend )
 
 Output::~Output()
 {
+    wl_list_remove( &m_newOutput.link );
     wlr_output_layout_destroy( m_layout );
     s_instance = nullptr;
 }

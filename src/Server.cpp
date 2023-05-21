@@ -1,5 +1,6 @@
 #include <stdlib.h>
 
+#include "Display.hpp"
 #include "Server.hpp"
 
 Server::Server()
@@ -15,4 +16,5 @@ Server::Server()
 {
     m_backend.Start();
     setenv( "WAYLAND_DISPLAY", m_dpy.Socket(), 1 );
+    m_dpy.Run();
 }

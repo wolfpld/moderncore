@@ -1,7 +1,7 @@
 #ifndef __SEAT_HPP__
 #define __SEAT_HPP__
 
-#include <wayland-server-core.h>
+#include "Listener.hpp"
 
 extern "C"
 {
@@ -26,9 +26,9 @@ private:
     void ReqSetSelection( wlr_seat_request_set_selection_event* ev );
 
     wlr_seat* m_seat;
-    wl_listener m_newInput;
-    wl_listener m_reqCursor;
-    wl_listener m_reqSetSelection;
+    Listener<wlr_input_device> m_newInput;
+    Listener<wlr_seat_pointer_request_set_cursor_event> m_reqCursor;
+    Listener<wlr_seat_request_set_selection_event> m_reqSetSelection;
 };
 
 #endif

@@ -13,29 +13,18 @@ extern "C"
 #include <wlr/util/log.h>
 };
 
-static Seat* s_instance;
-
 Seat::Seat( const Display& dpy, const Backend& backend )
     : m_seat( wlr_seat_create( dpy, "seat0" ) )
+    , m_newInput( backend.Get()->events.new_input, [this](auto v){ NewInput( v ); } )
+    , m_reqCursor( m_seat->events.request_set_cursor, [this](auto v){ ReqCursor( v ); } )
+    , m_reqSetSelection( m_seat->events.request_set_selection, [this](auto v){ ReqSetSelection( v ); } )
 {
     CheckPanic( m_seat, "Failed to create wlr_seat!" );
-
-    CheckPanic( !s_instance, "Creating a second instance of Seat!" );
-    s_instance = this;
-
-    m_newInput.notify = []( wl_listener*, void* data ){ s_instance->NewInput( (wlr_input_device*)data ); };
-    m_reqCursor.notify = []( wl_listener*, void* data ){ s_instance->ReqCursor( (wlr_seat_pointer_request_set_cursor_event*)data ); };
-    m_reqSetSelection.notify = []( wl_listener*, void* data ){ s_instance->ReqSetSelection( (wlr_seat_request_set_selection_event*)data ); };
-
-    wl_signal_add( &backend.Get()->events.new_input, &m_newInput );
-    wl_signal_add( &m_seat->events.request_set_cursor, &m_reqCursor );
-    wl_signal_add( &m_seat->events.request_set_selection, &m_reqSetSelection );
 }
 
 Seat::~Seat()
 {
     wlr_seat_destroy( m_seat );
-    s_instance = nullptr;
 }
 
 void Seat::NewInput( wlr_input_device* dev )

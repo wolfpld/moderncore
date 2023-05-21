@@ -21,6 +21,7 @@ void LogCallback( wlr_log_importance importance, const char* fmt, va_list args )
 
     vprintf( fmt, args );
     printf( ANSI_RESET "\n" );
+    fflush( stdout );
 }
 
 void SetupLogging()

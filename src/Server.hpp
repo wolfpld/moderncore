@@ -9,6 +9,7 @@
 #include "Display.hpp"
 #include "Output.hpp"
 #include "Renderer.hpp"
+#include "Scene.hpp"
 #include "Seat.hpp"
 #include "Subcompositor.hpp"
 #include "XdgShell.hpp"
@@ -26,6 +27,7 @@ private:
     Compositor m_compositor;
     Subcompositor m_subcompositor;
     DataDeviceManager m_ddm;
+    Scene m_scene;
     Output m_output;
     XdgShell m_xdgShell;
     Cursor m_cursor;

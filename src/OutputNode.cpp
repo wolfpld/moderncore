@@ -25,5 +25,6 @@ void OutputNode::Frame()
 
 void OutputNode::Destroy()
 {
+    wlr_log( WLR_INFO, "Remove output %s", m_output->name );
     m_parent.Remove( this );
 }

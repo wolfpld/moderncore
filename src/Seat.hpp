@@ -1,21 +1,34 @@
 #ifndef __SEAT_HPP__
 #define __SEAT_HPP__
 
+#include <wayland-server-core.h>
+
 extern "C"
 {
     struct wlr_seat;
+    struct wlr_input_device;
+    struct wlr_seat_pointer_request_set_cursor_event;
+    struct wlr_seat_request_set_selection_event;
 }
 
+class Backend;
 class Display;
 
 class Seat
 {
 public:
-    explicit Seat( const Display& dpy );
+    Seat( const Display& dpy, const Backend& backend );
     ~Seat();
 
 private:
+    void NewInput( wlr_input_device* dev );
+    void ReqCursor( wlr_seat_pointer_request_set_cursor_event* ev );
+    void ReqSetSelection( wlr_seat_request_set_selection_event* ev );
+
     wlr_seat* m_seat;
+    wl_listener m_newInput;
+    wl_listener m_reqCursor;
+    wl_listener m_reqSetSelection;
 };
 
 #endif

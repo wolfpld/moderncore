@@ -16,9 +16,9 @@ public:
     explicit XdgShell( const Display& dpy );
     ~XdgShell();
 
+private:
     void NewSurface( wlr_xdg_surface* output );
 
-private:
     wlr_xdg_shell* m_xdgShell;
     wl_listener m_newXdgSurface;
     wl_list m_views;

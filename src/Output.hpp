@@ -18,9 +18,9 @@ public:
 
     wlr_output_layout* GetLayout() const { return m_layout; }
 
+private:
     void NewOutput( wlr_output* output );
 
-private:
     wlr_output_layout* m_layout;
     wl_list m_outputs;
     wl_listener m_newOutput;

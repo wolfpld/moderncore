@@ -18,13 +18,13 @@ public:
     Cursor();
     ~Cursor();
 
+private:
     void Motion( wlr_pointer_motion_event* ev );
     void MotionAbsolute( wlr_pointer_motion_absolute_event* ev );
     void Button( wlr_pointer_button_event* ev );
     void Axis( wlr_pointer_axis_event* ev );
     void Frame();
 
-private:
     wlr_cursor* m_cursor;
     wlr_xcursor_manager* m_manager;
 

@@ -16,14 +16,14 @@ public:
     explicit Output( const Backend& backend );
     ~Output();
 
-    struct wlr_output_layout* GetLayout() const { return m_layout; }
+    wlr_output_layout* GetLayout() const { return m_layout; }
 
-    void NewOutput( struct wlr_output* output );
+    void NewOutput( wlr_output* output );
 
 private:
-    struct wlr_output_layout* m_layout;
-    struct wl_list m_outputs;
-    struct wl_listener m_newOutput;
+    wlr_output_layout* m_layout;
+    wl_list m_outputs;
+    wl_listener m_newOutput;
 };
 
 #endif

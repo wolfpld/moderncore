@@ -16,7 +16,7 @@ public:
     operator wl_display* () const { return m_dpy; }
 
 private:
-    struct wl_display* m_dpy;
+    wl_display* m_dpy;
     const char* m_socket;
 };
 

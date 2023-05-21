@@ -7,7 +7,7 @@ extern "C" {
 
 #include "Logs.hpp"
 
-void LogCallback( enum wlr_log_importance importance, const char* fmt, va_list args )
+void LogCallback( wlr_log_importance importance, const char* fmt, va_list args )
 {
     switch( importance )
     {

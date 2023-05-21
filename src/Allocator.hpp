@@ -17,7 +17,7 @@ public:
     operator wlr_allocator* () const { return m_allocator; }
 
 private:
-    struct wlr_allocator* m_allocator;
+    wlr_allocator* m_allocator;
 };
 
 #endif

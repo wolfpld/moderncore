@@ -21,7 +21,7 @@ Output::Output( const Backend& backend )
     s_instance = this;
 
     wl_list_init( &m_outputs );
-    m_newOutput.notify = []( struct wl_listener*, void* data ){ s_instance->NewOutput( (struct wlr_output*)data ); };
+    m_newOutput.notify = []( wl_listener*, void* data ){ s_instance->NewOutput( (wlr_output*)data ); };
     wl_signal_add( &backend.Get()->events.new_output, &m_newOutput );
 }
 
@@ -32,7 +32,7 @@ Output::~Output()
     s_instance = nullptr;
 }
 
-void Output::NewOutput( struct wlr_output* output )
+void Output::NewOutput( wlr_output* output )
 {
     wlr_log( WLR_INFO, "New output: %s (%s %s), %ix%i mm, %ix%i px, %.2f Hz",
         output->name,

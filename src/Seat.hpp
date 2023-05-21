@@ -15,7 +15,7 @@ public:
     ~Seat();
 
 private:
-    struct wlr_seat* m_seat;
+    wlr_seat* m_seat;
 };
 
 #endif

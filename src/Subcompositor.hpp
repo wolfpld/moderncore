@@ -15,7 +15,7 @@ public:
     operator wlr_subcompositor* () const { return m_subcompositor; }
 
 private:
-    struct wlr_subcompositor* m_subcompositor;
+    wlr_subcompositor* m_subcompositor;
 };
 
 #endif

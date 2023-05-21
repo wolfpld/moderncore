@@ -17,7 +17,7 @@ public:
     operator wlr_renderer* () const { return m_renderer; }
 
 private:
-    struct wlr_renderer* m_renderer;
+    wlr_renderer* m_renderer;
 };
 
 #endif

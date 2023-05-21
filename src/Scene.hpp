@@ -13,7 +13,7 @@ public:
     operator wlr_scene* () const { return m_scene; }
 
 private:
-    struct wlr_scene* m_scene;
+    wlr_scene* m_scene;
 };
 
 #endif

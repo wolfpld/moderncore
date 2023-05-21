@@ -21,11 +21,11 @@ Cursor::Cursor()
 
     wlr_xcursor_manager_load( m_manager, 1 );
 
-    m_motion.notify = []( struct wl_listener*, void* data ){ s_instance->Motion( (struct wlr_pointer_motion_event*)data ); };
-    m_motionAbsolute.notify = []( struct wl_listener*, void* data ){ s_instance->MotionAbsolute( (struct wlr_pointer_motion_absolute_event*)data ); };
-    m_button.notify = []( struct wl_listener*, void* data ){ s_instance->Button( (struct wlr_pointer_button_event*)data ); };
-    m_axis.notify = []( struct wl_listener*, void* data ){ s_instance->Axis( (struct wlr_pointer_axis_event*)data ); };
-    m_frame.notify = []( struct wl_listener*, void* data ){ s_instance->Frame(); };
+    m_motion.notify = []( wl_listener*, void* data ){ s_instance->Motion( (wlr_pointer_motion_event*)data ); };
+    m_motionAbsolute.notify = []( wl_listener*, void* data ){ s_instance->MotionAbsolute( (wlr_pointer_motion_absolute_event*)data ); };
+    m_button.notify = []( wl_listener*, void* data ){ s_instance->Button( (wlr_pointer_button_event*)data ); };
+    m_axis.notify = []( wl_listener*, void* data ){ s_instance->Axis( (wlr_pointer_axis_event*)data ); };
+    m_frame.notify = []( wl_listener*, void* data ){ s_instance->Frame(); };
 
     wl_signal_add( &m_cursor->events.motion, &m_motion );
     wl_signal_add( &m_cursor->events.motion_absolute, &m_motionAbsolute );
@@ -47,19 +47,19 @@ Cursor::~Cursor()
     s_instance = nullptr;
 }
 
-void Cursor::Motion( struct wlr_pointer_motion_event* ev )
+void Cursor::Motion( wlr_pointer_motion_event* ev )
 {
 }
 
-void Cursor::MotionAbsolute( struct wlr_pointer_motion_absolute_event* ev )
+void Cursor::MotionAbsolute( wlr_pointer_motion_absolute_event* ev )
 {
 }
 
-void Cursor::Button( struct wlr_pointer_button_event* ev )
+void Cursor::Button( wlr_pointer_button_event* ev )
 {
 }
 
-void Cursor::Axis( struct wlr_pointer_axis_event* ev )
+void Cursor::Axis( wlr_pointer_axis_event* ev )
 {
 }
 

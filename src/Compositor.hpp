@@ -16,7 +16,7 @@ public:
     operator wlr_compositor* () const { return m_compositor; }
 
 private:
-    struct wlr_compositor* m_compositor;
+    wlr_compositor* m_compositor;
 };
 
 #endif

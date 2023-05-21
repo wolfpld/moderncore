@@ -15,7 +15,7 @@ public:
     operator wlr_data_device_manager* () const { return m_ddm; }
 
 private:
-    struct wlr_data_device_manager* m_ddm;
+    wlr_data_device_manager* m_ddm;
 };
 
 #endif

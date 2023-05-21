@@ -19,7 +19,7 @@ XdgShell::XdgShell( const Display& dpy )
     s_instance = this;
 
     wl_list_init( &m_views );
-    m_newXdgSurface.notify = []( struct wl_listener*, void* data ){ s_instance->NewSurface( (struct wlr_xdg_surface*)data ); };
+    m_newXdgSurface.notify = []( wl_listener*, void* data ){ s_instance->NewSurface( (wlr_xdg_surface*)data ); };
     wl_signal_add( &m_xdgShell->events.new_surface, &m_newXdgSurface );
 }
 
@@ -29,7 +29,7 @@ XdgShell::~XdgShell()
     s_instance = nullptr;
 }
 
-void XdgShell::NewSurface( struct wlr_xdg_surface* output )
+void XdgShell::NewSurface( wlr_xdg_surface* output )
 {
     wlr_log( WLR_DEBUG, "New surface" );
 }

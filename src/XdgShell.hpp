@@ -5,6 +5,7 @@
 
 extern "C" {
     struct wlr_xdg_shell;
+    struct wlr_xdg_surface;
 };
 
 class Display;
@@ -15,12 +16,12 @@ public:
     explicit XdgShell( const Display& dpy );
     ~XdgShell();
 
-    void NewSurface( struct wlr_xdg_surface* output );
+    void NewSurface( wlr_xdg_surface* output );
 
 private:
-    struct wlr_xdg_shell* m_xdgShell;
-    struct wl_listener m_newXdgSurface;
-    struct wl_list m_views;
+    wlr_xdg_shell* m_xdgShell;
+    wl_listener m_newXdgSurface;
+    wl_list m_views;
 };
 
 #endif

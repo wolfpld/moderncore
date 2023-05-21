@@ -15,12 +15,12 @@ public:
 
     void Start();
 
-    struct wlr_backend* Get() const { return m_backend; }
+    wlr_backend* Get() const { return m_backend; }
 
     operator wlr_backend* () const { return m_backend; }
 
 private:
-    struct wlr_backend* m_backend;
+    wlr_backend* m_backend;
 };
 
 #endif

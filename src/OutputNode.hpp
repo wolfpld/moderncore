@@ -7,18 +7,20 @@ extern "C" {
     struct wlr_output;
 };
 
+class Output;
 class Scene;
 
 class OutputNode
 {
 public:
-    explicit OutputNode( wlr_output* output, Scene& scene );
+    OutputNode( wlr_output* output, Scene& scene, Output& parent );
 
 private:
     void Frame();
     void Destroy();
 
     Scene& m_scene;
+    Output& m_parent;
 
     wlr_output* m_output;
 

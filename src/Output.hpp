@@ -23,6 +23,8 @@ public:
     explicit Output( const Backend& backend, const Allocator& allocator, const Renderer& renderer, Scene& scene );
     ~Output();
 
+    void Remove( const OutputNode* node );
+
     [[nodiscard]] wlr_output_layout* GetLayout() const { return m_layout; }
 
 private:

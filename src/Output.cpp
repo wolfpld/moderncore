@@ -1,3 +1,5 @@
+#include <assert.h>
+
 #include "Allocator.hpp"
 #include "Backend.hpp"
 #include "Output.hpp"
@@ -60,7 +62,14 @@ void Output::NewOutput( wlr_output* output )
         }
     }
 
-    m_nodes.emplace_back( std::make_unique<OutputNode>( output, m_scene ) );
+    m_nodes.emplace_back( std::make_unique<OutputNode>( output, m_scene, *this ) );
 
     wlr_output_layout_add_auto( m_layout, output );
+}
+
+void Output::Remove( const OutputNode* node )
+{
+    auto it = std::find_if( m_nodes.begin(), m_nodes.end(), [node]( const auto& v ) { return v.get() == node; } );
+    assert( it != m_nodes.end() );
+    m_nodes.erase( it );
 }

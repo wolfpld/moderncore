@@ -10,6 +10,7 @@ files = [
     'src/Logs.cpp',
     'src/MCore.cpp',
     'src/Output.cpp',
+    'src/OutputNode.cpp',
     'src/Renderer.cpp',
     'src/Scene.cpp',
     'src/Seat.cpp',

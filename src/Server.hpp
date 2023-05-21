@@ -9,6 +9,7 @@
 #include "Display.hpp"
 #include "Output.hpp"
 #include "Renderer.hpp"
+#include "Seat.hpp"
 #include "Subcompositor.hpp"
 #include "XdgShell.hpp"
 
@@ -28,6 +29,7 @@ private:
     Output m_output;
     XdgShell m_xdgShell;
     Cursor m_cursor;
+    Seat m_seat;
 };
 
 #endif

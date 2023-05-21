@@ -12,6 +12,7 @@ files = [
     'src/Output.cpp',
     'src/Renderer.cpp',
     'src/Scene.cpp',
+    'src/Seat.cpp',
     'src/Server.cpp',
     'src/Subcompositor.cpp',
     'src/XdgShell.cpp',

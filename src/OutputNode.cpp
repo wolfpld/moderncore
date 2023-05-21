@@ -19,7 +19,7 @@ OutputNode::OutputNode( wlr_output* output, Scene& scene, Output& parent )
 
 void OutputNode::Frame()
 {
-    wlr_log( WLR_INFO, "New frame" );
+    wlr_log( WLR_INFO, "%s: New frame", m_output->name );
     m_scene.Render( m_output );
 }
 

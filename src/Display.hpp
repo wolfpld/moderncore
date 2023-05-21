@@ -11,6 +11,8 @@ public:
     Display();
     ~Display();
 
+    void Run();
+
     [[nodiscard]] const char* Socket() const { return m_socket; }
 
     [[nodiscard]] operator wl_display* () const { return m_dpy; }

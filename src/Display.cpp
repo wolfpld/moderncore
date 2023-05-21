@@ -21,3 +21,8 @@ Display::~Display()
 {
     wl_display_destroy( m_dpy );
 }
+
+void Display::Run()
+{
+    wl_display_run( m_dpy );
+}

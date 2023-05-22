@@ -12,10 +12,12 @@ extern "C" {
     struct wlr_pointer_axis_event;
 };
 
+class Seat;
+
 class Cursor
 {
 public:
-    Cursor();
+    explicit Cursor( const Seat& seat );
     ~Cursor();
 
 private:
@@ -24,6 +26,8 @@ private:
     void Button( wlr_pointer_button_event* ev );
     void Axis( wlr_pointer_axis_event* ev );
     void Frame();
+
+    const Seat& m_seat;
 
     wlr_cursor* m_cursor;
     wlr_xcursor_manager* m_manager;

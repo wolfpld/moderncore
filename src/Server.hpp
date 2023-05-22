@@ -30,8 +30,8 @@ private:
     Scene m_scene;
     Output m_output;
     XdgShell m_xdgShell;
-    Cursor m_cursor;
     Seat m_seat;
+    Cursor m_cursor;
 };
 
 #endif

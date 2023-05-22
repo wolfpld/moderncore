@@ -13,6 +13,7 @@ Server::Server()
     , m_output( m_backend, m_allocator, m_renderer, m_scene )
     , m_xdgShell( m_dpy )
     , m_seat( m_dpy, m_backend )
+    , m_cursor( m_seat )
 {
     m_backend.Start();
     setenv( "WAYLAND_DISPLAY", m_dpy.Socket(), 1 );

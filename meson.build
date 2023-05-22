@@ -11,6 +11,7 @@ files = [
     'src/MCore.cpp',
     'src/Output.cpp',
     'src/OutputNode.cpp',
+    'src/Pointer.cpp',
     'src/Renderer.cpp',
     'src/Scene.cpp',
     'src/Seat.cpp',

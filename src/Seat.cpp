@@ -3,6 +3,7 @@
 #include "Backend.hpp"
 #include "Display.hpp"
 #include "Panic.hpp"
+#include "Pointer.hpp"
 #include "Seat.hpp"
 
 extern "C"
@@ -38,6 +39,7 @@ void Seat::NewInput( wlr_input_device* dev )
         break;
     case WLR_INPUT_DEVICE_POINTER:
         type = "pointer";
+        NewPointer( dev );
         break;
     case WLR_INPUT_DEVICE_TOUCH:
         type = "touch";
@@ -65,4 +67,19 @@ void Seat::ReqCursor( wlr_seat_pointer_request_set_cursor_event* ev )
 
 void Seat::ReqSetSelection( wlr_seat_request_set_selection_event* ev )
 {
+}
+
+void Seat::NewPointer( wlr_input_device* dev )
+{
+    m_pointers.emplace_back( std::make_unique<Pointer>( *this, dev ) );
+
+    // FIXME
+    wlr_seat_set_capabilities( m_seat, WL_SEAT_CAPABILITY_POINTER );
+}
+
+void Seat::Remove( const Pointer* pointer )
+{
+    auto it = std::find_if( m_pointers.begin(), m_pointers.end(), [pointer]( const auto& v ) { return v.get() == pointer; } );
+    assert( it != m_pointers.end() );
+    m_pointers.erase( it );
 }

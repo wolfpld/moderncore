@@ -20,6 +20,8 @@ public:
     explicit Cursor( const Seat& seat );
     ~Cursor();
 
+    [[nodiscard]] operator wlr_cursor* () const { return m_cursor; }
+
 private:
     void Motion( wlr_pointer_motion_event* ev );
     void MotionAbsolute( wlr_pointer_motion_absolute_event* ev );

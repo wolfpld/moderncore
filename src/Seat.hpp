@@ -1,6 +1,7 @@
 #ifndef __SEAT_HPP__
 #define __SEAT_HPP__
 
+#include "Cursor.hpp"
 #include "Listener.hpp"
 
 extern "C"
@@ -26,6 +27,8 @@ private:
     void NewInput( wlr_input_device* dev );
     void ReqCursor( wlr_seat_pointer_request_set_cursor_event* ev );
     void ReqSetSelection( wlr_seat_request_set_selection_event* ev );
+
+    Cursor m_cursor;
 
     wlr_seat* m_seat;
     Listener<wlr_input_device> m_newInput;

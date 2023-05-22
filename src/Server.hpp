@@ -4,7 +4,6 @@
 #include "Allocator.hpp"
 #include "Backend.hpp"
 #include "Compositor.hpp"
-#include "Cursor.hpp"
 #include "DataDeviceManager.hpp"
 #include "Display.hpp"
 #include "Output.hpp"
@@ -31,7 +30,6 @@ private:
     Output m_output;
     XdgShell m_xdgShell;
     Seat m_seat;
-    Cursor m_cursor;
 };
 
 #endif

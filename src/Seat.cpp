@@ -14,7 +14,8 @@ extern "C"
 };
 
 Seat::Seat( const Display& dpy, const Backend& backend )
-    : m_seat( wlr_seat_create( dpy, "seat0" ) )
+    : m_cursor( *this )
+    , m_seat( wlr_seat_create( dpy, "seat0" ) )
     , m_newInput( backend.Get()->events.new_input, [this](auto v){ NewInput( v ); } )
     , m_reqCursor( m_seat->events.request_set_cursor, [this](auto v){ ReqCursor( v ); } )
     , m_reqSetSelection( m_seat->events.request_set_selection, [this](auto v){ ReqSetSelection( v ); } )

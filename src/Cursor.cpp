@@ -1,4 +1,5 @@
 #include "Cursor.hpp"
+#include "Output.hpp"
 #include "Panic.hpp"
 #include "Seat.hpp"
 
@@ -10,7 +11,7 @@ extern "C" {
 #include <wlr/types/wlr_xcursor_manager.h>
 };
 
-Cursor::Cursor( const Seat& seat )
+Cursor::Cursor( const Seat& seat, const Output& output )
     : m_seat( seat )
     , m_cursor( wlr_cursor_create() )
     , m_manager( wlr_xcursor_manager_create( nullptr, 24 ) )
@@ -22,6 +23,8 @@ Cursor::Cursor( const Seat& seat )
 {
     CheckPanic( m_cursor, "Failed to create wlr_cursor!" );
     CheckPanic( m_manager, "Failed to create wlr_xcursor_manager!" );
+
+    wlr_cursor_attach_output_layout( m_cursor, output.GetLayout() );
 
     wlr_xcursor_manager_load( m_manager, 1 );
 }

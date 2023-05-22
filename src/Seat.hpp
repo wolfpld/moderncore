@@ -14,11 +14,12 @@ extern "C"
 
 class Backend;
 class Display;
+class Output;
 
 class Seat
 {
 public:
-    Seat( const Display& dpy, const Backend& backend );
+    Seat( const Display& dpy, const Backend& backend, const Output& output );
     ~Seat();
 
     [[nodiscard]] operator wlr_seat* () const { return m_seat; }

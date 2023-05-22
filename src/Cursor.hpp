@@ -12,12 +12,13 @@ extern "C" {
     struct wlr_pointer_axis_event;
 };
 
+class Output;
 class Seat;
 
 class Cursor
 {
 public:
-    explicit Cursor( const Seat& seat );
+    Cursor( const Seat& seat, const Output& output );
     ~Cursor();
 
     [[nodiscard]] operator wlr_cursor* () const { return m_cursor; }

@@ -5,6 +5,8 @@
 extern "C" {
 #define WLR_USE_UNSTABLE
 #include <wlr/types/wlr_cursor.h>
+#include <wlr/types/wlr_pointer.h>
+#include <wlr/types/wlr_seat.h>
 #include <wlr/types/wlr_xcursor_manager.h>
 };
 
@@ -32,20 +34,25 @@ Cursor::~Cursor()
 
 void Cursor::Motion( wlr_pointer_motion_event* ev )
 {
+    wlr_cursor_move( m_cursor, &ev->pointer->base, ev->delta_x, ev->delta_y );
 }
 
 void Cursor::MotionAbsolute( wlr_pointer_motion_absolute_event* ev )
 {
+    wlr_cursor_warp_absolute( m_cursor, &ev->pointer->base, ev->x, ev->y );
 }
 
 void Cursor::Button( wlr_pointer_button_event* ev )
 {
+    wlr_seat_pointer_notify_button( m_seat, ev->time_msec, ev->button, ev->state );
 }
 
 void Cursor::Axis( wlr_pointer_axis_event* ev )
 {
+    wlr_seat_pointer_notify_axis( m_seat, ev->time_msec, ev->orientation, ev->delta, ev->delta_discrete, ev->source );
 }
 
 void Cursor::Frame()
 {
+    wlr_seat_pointer_notify_frame( m_seat );
 }

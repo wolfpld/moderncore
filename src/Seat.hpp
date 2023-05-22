@@ -20,6 +20,8 @@ public:
     Seat( const Display& dpy, const Backend& backend );
     ~Seat();
 
+    [[nodiscard]] operator wlr_seat* () const { return m_seat; }
+
 private:
     void NewInput( wlr_input_device* dev );
     void ReqCursor( wlr_seat_pointer_request_set_cursor_event* ev );

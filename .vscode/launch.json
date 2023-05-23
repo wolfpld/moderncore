@@ -12,7 +12,10 @@
             "program": "${workspaceFolder}/${config:mesonbuild.buildFolder}/mcore",
             "cwd": "${workspaceFolder}/${config:mesonbuild.buildFolder}",
             "args": [],
-            "preLaunchTask": "Meson: Build all targets"
+            "preLaunchTask": "Meson: Build all targets",
+            "env": {
+                "WAYLAND_DISPLAY": "wayland-0"
+            }
         }
     ]
 }

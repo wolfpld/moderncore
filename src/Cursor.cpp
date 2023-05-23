@@ -38,6 +38,7 @@ Cursor::~Cursor()
 void Cursor::Motion( wlr_pointer_motion_event* ev )
 {
     wlr_cursor_move( m_cursor, &ev->pointer->base, ev->delta_x, ev->delta_y );
+    wlr_xcursor_manager_set_cursor_image( m_manager, "left_ptr", m_cursor );
 }
 
 void Cursor::MotionAbsolute( wlr_pointer_motion_absolute_event* ev )

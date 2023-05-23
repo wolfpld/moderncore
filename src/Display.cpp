@@ -19,6 +19,7 @@ Display::Display()
 
 Display::~Display()
 {
+    wl_display_destroy_clients( m_dpy );
     wl_display_destroy( m_dpy );
 }
 

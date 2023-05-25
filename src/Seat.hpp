@@ -38,6 +38,8 @@ private:
 
     void NewPointer( wlr_input_device* dev );
 
+    void UpdateCapabilities();
+
     Cursor m_cursor;
 
     wlr_seat* m_seat;

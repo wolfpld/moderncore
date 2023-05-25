@@ -59,6 +59,7 @@ void Seat::NewInput( wlr_input_device* dev )
     }
 
     wlr_log( WLR_DEBUG, "New input: %s (%s)", dev->name, type );
+    UpdateCapabilities();
 }
 
 void Seat::ReqCursor( wlr_seat_pointer_request_set_cursor_event* ev )
@@ -72,9 +73,6 @@ void Seat::ReqSetSelection( wlr_seat_request_set_selection_event* ev )
 void Seat::NewPointer( wlr_input_device* dev )
 {
     m_pointers.emplace_back( std::make_unique<Pointer>( *this, dev ) );
-
-    // FIXME
-    wlr_seat_set_capabilities( m_seat, WL_SEAT_CAPABILITY_POINTER );
 }
 
 void Seat::Remove( const Pointer* pointer )
@@ -82,4 +80,12 @@ void Seat::Remove( const Pointer* pointer )
     auto it = std::find_if( m_pointers.begin(), m_pointers.end(), [pointer]( const auto& v ) { return v.get() == pointer; } );
     assert( it != m_pointers.end() );
     m_pointers.erase( it );
+    UpdateCapabilities();
+}
+
+void Seat::UpdateCapabilities()
+{
+    int caps = 0;
+    if( !m_pointers.empty() ) caps |= WL_SEAT_CAPABILITY_POINTER;
+    wlr_seat_set_capabilities( m_seat, caps );
 }

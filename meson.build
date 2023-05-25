@@ -7,6 +7,7 @@ files = [
     'src/Cursor.cpp',
     'src/DataDeviceManager.cpp',
     'src/Display.cpp',
+    'src/Keyboard.cpp',
     'src/Logs.cpp',
     'src/MCore.cpp',
     'src/Output.cpp',
@@ -26,6 +27,7 @@ pixman = dependency('pixman-1')
 vulkan = dependency('vulkan')
 wayland = dependency('wayland-server')
 wlroots = dependency('wlroots')
+xkbcommon = dependency('xkbcommon')
 wl_proto = dependency('wayland-protocols')
 wl_scanner = dependency('wayland-scanner')
 
@@ -66,5 +68,5 @@ add_project_arguments(compile_args, language: ['c', 'cpp'])
 
 executable('mcore',
     files,
-    dependencies: [pixman, vulkan, wayland, wlroots]
+    dependencies: [pixman, vulkan, wayland, wlroots, xkbcommon]
 )

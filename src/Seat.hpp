@@ -23,7 +23,7 @@ class Pointer;
 class Seat
 {
 public:
-    Seat( const Display& dpy, const Backend& backend, const Output& output );
+    Seat( Display& dpy, const Backend& backend, const Output& output );
     ~Seat();
 
     void Remove( const Pointer* pointer );
@@ -41,6 +41,8 @@ private:
     void UpdateCapabilities();
 
     Cursor m_cursor;
+
+    Display& m_dpy;
 
     wlr_seat* m_seat;
     Listener<wlr_input_device> m_newInput;

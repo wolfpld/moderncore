@@ -17,6 +17,7 @@ extern "C"
 
 class Backend;
 class Display;
+class Keyboard;
 class Output;
 class Pointer;
 
@@ -27,6 +28,7 @@ public:
     ~Seat();
 
     void Remove( const Pointer* pointer );
+    void Remove( const Keyboard* keyboard );
 
     [[nodiscard]] const Cursor& GetCursor() const { return m_cursor; }
     [[nodiscard]] operator wlr_seat* () const { return m_seat; }
@@ -37,6 +39,7 @@ private:
     void ReqSetSelection( wlr_seat_request_set_selection_event* ev );
 
     void NewPointer( wlr_input_device* dev );
+    void NewKeyboard( wlr_input_device* dev );
 
     void UpdateCapabilities();
 
@@ -50,6 +53,7 @@ private:
     Listener<wlr_seat_request_set_selection_event> m_reqSetSelection;
 
     std::vector<std::unique_ptr<Pointer>> m_pointers;
+    std::vector<std::unique_ptr<Keyboard>> m_keyboards;
 };
 
 #endif

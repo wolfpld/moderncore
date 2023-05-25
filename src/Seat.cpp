@@ -2,6 +2,7 @@
 
 #include "Backend.hpp"
 #include "Display.hpp"
+#include "Keyboard.hpp"
 #include "Panic.hpp"
 #include "Pointer.hpp"
 #include "Seat.hpp"
@@ -37,6 +38,7 @@ void Seat::NewInput( wlr_input_device* dev )
     {
     case WLR_INPUT_DEVICE_KEYBOARD:
         type = "keyboard";
+        NewKeyboard( dev );
         break;
     case WLR_INPUT_DEVICE_POINTER:
         type = "pointer";
@@ -76,6 +78,11 @@ void Seat::NewPointer( wlr_input_device* dev )
     m_pointers.emplace_back( std::make_unique<Pointer>( *this, dev ) );
 }
 
+void Seat::NewKeyboard( wlr_input_device* dev )
+{
+    m_keyboards.emplace_back( std::make_unique<Keyboard>( *this, dev ) );
+}
+
 void Seat::Remove( const Pointer* pointer )
 {
     auto it = std::find_if( m_pointers.begin(), m_pointers.end(), [pointer]( const auto& v ) { return v.get() == pointer; } );
@@ -84,9 +91,18 @@ void Seat::Remove( const Pointer* pointer )
     UpdateCapabilities();
 }
 
+void Seat::Remove( const Keyboard* keyboard )
+{
+    auto it = std::find_if( m_keyboards.begin(), m_keyboards.end(), [keyboard]( const auto& v ) { return v.get() == keyboard; } );
+    assert( it != m_keyboards.end() );
+    m_keyboards.erase( it );
+    UpdateCapabilities();
+}
+
 void Seat::UpdateCapabilities()
 {
     int caps = 0;
     if( !m_pointers.empty() ) caps |= WL_SEAT_CAPABILITY_POINTER;
+    if( !m_keyboards.empty() ) caps |= WL_SEAT_CAPABILITY_KEYBOARD;
     wlr_seat_set_capabilities( m_seat, caps );
 }

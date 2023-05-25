@@ -42,6 +42,8 @@ void Keyboard::ModifierEvent()
 
 void Keyboard::KeyEvent( wlr_keyboard_key_event* ev )
 {
+    if( m_seat.ProcessKeyEvent( ev, m_kbd ) ) return;
+
     wlr_seat_set_keyboard( m_seat, m_kbd );
     wlr_seat_keyboard_notify_key( m_seat, ev->time_msec, ev->keycode, ev->state );
 }

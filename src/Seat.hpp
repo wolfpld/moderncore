@@ -13,6 +13,8 @@ extern "C"
     struct wlr_input_device;
     struct wlr_seat_pointer_request_set_cursor_event;
     struct wlr_seat_request_set_selection_event;
+    struct wlr_keyboard;
+    struct wlr_keyboard_key_event;
 }
 
 class Backend;
@@ -29,6 +31,8 @@ public:
 
     void Remove( const Pointer* pointer );
     void Remove( const Keyboard* keyboard );
+
+    bool ProcessKeyEvent( wlr_keyboard_key_event* ev, wlr_keyboard* kbd );
 
     [[nodiscard]] const Cursor& GetCursor() const { return m_cursor; }
     [[nodiscard]] operator wlr_seat* () const { return m_seat; }

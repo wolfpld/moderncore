@@ -99,6 +99,11 @@ void Seat::Remove( const Keyboard* keyboard )
     UpdateCapabilities();
 }
 
+bool Seat::ProcessKeyEvent( wlr_keyboard_key_event* ev, wlr_keyboard* kbd )
+{
+    return false;
+}
+
 void Seat::UpdateCapabilities()
 {
     int caps = 0;

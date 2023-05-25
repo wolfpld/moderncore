@@ -12,6 +12,7 @@ public:
     ~Display();
 
     void Run();
+    void Terminate();
 
     [[nodiscard]] const char* Socket() const { return m_socket; }
 

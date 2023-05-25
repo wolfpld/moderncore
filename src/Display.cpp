@@ -27,3 +27,8 @@ void Display::Run()
 {
     wl_display_run( m_dpy );
 }
+
+void Display::Terminate()
+{
+    wl_display_terminate( m_dpy );
+}

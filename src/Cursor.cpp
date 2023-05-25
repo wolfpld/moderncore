@@ -19,7 +19,7 @@ Cursor::Cursor( const Seat& seat, const Output& output )
     , m_motionAbsolute( m_cursor->events.motion_absolute, [this](auto v){ MotionAbsolute( v ); } )
     , m_button( m_cursor->events.button, [this](auto v){ Button( v ); } )
     , m_axis( m_cursor->events.axis, [this](auto v){ Axis( v ); } )
-    , m_frame( m_cursor->events.frame, [this](auto v){ Frame(); } )
+    , m_frame( m_cursor->events.frame, [this](auto){ Frame(); } )
 {
     CheckPanic( m_cursor, "Failed to create wlr_cursor!" );
     CheckPanic( m_manager, "Failed to create wlr_xcursor_manager!" );

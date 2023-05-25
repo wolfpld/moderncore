@@ -12,7 +12,7 @@ extern "C"
 Pointer::Pointer( Seat& seat, wlr_input_device* dev )
     : m_seat( seat )
     , m_dev( dev )
-    , m_destroy( dev->events.destroy, [this](auto v){ Destroy(); } )
+    , m_destroy( dev->events.destroy, [this](auto){ Destroy(); } )
 {
     wlr_cursor_attach_input_device( seat.GetCursor(), dev );
 }

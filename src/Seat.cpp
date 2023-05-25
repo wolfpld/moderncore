@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <xkbcommon/xkbcommon.h>
 
 #include "Backend.hpp"
 #include "Display.hpp"
@@ -101,6 +102,21 @@ void Seat::Remove( const Keyboard* keyboard )
 
 bool Seat::ProcessKeyEvent( wlr_keyboard_key_event* ev, wlr_keyboard* kbd )
 {
+    if( ev->state == WL_KEYBOARD_KEY_STATE_PRESSED && ( wlr_keyboard_get_modifiers( kbd ) & WLR_MODIFIER_ALT ) )
+    {
+        const uint32_t keycode = ev->keycode + 8;
+        const xkb_keysym_t* syms;
+        const auto nsym = xkb_state_key_get_syms( kbd->xkb_state, keycode, &syms );
+
+        for( int i=0; i<nsym; i++ )
+        {
+            if( syms[i] == XKB_KEY_Escape )
+            {
+                m_dpy.Terminate();
+                return true;
+            }
+        }
+    }
     return false;
 }
 

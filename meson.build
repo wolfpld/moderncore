@@ -1,6 +1,7 @@
 project('ModernCore', 'c', 'cpp', default_options: ['cpp_std=c++20'])
 
 files = [
+    'contrib/ini/ini.c',
     'src/MCore.cpp',
     'src/Server.cpp',
     'src/cursor/CursorTheme.cpp',

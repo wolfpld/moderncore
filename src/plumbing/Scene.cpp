@@ -1,7 +1,7 @@
 #include <time.h>
 
-#include "Panic.hpp"
 #include "Scene.hpp"
+#include "../util/Panic.hpp"
 
 extern "C" {
     /* wlr_scene.h header uses C99 features not recognized by a C++ compiler */

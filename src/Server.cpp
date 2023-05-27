@@ -1,7 +1,7 @@
 #include <stdlib.h>
 
-#include "Display.hpp"
 #include "Server.hpp"
+#include "plumbing/Display.hpp"
 
 Server::Server()
     : m_backend( m_dpy )

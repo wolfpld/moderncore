@@ -1,7 +1,7 @@
 #include "Backend.hpp"
 #include "Display.hpp"
-#include "Panic.hpp"
 #include "Renderer.hpp"
+#include "../util/Panic.hpp"
 
 extern "C" {
     /* wlr_renderer.h header uses C99 features not recognized by a C++ compiler */

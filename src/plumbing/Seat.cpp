@@ -4,9 +4,9 @@
 #include "Backend.hpp"
 #include "Display.hpp"
 #include "Keyboard.hpp"
-#include "Panic.hpp"
 #include "Pointer.hpp"
 #include "Seat.hpp"
+#include "../util/Panic.hpp"
 
 extern "C"
 {

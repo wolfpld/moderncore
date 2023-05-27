@@ -1,7 +1,7 @@
 #include <wayland-server-core.h>
 
 #include "Display.hpp"
-#include "Panic.hpp"
+#include "../util/Panic.hpp"
 
 extern "C" {
 #include <wlr/util/log.h>

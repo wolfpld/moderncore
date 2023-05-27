@@ -1,7 +1,7 @@
 #include "Compositor.hpp"
 #include "Display.hpp"
-#include "Panic.hpp"
 #include "Renderer.hpp"
+#include "../util/Panic.hpp"
 
 extern "C" {
 #define WLR_USE_UNSTABLE

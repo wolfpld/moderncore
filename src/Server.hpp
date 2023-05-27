@@ -1,17 +1,17 @@
 #ifndef __SERVER_HPP__
 #define __SERVER_HPP__
 
-#include "Allocator.hpp"
-#include "Backend.hpp"
-#include "Compositor.hpp"
-#include "DataDeviceManager.hpp"
-#include "Display.hpp"
-#include "Output.hpp"
-#include "Renderer.hpp"
-#include "Scene.hpp"
-#include "Seat.hpp"
-#include "Subcompositor.hpp"
-#include "XdgShell.hpp"
+#include "plumbing/Allocator.hpp"
+#include "plumbing/Backend.hpp"
+#include "plumbing/Compositor.hpp"
+#include "plumbing/DataDeviceManager.hpp"
+#include "plumbing/Display.hpp"
+#include "plumbing/Output.hpp"
+#include "plumbing/Renderer.hpp"
+#include "plumbing/Scene.hpp"
+#include "plumbing/Seat.hpp"
+#include "plumbing/Subcompositor.hpp"
+#include "plumbing/XdgShell.hpp"
 
 class Server
 {

@@ -5,8 +5,8 @@ extern "C" {
 #include <wlr/util/log.h>
 }
 
-#include "Ansi.hpp"
 #include "Logs.hpp"
+#include "../util/Ansi.hpp"
 
 void LogCallback( wlr_log_importance importance, const char* fmt, va_list args )
 {

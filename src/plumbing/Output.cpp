@@ -4,9 +4,9 @@
 #include "Backend.hpp"
 #include "Output.hpp"
 #include "OutputNode.hpp"
-#include "Panic.hpp"
 #include "Renderer.hpp"
 #include "Scene.hpp"
+#include "../util/Panic.hpp"
 
 extern "C" {
 #define WLR_USE_UNSTABLE

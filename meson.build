@@ -3,6 +3,7 @@ project('ModernCore', 'c', 'cpp', default_options: ['cpp_std=c++20'])
 files = [
     'src/MCore.cpp',
     'src/Server.cpp',
+    'src/cursor/CursorTheme.cpp',
     'src/plumbing/Allocator.cpp',
     'src/plumbing/Backend.cpp',
     'src/plumbing/Compositor.cpp',

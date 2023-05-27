@@ -5,20 +5,20 @@
 
 extern "C" {
     struct wlr_cursor;
-    struct wlr_xcursor_manager;
     struct wlr_pointer_motion_event;
     struct wlr_pointer_motion_absolute_event;
     struct wlr_pointer_button_event;
     struct wlr_pointer_axis_event;
 };
 
+class CursorTheme;
 class Output;
 class Seat;
 
 class Cursor
 {
 public:
-    Cursor( const Seat& seat, const Output& output );
+    Cursor( const Seat& seat, const Output& output, const CursorTheme& theme );
     ~Cursor();
 
     [[nodiscard]] operator wlr_cursor* () const { return m_cursor; }
@@ -31,9 +31,9 @@ private:
     void Frame();
 
     const Seat& m_seat;
+    const CursorTheme& m_theme;
 
     wlr_cursor* m_cursor;
-    wlr_xcursor_manager* m_manager;
 
     Listener<wlr_pointer_motion_event> m_motion;
     Listener<wlr_pointer_motion_absolute_event> m_motionAbsolute;

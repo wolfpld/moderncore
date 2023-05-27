@@ -6,6 +6,7 @@
 
 #include "Cursor.hpp"
 #include "Listener.hpp"
+#include "../cursor/CursorTheme.hpp"
 
 extern "C"
 {
@@ -47,6 +48,7 @@ private:
 
     void UpdateCapabilities();
 
+    CursorTheme m_theme;
     Cursor m_cursor;
 
     Display& m_dpy;

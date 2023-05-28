@@ -4,6 +4,7 @@ files = [
     'contrib/ini/ini.c',
     'src/MCore.cpp',
     'src/Server.cpp',
+    'src/cursor/CursorBase.cpp',
     'src/cursor/CursorTheme.cpp',
     'src/plumbing/Allocator.cpp',
     'src/plumbing/Backend.cpp',

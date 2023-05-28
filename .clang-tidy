@@ -20,6 +20,7 @@ Checks:
 	-google-readability-namespace-comments,
 	-misc-confusable-identifiers,
 	-misc-no-recursion,
+	-misc-non-private-member-variables-in-classes,
 	-modernize-avoid-c-arrays,
 	-modernize-deprecated-headers,
 	-modernize-use-default-member-init,

@@ -1,10 +1,13 @@
 #ifndef __CURSORTHEME_HPP__
 #define __CURSORTHEME_HPP__
 
+#include <memory>
+
 extern "C" {
     struct wlr_cursor;
-    struct wlr_xcursor_manager;
 }
+
+class CursorBase;
 
 class CursorTheme
 {
@@ -15,7 +18,7 @@ public:
     void Set( wlr_cursor* cursor ) const;
 
 private:
-    wlr_xcursor_manager* m_manager;
+    std::unique_ptr<CursorBase> m_cursor;
 };
 
 #endif

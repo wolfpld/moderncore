@@ -12,6 +12,25 @@ const std::vector<CursorBitmap>* CursorBase::Get( uint32_t size, CursorType type
     return &t;
 }
 
+uint32_t CursorBase::FitSize( uint32_t size )
+{
+    assert( !m_cursor.empty() );
+    assert( !m_sizes.empty() );
+
+    const auto mit = m_cursor.find( size );
+    if( mit != m_cursor.end() ) return size;
+
+    if( size < m_sizes.front() ) return m_sizes.front();
+    if( size > m_sizes.back() ) return m_sizes.back();
+
+    const auto it = std::lower_bound( m_sizes.begin() + 1, m_sizes.end(), size );
+    const auto next = *it;
+    const auto prev = *(it-1);
+    const auto dnext = next - size;
+    const auto dprev = size - prev;
+    return dnext > dprev ? prev : next;
+}
+
 void CursorBase::CalcSizes()
 {
     assert( !m_cursor.empty() );

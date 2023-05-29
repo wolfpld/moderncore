@@ -11,6 +11,7 @@
 #include "XCursor.hpp"
 #include "../util/Bitmap.hpp"
 #include "../util/FileWrapper.hpp"
+#include "../util/Home.hpp"
 #include "../util/RobinHood.hpp"
 
 extern "C" {
@@ -75,9 +76,7 @@ static void SplitString( const char* str, std::vector<std::string>& out )
 static std::string ExpandHome( const char* path )
 {
     if( path[0] != '~' ) return path;
-    const auto home = getenv( "HOME" );
-    if( !home ) return path;
-    return std::string( home ) + ( path+1 );
+    return GetHome() + (path+1);
 }
 
 static std::vector<std::string> GetPaths()

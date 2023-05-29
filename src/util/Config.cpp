@@ -2,6 +2,7 @@
 #include <string>
 
 #include "Config.hpp"
+#include "../util/Home.hpp"
 
 extern "C" {
 #include "../../contrib/ini/ini.h"
@@ -19,9 +20,7 @@ Config::Config( const char* name )
     }
     else
     {
-        const auto home = getenv( "HOME" );
-        if( !home ) return;
-        path = home;
+        path = GetHome();
         path += "/.config/ModernCore/";
     }
     path += name;

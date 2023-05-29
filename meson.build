@@ -25,6 +25,7 @@ files = [
     'src/plumbing/XdgShell.cpp',
     'src/util/Bitmap.cpp',
     'src/util/Config.cpp',
+    'src/util/Home.cpp',
 ]
 
 compiler = meson.get_compiler('cpp')

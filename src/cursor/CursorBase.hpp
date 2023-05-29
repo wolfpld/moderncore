@@ -33,7 +33,12 @@ public:
     [[nodiscard]] bool Valid() const { return !m_cursor.empty(); }
 
 protected:
+    void CalcSizes();
+
     unordered_flat_map<uint32_t, CursorSize> m_cursor;
+
+private:
+    std::vector<uint32_t> m_sizes;
 };
 
 #endif

@@ -241,5 +241,7 @@ XCursor::XCursor( const char* theme )
     }
     if( m_cursor.empty() ) return;
 
+    CalcSizes();
+
     wlr_log( WLR_INFO, "Loaded %i/%i X cursors from theme %s", numTypes - left, numTypes, theme );
 }

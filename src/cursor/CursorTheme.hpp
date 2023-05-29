@@ -19,6 +19,7 @@ public:
 
 private:
     std::unique_ptr<CursorBase> m_cursor;
+    uint32_t m_size;
 };
 
 #endif

@@ -73,12 +73,6 @@ static void SplitString( const char* str, std::vector<std::string>& out )
     }
 }
 
-static std::string ExpandHome( const char* path )
-{
-    if( path[0] != '~' ) return path;
-    return GetHome() + (path+1);
-}
-
 static std::vector<std::string> GetPaths()
 {
     std::vector<std::string> ret;

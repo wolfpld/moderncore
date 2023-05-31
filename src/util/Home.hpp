@@ -4,5 +4,6 @@
 #include <string>
 
 std::string GetHome();
+std::string ExpandHome( const char* path );
 
 #endif

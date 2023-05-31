@@ -21,3 +21,9 @@ std::string GetHome()
 
     return res ? pass.pw_dir : "";
 }
+
+std::string ExpandHome( const char* path )
+{
+    if( path[0] != '~' ) return path;
+    return GetHome() + (path+1);
+}

@@ -14,6 +14,8 @@ public:
     Bitmap& operator=( const Bitmap& ) = delete;
     Bitmap& operator=( Bitmap&& other ) noexcept;
 
+    void FlipVertical();
+
     [[nodiscard]] uint32_t Width() const { return m_width; }
     [[nodiscard]] uint32_t Height() const { return m_height; }
     [[nodiscard]] uint8_t* Data() { return m_data; }

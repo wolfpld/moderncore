@@ -1,9 +1,9 @@
 #ifndef __XCURSOR_HPP__
 #define __XCURSOR_HPP__
 
-#include "CursorBase.hpp"
+#include "CursorBaseMulti.hpp"
 
-class XCursor : public CursorBase
+class XCursor : public CursorBaseMulti
 {
 public:
     explicit XCursor( const char* theme );

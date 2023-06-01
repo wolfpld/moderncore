@@ -5,6 +5,7 @@ files = [
     'src/MCore.cpp',
     'src/Server.cpp',
     'src/cursor/CursorBase.cpp',
+    'src/cursor/CursorBaseMulti.cpp',
     'src/cursor/CursorTheme.cpp',
     'src/cursor/XCursor.cpp',
     'src/plumbing/Allocator.cpp',

@@ -16,7 +16,6 @@ files = [
     'src/plumbing/DataDeviceManager.cpp',
     'src/plumbing/Display.cpp',
     'src/plumbing/Keyboard.cpp',
-    'src/plumbing/Logs.cpp',
     'src/plumbing/Output.cpp',
     'src/plumbing/OutputNode.cpp',
     'src/plumbing/Pointer.cpp',
@@ -28,6 +27,7 @@ files = [
     'src/util/Bitmap.cpp',
     'src/util/Config.cpp',
     'src/util/Home.cpp',
+    'src/util/Logs.cpp',
 ]
 
 compiler = meson.get_compiler('cpp')

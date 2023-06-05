@@ -6,6 +6,7 @@
 #include "OutputNode.hpp"
 #include "Renderer.hpp"
 #include "Scene.hpp"
+#include "../util/Logs.hpp"
 #include "../util/Panic.hpp"
 
 extern "C" {
@@ -13,7 +14,6 @@ extern "C" {
 #include <wlr/backend.h>
 #include <wlr/types/wlr_output.h>
 #include <wlr/types/wlr_output_layout.h>
-#include <wlr/util/log.h>
 
 /* wlr_scene.h header uses C99 features not recognized by a C++ compiler */
 bool wlr_scene_attach_output_layout(struct wlr_scene *scene, struct wlr_output_layout *output_layout);
@@ -38,7 +38,7 @@ Output::~Output()
 
 void Output::NewOutput( wlr_output* output )
 {
-    wlr_log( WLR_INFO, "New output: %s (%s %s), %ix%i mm, %ix%i px, %.2f Hz",
+    mclog( LogLevel::Info, "New output: %s (%s %s), %ix%i mm, %ix%i px, %.2f Hz",
         output->name,
         output->make ? output->make : "null",
         output->model ? output->model : "null",
@@ -57,7 +57,7 @@ void Output::NewOutput( wlr_output* output )
         wlr_output_enable( output, true );
         if( !wlr_output_commit( output ) )
         {
-            wlr_log( WLR_ERROR, "Cannot set preferred mode for output: %ix%i %.2f Hz", preferred->width, preferred->height, preferred->refresh / 1000.f );
+            mclog( LogLevel::Error, "Cannot set preferred mode for output: %ix%i %.2f Hz", preferred->width, preferred->height, preferred->refresh / 1000.f );
             return;
         }
     }

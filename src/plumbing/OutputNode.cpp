@@ -1,11 +1,11 @@
 #include "Output.hpp"
 #include "OutputNode.hpp"
 #include "Scene.hpp"
+#include "../util/Logs.hpp"
 
 extern "C" {
 #define WLR_USE_UNSTABLE
 #include <wlr/types/wlr_output.h>
-#include <wlr/util/log.h>
 };
 
 OutputNode::OutputNode( wlr_output* output, Scene& scene, Output& parent )
@@ -19,12 +19,12 @@ OutputNode::OutputNode( wlr_output* output, Scene& scene, Output& parent )
 
 void OutputNode::Frame()
 {
-    wlr_log( WLR_INFO, "%s: New frame", m_output->name );
+    mclog( LogLevel::Debug, "%s: New frame", m_output->name );
     m_scene.Render( m_output );
 }
 
 void OutputNode::Destroy()
 {
-    wlr_log( WLR_INFO, "Remove output %s", m_output->name );
+    mclog( LogLevel::Info, "Remove output %s", m_output->name );
     m_parent.Remove( this );
 }

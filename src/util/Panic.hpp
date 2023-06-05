@@ -3,15 +3,13 @@
 
 #include <stdlib.h>
 
-extern "C" {
-#include <wlr/util/log.h>
-}
+#include "Logs.hpp"
 
 #define CheckPanic( condition, msg ) \
     { \
         if( !(condition) ) \
         { \
-            wlr_log( WLR_ERROR, "%s", msg ); \
+            mclog( LogLevel::Fatal, "%s", msg ); \
             abort(); \
         } \
     }

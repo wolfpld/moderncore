@@ -6,6 +6,7 @@
 #include "Keyboard.hpp"
 #include "Pointer.hpp"
 #include "Seat.hpp"
+#include "../util/Logs.hpp"
 #include "../util/Panic.hpp"
 
 extern "C"
@@ -13,7 +14,6 @@ extern "C"
 #define WLR_USE_UNSTABLE
 #include <wlr/backend.h>
 #include <wlr/types/wlr_seat.h>
-#include <wlr/util/log.h>
 };
 
 Seat::Seat( Display& dpy, const Backend& backend, const Output& output )
@@ -58,11 +58,11 @@ void Seat::NewInput( wlr_input_device* dev )
         type = "switch";
         break;
     default:
-        wlr_log( WLR_ERROR, "Unknown input device type! (%i)", dev->type );
+        mclog( LogLevel::Error, "Unknown input device type! (%i)", dev->type );
         return;
     }
 
-    wlr_log( WLR_DEBUG, "New input: %s (%s)", dev->name, type );
+    mclog( LogLevel::Info, "New input: %s (%s)", dev->name, type );
     UpdateCapabilities();
 }
 

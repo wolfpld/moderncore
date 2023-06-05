@@ -1,11 +1,9 @@
 #include <wayland-server-core.h>
 
 #include "Display.hpp"
+#include "../util/Logs.hpp"
 #include "../util/Panic.hpp"
 
-extern "C" {
-#include <wlr/util/log.h>
-}
 
 Display::Display()
     : m_dpy( wl_display_create() )
@@ -14,7 +12,7 @@ Display::Display()
     CheckPanic( m_dpy, "Failed to create wl_display!" );
     CheckPanic( m_socket, "Failed to initialize a socket!" );
 
-    wlr_log( WLR_INFO, "Wayland socket: %s", m_socket );
+    mclog( LogLevel::Info, "Wayland socket: %s", m_socket );
 }
 
 Display::~Display()

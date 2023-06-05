@@ -1,11 +1,11 @@
 #include "Display.hpp"
 #include "XdgShell.hpp"
+#include "../util/Logs.hpp"
 #include "../util/Panic.hpp"
 
 extern "C" {
 #define WLR_USE_UNSTABLE
 #include <wlr/types/wlr_xdg_shell.h>
-#include <wlr/util/log.h>
 };
 
 XdgShell::XdgShell( const Display& dpy )
@@ -17,5 +17,5 @@ XdgShell::XdgShell( const Display& dpy )
 
 void XdgShell::NewSurface( wlr_xdg_surface* output )
 {
-    wlr_log( WLR_DEBUG, "New surface" );
+    mclog( LogLevel::Debug, "New surface" );
 }

@@ -12,11 +12,11 @@
 #include "../util/Bitmap.hpp"
 #include "../util/FileWrapper.hpp"
 #include "../util/Home.hpp"
+#include "../util/Logs.hpp"
 #include "../util/RobinHood.hpp"
 
 extern "C" {
 #include "../../contrib/ini/ini.h"
-#include <wlr/util/log.h>
 }
 
 // Based on https://www.freedesktop.org/wiki/Specifications/cursor-spec/
@@ -144,7 +144,7 @@ static std::vector<std::string> GetThemeData( const char* theme )
                 path.append( "/cursors/" );
                 if( stat( path.c_str(), &st ) == 0 && ( st.st_mode & S_IFMT ) == S_IFDIR )
                 {
-                    wlr_log( WLR_INFO, "Including cursor theme %s", curr.c_str() );
+                    mclog( LogLevel::Debug, "Including cursor theme %s", curr.c_str() );
                     themeData.emplace_back( std::move( path ) );
                 }
             }
@@ -236,5 +236,5 @@ XCursor::XCursor( const char* theme )
 
     CalcSizes();
 
-    wlr_log( WLR_INFO, "Loaded %i/%i X cursors from theme %s", numTypes - left, numTypes, theme );
+    mclog( LogLevel::Info, "Loaded %i/%i X cursors from theme %s", numTypes - left, numTypes, theme );
 }

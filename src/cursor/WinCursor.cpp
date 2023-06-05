@@ -10,10 +10,10 @@
 #include "../util/Bitmap.hpp"
 #include "../util/FileWrapper.hpp"
 #include "../util/Home.hpp"
+#include "../util/Logs.hpp"
 
 extern "C" {
 #include "../../contrib/ini/ini.h"
-#include <wlr/util/log.h>
 }
 
 constexpr const char* CursorNames[] = {
@@ -371,5 +371,5 @@ WinCursor::WinCursor( const char* theme )
 
     CalcSizes();
 
-    wlr_log( WLR_INFO, "Loaded %i Windows cursors from theme %s", numCursors, theme );
+    mclog( LogLevel::Info, "Loaded %i Windows cursors from theme %s", numCursors, theme );
 }

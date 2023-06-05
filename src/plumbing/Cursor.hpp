@@ -1,5 +1,5 @@
-#ifndef __CURSOR_HPP__
-#define __CURSOR_HPP__
+#ifndef __WLR_CURSOR_HPP__
+#define __WLR_CURSOR_HPP__
 
 #include "Listener.hpp"
 

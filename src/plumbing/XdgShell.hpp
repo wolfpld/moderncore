@@ -1,5 +1,5 @@
-#ifndef __XDGSHELL_HPP__
-#define __XDGSHELL_HPP__
+#ifndef __WLR_XDGSHELL_HPP__
+#define __WLR_XDGSHELL_HPP__
 
 #include "Listener.hpp"
 

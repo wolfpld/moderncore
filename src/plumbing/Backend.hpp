@@ -1,5 +1,5 @@
-#ifndef __BACKEND_HPP__
-#define __BACKEND_HPP__
+#ifndef __WLR_BACKEND_HPP__
+#define __WLR_BACKEND_HPP__
 
 extern "C" {
     struct wlr_backend;

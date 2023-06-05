@@ -1,5 +1,5 @@
-#ifndef __RENDERER_HPP__
-#define __RENDERER_HPP__
+#ifndef __WLR_RENDERER_HPP__
+#define __WLR_RENDERER_HPP__
 
 extern "C" {
     struct wlr_renderer;

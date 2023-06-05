@@ -1,5 +1,5 @@
-#ifndef __OUTPUT_HPP__
-#define __OUTPUT_HPP__
+#ifndef __WLR_OUTPUT_HPP__
+#define __WLR_OUTPUT_HPP__
 
 #include <memory>
 #include <vector>

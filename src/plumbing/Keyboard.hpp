@@ -1,5 +1,5 @@
-#ifndef __KEYBOARD_HPP__
-#define __KEYBOARD_HPP__
+#ifndef __WLR_KEYBOARD_HPP__
+#define __WLR_KEYBOARD_HPP__
 
 #include "Listener.hpp"
 

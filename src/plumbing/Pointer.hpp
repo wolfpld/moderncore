@@ -1,5 +1,5 @@
-#ifndef __POINTER_HPP__
-#define __POINTER_HPP__
+#ifndef __WLR_POINTER_HPP__
+#define __WLR_POINTER_HPP__
 
 #include "Listener.hpp"
 

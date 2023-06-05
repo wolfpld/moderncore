@@ -1,5 +1,5 @@
-#ifndef __SUBCOMPOSITOR_HPP__
-#define __SUBCOMPOSITOR_HPP__
+#ifndef __WLR_SUBCOMPOSITOR_HPP__
+#define __WLR_SUBCOMPOSITOR_HPP__
 
 extern "C" {
     struct wlr_subcompositor;

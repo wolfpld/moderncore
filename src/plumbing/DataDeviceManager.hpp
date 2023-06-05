@@ -1,5 +1,5 @@
-#ifndef __DATADEVICEMANAGER_HPP__
-#define __DATADEVICEMANAGER_HPP__
+#ifndef __WLR_DATADEVICEMANAGER_HPP__
+#define __WLR_DATADEVICEMANAGER_HPP__
 
 extern "C" {
     struct wlr_data_device_manager;

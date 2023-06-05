@@ -1,5 +1,5 @@
-#ifndef __SEAT_HPP__
-#define __SEAT_HPP__
+#ifndef __WLR_SEAT_HPP__
+#define __WLR_SEAT_HPP__
 
 #include <memory>
 #include <vector>

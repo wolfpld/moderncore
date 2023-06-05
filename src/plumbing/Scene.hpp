@@ -1,5 +1,5 @@
-#ifndef __SCENE_HPP__
-#define __SCENE_HPP__
+#ifndef __WLR_SCENE_HPP__
+#define __WLR_SCENE_HPP__
 
 extern "C" {
     struct wlr_output;

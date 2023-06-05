@@ -1,5 +1,5 @@
-#ifndef __OUTPUTNODE_HPP__
-#define __OUTPUTNODE_HPP__
+#ifndef __WLR_OUTPUTNODE_HPP__
+#define __WLR_OUTPUTNODE_HPP__
 
 #include "Listener.hpp"
 

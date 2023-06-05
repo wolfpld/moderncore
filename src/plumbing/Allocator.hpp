@@ -1,5 +1,5 @@
-#ifndef __ALLOCATOR_HPP__
-#define __ALLOCATOR_HPP__
+#ifndef __WLR_ALLOCATOR_HPP__
+#define __WLR_ALLOCATOR_HPP__
 
 extern "C" {
     struct wlr_allocator;

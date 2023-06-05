@@ -1,5 +1,5 @@
-#ifndef __COMPOSITOR_HPP__
-#define __COMPOSITOR_HPP__
+#ifndef __WLR_COMPOSITOR_HPP__
+#define __WLR_COMPOSITOR_HPP__
 
 extern "C" {
     struct wlr_compositor;

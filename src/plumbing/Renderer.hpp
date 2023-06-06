@@ -5,13 +5,13 @@ extern "C" {
     struct wlr_renderer;
 };
 
-class Backend;
+class BackendWlr;
 class Display;
 
 class Renderer
 {
 public:
-    Renderer( const Backend& backend, const Display& dpy );
+    Renderer( const BackendWlr& backend, const Display& dpy );
     ~Renderer();
 
     [[nodiscard]] operator wlr_renderer* () const { return m_renderer; }

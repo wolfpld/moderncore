@@ -10,7 +10,7 @@ extern "C" {
     bool wlr_renderer_init_wl_display(struct wlr_renderer *r, struct wl_display *wl_display);
 };
 
-Renderer::Renderer( const Backend& backend, const Display& dpy )
+Renderer::Renderer( const BackendWlr& backend, const Display& dpy )
     : m_renderer( wlr_renderer_autocreate( backend ) )
 {
     CheckPanic( m_renderer, "Failed to create wlr_renderer!" );

@@ -12,7 +12,7 @@ extern "C" {
 };
 
 class Allocator;
-class Backend;
+class BackendWlr;
 class OutputNode;
 class Renderer;
 class Scene;
@@ -20,7 +20,7 @@ class Scene;
 class Output
 {
 public:
-    explicit Output( const Backend& backend, const Allocator& allocator, const Renderer& renderer, Scene& scene );
+    explicit Output( const BackendWlr& backend, const Allocator& allocator, const Renderer& renderer, Scene& scene );
     ~Output();
 
     void Remove( const OutputNode* node );

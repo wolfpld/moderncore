@@ -16,7 +16,7 @@ extern "C"
 #include <wlr/types/wlr_seat.h>
 };
 
-Seat::Seat( Display& dpy, const Backend& backend, const Output& output )
+Seat::Seat( Display& dpy, const BackendWlr& backend, const Output& output )
     : m_cursor( *this, output, m_theme )
     , m_dpy( dpy )
     , m_seat( wlr_seat_create( dpy, "seat0" ) )

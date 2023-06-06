@@ -20,7 +20,7 @@ public:
 
 private:
     Display m_dpy;
-    Backend m_backend;
+    BackendWlr m_backend;
     Renderer m_renderer;
     Allocator m_allocator;
     Compositor m_compositor;

@@ -18,7 +18,7 @@ extern "C"
     struct wlr_keyboard_key_event;
 }
 
-class Backend;
+class BackendWlr;
 class Display;
 class Keyboard;
 class Output;
@@ -27,7 +27,7 @@ class Pointer;
 class Seat
 {
 public:
-    Seat( Display& dpy, const Backend& backend, const Output& output );
+    Seat( Display& dpy, const BackendWlr& backend, const Output& output );
     ~Seat();
 
     void Remove( const Pointer* pointer );

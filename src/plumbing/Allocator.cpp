@@ -8,7 +8,7 @@ extern "C" {
 #include <wlr/render/allocator.h>
 };
 
-Allocator::Allocator( const Backend& backend, const Renderer& renderer )
+Allocator::Allocator( const BackendWlr& backend, const Renderer& renderer )
     : m_allocator( wlr_allocator_autocreate( backend, renderer ) )
 {
     CheckPanic( m_allocator, "Failed to create wlr_allocator!" );

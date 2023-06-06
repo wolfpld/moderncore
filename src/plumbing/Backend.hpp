@@ -7,11 +7,11 @@ extern "C" {
 
 class Display;
 
-class Backend
+class BackendWlr
 {
 public:
-    explicit Backend( const Display& dpy );
-    ~Backend();
+    explicit BackendWlr( const Display& dpy );
+    ~BackendWlr();
 
     void Start();
 

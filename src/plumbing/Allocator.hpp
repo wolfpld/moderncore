@@ -5,13 +5,13 @@ extern "C" {
     struct wlr_allocator;
 };
 
-class Backend;
+class BackendWlr;
 class Renderer;
 
 class Allocator
 {
 public:
-    Allocator( const Backend& backend, const Renderer& renderer );
+    Allocator( const BackendWlr& backend, const Renderer& renderer );
     ~Allocator();
 
     [[nodiscard]] operator wlr_allocator* () const { return m_allocator; }

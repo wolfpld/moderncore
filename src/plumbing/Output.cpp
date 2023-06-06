@@ -19,7 +19,7 @@ extern "C" {
 bool wlr_scene_attach_output_layout(struct wlr_scene *scene, struct wlr_output_layout *output_layout);
 };
 
-Output::Output( const Backend& backend, const Allocator& allocator, const Renderer& renderer, Scene& scene )
+Output::Output( const BackendWlr& backend, const Allocator& allocator, const Renderer& renderer, Scene& scene )
     : m_allocator( allocator )
     , m_renderer( renderer )
     , m_scene( scene )

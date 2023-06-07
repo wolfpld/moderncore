@@ -9,6 +9,7 @@ files = [
     'src/cursor/CursorTheme.cpp',
     'src/cursor/WinCursor.cpp',
     'src/cursor/XCursor.cpp',
+    'src/backend/wayland/WaylandPointer.cpp',
     'src/plumbing/Allocator.cpp',
     'src/plumbing/Backend.cpp',
     'src/plumbing/Compositor.cpp',

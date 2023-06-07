@@ -53,6 +53,7 @@ wl_scanner_bin = find_program(wl_scanner.get_variable('wayland_scanner'))
 
 protocols = {
     'xdg-shell': wl_proto_dir / 'stable/xdg-shell/xdg-shell.xml',
+    'xdg-decoration': wl_proto_dir / 'unstable/xdg-decoration/xdg-decoration-unstable-v1.xml',
 }
 
 foreach name, path : protocols

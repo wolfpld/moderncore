@@ -66,6 +66,14 @@ foreach name, path : protocols
         command: [wl_scanner_bin, 'server-header', '@INPUT@', '@OUTPUT@']
     )
     files += header
+
+    client_header = custom_target(
+        name.underscorify() + '_client_h',
+        input: path,
+        output: '@BASENAME@-client-protocol.h',
+        command: [wl_scanner_bin, 'client-header', '@INPUT@', '@OUTPUT@']
+    )
+    files += client_header
 endforeach
 
 

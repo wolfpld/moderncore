@@ -28,6 +28,9 @@ files = [
     'src/util/Config.cpp',
     'src/util/Home.cpp',
     'src/util/Logs.cpp',
+    'src/vulkan/VlkError.cpp',
+    'src/vulkan/VlkInstance.cpp',
+    'src/vulkan/VlkProxy.cpp',
 ]
 
 compiler = meson.get_compiler('cpp')

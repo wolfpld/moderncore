@@ -1,8 +1,10 @@
+#include <algorithm>
 #include <string.h>
 
 #include "BackendWayland.hpp"
 #include "WaylandMethod.hpp"
 #include "WaylandOutput.hpp"
+#include "WaylandRegistry.hpp"
 #include "WaylandSeat.hpp"
 #include "WaylandWindow.hpp"
 #include "../../util/Panic.hpp"
@@ -54,7 +56,7 @@ void BackendWayland::RegistryGlobal( wl_registry* reg, uint32_t name, const char
 {
     if( strcmp( interface, wl_compositor_interface.name ) == 0 )
     {
-        m_compositor = (wl_compositor*)wl_registry_bind( reg, name, &wl_compositor_interface, 1 );
+        m_compositor = RegistryBind( wl_compositor );
     }
     else if( strcmp( interface, xdg_wm_base_interface.name ) == 0 )
     {
@@ -62,22 +64,22 @@ void BackendWayland::RegistryGlobal( wl_registry* reg, uint32_t name, const char
             .ping = Method( BackendWayland, XdgWmPing )
         };
 
-        m_xdgWmBase = (xdg_wm_base*)wl_registry_bind( reg, name, &xdg_wm_base_interface, 1 );
+        m_xdgWmBase = RegistryBind( xdg_wm_base );
         xdg_wm_base_add_listener( m_xdgWmBase, &wmBaseListener, this );
     }
     else if( strcmp( interface, wl_seat_interface.name ) == 0 )
     {
-        auto seat = (wl_seat*)wl_registry_bind( reg, name, &wl_seat_interface, 8 );
+        auto seat = RegistryBind( wl_seat, 5, 9 );
         m_seat = std::make_unique<WaylandSeat>( seat );
     }
     else if( strcmp( interface, wl_output_interface.name ) == 0 )
     {
-        auto output = (wl_output*)wl_registry_bind( reg, name, &wl_output_interface, 4 );
+        auto output = RegistryBind( wl_output, 3, 4 );
         m_outputMap.emplace( name, std::make_unique<WaylandOutput>( output, [this]{ OnOutput(); } ) );
     }
     else if( strcmp( interface, zxdg_decoration_manager_v1_interface.name ) == 0 )
     {
-        m_decorationManager = (zxdg_decoration_manager_v1*)wl_registry_bind( reg, name, &zxdg_decoration_manager_v1_interface, 1 );
+        m_decorationManager = RegistryBind( zxdg_decoration_manager_v1 );
     }
     else if( strcmp( interface, zxdg_toplevel_decoration_v1_interface.name ) == 0 )
     {
@@ -85,7 +87,7 @@ void BackendWayland::RegistryGlobal( wl_registry* reg, uint32_t name, const char
             .configure = Method( BackendWayland, DecorationConfigure ),
         };
 
-        m_toplevelDecoration = (zxdg_toplevel_decoration_v1*)wl_registry_bind( reg, name, &zxdg_toplevel_decoration_v1_interface, 1 );
+        m_toplevelDecoration = RegistryBind( zxdg_toplevel_decoration_v1 );
         zxdg_toplevel_decoration_v1_add_listener( m_toplevelDecoration, &decorationListener, this );
         zxdg_toplevel_decoration_v1_set_mode( m_toplevelDecoration, ZXDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE );
     }

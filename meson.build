@@ -13,6 +13,7 @@ files = [
     'src/backend/wayland/WaylandOutput.cpp',
     'src/backend/wayland/WaylandPointer.cpp',
     'src/backend/wayland/WaylandSeat.cpp',
+    'src/backend/wayland/WaylandWindow.cpp',
     'src/plumbing/Allocator.cpp',
     'src/plumbing/Backend.cpp',
     'src/plumbing/Compositor.cpp',

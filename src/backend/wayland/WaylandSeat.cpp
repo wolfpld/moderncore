@@ -1,0 +1,50 @@
+#include "WaylandKeyboard.hpp"
+#include "WaylandMethod.hpp"
+#include "WaylandPointer.hpp"
+#include "WaylandSeat.hpp"
+
+WaylandSeat::WaylandSeat( wl_seat* seat )
+    : m_seat( seat )
+{
+    static constexpr wl_seat_listener seatListener = {
+        .capabilities = Method( WaylandSeat, SeatCapabilities ),
+        .name = Method( WaylandSeat, SeatName )
+    };
+
+    wl_seat_add_listener( m_seat, &seatListener, this );
+}
+
+WaylandSeat::~WaylandSeat()
+{
+    m_pointer.reset();
+    m_keyboard.reset();
+    wl_seat_destroy( m_seat );
+}
+
+void WaylandSeat::SeatCapabilities( wl_seat* seat, uint32_t caps )
+{
+    const bool hasPointer = caps & WL_SEAT_CAPABILITY_POINTER;
+    const bool hasKeyboard = caps & WL_SEAT_CAPABILITY_KEYBOARD;
+
+    if( hasPointer && !m_pointer )
+    {
+        m_pointer = std::make_unique<WaylandPointer>( wl_seat_get_pointer( seat ) );
+    }
+    else if( !hasPointer && m_pointer )
+    {
+        m_pointer.reset();
+    }
+
+    if( hasKeyboard && !m_keyboard )
+    {
+        m_keyboard = std::make_unique<WaylandKeyboard>( wl_seat_get_keyboard( seat ) );
+    }
+    else if( !hasKeyboard && m_keyboard )
+    {
+        m_keyboard.reset();
+    }
+}
+
+void WaylandSeat::SeatName( wl_seat* seat, const char* name )
+{
+}

@@ -9,6 +9,7 @@ files = [
     'src/cursor/CursorTheme.cpp',
     'src/cursor/WinCursor.cpp',
     'src/cursor/XCursor.cpp',
+    'src/backend/wayland/BackendWayland.cpp',
     'src/backend/wayland/WaylandKeyboard.cpp',
     'src/backend/wayland/WaylandOutput.cpp',
     'src/backend/wayland/WaylandPointer.cpp',

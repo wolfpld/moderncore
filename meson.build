@@ -37,7 +37,8 @@ compiler = meson.get_compiler('cpp')
 
 pixman = dependency('pixman-1')
 vulkan = dependency('vulkan')
-wayland = dependency('wayland-server')
+wayland_server = dependency('wayland-server')
+wayland_client = dependency('wayland-client')
 wlroots = dependency('wlroots')
 xkbcommon = dependency('xkbcommon')
 wl_proto = dependency('wayland-protocols')
@@ -88,5 +89,5 @@ add_project_arguments(compile_args, language: ['c', 'cpp'])
 
 executable('mcore',
     files,
-    dependencies: [pixman, vulkan, wayland, wlroots, xkbcommon]
+    dependencies: [pixman, vulkan, wayland_server, wayland_client, wlroots, xkbcommon]
 )

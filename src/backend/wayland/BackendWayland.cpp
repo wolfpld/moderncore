@@ -9,7 +9,7 @@
 #include "WaylandWindow.hpp"
 #include "../../util/Panic.hpp"
 
-BackendWayland::BackendWayland()
+BackendWayland::BackendWayland( VkInstance vkInstance )
     : m_dpy( wl_display_connect( nullptr ) )
 {
     CheckPanic( m_dpy, "Failed to connect to Wayland display" );
@@ -26,7 +26,7 @@ BackendWayland::BackendWayland()
     CheckPanic( m_xdgWmBase, "Failed to create Wayland xdg_wm_base" );
     CheckPanic( m_seat, "Failed to create Wayland seat" );
 
-    m_window = std::make_unique<WaylandWindow>( m_compositor, m_xdgWmBase, m_decorationManager, [this]{ Stop(); } );
+    m_window = std::make_unique<WaylandWindow>( m_compositor, m_xdgWmBase, m_decorationManager, m_dpy, vkInstance, [this]{ Stop(); } );
     m_window->Show();
 }
 

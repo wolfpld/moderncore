@@ -10,8 +10,8 @@ int main()
 
     {
         VlkInstance vk( VlkInstanceType::Wayland );
-        BackendWayland ww;
-        ww.Run();
+        BackendWayland backend( vk );
+        backend.Run();
     }
 
     Server server;

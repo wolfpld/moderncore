@@ -1,10 +1,15 @@
+#include <vulkan/vulkan.h>
+#include <vulkan/vulkan_wayland.h>
+
 #include "WaylandMethod.hpp"
 #include "WaylandWindow.hpp"
 #include "../../util/Panic.hpp"
+#include "../../vulkan/VlkError.hpp"
 
-WaylandWindow::WaylandWindow( wl_compositor* compositor, xdg_wm_base* xdgWmBase, zxdg_decoration_manager_v1* decorationManager, std::function<void()> onClose )
+WaylandWindow::WaylandWindow( wl_compositor* compositor, xdg_wm_base* xdgWmBase, zxdg_decoration_manager_v1* decorationManager, wl_display* dpy, VkInstance vkInstance, std::function<void()> onClose )
     : m_surface( wl_compositor_create_surface( compositor ) )
     , m_onClose( std::move( onClose ) )
+    , m_vkInstance( vkInstance )
 {
     CheckPanic( m_surface, "Failed to create Wayland surface" );
 
@@ -28,10 +33,17 @@ WaylandWindow::WaylandWindow( wl_compositor* compositor, xdg_wm_base* xdgWmBase,
     xdg_toplevel_set_app_id( m_xdgToplevel, "moderncore" );
 
     if( decorationManager ) zxdg_decoration_manager_v1_get_toplevel_decoration( decorationManager, m_xdgToplevel );
+
+    VkWaylandSurfaceCreateInfoKHR createInfo = { VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR };
+    createInfo.display = dpy;
+    createInfo.surface = m_surface;
+
+    VkVerify( vkCreateWaylandSurfaceKHR( vkInstance, &createInfo, nullptr, &m_vkSurface ) );
 }
 
 WaylandWindow::~WaylandWindow()
 {
+    vkDestroySurfaceKHR( m_vkInstance, m_vkSurface, nullptr );
     xdg_toplevel_destroy( m_xdgToplevel );
     xdg_surface_destroy( m_xdgSurface );
     wl_surface_destroy( m_surface );

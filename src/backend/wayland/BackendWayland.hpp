@@ -4,6 +4,7 @@
 #include <memory>
 #include <stdint.h>
 #include <wayland-client.h>
+#include <vulkan/vulkan.h>
 
 #include "../Backend.hpp"
 #include "../../util/RobinHood.hpp"
@@ -18,7 +19,7 @@ class WaylandWindow;
 class BackendWayland : public Backend
 {
 public:
-    BackendWayland();
+    explicit BackendWayland( VkInstance vkInstance );
     ~BackendWayland() override;
 
     void Run() override;

@@ -34,8 +34,10 @@ files = [
     'src/util/Config.cpp',
     'src/util/Home.cpp',
     'src/util/Logs.cpp',
+    'src/vulkan/PhysDevSel.cpp',
     'src/vulkan/VlkError.cpp',
     'src/vulkan/VlkInstance.cpp',
+    'src/vulkan/VlkPhysicalDevice.cpp',
     'src/vulkan/VlkProxy.cpp',
 ]
 

@@ -88,7 +88,7 @@ VlkInstance::VlkInstance()
     VkInstanceCreateInfo createInfo = { VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO };
     createInfo.pApplicationInfo = &appInfo;
 
-    std::vector<const char*> instanceExtensions;
+    std::vector<const char*> instanceExtensions { VK_KHR_SURFACE_EXTENSION_NAME };
 
     VkDebugUtilsMessengerCreateInfoEXT dbgInfo = { VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT };
 

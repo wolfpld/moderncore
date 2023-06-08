@@ -52,6 +52,11 @@ void BackendWayland::Stop()
     m_keepRunning = false;
 }
 
+BackendWayland::operator VkSurfaceKHR() const
+{
+    return *m_window;
+}
+
 void BackendWayland::RegistryGlobal( wl_registry* reg, uint32_t name, const char* interface, uint32_t version )
 {
     if( strcmp( interface, wl_compositor_interface.name ) == 0 )

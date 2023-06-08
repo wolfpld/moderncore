@@ -4,7 +4,6 @@
 #include <memory>
 #include <stdint.h>
 #include <wayland-client.h>
-#include <vulkan/vulkan.h>
 
 #include "../Backend.hpp"
 #include "../../util/RobinHood.hpp"
@@ -24,6 +23,8 @@ public:
 
     void Run() override;
     void Stop() override;
+
+    operator VkSurfaceKHR() const override;
 
 private:
     void RegistryGlobal( wl_registry* reg, uint32_t name, const char* interface, uint32_t version );

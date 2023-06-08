@@ -16,6 +16,8 @@ public:
 
     void Show();
 
+    operator VkSurfaceKHR() const { return m_vkSurface; }
+
 private:
     void XdgSurfaceConfigure( struct xdg_surface *xdg_surface, uint32_t serial );
 

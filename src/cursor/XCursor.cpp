@@ -223,8 +223,7 @@ XCursor::XCursor( const char* theme )
     {
         for( int i=0; i<numTypes; i++ )
         {
-            const auto done = std::find_if( m_cursor.begin(), m_cursor.end(), [i]( const auto& v ){ return !v.second.type[i].empty(); } );
-            if( done != m_cursor.end() ) continue;
+            if( std::any_of( m_cursor.begin(), m_cursor.end(), [i]( const auto& v ){ return !v.second.type[i].empty(); } ) ) continue;
 
             const auto path = td + CursorNames[i];
             if( LoadCursor( path, i, m_cursor ) ) left--;

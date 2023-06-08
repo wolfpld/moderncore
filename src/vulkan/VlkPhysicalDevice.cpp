@@ -16,12 +16,12 @@ VlkPhysicalDevice::VlkPhysicalDevice( VkPhysicalDevice physDev )
 
 bool VlkPhysicalDevice::IsGraphicCapable()
 {
-    return std::find_if( m_queueFamilyProperties.begin(), m_queueFamilyProperties.end(),
-        []( const auto& v ) { return ( v.queueFlags & VK_QUEUE_GRAPHICS_BIT ) != 0; } ) != m_queueFamilyProperties.end();
+    return std::any_of( m_queueFamilyProperties.begin(), m_queueFamilyProperties.end(),
+        []( const auto& v ) { return ( v.queueFlags & VK_QUEUE_GRAPHICS_BIT ) != 0; } );
 }
 
 bool VlkPhysicalDevice::IsComputeCapable()
 {
-    return std::find_if( m_queueFamilyProperties.begin(), m_queueFamilyProperties.end(),
-        []( const auto& v ) { return ( v.queueFlags & VK_QUEUE_GRAPHICS_BIT ) != 0; } ) != m_queueFamilyProperties.end();
+    return std::any_of( m_queueFamilyProperties.begin(), m_queueFamilyProperties.end(),
+        []( const auto& v ) { return ( v.queueFlags & VK_QUEUE_GRAPHICS_BIT ) != 0; } );
 }

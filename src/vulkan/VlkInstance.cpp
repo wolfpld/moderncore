@@ -20,8 +20,7 @@ static bool HasValidationLayers()
 
     for( auto& search : validationLayers )
     {
-        auto it = std::find_if( layers.begin(), layers.end(), [&search](auto& layer){ return strcmp( layer.layerName, search ) == 0; } );
-        if( it == layers.end() )
+        if( std::none_of( layers.begin(), layers.end(), [&search](auto& layer){ return strcmp( layer.layerName, search ) == 0; } ) )
         {
             mclog( LogLevel::Warning, "Validation layers are not available!" );
             return false;

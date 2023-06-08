@@ -5,10 +5,15 @@
 #include <vector>
 #include <vulkan/vulkan.h>
 
+enum class VlkInstanceType
+{
+    Wayland
+};
+
 class VlkInstance
 {
 public:
-    VlkInstance();
+    explicit VlkInstance( VlkInstanceType instanceType );
     ~VlkInstance();
 
     [[nodiscard]] std::vector<VkPhysicalDevice> QueryPhysicalDevices() const;

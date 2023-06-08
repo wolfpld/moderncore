@@ -9,7 +9,7 @@ int main()
     SetupLogging();
 
     {
-        VlkInstance vk;
+        VlkInstance vk( VlkInstanceType::Wayland );
         BackendWayland ww;
         ww.Run();
     }

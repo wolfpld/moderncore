@@ -3,6 +3,9 @@
 #include <array>
 #include <string.h>
 
+#include <vulkan/vulkan.h>
+#include <vulkan/vulkan_wayland.h>
+
 #include "VlkError.hpp"
 #include "VlkInstance.hpp"
 #include "VlkProxy.hpp"
@@ -74,7 +77,7 @@ static bool HasValidationLayers()
     return VK_TRUE;
 }
 
-VlkInstance::VlkInstance()
+VlkInstance::VlkInstance( VlkInstanceType instanceType )
     : m_debugMessenger( VK_NULL_HANDLE )
 {
     VkApplicationInfo appInfo = { VK_STRUCTURE_TYPE_APPLICATION_INFO };
@@ -88,6 +91,16 @@ VlkInstance::VlkInstance()
     createInfo.pApplicationInfo = &appInfo;
 
     std::vector<const char*> instanceExtensions { VK_KHR_SURFACE_EXTENSION_NAME };
+
+    switch( instanceType )
+    {
+    case VlkInstanceType::Wayland:
+        instanceExtensions.push_back( VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME );
+        break;
+    default:
+        assert( false );
+        break;
+    }
 
     VkDebugUtilsMessengerCreateInfoEXT dbgInfo = { VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT };
 

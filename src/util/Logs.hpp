@@ -12,7 +12,6 @@ enum class LogLevel
     Fatal
 };
 
-void SetupLogging();
 void MCoreLogMessage( LogLevel level, const char* fileName, size_t line, const char* fmt, ... );
 
 #define mclog(level, fmt, ...) MCoreLogMessage( level, __FILE__, __LINE__, fmt, ##__VA_ARGS__ )

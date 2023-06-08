@@ -15,21 +15,7 @@ files = [
     'src/backend/wayland/WaylandPointer.cpp',
     'src/backend/wayland/WaylandSeat.cpp',
     'src/backend/wayland/WaylandWindow.cpp',
-    'src/plumbing/Allocator.cpp',
-    'src/plumbing/Backend.cpp',
-    'src/plumbing/Compositor.cpp',
-    'src/plumbing/Cursor.cpp',
-    'src/plumbing/DataDeviceManager.cpp',
     'src/plumbing/Display.cpp',
-    'src/plumbing/Keyboard.cpp',
-    'src/plumbing/Output.cpp',
-    'src/plumbing/OutputNode.cpp',
-    'src/plumbing/Pointer.cpp',
-    'src/plumbing/Renderer.cpp',
-    'src/plumbing/Scene.cpp',
-    'src/plumbing/Seat.cpp',
-    'src/plumbing/Subcompositor.cpp',
-    'src/plumbing/XdgShell.cpp',
     'src/util/Bitmap.cpp',
     'src/util/Config.cpp',
     'src/util/Home.cpp',
@@ -43,11 +29,9 @@ files = [
 
 compiler = meson.get_compiler('cpp')
 
-pixman = dependency('pixman-1')
 vulkan = dependency('vulkan')
 wayland_server = dependency('wayland-server')
 wayland_client = dependency('wayland-client')
-wlroots = dependency('wlroots')
 xkbcommon = dependency('xkbcommon')
 wl_proto = dependency('wayland-protocols')
 wl_scanner = dependency('wayland-scanner')
@@ -98,5 +82,5 @@ add_project_arguments(compile_args, language: ['c', 'cpp'])
 
 executable('mcore',
     files,
-    dependencies: [pixman, vulkan, wayland_server, wayland_client, wlroots, xkbcommon]
+    dependencies: [vulkan, wayland_server, wayland_client, xkbcommon]
 )

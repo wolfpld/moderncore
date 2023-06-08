@@ -3,10 +3,6 @@
 
 #include <memory>
 
-extern "C" {
-    struct wlr_cursor;
-}
-
 class CursorBase;
 
 class CursorTheme
@@ -14,8 +10,6 @@ class CursorTheme
 public:
     CursorTheme();
     ~CursorTheme();
-
-    void Set( wlr_cursor* cursor ) const;
 
 private:
     std::unique_ptr<CursorBase> m_cursor;

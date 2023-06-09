@@ -13,6 +13,8 @@ public:
     Server();
     ~Server();
 
+    void Run();
+
 private:
     std::unique_ptr<VlkInstance> m_vkInstance;
     std::unique_ptr<Backend> m_backend;

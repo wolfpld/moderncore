@@ -29,7 +29,10 @@ Server::Server()
 
     m_dpy = std::make_unique<Display>();
     setenv( "WAYLAND_DISPLAY", m_dpy->Socket(), 1 );
+}
 
+void Server::Run()
+{
     m_backend->Run();
 }
 

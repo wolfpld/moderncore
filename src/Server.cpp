@@ -7,6 +7,7 @@
 #include "util/Panic.hpp"
 #include "vulkan/PhysDevSel.hpp"
 #include "vulkan/VlkDevice.hpp"
+#include "vulkan/VlkInfo.hpp"
 #include "vulkan/VlkInstance.hpp"
 
 Server::Server()
@@ -27,7 +28,14 @@ Server::Server()
 
     auto physDev = PhysDevSel::PickBest( m_vkInstance->QueryPhysicalDevices(), *m_backend, PhysDevSel::RequireGraphic );
     CheckPanic( physDev, "No suitable GPU found" );
+#ifdef DEBUG
+    PrintVulkanPhysicalDevice( physDev );
+#endif
+
     m_vkDevice = std::make_unique<VlkDevice>( *m_vkInstance, physDev, VlkDevice::RequireGraphic );
+#ifdef DEBUG
+    PrintVulkanQueues( *m_vkDevice );
+#endif
 
     m_dpy = std::make_unique<Display>();
     setenv( "WAYLAND_DISPLAY", m_dpy->Socket(), 1 );

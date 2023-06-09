@@ -24,6 +24,7 @@ files = [
     'src/vulkan/VlkAllocator.cpp',
     'src/vulkan/VlkDevice.cpp',
     'src/vulkan/VlkError.cpp',
+    'src/vulkan/VlkInfo.cpp',
     'src/vulkan/VlkInstance.cpp',
     'src/vulkan/VlkPhysicalDevice.cpp',
     'src/vulkan/VlkProxy.cpp',

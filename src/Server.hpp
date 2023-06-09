@@ -5,6 +5,7 @@
 
 class Backend;
 class Display;
+class VlkDevice;
 class VlkInstance;
 
 class Server
@@ -18,6 +19,7 @@ public:
 private:
     std::unique_ptr<VlkInstance> m_vkInstance;
     std::unique_ptr<Backend> m_backend;
+    std::unique_ptr<VlkDevice> m_vkDevice;
     std::unique_ptr<Display> m_dpy;
 };
 

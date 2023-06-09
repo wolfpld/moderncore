@@ -178,6 +178,7 @@ VlkDevice::VlkDevice( VkInstance instance, VkPhysicalDevice physDev, int flags )
     allocInfo.physicalDevice = physDev;
     allocInfo.device = m_device;
     allocInfo.instance = instance;
+    allocInfo.vulkanApiVersion = VK_API_VERSION_1_1;
 
     VkVerify( vmaCreateAllocator( &allocInfo, &m_allocator ) );
 }

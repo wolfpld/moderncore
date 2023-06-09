@@ -64,6 +64,7 @@ void PrintVulkanQueues( const VlkDevice& device )
             mclog( LogLevel::Info, "  Graphics queue family: %i", q.idx );
             if( q.shareCompute ) mclog( LogLevel::Info, "    <share compute>" );
             if( q.shareTransfer ) mclog( LogLevel::Info, "    <share transfer>" );
+            if( q.sharePresent ) mclog( LogLevel::Info, "    <share present>" );
         }
         else
         {
@@ -78,6 +79,7 @@ void PrintVulkanQueues( const VlkDevice& device )
             mclog( LogLevel::Info, "  Compute queue family: %i", q.idx );
             if( q.shareGraphic ) mclog( LogLevel::Info, "    <share graphic>" );
             if( q.shareTransfer ) mclog( LogLevel::Info, "    <share transfer>" );
+            if( q.sharePresent ) mclog( LogLevel::Info, "    <share present>" );
         }
         else
         {
@@ -92,10 +94,26 @@ void PrintVulkanQueues( const VlkDevice& device )
             mclog( LogLevel::Info, "  Transfer queue family: %i", q.idx );
             if( q.shareGraphic ) mclog( LogLevel::Info, "    <share graphic>" );
             if( q.shareCompute ) mclog( LogLevel::Info, "    <share compute>" );
+            if( q.sharePresent ) mclog( LogLevel::Info, "    <share present>" );
         }
         else
         {
             mclog( LogLevel::Info, "  Transfer queue family not present" );
+        }
+    }
+
+    {
+        auto q = device.GetQueueInfo( VlkDevice::QueueType::Present );
+        if( q.idx >= 0 )
+        {
+            mclog( LogLevel::Info, "  Present queue family: %i", q.idx );
+            if( q.shareGraphic ) mclog( LogLevel::Info, "    <share graphic>" );
+            if( q.shareCompute ) mclog( LogLevel::Info, "    <share compute>" );
+            if( q.shareTransfer ) mclog( LogLevel::Info, "    <share transfer>" );
+        }
+        else
+        {
+            mclog( LogLevel::Info, "  Present queue family not present" );
         }
     }
 }

@@ -12,14 +12,16 @@ public:
     {
         RequireGraphic  = 1 << 0,
         RequireCompute  = 1 << 1,
-        RequireTransfer = 1 << 2
+        RequireTransfer = 1 << 2,
+        RequirePresent  = 1 << 3,
     };
 
     enum class QueueType
     {
         Graphic,
         Compute,
-        Transfer
+        Transfer,
+        Present
     };
 
     struct QueueInfo
@@ -28,9 +30,10 @@ public:
         bool shareGraphic;
         bool shareCompute;
         bool shareTransfer;
+        bool sharePresent;
     };
 
-    VlkDevice( VkInstance instance, VkPhysicalDevice physDev, int flags );
+    VlkDevice( VkInstance instance, VkPhysicalDevice physDev, int flags, VkSurfaceKHR presentSurface = VK_NULL_HANDLE );
     ~VlkDevice();
 
     void Submit( QueueType type, VkCommandBuffer cmdbuf, VkFence fence );
@@ -43,8 +46,8 @@ public:
 
 private:
     VkDevice m_device;
-    QueueInfo m_queueInfo[3];
-    VkQueue m_queue[3];
+    QueueInfo m_queueInfo[4];
+    VkQueue m_queue[4];
 
     VmaAllocator m_allocator;
 };

@@ -7,7 +7,7 @@
 #include "VlkPhysicalDevice.hpp"
 #include "../util/Panic.hpp"
 
-VlkDevice::VlkDevice( VkInstance instance, VkPhysicalDevice physDev, int flags )
+VlkDevice::VlkDevice( VkInstance instance, VkPhysicalDevice physDev, int flags, VkSurfaceKHR presentSurface )
     : m_queueInfo {}
     , m_queue {}
 {
@@ -17,11 +17,50 @@ VlkDevice::VlkDevice( VkInstance instance, VkPhysicalDevice physDev, int flags )
     auto& qfp = phys.GetQueueFamilyProperties();
     const auto sz = uint32_t( qfp.size() );
 
+    bool presentOnGraphicsQueue = false;
+    std::vector<VkBool32> presentSupport( sz );
+    if( flags & RequirePresent )
+    {
+        assert( presentSurface );
+        for( size_t i=0; i<sz; i++ )
+        {
+            vkGetPhysicalDeviceSurfaceSupportKHR( physDev, uint32_t( i ), presentSurface, &presentSupport[i] );
+        }
+    }
+
     if( flags & RequireGraphic )
     {
         CheckPanic( phys.IsGraphicCapable(), "Requested Device with graphic queue, but it does not has any graphic queues." );
         uint32_t idx = sz;
-        if( flags & RequireCompute )
+        if( flags & RequirePresent )
+        {
+            if( flags & RequireCompute )
+            {
+                for( idx=0; idx<sz; idx++ )
+                {
+                    if(  ( qfp[idx].queueFlags & VK_QUEUE_GRAPHICS_BIT ) &&
+                        !( qfp[idx].queueFlags & VK_QUEUE_COMPUTE_BIT  ) &&
+                        presentSupport[idx] )
+                    {
+                        presentOnGraphicsQueue = true;
+                        break;
+                    }
+                }
+            }
+            if( idx == sz )
+            {
+                for( idx=0; idx<sz; idx++ )
+                {
+                    if( ( qfp[idx].queueFlags & VK_QUEUE_GRAPHICS_BIT ) &&
+                        presentSupport[idx] )
+                    {
+                        presentOnGraphicsQueue = true;
+                        break;
+                    }
+                }
+            }
+        }
+        if( idx == sz && ( flags & RequireCompute ) )
         {
             for( idx=0; idx<sz; idx++ )
             {
@@ -42,6 +81,7 @@ VlkDevice::VlkDevice( VkInstance instance, VkPhysicalDevice physDev, int flags )
                 }
             }
         }
+        CheckPanic( idx != sz, "Requested Device with graphic queue, but it does not has any graphic queues." );
         m_queueInfo[(int)QueueType::Graphic].idx = idx;
     }
 
@@ -95,6 +135,40 @@ VlkDevice::VlkDevice( VkInstance instance, VkPhysicalDevice physDev, int flags )
         m_queueInfo[(int)QueueType::Transfer].idx = idx;
     }
 
+    if( flags & RequirePresent )
+    {
+        if( presentOnGraphicsQueue )
+        {
+            m_queueInfo[(int)QueueType::Present].idx = m_queueInfo[(int)QueueType::Graphic].idx;
+        }
+        else
+        {
+            uint32_t idx;
+            for( idx=0; idx<sz; idx++ )
+            {
+                if( presentSupport[idx] )
+                {
+                    if( m_queueInfo[(int)QueueType::Compute].idx == idx ) continue;
+                    if( m_queueInfo[(int)QueueType::Transfer].idx == idx ) continue;
+
+                    m_queueInfo[(int)QueueType::Present].idx = idx;
+                    break;
+                }
+            }
+            if( idx == sz )
+            {
+                for( idx=0; idx<sz; idx++ )
+                {
+                    if( presentSupport[idx] )
+                    {
+                        m_queueInfo[(int)QueueType::Present].idx = idx;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
     if( m_queueInfo[(int)QueueType::Graphic].idx != -1 )
     {
         if( m_queueInfo[(int)QueueType::Graphic].idx == m_queueInfo[(int)QueueType::Compute].idx )
@@ -107,6 +181,11 @@ VlkDevice::VlkDevice( VkInstance instance, VkPhysicalDevice physDev, int flags )
             m_queueInfo[(int)QueueType::Graphic].shareTransfer = true;
             m_queueInfo[(int)QueueType::Transfer].shareGraphic = true;
         }
+        if( m_queueInfo[(int)QueueType::Graphic].idx == m_queueInfo[(int)QueueType::Present].idx )
+        {
+            m_queueInfo[(int)QueueType::Graphic].sharePresent = true;
+            m_queueInfo[(int)QueueType::Present].shareGraphic = true;
+        }
     }
 
     if( m_queueInfo[(int)QueueType::Compute].idx != -1 )
@@ -115,6 +194,20 @@ VlkDevice::VlkDevice( VkInstance instance, VkPhysicalDevice physDev, int flags )
         {
             m_queueInfo[(int)QueueType::Compute].shareTransfer = true;
             m_queueInfo[(int)QueueType::Transfer].shareCompute = true;
+        }
+        if( m_queueInfo[(int)QueueType::Compute].idx == m_queueInfo[(int)QueueType::Present].idx )
+        {
+            m_queueInfo[(int)QueueType::Compute].sharePresent = true;
+            m_queueInfo[(int)QueueType::Present].shareCompute = true;
+        }
+    }
+
+    if( m_queueInfo[(int)QueueType::Transfer].idx != -1 )
+    {
+        if( m_queueInfo[(int)QueueType::Transfer].idx == m_queueInfo[(int)QueueType::Present].idx )
+        {
+            m_queueInfo[(int)QueueType::Transfer].sharePresent = true;
+            m_queueInfo[(int)QueueType::Present].shareTransfer = true;
         }
     }
 
@@ -151,6 +244,18 @@ VlkDevice::VlkDevice( VkInstance instance, VkPhysicalDevice physDev, int flags )
         queueCreate.emplace_back( qi );
     }
 
+    if(  ( m_queueInfo[(int)QueueType::Present].idx >= 0 ) &&
+        !( m_queueInfo[(int)QueueType::Present].shareGraphic ) &&
+        !( m_queueInfo[(int)QueueType::Present].shareCompute ) &&
+        !( m_queueInfo[(int)QueueType::Present].shareTransfer ) )
+    {
+        VkDeviceQueueCreateInfo qi = { VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO };
+        qi.queueCount = 1;
+        qi.queueFamilyIndex = (uint32_t)m_queueInfo[(int)QueueType::Present].idx;
+        qi.pQueuePriorities = &queuePriority;
+        queueCreate.emplace_back( qi );
+    }
+
     std::vector<const char*> deviceExtensions;
 
     VkDeviceCreateInfo devInfo = { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
@@ -172,6 +277,10 @@ VlkDevice::VlkDevice( VkInstance instance, VkPhysicalDevice physDev, int flags )
     if( m_queueInfo[(int)QueueType::Transfer].idx >= 0 )
     {
         vkGetDeviceQueue( m_device, m_queueInfo[(int)QueueType::Transfer].idx, 0, m_queue + (int)QueueType::Transfer );
+    }
+    if( m_queueInfo[(int)QueueType::Present].idx >= 0 )
+    {
+        vkGetDeviceQueue( m_device, m_queueInfo[(int)QueueType::Present].idx, 0, m_queue + (int)QueueType::Present );
     }
 
     VmaAllocatorCreateInfo allocInfo = {};

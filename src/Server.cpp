@@ -32,7 +32,7 @@ Server::Server()
     PrintVulkanPhysicalDevice( physDev );
 #endif
 
-    m_vkDevice = std::make_unique<VlkDevice>( *m_vkInstance, physDev, VlkDevice::RequireGraphic );
+    m_vkDevice = std::make_unique<VlkDevice>( *m_vkInstance, physDev, VlkDevice::RequireGraphic | VlkDevice::RequirePresent, *m_backend );
 #ifdef DEBUG
     PrintVulkanQueues( *m_vkDevice );
 #endif

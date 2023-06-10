@@ -16,6 +16,8 @@ public:
     [[nodiscard]] bool IsComputeCapable();
 
 private:
+    [[nodiscard]] bool IsExtensionAvailable( const char* extensionName ) const;
+
     std::vector<VkQueueFamilyProperties> m_queueFamilyProperties;
     std::vector<VkExtensionProperties> m_extensionProperties;
 };

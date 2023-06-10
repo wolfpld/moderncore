@@ -2,26 +2,15 @@
 #define __VLKERROR_HPP__
 
 #include <vulkan/vulkan.h>
+#include <vulkan/vk_enum_string_helper.h>
 
 #include "../util/Logs.hpp"
-
-namespace impl {
-    const char* TranslateVulkanResult( VkResult res );
-}
 
 #define VkVerify( res ) \
     { \
         if( (res) != VK_SUCCESS ) \
         { \
-            auto str = impl::TranslateVulkanResult( res ); \
-            if( str ) \
-            { \
-                mclog( LogLevel::Fatal, "VkVerify fail: %i (%s)", (res), str ); \
-            } \
-            else \
-            { \
-                mclog( LogLevel::Fatal, "VkVerify fail: %i", (res) ); \
-            } \
+            mclog( LogLevel::Fatal, "VkVerify fail: %i (%s)", (res), string_VkResult( res ) ); \
         } \
     }
 

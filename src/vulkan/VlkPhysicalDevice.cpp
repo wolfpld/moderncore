@@ -29,6 +29,11 @@ bool VlkPhysicalDevice::IsComputeCapable()
         []( const auto& v ) { return ( v.queueFlags & VK_QUEUE_GRAPHICS_BIT ) != 0; } );
 }
 
+bool VlkPhysicalDevice::IsSwapchainCapable()
+{
+    return IsExtensionAvailable( VK_KHR_SWAPCHAIN_EXTENSION_NAME );
+}
+
 bool VlkPhysicalDevice::IsExtensionAvailable( const char* extensionName ) const
 {
     auto it = std::lower_bound( m_extensionProperties.begin(), m_extensionProperties.end(), extensionName,

@@ -19,6 +19,7 @@ VkPhysicalDevice PickBest( const std::vector<VkPhysicalDevice>& list, VkSurfaceK
             if( flags & RequireCompute && !physDev.IsComputeCapable() ) continue;
             if( presentSurface != VK_NULL_HANDLE )
             {
+                if( !physDev.IsSwapchainCapable() ) continue;
                 const auto numQueues = physDev.GetQueueFamilyProperties().size();
                 bool support = false;
                 for( size_t i=0; i<numQueues; i++ )

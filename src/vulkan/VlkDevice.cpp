@@ -1,3 +1,4 @@
+#include <array>
 #include <assert.h>
 #include <limits>
 #include <vector>
@@ -256,7 +257,7 @@ VlkDevice::VlkDevice( VkInstance instance, VkPhysicalDevice physDev, int flags, 
         queueCreate.emplace_back( qi );
     }
 
-    std::vector<const char*> deviceExtensions;
+    std::array deviceExtensions { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
     VkDeviceCreateInfo devInfo = { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
     devInfo.queueCreateInfoCount = (uint32_t)queueCreate.size();

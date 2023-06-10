@@ -9,6 +9,7 @@
 #include "vulkan/VlkDevice.hpp"
 #include "vulkan/VlkInfo.hpp"
 #include "vulkan/VlkInstance.hpp"
+#include "vulkan/VlkSwapchain.hpp"
 
 Server::Server()
 {
@@ -36,6 +37,8 @@ Server::Server()
 #ifdef DEBUG
     PrintVulkanQueues( *m_vkDevice );
 #endif
+
+    VlkSwapchain swapchain( physDev, *m_backend );
 
     m_dpy = std::make_unique<Display>();
     setenv( "WAYLAND_DISPLAY", m_dpy->Socket(), 1 );

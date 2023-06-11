@@ -2,6 +2,7 @@
 #define __VLKSWAPCHAIN_HPP__
 
 #include <stdint.h>
+#include <vector>
 #include <vulkan/vulkan.h>
 
 #include "VlkSwapchainProperties.hpp"
@@ -20,10 +21,11 @@ private:
     VkSurfaceFormatKHR m_format;
     VkPresentModeKHR m_presentMode;
     VkExtent2D m_extent;
-    uint32_t m_imageCount;
 
     VkDevice m_device;
     VkSwapchainKHR m_swapchain;
+
+    std::vector<VkImage> m_images;
 };
 
 #endif

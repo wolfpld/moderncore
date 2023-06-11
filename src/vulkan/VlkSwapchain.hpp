@@ -15,6 +15,8 @@ public:
     VlkSwapchain( VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, const VlkDevice& device );
     ~VlkSwapchain();
 
+    operator VkSwapchainKHR() const { return m_swapchain; }
+
 private:
     VlkSwapchainProperties m_properties;
 

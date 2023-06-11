@@ -13,6 +13,7 @@ public:
 
 private:
     VlkSwapchainProperties m_properties;
+    VkSurfaceFormatKHR m_format;
 };
 
 #endif

@@ -14,6 +14,7 @@ public:
 private:
     VlkSwapchainProperties m_properties;
     VkSurfaceFormatKHR m_format;
+    VkExtent2D m_extent;
 };
 
 #endif

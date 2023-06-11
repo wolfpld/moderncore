@@ -1,4 +1,6 @@
+#include <algorithm>
 #include <assert.h>
+#include <stdint.h>
 #include <vector>
 #include <vulkan/vk_enum_string_helper.h>
 
@@ -30,6 +32,14 @@ VlkSwapchain::VlkSwapchain( VkPhysicalDevice physicalDevice, VkSurfaceKHR surfac
     assert( m_format.format != VK_FORMAT_UNDEFINED );
 
     mclog( LogLevel::Info, "Using swapchain format: %s / %s", string_VkFormat( m_format.format ), string_VkColorSpaceKHR( m_format.colorSpace ) );
+
+    const auto caps = m_properties.GetCapabilities();
+    m_extent.width = caps.currentExtent.width == UINT32_MAX ?
+        std::clamp( 1650u, caps.minImageExtent.width, caps.maxImageExtent.width ) : caps.currentExtent.width;
+    m_extent.height = caps.currentExtent.height == UINT32_MAX ?
+        std::clamp( 1050u, caps.minImageExtent.height, caps.maxImageExtent.height ) : caps.currentExtent.height;
+
+    mclog( LogLevel::Info, "Using swapchain extent: %ux%u", m_extent.width, m_extent.height );
 }
 
 VlkSwapchain::~VlkSwapchain()

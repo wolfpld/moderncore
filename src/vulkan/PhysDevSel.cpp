@@ -1,5 +1,7 @@
 #include "PhysDevSel.hpp"
 #include "VlkPhysicalDevice.hpp"
+#include "VlkSwapchainFormats.hpp"
+#include "VlkSwapchainProperties.hpp"
 #include "../util/Logs.hpp"
 
 namespace PhysDevSel
@@ -20,6 +22,7 @@ VkPhysicalDevice PickBest( const std::vector<VkPhysicalDevice>& list, VkSurfaceK
             if( presentSurface != VK_NULL_HANDLE )
             {
                 if( !physDev.IsSwapchainCapable() ) continue;
+
                 const auto numQueues = physDev.GetQueueFamilyProperties().size();
                 bool support = false;
                 for( size_t i=0; i<numQueues; i++ )
@@ -31,6 +34,22 @@ VkPhysicalDevice PickBest( const std::vector<VkPhysicalDevice>& list, VkSurfaceK
                         support = true;
                         break;
                     }
+                }
+                if( !support ) continue;
+
+                VlkSwapchainProperties swapchainProps( dev, presentSurface );
+                support = false;
+                for( auto& format : swapchainProps.GetFormats() )
+                {
+                    for( auto& valid : SupportedSwapchainFormats )
+                    {
+                        if( format.format == valid.format && format.colorSpace == valid.colorSpace )
+                        {
+                            support = true;
+                            break;
+                        }
+                    }
+                    if( support ) break;
                 }
                 if( !support ) continue;
             }

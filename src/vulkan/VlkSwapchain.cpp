@@ -31,7 +31,7 @@ VlkSwapchain::VlkSwapchain( VkPhysicalDevice physicalDevice, VkSurfaceKHR surfac
     }
     assert( m_format.format != VK_FORMAT_UNDEFINED );
 
-    mclog( LogLevel::Info, "Using swapchain format: %s / %s", string_VkFormat( m_format.format ), string_VkColorSpaceKHR( m_format.colorSpace ) );
+    mclog( LogLevel::Info, "Swapchain format: %s / %s", string_VkFormat( m_format.format ), string_VkColorSpaceKHR( m_format.colorSpace ) );
 
     const auto caps = m_properties.GetCapabilities();
     m_extent.width = caps.currentExtent.width == UINT32_MAX ?
@@ -39,7 +39,12 @@ VlkSwapchain::VlkSwapchain( VkPhysicalDevice physicalDevice, VkSurfaceKHR surfac
     m_extent.height = caps.currentExtent.height == UINT32_MAX ?
         std::clamp( 1050u, caps.minImageExtent.height, caps.maxImageExtent.height ) : caps.currentExtent.height;
 
-    mclog( LogLevel::Info, "Using swapchain extent: %ux%u", m_extent.width, m_extent.height );
+    mclog( LogLevel::Info, "Swapchain extent: %ux%u", m_extent.width, m_extent.height );
+
+    m_imageCount = std::max( 2u, caps.minImageCount );
+    if( caps.maxImageCount > 0 && m_imageCount > caps.maxImageCount ) m_imageCount = caps.maxImageCount;
+
+    mclog( LogLevel::Info, "Swapchain image count: %u", m_imageCount );
 }
 
 VlkSwapchain::~VlkSwapchain()

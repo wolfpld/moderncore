@@ -38,7 +38,7 @@ Server::Server()
     PrintVulkanQueues( *m_vkDevice );
 #endif
 
-    VlkSwapchain swapchain( physDev, *m_backend );
+    VlkSwapchain swapchain( physDev, *m_backend, *m_vkDevice );
 
     m_dpy = std::make_unique<Display>();
     setenv( "WAYLAND_DISPLAY", m_dpy->Socket(), 1 );

@@ -1,17 +1,22 @@
 #include <algorithm>
+#include <array>
 #include <assert.h>
 #include <stdint.h>
 #include <vector>
 #include <vulkan/vk_enum_string_helper.h>
 
+#include "VlkDevice.hpp"
+#include "VlkError.hpp"
 #include "VlkInfo.hpp"
 #include "VlkSwapchain.hpp"
 #include "VlkSwapchainFormats.hpp"
 #include "../util/Logs.hpp"
 
-VlkSwapchain::VlkSwapchain( VkPhysicalDevice physicalDevice, VkSurfaceKHR surface )
+VlkSwapchain::VlkSwapchain( VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, const VlkDevice& device )
     : m_properties( physicalDevice, surface )
     , m_format { VK_FORMAT_UNDEFINED }
+    , m_presentMode( VK_PRESENT_MODE_FIFO_KHR )
+    , m_device( device )
 {
 #ifdef DEBUG
     PrintSwapchainProperties( m_properties );
@@ -45,8 +50,40 @@ VlkSwapchain::VlkSwapchain( VkPhysicalDevice physicalDevice, VkSurfaceKHR surfac
     if( caps.maxImageCount > 0 && m_imageCount > caps.maxImageCount ) m_imageCount = caps.maxImageCount;
 
     mclog( LogLevel::Info, "Swapchain image count: %u", m_imageCount );
+
+    const auto& graphicQueue = device.GetQueueInfo( VlkDevice::QueueType::Graphic );
+    const auto& presentQueue = device.GetQueueInfo( VlkDevice::QueueType::Present );
+    const std::array queues = { uint32_t( graphicQueue.idx ), uint32_t( presentQueue.idx ) };
+
+    VkSwapchainCreateInfoKHR createInfo = { VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR };
+    createInfo.surface = surface;
+    createInfo.minImageCount = m_imageCount;
+    createInfo.imageFormat = m_format.format;
+    createInfo.imageColorSpace = m_format.colorSpace;
+    createInfo.imageExtent = m_extent;
+    createInfo.imageArrayLayers = 1;
+    createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    createInfo.preTransform = caps.currentTransform;
+    createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+    createInfo.presentMode = m_presentMode;
+    createInfo.clipped = VK_TRUE;
+    createInfo.oldSwapchain = VK_NULL_HANDLE;
+
+    if( graphicQueue.sharePresent )
+    {
+        createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    }
+    else
+    {
+        createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+        createInfo.queueFamilyIndexCount = static_cast<uint32_t>( queues.size() );
+        createInfo.pQueueFamilyIndices = queues.data();
+    }
+
+    VkVerify( vkCreateSwapchainKHR( device, &createInfo, nullptr, &m_swapchain ) );
 }
 
 VlkSwapchain::~VlkSwapchain()
 {
+    vkDestroySwapchainKHR( m_device, m_swapchain, nullptr );
 }

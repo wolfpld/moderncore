@@ -3,6 +3,8 @@
 
 #include <vulkan/vulkan.h>
 
+#include "VlkSwapchainProperties.hpp"
+
 class VlkSwapchain
 {
 public:
@@ -10,7 +12,7 @@ public:
     ~VlkSwapchain();
 
 private:
-
+    VlkSwapchainProperties m_properties;
 };
 
 #endif

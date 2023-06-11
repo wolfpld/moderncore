@@ -28,6 +28,7 @@ files = [
     'src/vulkan/VlkPhysicalDevice.cpp',
     'src/vulkan/VlkProxy.cpp',
     'src/vulkan/VlkSwapchain.cpp',
+    'src/vulkan/VlkSwapchainProperties.cpp',
 ]
 
 compiler = meson.get_compiler('cpp')

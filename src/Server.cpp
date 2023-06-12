@@ -117,6 +117,7 @@ Server::Server()
 
 Server::~Server()
 {
+    vkDeviceWaitIdle( *m_vkDevice );
 }
 
 void Server::Run()

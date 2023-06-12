@@ -25,6 +25,7 @@ files = [
     'src/vulkan/VlkCommandBuffer.cpp',
     'src/vulkan/VlkCommandPool.cpp',
     'src/vulkan/VlkDevice.cpp',
+    'src/vulkan/VlkFence.cpp',
     'src/vulkan/VlkFramebuffer.cpp',
     'src/vulkan/VlkInfo.cpp',
     'src/vulkan/VlkInstance.cpp',

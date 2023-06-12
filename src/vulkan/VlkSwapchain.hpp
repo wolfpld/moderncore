@@ -15,6 +15,11 @@ public:
     VlkSwapchain( VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, const VlkDevice& device );
     ~VlkSwapchain();
 
+    [[nodiscard]] VkFormat GetFormat() const { return m_format.format; }
+    [[nodiscard]] uint32_t GetWidth() const { return m_extent.width; }
+    [[nodiscard]] uint32_t GetHeight() const { return m_extent.height; }
+    [[nodiscard]] const std::vector<VkImageView>& GetImageViews() const { return m_imageViews; }
+
     operator VkSwapchainKHR() const { return m_swapchain; }
 
 private:

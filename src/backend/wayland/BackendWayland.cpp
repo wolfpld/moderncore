@@ -27,7 +27,6 @@ BackendWayland::BackendWayland( VkInstance vkInstance )
     CheckPanic( m_seat, "Failed to create Wayland seat" );
 
     m_window = std::make_unique<WaylandWindow>( m_compositor, m_xdgWmBase, m_decorationManager, m_dpy, vkInstance, [this]{ Stop(); } );
-    m_window->Show();
 }
 
 BackendWayland::~BackendWayland()
@@ -42,8 +41,9 @@ BackendWayland::~BackendWayland()
     wl_display_disconnect( m_dpy );
 }
 
-void BackendWayland::Run()
+void BackendWayland::Run( const std::function<void()>& render )
 {
+    m_window->Show( render );
     while( m_keepRunning && wl_display_dispatch( m_dpy ) != -1 ) {}
 }
 

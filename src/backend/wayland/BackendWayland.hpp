@@ -21,7 +21,7 @@ public:
     explicit BackendWayland( VkInstance vkInstance );
     ~BackendWayland() override;
 
-    void Run() override;
+    void Run( const std::function<void()>& render ) override;
     void Stop() override;
 
     operator VkSurfaceKHR() const override;

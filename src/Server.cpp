@@ -121,7 +121,7 @@ Server::~Server()
 
 void Server::Run()
 {
-    m_backend->Run();
+    m_backend->Run( [this]{ Render(); } );
 }
 
 void Server::Render()

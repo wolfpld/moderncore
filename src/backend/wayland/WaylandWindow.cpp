@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_wayland.h>
 
@@ -32,6 +33,13 @@ WaylandWindow::WaylandWindow( wl_compositor* compositor, xdg_wm_base* xdgWmBase,
     xdg_toplevel_set_title( m_xdgToplevel, "ModernCore" );
     xdg_toplevel_set_app_id( m_xdgToplevel, "moderncore" );
 
+    static constexpr wl_callback_listener frameListener = {
+        .done = Method( WaylandWindow, FrameDone )
+    };
+
+    auto cb = wl_surface_frame( m_surface );
+    wl_callback_add_listener( cb, &frameListener, this );
+
     if( decorationManager ) zxdg_decoration_manager_v1_get_toplevel_decoration( decorationManager, m_xdgToplevel );
 
     VkWaylandSurfaceCreateInfoKHR createInfo = { VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR };
@@ -49,8 +57,11 @@ WaylandWindow::~WaylandWindow()
     wl_surface_destroy( m_surface );
 }
 
-void WaylandWindow::Show()
+void WaylandWindow::Show( const std::function<void()>& render )
 {
+    assert( !m_onRender );
+    m_onRender = render;
+    render();
     wl_surface_commit( m_surface );
 }
 
@@ -69,4 +80,18 @@ void WaylandWindow::XdgToplevelConfigure( struct xdg_toplevel* toplevel, int32_t
 void WaylandWindow::XdgToplevelClose( struct xdg_toplevel* toplevel )
 {
     m_onClose();
+}
+
+void WaylandWindow::FrameDone( struct wl_callback* cb, uint32_t time )
+{
+    wl_callback_destroy( cb );
+
+    static constexpr wl_callback_listener frameListener = {
+        .done = Method( WaylandWindow, FrameDone )
+    };
+
+    cb = wl_surface_frame( m_surface );
+    wl_callback_add_listener( cb, &frameListener, this );
+
+    m_onRender();
 }

@@ -27,6 +27,7 @@ files = [
     'src/vulkan/VlkInstance.cpp',
     'src/vulkan/VlkPhysicalDevice.cpp',
     'src/vulkan/VlkProxy.cpp',
+    'src/vulkan/VlkRenderPass.cpp',
     'src/vulkan/VlkSwapchain.cpp',
     'src/vulkan/VlkSwapchainProperties.cpp',
 ]

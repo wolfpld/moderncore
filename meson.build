@@ -23,6 +23,7 @@ files = [
     'src/vulkan/PhysDevSel.cpp',
     'src/vulkan/VlkAllocator.cpp',
     'src/vulkan/VlkDevice.cpp',
+    'src/vulkan/VlkFramebuffer.cpp',
     'src/vulkan/VlkInfo.cpp',
     'src/vulkan/VlkInstance.cpp',
     'src/vulkan/VlkPhysicalDevice.cpp',

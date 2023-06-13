@@ -141,7 +141,7 @@ void Server::Render()
     m_cmdBufs[frameIdx]->Reset();
     m_cmdBufs[frameIdx]->Begin( VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT );
 
-    VkClearValue clearColor = {{{ 0.0f, 0.0f, 0.0f, 1.0f }}};
+    VkClearValue clearColor = {{{ 0.25f, 0.25f, 0.25f, 1.0f }}};
 
     VkRenderPassBeginInfo renderPassInfo = { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
     renderPassInfo.renderPass = *m_renderPass;

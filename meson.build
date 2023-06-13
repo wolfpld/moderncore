@@ -22,6 +22,7 @@ files = [
     'src/util/Logs.cpp',
     'src/vulkan/PhysDevSel.cpp',
     'src/vulkan/VlkAllocator.cpp',
+    'src/vulkan/VlkBuffer.cpp',
     'src/vulkan/VlkCommandBuffer.cpp',
     'src/vulkan/VlkCommandPool.cpp',
     'src/vulkan/VlkDevice.cpp',

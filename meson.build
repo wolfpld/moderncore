@@ -32,6 +32,7 @@ files = [
     'src/vulkan/VlkInstance.cpp',
     'src/vulkan/VlkPhysicalDevice.cpp',
     'src/vulkan/VlkPipelineLayout.cpp',
+    'src/vulkan/VlkPipeline.cpp',
     'src/vulkan/VlkProxy.cpp',
     'src/vulkan/VlkRenderPass.cpp',
     'src/vulkan/VlkSemaphore.cpp',

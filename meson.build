@@ -18,6 +18,7 @@ files = [
     'src/plumbing/Display.cpp',
     'src/util/Bitmap.cpp',
     'src/util/Config.cpp',
+    'src/util/FileBuffer.cpp',
     'src/util/Home.cpp',
     'src/util/Logs.cpp',
     'src/vulkan/PhysDevSel.cpp',

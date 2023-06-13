@@ -28,6 +28,7 @@ WaylandPointer::~WaylandPointer()
 
 void WaylandPointer::PointerEnter( wl_pointer* pointer, uint32_t serial, wl_surface* surf, wl_fixed_t sx, wl_fixed_t sy )
 {
+    wl_pointer_set_cursor( pointer, serial, nullptr, 0, 0 );
 }
 
 void WaylandPointer::PointerLeave( wl_pointer* pointer, uint32_t serial, wl_surface* surf )

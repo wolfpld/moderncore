@@ -33,6 +33,9 @@ WaylandWindow::WaylandWindow( wl_compositor* compositor, xdg_wm_base* xdgWmBase,
     xdg_toplevel_set_title( m_xdgToplevel, "ModernCore" );
     xdg_toplevel_set_app_id( m_xdgToplevel, "moderncore" );
 
+    wl_surface_commit( m_surface );
+    wl_display_roundtrip( dpy );
+
     static constexpr wl_callback_listener frameListener = {
         .done = Method( WaylandWindow, FrameDone )
     };

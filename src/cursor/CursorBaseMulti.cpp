@@ -3,7 +3,7 @@
 
 #include "CursorBaseMulti.hpp"
 
-uint32_t CursorBaseMulti::FitSize( uint32_t size )
+uint32_t CursorBaseMulti::FitSize( uint32_t size ) const
 {
     assert( !m_cursor.empty() );
     assert( !m_sizes.empty() );

@@ -28,8 +28,8 @@ class CursorBase
 public:
     virtual ~CursorBase() = default;
 
-    [[nodiscard]] virtual uint32_t FitSize( uint32_t size ) = 0;
-    [[nodiscard]] const std::vector<CursorBitmap>* Get( uint32_t size, CursorType type );
+    [[nodiscard]] virtual uint32_t FitSize( uint32_t size ) const = 0;
+    [[nodiscard]] const std::vector<CursorBitmap>* Get( uint32_t size, CursorType type ) const;
     [[nodiscard]] bool Valid() const { return !m_cursor.empty(); }
 
 protected:

@@ -9,7 +9,7 @@
 class CursorBaseMulti : public CursorBase
 {
 public:
-    uint32_t FitSize( uint32_t size ) override;
+    [[nodiscard]] uint32_t FitSize( uint32_t size ) const override;
 
 protected:
     void CalcSizes();

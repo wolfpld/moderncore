@@ -2,7 +2,7 @@
 
 #include "CursorBase.hpp"
 
-const std::vector<CursorBitmap>* CursorBase::Get( uint32_t size, CursorType type )
+const std::vector<CursorBitmap>* CursorBase::Get( uint32_t size, CursorType type ) const
 {
     auto it = m_cursor.find( size );
     if( it == m_cursor.end() ) return nullptr;

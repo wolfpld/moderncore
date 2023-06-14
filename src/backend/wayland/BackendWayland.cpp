@@ -52,6 +52,11 @@ void BackendWayland::Stop()
     m_keepRunning = false;
 }
 
+void BackendWayland::RenderCursor()
+{
+    m_window->RenderCursor();
+}
+
 BackendWayland::operator VkSurfaceKHR() const
 {
     return *m_window;
@@ -75,7 +80,7 @@ void BackendWayland::RegistryGlobal( wl_registry* reg, uint32_t name, const char
     else if( strcmp( interface, wl_seat_interface.name ) == 0 )
     {
         auto seat = RegistryBind( wl_seat, 5, 9 );
-        m_seat = std::make_unique<WaylandSeat>( seat );
+        m_seat = std::make_unique<WaylandSeat>( seat, *this );
     }
     else if( strcmp( interface, wl_output_interface.name ) == 0 )
     {
@@ -122,4 +127,9 @@ void BackendWayland::OnOutput()
         if( outputScale > scale ) scale = outputScale;
     }
     m_scale = scale;
+}
+
+void BackendWayland::PointerMotion( double x, double y )
+{
+    m_window->PointerMotion( x, y );
 }

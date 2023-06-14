@@ -24,6 +24,10 @@ public:
     void Run( const std::function<void()>& render ) override;
     void Stop() override;
 
+    void RenderCursor() override;
+
+    void PointerMotion( double x, double y );
+
     operator VkSurfaceKHR() const override;
 
 private:

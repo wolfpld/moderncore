@@ -152,6 +152,9 @@ void Server::Render()
     renderPassInfo.pClearValues = &clearColor;
 
     vkCmdBeginRenderPass( *m_cmdBufs[frameIdx], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
+
+    m_backend->RenderCursor();
+
     vkCmdEndRenderPass( *m_cmdBufs[frameIdx] );
     m_cmdBufs[frameIdx]->End();
 

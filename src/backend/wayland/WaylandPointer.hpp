@@ -3,15 +3,15 @@
 
 #include <wayland-client.h>
 
+class WaylandSeat;
+
 class WaylandPointer
 {
 public:
-    explicit WaylandPointer( wl_pointer* pointer );
+    explicit WaylandPointer( wl_pointer* pointer, WaylandSeat& seat );
     ~WaylandPointer();
 
 private:
-    wl_pointer* m_pointer;
-
     void PointerEnter( wl_pointer* pointer, uint32_t serial, wl_surface* surf, wl_fixed_t sx, wl_fixed_t sy );
     void PointerLeave( wl_pointer* pointer, uint32_t serial, wl_surface* surf );
     void PointerMotion( wl_pointer* pointer, uint32_t time, wl_fixed_t sx, wl_fixed_t sy );
@@ -23,6 +23,9 @@ private:
     void PointerAxisDiscrete( wl_pointer* pointer, uint32_t axis, int32_t discrete );
     void PointerAxisValue120( wl_pointer* pointer, uint32_t axis, int32_t value120 );
     void PointerAxisRelativeDirection( wl_pointer* pointer, uint32_t axis, uint32_t direction );
+
+    wl_pointer* m_pointer;
+    WaylandSeat& m_seat;
 };
 
 #endif

@@ -4,6 +4,7 @@
 
 #include "WaylandMethod.hpp"
 #include "WaylandWindow.hpp"
+#include "../../render/SoftwareCursor.hpp"
 #include "../../util/Panic.hpp"
 #include "../../vulkan/VlkError.hpp"
 
@@ -11,6 +12,7 @@ WaylandWindow::WaylandWindow( wl_compositor* compositor, xdg_wm_base* xdgWmBase,
     : m_surface( wl_compositor_create_surface( compositor ) )
     , m_onClose( std::move( onClose ) )
     , m_vkInstance( vkInstance )
+    , m_cursor( std::make_unique<SoftwareCursor>() )
 {
     CheckPanic( m_surface, "Failed to create Wayland surface" );
 
@@ -66,6 +68,16 @@ void WaylandWindow::Show( const std::function<void()>& render )
     m_onRender = render;
     render();
     wl_surface_commit( m_surface );
+}
+
+void WaylandWindow::RenderCursor()
+{
+    m_cursor->Render();
+}
+
+void WaylandWindow::PointerMotion( double x, double y )
+{
+    m_cursor->SetPosition( x, y );
 }
 
 void WaylandWindow::XdgSurfaceConfigure( struct xdg_surface *xdg_surface, uint32_t serial )

@@ -1,10 +1,12 @@
+#include "BackendWayland.hpp"
 #include "WaylandKeyboard.hpp"
 #include "WaylandMethod.hpp"
 #include "WaylandPointer.hpp"
 #include "WaylandSeat.hpp"
 
-WaylandSeat::WaylandSeat( wl_seat* seat )
+WaylandSeat::WaylandSeat( wl_seat* seat, BackendWayland& backend )
     : m_seat( seat )
+    , m_backend( backend )
 {
     static constexpr wl_seat_listener seatListener = {
         .capabilities = Method( WaylandSeat, SeatCapabilities ),
@@ -28,7 +30,7 @@ void WaylandSeat::SeatCapabilities( wl_seat* seat, uint32_t caps )
 
     if( hasPointer && !m_pointer )
     {
-        m_pointer = std::make_unique<WaylandPointer>( wl_seat_get_pointer( seat ) );
+        m_pointer = std::make_unique<WaylandPointer>( wl_seat_get_pointer( seat ), *this );
     }
     else if( !hasPointer && m_pointer )
     {
@@ -47,4 +49,9 @@ void WaylandSeat::SeatCapabilities( wl_seat* seat, uint32_t caps )
 
 void WaylandSeat::SeatName( wl_seat* seat, const char* name )
 {
+}
+
+void WaylandSeat::PointerMotion( double x, double y )
+{
+    m_backend.PointerMotion( x, y );
 }

@@ -2,11 +2,14 @@
 #define __WAYLANDWINDOW_HPP__
 
 #include <functional>
+#include <memory>
 #include <wayland-client.h>
 #include <vulkan/vulkan.h>
 
 #include "xdg-decoration-unstable-v1-client-protocol.h"
 #include "xdg-shell-client-protocol.h"
+
+class SoftwareCursor;
 
 class WaylandWindow
 {
@@ -15,6 +18,9 @@ public:
     ~WaylandWindow();
 
     void Show( const std::function<void()>& render );
+    void RenderCursor();
+
+    void PointerMotion( double x, double y );
 
     operator VkSurfaceKHR() const { return m_vkSurface; }
 
@@ -35,6 +41,8 @@ private:
     std::function<void()> m_onRender;
 
     VkInstance m_vkInstance;
+
+    std::unique_ptr<SoftwareCursor> m_cursor;
 };
 
 #endif

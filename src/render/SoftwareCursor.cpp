@@ -1,5 +1,11 @@
+#include <string.h>
+
 #include "SoftwareCursor.hpp"
+#include "../cursor/CursorBase.hpp"
+#include "../cursor/CursorTheme.hpp"
+#include "../util/Bitmap.hpp"
 #include "../util/FileBuffer.hpp"
+#include "../vulkan/VlkBuffer.hpp"
 #include "../vulkan/VlkDevice.hpp"
 #include "../vulkan/VlkPipeline.hpp"
 #include "../vulkan/VlkPipelineLayout.hpp"
@@ -18,7 +24,21 @@ SoftwareCursor::SoftwareCursor( const VlkDevice& device, VkRenderPass renderPass
 
     m_shader = std::make_unique<VlkShader>( stages, 2 );
 
+    VkVertexInputBindingDescription bindingDescription = {};
+    bindingDescription.binding = 0;
+    bindingDescription.stride = sizeof( Vertex );
+    bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+    VkVertexInputAttributeDescription attributeDescriptions[] = {
+        { 0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof( Vertex, pos ) },
+        { 1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof( Vertex, uv ) }
+    };
+
     VkPipelineVertexInputStateCreateInfo vertexInputInfo = { VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO };
+    vertexInputInfo.vertexBindingDescriptionCount = 1;
+    vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+    vertexInputInfo.vertexAttributeDescriptionCount = 2;
+    vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions;
 
     VkPipelineInputAssemblyStateCreateInfo inputAssembly = { VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO };
     inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -68,6 +88,38 @@ SoftwareCursor::SoftwareCursor( const VlkDevice& device, VkRenderPass renderPass
     pipelineInfo.renderPass = renderPass;
 
     m_pipeline = std::make_unique<VlkPipeline>( device, pipelineInfo );
+
+    VkBufferCreateInfo bufferInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+    bufferInfo.size = sizeof( Vertex ) * 4;
+    bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    m_vertexBuffer = std::make_unique<VlkBuffer>( device, bufferInfo, VlkBuffer::WillWrite );
+
+    bufferInfo.size = sizeof( uint16_t ) * 6;
+    bufferInfo.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+
+    m_indexBuffer = std::make_unique<VlkBuffer>( device, bufferInfo, VlkBuffer::WillWrite );
+
+    CursorTheme theme;
+    auto& cursor = theme.Cursor();
+    const auto size = cursor.FitSize( 24 );
+    const auto& bitmaps = *cursor.Get( size, CursorType::Default );
+    auto bmp = bitmaps[0];
+
+    Vertex vertices[] = {
+        { { 0, 0 }, { 0, 0 } },
+        { { 0, bmp.bitmap->Height() }, { 0, 1 } },
+        { { bmp.bitmap->Width(), 0 }, { 1, 0 } },
+        { { bmp.bitmap->Width(), bmp.bitmap->Height() }, { 1, 1 } }
+    };
+
+    memcpy( m_vertexBuffer->Ptr(), vertices, sizeof( vertices ) );
+    m_vertexBuffer->Flush( 0, sizeof( vertices ) );
+
+    uint16_t indices[] = { 0, 1, 2, 2, 1, 3 };
+    memcpy( m_indexBuffer->Ptr(), indices, sizeof( indices ) );
+    m_indexBuffer->Flush( 0, sizeof( indices ) );
 }
 
 SoftwareCursor::~SoftwareCursor()
@@ -82,6 +134,21 @@ void SoftwareCursor::SetPosition( float x, float y )
 
 void SoftwareCursor::Render( VkCommandBuffer cmdBuf )
 {
+    Vertex vertices[] = {
+        { { m_x, m_y }, { 0, 0 } },
+        { { m_x, m_y + 24 }, { 0, 1 } },
+        { { m_x + 24, m_y }, { 1, 0 } },
+        { { m_x + 24, m_y + 24 }, { 1, 1 } }
+    };
+
+    memcpy( m_vertexBuffer->Ptr(), vertices, sizeof( vertices ) );
+    m_vertexBuffer->Flush( 0, sizeof( vertices ) );
+
+    std::array<VkBuffer, 1> vtx = { *m_vertexBuffer };
+    std::array<VkDeviceSize, 1> offsets = { 0 };
+
     vkCmdBindPipeline( cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, *m_pipeline );
-    vkCmdDraw( cmdBuf, 3, 1, 0, 0 );
+    vkCmdBindVertexBuffers( cmdBuf, 0, 1, vtx.data(), offsets.data() );
+    vkCmdBindIndexBuffer( cmdBuf, *m_indexBuffer, 0, VK_INDEX_TYPE_UINT16 );
+    vkCmdDrawIndexed( cmdBuf, 6, 1, 0, 0, 0 );
 }

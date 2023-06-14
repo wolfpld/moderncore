@@ -74,7 +74,7 @@ static bool HasValidationLayers()
     }
 
     mclog( loglevel, "%s %s", t, pCallbackData->pMessage );
-    return VK_TRUE;
+    return VK_FALSE;
 }
 
 VlkInstance::VlkInstance( VlkInstanceType instanceType )

@@ -43,7 +43,13 @@ files = [
     'src/vulkan/VlkSwapchainProperties.cpp',
 ]
 
+shaders = [
+    'shader/SoftwareCursor.frag',
+    'shader/SoftwareCursor.vert',
+]
+
 compiler = meson.get_compiler('cpp')
+glslc = find_program('glslc')
 
 vulkan = dependency('vulkan')
 wayland_server = dependency('wayland-server')
@@ -86,6 +92,20 @@ foreach name, path : protocols
     files += client_header
 endforeach
 
+foreach shader : shaders
+    spirv = custom_target(
+        shader.underscorify(),
+        input: shader,
+        output: '@PLAINNAME@.spv',
+        command: [
+            glslc,
+            '-O',
+            '-o', '@OUTPUT@',
+            '@INPUT@',
+        ]
+    )
+    files += spirv
+endforeach
 
 if get_option('buildtype').startswith('debug')
     add_project_arguments('-DDEBUG', language: 'cpp')

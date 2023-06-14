@@ -74,9 +74,9 @@ void WaylandWindow::Show( const std::function<void()>& render )
     wl_surface_commit( m_surface );
 }
 
-void WaylandWindow::RenderCursor()
+void WaylandWindow::RenderCursor( VkCommandBuffer cmdBuf )
 {
-    m_cursor->Render();
+    m_cursor->Render( cmdBuf );
 }
 
 void WaylandWindow::PointerMotion( double x, double y )

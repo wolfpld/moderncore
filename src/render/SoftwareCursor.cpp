@@ -80,6 +80,8 @@ void SoftwareCursor::SetPosition( float x, float y )
     m_y = y;
 }
 
-void SoftwareCursor::Render()
+void SoftwareCursor::Render( VkCommandBuffer cmdBuf )
 {
+    vkCmdBindPipeline( cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, *m_pipeline );
+    vkCmdDraw( cmdBuf, 3, 1, 0, 0 );
 }

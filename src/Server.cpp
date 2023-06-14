@@ -155,7 +155,7 @@ void Server::Render()
 
     vkCmdBeginRenderPass( *m_cmdBufs[frameIdx], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
 
-    m_backend->RenderCursor();
+    m_backend->RenderCursor( *m_cmdBufs[frameIdx] );
 
     vkCmdEndRenderPass( *m_cmdBufs[frameIdx] );
     m_cmdBufs[frameIdx]->End();

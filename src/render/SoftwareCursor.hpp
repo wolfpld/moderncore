@@ -16,7 +16,7 @@ public:
     ~SoftwareCursor();
 
     void SetPosition( float x, float y );
-    void Render();
+    void Render( VkCommandBuffer cmdBuf );
 
 private:
     double m_x = 0;

@@ -21,7 +21,7 @@ public:
     void VulkanInit( const VlkDevice& device, VkRenderPass renderPass, uint32_t width, uint32_t height );
 
     void Show( const std::function<void()>& render );
-    void RenderCursor();
+    void RenderCursor( VkCommandBuffer cmdBuf );
 
     void PointerMotion( double x, double y );
 

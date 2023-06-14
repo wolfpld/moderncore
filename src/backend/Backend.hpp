@@ -17,7 +17,7 @@ public:
     virtual void Run( const std::function<void()>& render ) = 0;
     virtual void Stop() = 0;
 
-    virtual void RenderCursor() = 0;
+    virtual void RenderCursor( VkCommandBuffer cmdBuf ) = 0;
 
     virtual operator VkSurfaceKHR() const = 0;
 

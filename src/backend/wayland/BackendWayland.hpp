@@ -26,7 +26,7 @@ public:
     void Run( const std::function<void()>& render ) override;
     void Stop() override;
 
-    void RenderCursor() override;
+    void RenderCursor( VkCommandBuffer cmdBuf ) override;
 
     void PointerMotion( double x, double y );
 

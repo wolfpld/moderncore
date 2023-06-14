@@ -58,9 +58,9 @@ void BackendWayland::Stop()
     m_keepRunning = false;
 }
 
-void BackendWayland::RenderCursor()
+void BackendWayland::RenderCursor( VkCommandBuffer cmdBuf )
 {
-    m_window->RenderCursor();
+    m_window->RenderCursor( cmdBuf );
 }
 
 BackendWayland::operator VkSurfaceKHR() const

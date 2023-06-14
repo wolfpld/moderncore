@@ -16,6 +16,7 @@ files = [
     'src/backend/wayland/WaylandSeat.cpp',
     'src/backend/wayland/WaylandWindow.cpp',
     'src/plumbing/Display.cpp',
+    'src/render/SoftwareCursor.cpp',
     'src/util/Bitmap.cpp',
     'src/util/Config.cpp',
     'src/util/FileBuffer.cpp',

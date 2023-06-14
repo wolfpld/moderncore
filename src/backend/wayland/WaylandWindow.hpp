@@ -10,12 +10,15 @@
 #include "xdg-shell-client-protocol.h"
 
 class SoftwareCursor;
+class VlkDevice;
 
 class WaylandWindow
 {
 public:
     WaylandWindow( wl_compositor* compositor, xdg_wm_base* xdgWmBase, zxdg_decoration_manager_v1* decorationManager, wl_display* dpy, VkInstance vkInstance, std::function<void()> onClose );
     ~WaylandWindow();
+
+    void VulkanInit( const VlkDevice& device, VkRenderPass renderPass, uint32_t width, uint32_t height );
 
     void Show( const std::function<void()>& render );
     void RenderCursor();

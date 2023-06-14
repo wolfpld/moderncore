@@ -4,10 +4,15 @@
 #include <functional>
 #include <vulkan/vulkan.h>
 
+class VlkDevice;
+class VlkSwapchain;
+
 class Backend
 {
 public:
     virtual ~Backend() = default;
+
+    virtual void VulkanInit( const VlkDevice& device, VkRenderPass renderPass, const VlkSwapchain& swapchain ) = 0;
 
     virtual void Run( const std::function<void()>& render ) = 0;
     virtual void Stop() = 0;

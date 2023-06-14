@@ -21,6 +21,8 @@ public:
     explicit BackendWayland( VkInstance vkInstance );
     ~BackendWayland() override;
 
+    void VulkanInit( const VlkDevice& device, VkRenderPass renderPass, const VlkSwapchain& swapchain ) override;
+
     void Run( const std::function<void()>& render ) override;
     void Stop() override;
 

@@ -113,6 +113,8 @@ Server::Server()
 
     m_dpy = std::make_unique<Display>();
     setenv( "WAYLAND_DISPLAY", m_dpy->Socket(), 1 );
+
+    m_backend->VulkanInit( *m_vkDevice, *m_renderPass, *m_swapchain );
 }
 
 Server::~Server()

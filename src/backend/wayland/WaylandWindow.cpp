@@ -12,7 +12,6 @@ WaylandWindow::WaylandWindow( wl_compositor* compositor, xdg_wm_base* xdgWmBase,
     : m_surface( wl_compositor_create_surface( compositor ) )
     , m_onClose( std::move( onClose ) )
     , m_vkInstance( vkInstance )
-    , m_cursor( std::make_unique<SoftwareCursor>() )
 {
     CheckPanic( m_surface, "Failed to create Wayland surface" );
 
@@ -60,6 +59,11 @@ WaylandWindow::~WaylandWindow()
     xdg_toplevel_destroy( m_xdgToplevel );
     xdg_surface_destroy( m_xdgSurface );
     wl_surface_destroy( m_surface );
+}
+
+void WaylandWindow::VulkanInit( const VlkDevice& device, VkRenderPass renderPass, uint32_t width, uint32_t height )
+{
+    m_cursor = std::make_unique<SoftwareCursor>( device, renderPass, width, height );
 }
 
 void WaylandWindow::Show( const std::function<void()>& render )

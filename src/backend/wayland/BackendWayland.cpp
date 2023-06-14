@@ -8,6 +8,7 @@
 #include "WaylandSeat.hpp"
 #include "WaylandWindow.hpp"
 #include "../../util/Panic.hpp"
+#include "../../vulkan/VlkSwapchain.hpp"
 
 BackendWayland::BackendWayland( VkInstance vkInstance )
     : m_dpy( wl_display_connect( nullptr ) )
@@ -39,6 +40,11 @@ BackendWayland::~BackendWayland()
     xdg_wm_base_destroy( m_xdgWmBase );
     wl_compositor_destroy( m_compositor );
     wl_display_disconnect( m_dpy );
+}
+
+void BackendWayland::VulkanInit( const VlkDevice& device, VkRenderPass renderPass, const VlkSwapchain& swapchain )
+{
+    m_window->VulkanInit( device, renderPass, swapchain.GetWidth(), swapchain.GetHeight() );
 }
 
 void BackendWayland::Run( const std::function<void()>& render )

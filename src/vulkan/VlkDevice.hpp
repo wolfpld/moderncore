@@ -11,6 +11,7 @@
 
 class VlkCommandBuffer;
 class VlkCommandPool;
+class VlkDescriptorPool;
 
 class VlkDevice
 {
@@ -53,6 +54,8 @@ private:
     VmaAllocator m_allocator;
 
     std::array<std::shared_ptr<VlkCommandPool>, 4> m_commandPool;
+
+    std::unique_ptr<VlkDescriptorPool> m_descriptorPool;
 };
 
 #endif

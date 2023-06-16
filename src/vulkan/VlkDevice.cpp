@@ -5,6 +5,7 @@
 
 #include "VlkCommandBuffer.hpp"
 #include "VlkCommandPool.hpp"
+#include "VlkDescriptorPool.hpp"
 #include "VlkDevice.hpp"
 #include "VlkError.hpp"
 #include "VlkPhysicalDevice.hpp"
@@ -311,10 +312,33 @@ VlkDevice::VlkDevice( VkInstance instance, VkPhysicalDevice physDev, int flags, 
         assert( !m_commandPool[(int)QueueType::Transfer] );
         if( !m_commandPool[(int)QueueType::Transfer] ) m_commandPool[(int)QueueType::Transfer] = std::make_shared<VlkCommandPool>( *this, m_queueInfo[(int)QueueType::Transfer].idx, QueueType::Transfer );
     }
+
+    constexpr VkDescriptorPoolSize poolSizes[] = {
+        { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
+        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+        { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
+        { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+    };
+
+    VkDescriptorPoolCreateInfo descriptorPoolInfo = { VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO };
+    descriptorPoolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+    descriptorPoolInfo.poolSizeCount = (uint32_t)std::size( poolSizes );
+    descriptorPoolInfo.pPoolSizes = poolSizes;
+    descriptorPoolInfo.maxSets = 1000 * (uint32_t)std::size( poolSizes );
+
+    m_descriptorPool = std::make_unique<VlkDescriptorPool>( m_device, descriptorPoolInfo );
 }
 
 VlkDevice::~VlkDevice()
 {
+    m_descriptorPool.reset();
     for( auto& pool : m_commandPool ) pool.reset();
     vmaDestroyAllocator( m_allocator );
     vkDestroyDevice( m_device, nullptr );

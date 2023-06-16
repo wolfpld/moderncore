@@ -7,6 +7,8 @@
 #include "../util/Bitmap.hpp"
 #include "../util/FileBuffer.hpp"
 #include "../vulkan/VlkBuffer.hpp"
+#include "../vulkan/VlkDescriptorSet.hpp"
+#include "../vulkan/VlkDescriptorSetLayout.hpp"
 #include "../vulkan/VlkDevice.hpp"
 #include "../vulkan/VlkImage.hpp"
 #include "../vulkan/VlkImageView.hpp"
@@ -27,6 +29,19 @@ SoftwareCursor::SoftwareCursor( VlkDevice& device, VkRenderPass renderPass, uint
     };
 
     m_shader = std::make_unique<VlkShader>( stages, 2 );
+
+    VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
+    samplerLayoutBinding.binding = 0;
+    samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    samplerLayoutBinding.descriptorCount = 1;
+    samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+    VkDescriptorSetLayoutCreateInfo descriptorSetLayoutInfo = { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
+    descriptorSetLayoutInfo.bindingCount = 1;
+    descriptorSetLayoutInfo.pBindings = &samplerLayoutBinding;
+
+    m_descriptorSetLayout = std::make_unique<VlkDescriptorSetLayout>( device, descriptorSetLayoutInfo );
+    m_descriptorSet = std::make_unique<VlkDescriptorSet>( *m_descriptorSetLayout );
 
     VkVertexInputBindingDescription bindingDescription = {};
     bindingDescription.binding = 0;
@@ -76,7 +91,12 @@ SoftwareCursor::SoftwareCursor( VlkDevice& device, VkRenderPass renderPass, uint
     colorBlending.attachmentCount = 1;
     colorBlending.pAttachments = &colorBlendAttachment;
 
+    const std::array<VkDescriptorSetLayout, 1> layouts = { *m_descriptorSetLayout };
+
     VkPipelineLayoutCreateInfo pipelineLayoutInfo = { VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO };
+    pipelineLayoutInfo.setLayoutCount = layouts.size();
+    pipelineLayoutInfo.pSetLayouts = layouts.data();
+
     m_pipelineLayout = std::make_unique<VlkPipelineLayout>( device, pipelineLayoutInfo );
 
     VkGraphicsPipelineCreateInfo pipelineInfo = { VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO };
@@ -141,6 +161,21 @@ SoftwareCursor::SoftwareCursor( VlkDevice& device, VkRenderPass renderPass, uint
     uint16_t indices[] = { 0, 1, 2, 2, 1, 3 };
     memcpy( m_indexBuffer->Ptr(), indices, sizeof( indices ) );
     m_indexBuffer->Flush( 0, sizeof( indices ) );
+
+    VkDescriptorImageInfo imageInfo = {};
+    imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    imageInfo.imageView = *m_image;
+    imageInfo.sampler = *m_sampler;
+
+    VkWriteDescriptorSet descriptorWrite = { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };
+    descriptorWrite.dstSet = *m_descriptorSet;
+    descriptorWrite.dstBinding = 0;
+    descriptorWrite.dstArrayElement = 0;
+    descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    descriptorWrite.descriptorCount = 1;
+    descriptorWrite.pImageInfo = &imageInfo;
+
+    vkUpdateDescriptorSets( device, 1, &descriptorWrite, 0, nullptr );
 }
 
 SoftwareCursor::~SoftwareCursor()

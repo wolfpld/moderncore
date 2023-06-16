@@ -7,6 +7,8 @@
 
 class Texture;
 class VlkBuffer;
+class VlkDescriptorSet;
+class VlkDescriptorSetLayout;
 class VlkDevice;
 class VlkPipeline;
 class VlkPipelineLayout;
@@ -35,6 +37,8 @@ private:
     uint32_t m_w, m_h;
 
     std::unique_ptr<VlkShader> m_shader;
+    std::unique_ptr<VlkDescriptorSetLayout> m_descriptorSetLayout;
+    std::unique_ptr<VlkDescriptorSet> m_descriptorSet;
     std::unique_ptr<VlkPipelineLayout> m_pipelineLayout;
     std::unique_ptr<VlkPipeline> m_pipeline;
     std::unique_ptr<VlkBuffer> m_vertexBuffer;

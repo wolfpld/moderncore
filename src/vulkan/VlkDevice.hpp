@@ -8,6 +8,7 @@
 #include "VlkQueueType.hpp"
 #include "../../contrib/vk_mem_alloc.h"
 
+class VlkCommandBuffer;
 class VlkCommandPool;
 
 class VlkDevice
@@ -33,7 +34,7 @@ public:
     VlkDevice( VkInstance instance, VkPhysicalDevice physDev, int flags, VkSurfaceKHR presentSurface = VK_NULL_HANDLE );
     ~VlkDevice();
 
-    void Submit( QueueType type, VkCommandBuffer cmdbuf, VkFence fence );
+    void Submit( const VlkCommandBuffer& cmdbuf, VkFence fence );
 
     [[nodiscard]] const QueueInfo& GetQueueInfo( QueueType type ) const { return m_queueInfo[(int)type]; }
     [[nodiscard]] VkQueue GetQueue( QueueType type ) const { return m_queue[(int)type]; }

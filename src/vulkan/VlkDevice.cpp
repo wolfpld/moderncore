@@ -3,6 +3,7 @@
 #include <limits>
 #include <vector>
 
+#include "VlkCommandBuffer.hpp"
 #include "VlkCommandPool.hpp"
 #include "VlkDevice.hpp"
 #include "VlkError.hpp"
@@ -295,20 +296,20 @@ VlkDevice::VlkDevice( VkInstance instance, VkPhysicalDevice physDev, int flags, 
 
     if( m_queueInfo[(int)QueueType::Graphic].idx >= 0 )
     {
-        m_commandPool[(int)QueueType::Graphic] = std::make_shared<VlkCommandPool>( *this, m_queueInfo[(int)QueueType::Graphic].idx );
+        m_commandPool[(int)QueueType::Graphic] = std::make_shared<VlkCommandPool>( *this, m_queueInfo[(int)QueueType::Graphic].idx, QueueType::Graphic );
         if( m_queueInfo[(int)QueueType::Graphic].shareCompute ) m_commandPool[(int)QueueType::Compute] = m_commandPool[(int)QueueType::Graphic];
         if( m_queueInfo[(int)QueueType::Graphic].shareTransfer ) m_commandPool[(int)QueueType::Transfer] = m_commandPool[(int)QueueType::Graphic];
     }
     if( m_queueInfo[(int)QueueType::Compute].idx >= 0 )
     {
         assert( !m_commandPool[(int)QueueType::Compute] );
-        m_commandPool[(int)QueueType::Compute] = std::make_shared<VlkCommandPool>( *this, m_queueInfo[(int)QueueType::Compute].idx );
+        m_commandPool[(int)QueueType::Compute] = std::make_shared<VlkCommandPool>( *this, m_queueInfo[(int)QueueType::Compute].idx, QueueType::Compute );
         if( m_queueInfo[(int)QueueType::Compute].shareTransfer ) m_commandPool[(int)QueueType::Transfer] = m_commandPool[(int)QueueType::Compute];
     }
     if( m_queueInfo[(int)QueueType::Transfer].idx >= 0 )
     {
         assert( !m_commandPool[(int)QueueType::Transfer] );
-        if( !m_commandPool[(int)QueueType::Transfer] ) m_commandPool[(int)QueueType::Transfer] = std::make_shared<VlkCommandPool>( *this, m_queueInfo[(int)QueueType::Transfer].idx );
+        if( !m_commandPool[(int)QueueType::Transfer] ) m_commandPool[(int)QueueType::Transfer] = std::make_shared<VlkCommandPool>( *this, m_queueInfo[(int)QueueType::Transfer].idx, QueueType::Transfer );
     }
 }
 
@@ -319,11 +320,13 @@ VlkDevice::~VlkDevice()
     vkDestroyDevice( m_device, nullptr );
 }
 
-void VlkDevice::Submit( QueueType type, VkCommandBuffer cmdbuf, VkFence fence )
+void VlkDevice::Submit( const VlkCommandBuffer& cmdbuf, VkFence fence )
 {
-    VkSubmitInfo submitInfo = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
-    submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &cmdbuf;
+    const std::array<VkCommandBuffer, 1> cmdbufs = { cmdbuf };
 
-    VkVerify( vkQueueSubmit( GetQueue( type ), 1, &submitInfo, fence ) );
+    VkSubmitInfo submitInfo = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
+    submitInfo.commandBufferCount = (uint32_t)cmdbufs.size();
+    submitInfo.pCommandBuffers = cmdbufs.data();
+
+    VkVerify( vkQueueSubmit( GetQueue( cmdbuf ), 1, &submitInfo, fence ) );
 }

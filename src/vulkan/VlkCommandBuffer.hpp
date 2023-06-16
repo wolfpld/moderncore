@@ -3,7 +3,7 @@
 
 #include <vulkan/vulkan.h>
 
-class VlkCommandPool;
+#include "VlkCommandPool.hpp"
 
 class VlkCommandBuffer
 {
@@ -17,10 +17,11 @@ public:
     void Reset( VkCommandBufferResetFlags flags = 0 );
 
     operator VkCommandBuffer() const { return m_commandBuffer; }
+    operator QueueType() const { return m_commandPool; }
 
 private:
     VkCommandBuffer m_commandBuffer;
-    VkCommandPool m_commandPool;
+    const VlkCommandPool& m_commandPool;
     VkDevice m_device;
 };
 

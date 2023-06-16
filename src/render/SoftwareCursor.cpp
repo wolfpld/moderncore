@@ -110,6 +110,8 @@ SoftwareCursor::SoftwareCursor( VlkDevice& device, VkRenderPass renderPass, uint
     const auto size = cursor.FitSize( 24 );
     const auto& bitmaps = *cursor.Get( size, CursorType::Default );
     auto bmp = bitmaps[0];
+    m_w = bmp.bitmap->Width();
+    m_h = bmp.bitmap->Height();
 
     VkSamplerCreateInfo samplerInfo = { VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
     samplerInfo.magFilter = VK_FILTER_NEAREST;
@@ -123,14 +125,14 @@ SoftwareCursor::SoftwareCursor( VlkDevice& device, VkRenderPass renderPass, uint
     m_image = std::make_unique<Texture>( device, *bmp.bitmap );
 
     auto stagingBuffer = std::make_unique<VlkBuffer>( device, bufferInfo, VlkBuffer::WillWrite | VlkBuffer::PreferHost );
-    memcpy( stagingBuffer->Ptr(), bmp.bitmap->Data(), bmp.bitmap->Width() * bmp.bitmap->Height() * 4 );
-    stagingBuffer->Flush( 0, bmp.bitmap->Width() * bmp.bitmap->Height() * 4 );
+    memcpy( stagingBuffer->Ptr(), bmp.bitmap->Data(), m_w * m_h * 4 );
+    stagingBuffer->Flush( 0, m_w * m_h * 4 );
 
     Vertex vertices[] = {
         { { 0, 0 }, { 0, 0 } },
-        { { 0, bmp.bitmap->Height() }, { 0, 1 } },
-        { { bmp.bitmap->Width(), 0 }, { 1, 0 } },
-        { { bmp.bitmap->Width(), bmp.bitmap->Height() }, { 1, 1 } }
+        { { 0, m_h }, { 0, 1 } },
+        { { m_w, 0 }, { 1, 0 } },
+        { { m_w, m_h }, { 1, 1 } }
     };
 
     memcpy( m_vertexBuffer->Ptr(), vertices, sizeof( vertices ) );
@@ -155,9 +157,9 @@ void SoftwareCursor::Render( VkCommandBuffer cmdBuf )
 {
     Vertex vertices[] = {
         { { m_x, m_y }, { 0, 0 } },
-        { { m_x, m_y + 24 }, { 0, 1 } },
-        { { m_x + 24, m_y }, { 1, 0 } },
-        { { m_x + 24, m_y + 24 }, { 1, 1 } }
+        { { m_x, m_y + m_h }, { 0, 1 } },
+        { { m_x + m_w, m_y }, { 1, 0 } },
+        { { m_x + m_w, m_y + m_h }, { 1, 1 } }
     };
 
     memcpy( m_vertexBuffer->Ptr(), vertices, sizeof( vertices ) );

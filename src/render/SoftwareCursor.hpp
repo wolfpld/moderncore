@@ -32,6 +32,8 @@ private:
     double m_x = 0;
     double m_y = 0;
 
+    uint32_t m_w, m_h;
+
     std::unique_ptr<VlkShader> m_shader;
     std::unique_ptr<VlkPipelineLayout> m_pipelineLayout;
     std::unique_ptr<VlkPipeline> m_pipeline;

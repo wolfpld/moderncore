@@ -5,6 +5,7 @@
 #include <memory>
 #include <vulkan/vulkan.h>
 
+#include "VlkDescriptorPool.hpp"
 #include "VlkQueueType.hpp"
 #include "../../contrib/vk_mem_alloc.h"
 
@@ -42,6 +43,7 @@ public:
 
     operator VkDevice() const { return m_device; }
     operator VmaAllocator() const { return m_allocator; }
+    operator VkDescriptorPool() const { return *m_descriptorPool; }
 
 private:
     VkDevice m_device;

@@ -1,9 +1,12 @@
 #ifndef __VLKDEVICE_HPP__
 #define __VLKDEVICE_HPP__
 
+#include <memory>
 #include <vulkan/vulkan.h>
 
 #include "../../contrib/vk_mem_alloc.h"
+
+class VlkCommandPool;
 
 class VlkDevice
 {
@@ -40,6 +43,7 @@ public:
 
     [[nodiscard]] const QueueInfo& GetQueueInfo( QueueType type ) const { return m_queueInfo[(int)type]; }
     [[nodiscard]] VkQueue GetQueue( QueueType type ) const { return m_queue[(int)type]; }
+    [[nodiscard]] const std::shared_ptr<VlkCommandPool>& GetCommandPool( QueueType type ) const { return m_commandPool[(int)type]; }
 
     operator VkDevice() const { return m_device; }
     operator VmaAllocator() const { return m_allocator; }
@@ -50,6 +54,8 @@ private:
     VkQueue m_queue[4];
 
     VmaAllocator m_allocator;
+
+    std::shared_ptr<VlkCommandPool> m_commandPool[3];
 };
 
 #endif

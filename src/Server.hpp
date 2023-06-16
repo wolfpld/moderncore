@@ -35,7 +35,6 @@ private:
 
     std::unique_ptr<VlkSwapchain> m_swapchain;
     std::unique_ptr<VlkRenderPass> m_renderPass;
-    std::unique_ptr<VlkCommandPool> m_commandPool;
 
     std::vector<std::unique_ptr<VlkFramebuffer>> m_framebuffers;
     std::vector<std::unique_ptr<VlkCommandBuffer>> m_cmdBufs;

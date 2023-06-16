@@ -84,7 +84,6 @@ Server::Server()
     renderPassInfo.pDependencies = &dependency;
 
     m_renderPass = std::make_unique<VlkRenderPass>( *m_vkDevice, renderPassInfo );
-    m_commandPool = std::make_unique<VlkCommandPool>( *m_vkDevice, m_vkDevice->GetQueueInfo( VlkDevice::QueueType::Graphic ).idx );
 
     const auto& imageViews = m_swapchain->GetImageViews();
     VkFramebufferCreateInfo framebufferInfo = { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
@@ -105,7 +104,7 @@ Server::Server()
     {
         framebufferInfo.pAttachments = &imageViews[i];
         m_framebuffers[i] = std::make_unique<VlkFramebuffer>( *m_vkDevice, framebufferInfo );
-        m_cmdBufs[i] = std::make_unique<VlkCommandBuffer>( *m_commandPool, true );
+        m_cmdBufs[i] = std::make_unique<VlkCommandBuffer>( *m_vkDevice->GetCommandPool( VlkDevice::QueueType::Graphic ), true );
         m_imgAvailSema[i] = std::make_unique<VlkSemaphore>( *m_vkDevice );
         m_renderDoneSema[i] = std::make_unique<VlkSemaphore>( *m_vkDevice );
         m_inFlightFences[i] = std::make_unique<VlkFence>( *m_vkDevice, VK_FENCE_CREATE_SIGNALED_BIT );

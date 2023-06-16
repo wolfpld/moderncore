@@ -3,6 +3,7 @@
 #include <limits>
 #include <vector>
 
+#include "VlkCommandPool.hpp"
 #include "VlkDevice.hpp"
 #include "VlkError.hpp"
 #include "VlkPhysicalDevice.hpp"
@@ -291,10 +292,29 @@ VlkDevice::VlkDevice( VkInstance instance, VkPhysicalDevice physDev, int flags, 
     allocInfo.vulkanApiVersion = VK_API_VERSION_1_1;
 
     VkVerify( vmaCreateAllocator( &allocInfo, &m_allocator ) );
+
+    if( m_queueInfo[(int)QueueType::Graphic].idx >= 0 )
+    {
+        m_commandPool[(int)QueueType::Graphic] = std::make_shared<VlkCommandPool>( *this, m_queueInfo[(int)QueueType::Graphic].idx );
+        if( m_queueInfo[(int)QueueType::Graphic].shareCompute ) m_commandPool[(int)QueueType::Compute] = m_commandPool[(int)QueueType::Graphic];
+        if( m_queueInfo[(int)QueueType::Graphic].shareTransfer ) m_commandPool[(int)QueueType::Transfer] = m_commandPool[(int)QueueType::Graphic];
+    }
+    if( m_queueInfo[(int)QueueType::Compute].idx >= 0 )
+    {
+        assert( !m_commandPool[(int)QueueType::Compute] );
+        m_commandPool[(int)QueueType::Compute] = std::make_shared<VlkCommandPool>( *this, m_queueInfo[(int)QueueType::Compute].idx );
+        if( m_queueInfo[(int)QueueType::Compute].shareTransfer ) m_commandPool[(int)QueueType::Transfer] = m_commandPool[(int)QueueType::Compute];
+    }
+    if( m_queueInfo[(int)QueueType::Transfer].idx >= 0 )
+    {
+        assert( !m_commandPool[(int)QueueType::Transfer] );
+        if( !m_commandPool[(int)QueueType::Transfer] ) m_commandPool[(int)QueueType::Transfer] = std::make_shared<VlkCommandPool>( *this, m_queueInfo[(int)QueueType::Transfer].idx );
+    }
 }
 
 VlkDevice::~VlkDevice()
 {
+    for( auto& pool : m_commandPool ) pool.reset();
     vmaDestroyAllocator( m_allocator );
     vkDestroyDevice( m_device, nullptr );
 }

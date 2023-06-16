@@ -39,6 +39,7 @@ files = [
     'src/vulkan/VlkPipeline.cpp',
     'src/vulkan/VlkProxy.cpp',
     'src/vulkan/VlkRenderPass.cpp',
+    'src/vulkan/VlkSampler.cpp',
     'src/vulkan/VlkSemaphore.cpp',
     'src/vulkan/VlkShader.cpp',
     'src/vulkan/VlkShaderModule.cpp',

@@ -60,7 +60,7 @@ void PrintVulkanQueues( const VlkDevice& device )
     mclog( LogLevel::Info, "Device queues:" );
 
     {
-        auto q = device.GetQueueInfo( VlkDevice::QueueType::Graphic );
+        auto q = device.GetQueueInfo( QueueType::Graphic );
         if( q.idx >= 0 )
         {
             mclog( LogLevel::Info, "  Graphics queue family: %i", q.idx );
@@ -75,7 +75,7 @@ void PrintVulkanQueues( const VlkDevice& device )
     }
 
     {
-        auto q = device.GetQueueInfo( VlkDevice::QueueType::Compute );
+        auto q = device.GetQueueInfo( QueueType::Compute );
         if( q.idx >= 0 )
         {
             mclog( LogLevel::Info, "  Compute queue family: %i", q.idx );
@@ -90,7 +90,7 @@ void PrintVulkanQueues( const VlkDevice& device )
     }
 
     {
-        auto q = device.GetQueueInfo( VlkDevice::QueueType::Transfer );
+        auto q = device.GetQueueInfo( QueueType::Transfer );
         if( q.idx >= 0 )
         {
             mclog( LogLevel::Info, "  Transfer queue family: %i", q.idx );
@@ -105,7 +105,7 @@ void PrintVulkanQueues( const VlkDevice& device )
     }
 
     {
-        auto q = device.GetQueueInfo( VlkDevice::QueueType::Present );
+        auto q = device.GetQueueInfo( QueueType::Present );
         if( q.idx >= 0 )
         {
             mclog( LogLevel::Info, "  Present queue family: %i", q.idx );

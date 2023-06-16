@@ -51,8 +51,8 @@ VlkSwapchain::VlkSwapchain( VkPhysicalDevice physicalDevice, VkSurfaceKHR surfac
 
     mclog( LogLevel::Info, "Swapchain image count: %u", imageCount );
 
-    const auto& graphicQueue = device.GetQueueInfo( VlkDevice::QueueType::Graphic );
-    const auto& presentQueue = device.GetQueueInfo( VlkDevice::QueueType::Present );
+    const auto& graphicQueue = device.GetQueueInfo( QueueType::Graphic );
+    const auto& presentQueue = device.GetQueueInfo( QueueType::Present );
     const std::array queues = { uint32_t( graphicQueue.idx ), uint32_t( presentQueue.idx ) };
 
     VkSwapchainCreateInfoKHR createInfo = { VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR };

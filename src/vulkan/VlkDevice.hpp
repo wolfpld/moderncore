@@ -5,6 +5,7 @@
 #include <memory>
 #include <vulkan/vulkan.h>
 
+#include "VlkQueueType.hpp"
 #include "../../contrib/vk_mem_alloc.h"
 
 class VlkCommandPool;
@@ -18,14 +19,6 @@ public:
         RequireCompute  = 1 << 1,
         RequireTransfer = 1 << 2,
         RequirePresent  = 1 << 3,
-    };
-
-    enum class QueueType
-    {
-        Graphic,
-        Compute,
-        Transfer,
-        Present
     };
 
     struct QueueInfo

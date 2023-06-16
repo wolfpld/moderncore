@@ -104,7 +104,7 @@ Server::Server()
     {
         framebufferInfo.pAttachments = &imageViews[i];
         m_framebuffers[i] = std::make_unique<VlkFramebuffer>( *m_vkDevice, framebufferInfo );
-        m_cmdBufs[i] = std::make_unique<VlkCommandBuffer>( *m_vkDevice->GetCommandPool( VlkDevice::QueueType::Graphic ), true );
+        m_cmdBufs[i] = std::make_unique<VlkCommandBuffer>( *m_vkDevice->GetCommandPool( QueueType::Graphic ), true );
         m_imgAvailSema[i] = std::make_unique<VlkSemaphore>( *m_vkDevice );
         m_renderDoneSema[i] = std::make_unique<VlkSemaphore>( *m_vkDevice );
         m_inFlightFences[i] = std::make_unique<VlkFence>( *m_vkDevice, VK_FENCE_CREATE_SIGNALED_BIT );
@@ -173,7 +173,7 @@ void Server::Render()
     submitInfo.signalSemaphoreCount = signalSemaphores.size();
     submitInfo.pSignalSemaphores = signalSemaphores.data();
 
-    VkVerify( vkQueueSubmit( m_vkDevice->GetQueue( VlkDevice::QueueType::Graphic ), 1, &submitInfo, *m_inFlightFences[frameIdx] ) );
+    VkVerify( vkQueueSubmit( m_vkDevice->GetQueue( QueueType::Graphic ), 1, &submitInfo, *m_inFlightFences[frameIdx] ) );
 
     const std::array<VkSwapchainKHR, 1> swapchains = { *m_swapchain };
 
@@ -184,5 +184,5 @@ void Server::Render()
     presentInfo.pSwapchains = swapchains.data();
     presentInfo.pImageIndices = &imgIndex;
 
-    vkQueuePresentKHR( m_vkDevice->GetQueue( VlkDevice::QueueType::Graphic ), &presentInfo );
+    vkQueuePresentKHR( m_vkDevice->GetQueue( QueueType::Graphic ), &presentInfo );
 }

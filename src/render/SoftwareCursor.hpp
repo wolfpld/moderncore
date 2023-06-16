@@ -23,7 +23,7 @@ class SoftwareCursor
     };
 
 public:
-    explicit SoftwareCursor( const VlkDevice& device, VkRenderPass renderPass, uint32_t screenWidth, uint32_t screenHeight );
+    explicit SoftwareCursor( VlkDevice& device, VkRenderPass renderPass, uint32_t screenWidth, uint32_t screenHeight );
     ~SoftwareCursor();
 
     void SetPosition( float x, float y );

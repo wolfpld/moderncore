@@ -15,7 +15,7 @@
 #include "../vulkan/VlkShader.hpp"
 #include "../vulkan/VlkShaderModule.hpp"
 
-SoftwareCursor::SoftwareCursor( const VlkDevice& device, VkRenderPass renderPass, uint32_t screenWidth, uint32_t screenHeight )
+SoftwareCursor::SoftwareCursor( VlkDevice& device, VkRenderPass renderPass, uint32_t screenWidth, uint32_t screenHeight )
 {
     FileBuffer vert( "SoftwareCursor.vert.spv" );
     FileBuffer frag( "SoftwareCursor.frag.spv" );

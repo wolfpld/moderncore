@@ -61,7 +61,7 @@ WaylandWindow::~WaylandWindow()
     wl_surface_destroy( m_surface );
 }
 
-void WaylandWindow::VulkanInit( const VlkDevice& device, VkRenderPass renderPass, uint32_t width, uint32_t height )
+void WaylandWindow::VulkanInit( VlkDevice& device, VkRenderPass renderPass, uint32_t width, uint32_t height )
 {
     m_cursor = std::make_unique<SoftwareCursor>( device, renderPass, width, height );
 }

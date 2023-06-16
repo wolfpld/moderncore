@@ -42,7 +42,7 @@ BackendWayland::~BackendWayland()
     wl_display_disconnect( m_dpy );
 }
 
-void BackendWayland::VulkanInit( const VlkDevice& device, VkRenderPass renderPass, const VlkSwapchain& swapchain )
+void BackendWayland::VulkanInit( VlkDevice& device, VkRenderPass renderPass, const VlkSwapchain& swapchain )
 {
     m_window->VulkanInit( device, renderPass, swapchain.GetWidth(), swapchain.GetHeight() );
 }

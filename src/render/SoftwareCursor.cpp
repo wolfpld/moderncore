@@ -134,8 +134,7 @@ SoftwareCursor::SoftwareCursor( VlkDevice& device, VkRenderPass renderPass, uint
 
     CursorTheme theme;
     auto& cursor = theme.Cursor();
-    const auto size = cursor.FitSize( 24 );
-    const auto& bitmaps = *cursor.Get( size, CursorType::Default );
+    const auto& bitmaps = *cursor.Get( theme.Size(), CursorType::Default );
     auto bmp = bitmaps[0];
     m_w = bmp.bitmap->Width();
     m_h = bmp.bitmap->Height();

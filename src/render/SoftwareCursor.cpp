@@ -7,8 +7,11 @@
 #include "../util/FileBuffer.hpp"
 #include "../vulkan/VlkBuffer.hpp"
 #include "../vulkan/VlkDevice.hpp"
+#include "../vulkan/VlkImage.hpp"
+#include "../vulkan/VlkImageView.hpp"
 #include "../vulkan/VlkPipeline.hpp"
 #include "../vulkan/VlkPipelineLayout.hpp"
+#include "../vulkan/VlkSampler.hpp"
 #include "../vulkan/VlkShader.hpp"
 #include "../vulkan/VlkShaderModule.hpp"
 
@@ -106,6 +109,48 @@ SoftwareCursor::SoftwareCursor( const VlkDevice& device, VkRenderPass renderPass
     const auto size = cursor.FitSize( 24 );
     const auto& bitmaps = *cursor.Get( size, CursorType::Default );
     auto bmp = bitmaps[0];
+
+    VkSamplerCreateInfo samplerInfo = { VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
+    samplerInfo.magFilter = VK_FILTER_NEAREST;
+    samplerInfo.minFilter = VK_FILTER_NEAREST;
+    samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+
+    m_sampler = std::make_unique<VlkSampler>( device, samplerInfo );
+
+    VkImageCreateInfo imageInfo = { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
+    imageInfo.imageType = VK_IMAGE_TYPE_2D;
+    imageInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
+    imageInfo.extent.width = bmp.bitmap->Width();
+    imageInfo.extent.height = bmp.bitmap->Height();
+    imageInfo.extent.depth = 1;
+    imageInfo.mipLevels = 1;
+    imageInfo.arrayLayers = 1;
+    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+    imageInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+    m_image = std::make_unique<VlkImage>( device, imageInfo );
+
+    VkImageViewCreateInfo imageViewInfo = { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
+    imageViewInfo.image = *m_image;
+    imageViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    imageViewInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
+    imageViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    imageViewInfo.subresourceRange.levelCount = 1;
+    imageViewInfo.subresourceRange.layerCount = 1;
+
+    m_imageView = std::make_unique<VlkImageView>( device, imageViewInfo );
+
+    bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    bufferInfo.size = bmp.bitmap->Width() * bmp.bitmap->Height() * 4;
+
+    auto stagingBuffer = std::make_unique<VlkBuffer>( device, bufferInfo, VlkBuffer::WillWrite | VlkBuffer::PreferHost );
+    memcpy( stagingBuffer->Ptr(), bmp.bitmap->Data(), bmp.bitmap->Width() * bmp.bitmap->Height() * 4 );
+    stagingBuffer->Flush( 0, bmp.bitmap->Width() * bmp.bitmap->Height() * 4 );
 
     Vertex vertices[] = {
         { { 0, 0 }, { 0, 0 } },

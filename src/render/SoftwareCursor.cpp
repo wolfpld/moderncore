@@ -200,11 +200,13 @@ void SoftwareCursor::Render( VkCommandBuffer cmdBuf )
     memcpy( m_vertexBuffer->Ptr(), vertices, sizeof( vertices ) );
     m_vertexBuffer->Flush( 0, sizeof( vertices ) );
 
-    std::array<VkBuffer, 1> vtx = { *m_vertexBuffer };
-    std::array<VkDeviceSize, 1> offsets = { 0 };
+    const std::array<VkBuffer, 1> vtx = { *m_vertexBuffer };
+    const std::array<VkDeviceSize, 1> offsets = { 0 };
+    const std::array<VkDescriptorSet, 1> desc = { *m_descriptorSet };
 
     vkCmdBindPipeline( cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, *m_pipeline );
     vkCmdBindVertexBuffers( cmdBuf, 0, 1, vtx.data(), offsets.data() );
     vkCmdBindIndexBuffer( cmdBuf, *m_indexBuffer, 0, VK_INDEX_TYPE_UINT16 );
+    vkCmdBindDescriptorSets( cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, *m_pipelineLayout, 0, desc.size(), desc.data(), 0, nullptr );
     vkCmdDrawIndexed( cmdBuf, 6, 1, 0, 0, 0 );
 }

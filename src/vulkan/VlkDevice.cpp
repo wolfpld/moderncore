@@ -270,19 +270,19 @@ VlkDevice::VlkDevice( VkInstance instance, VkPhysicalDevice physDev, int flags, 
 
     if( m_queueInfo[(int)QueueType::Graphic].idx >= 0 )
     {
-        vkGetDeviceQueue( m_device, m_queueInfo[(int)QueueType::Graphic].idx, 0, m_queue + (int)QueueType::Graphic );
+        vkGetDeviceQueue( m_device, m_queueInfo[(int)QueueType::Graphic].idx, 0, &m_queue[(int)QueueType::Graphic] );
     }
     if( m_queueInfo[(int)QueueType::Compute].idx >= 0 )
     {
-        vkGetDeviceQueue( m_device, m_queueInfo[(int)QueueType::Compute].idx, 0, m_queue + (int)QueueType::Compute );
+        vkGetDeviceQueue( m_device, m_queueInfo[(int)QueueType::Compute].idx, 0, &m_queue[(int)QueueType::Compute] );
     }
     if( m_queueInfo[(int)QueueType::Transfer].idx >= 0 )
     {
-        vkGetDeviceQueue( m_device, m_queueInfo[(int)QueueType::Transfer].idx, 0, m_queue + (int)QueueType::Transfer );
+        vkGetDeviceQueue( m_device, m_queueInfo[(int)QueueType::Transfer].idx, 0, &m_queue[(int)QueueType::Transfer] );
     }
     if( m_queueInfo[(int)QueueType::Present].idx >= 0 )
     {
-        vkGetDeviceQueue( m_device, m_queueInfo[(int)QueueType::Present].idx, 0, m_queue + (int)QueueType::Present );
+        vkGetDeviceQueue( m_device, m_queueInfo[(int)QueueType::Present].idx, 0, &m_queue[(int)QueueType::Present] );
     }
 
     VmaAllocatorCreateInfo allocInfo = {};

@@ -1,6 +1,7 @@
 #ifndef __VLKDEVICE_HPP__
 #define __VLKDEVICE_HPP__
 
+#include <array>
 #include <memory>
 #include <vulkan/vulkan.h>
 
@@ -50,12 +51,12 @@ public:
 
 private:
     VkDevice m_device;
-    QueueInfo m_queueInfo[4];
-    VkQueue m_queue[4];
+    std::array<QueueInfo, 4> m_queueInfo;
+    std::array<VkQueue, 4> m_queue;
 
     VmaAllocator m_allocator;
 
-    std::shared_ptr<VlkCommandPool> m_commandPool[3];
+    std::array<std::shared_ptr<VlkCommandPool>, 4> m_commandPool;
 };
 
 #endif

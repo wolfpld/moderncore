@@ -30,6 +30,7 @@ files = [
     'src/vulkan/VlkDevice.cpp',
     'src/vulkan/VlkFence.cpp',
     'src/vulkan/VlkFramebuffer.cpp',
+    'src/vulkan/VlkImage.cpp',
     'src/vulkan/VlkImageView.cpp',
     'src/vulkan/VlkInfo.cpp',
     'src/vulkan/VlkInstance.cpp',

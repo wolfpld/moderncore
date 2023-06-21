@@ -72,7 +72,7 @@ void BackendWayland::RegistryGlobal( wl_registry* reg, uint32_t name, const char
 {
     if( strcmp( interface, wl_compositor_interface.name ) == 0 )
     {
-        m_compositor = RegistryBind( wl_compositor );
+        m_compositor = RegistryBind( wl_compositor, 3, 3 );
     }
     else if( strcmp( interface, xdg_wm_base_interface.name ) == 0 )
     {

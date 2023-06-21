@@ -74,6 +74,11 @@ void WaylandWindow::Show( const std::function<void()>& render )
     wl_surface_commit( m_surface );
 }
 
+void WaylandWindow::SetScale( int32_t scale )
+{
+    wl_surface_set_buffer_scale( m_surface, scale );
+}
+
 void WaylandWindow::RenderCursor( VkCommandBuffer cmdBuf )
 {
     m_cursor->Render( cmdBuf );

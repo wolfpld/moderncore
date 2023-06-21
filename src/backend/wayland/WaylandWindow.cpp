@@ -34,6 +34,8 @@ WaylandWindow::WaylandWindow( wl_compositor* compositor, xdg_wm_base* xdgWmBase,
     xdg_toplevel_set_title( m_xdgToplevel, "ModernCore" );
     xdg_toplevel_set_app_id( m_xdgToplevel, "moderncore" );
 
+    if( decorationManager ) zxdg_decoration_manager_v1_get_toplevel_decoration( decorationManager, m_xdgToplevel );
+
     wl_surface_commit( m_surface );
     wl_display_roundtrip( dpy );
 
@@ -43,8 +45,6 @@ WaylandWindow::WaylandWindow( wl_compositor* compositor, xdg_wm_base* xdgWmBase,
 
     auto cb = wl_surface_frame( m_surface );
     wl_callback_add_listener( cb, &frameListener, this );
-
-    if( decorationManager ) zxdg_decoration_manager_v1_get_toplevel_decoration( decorationManager, m_xdgToplevel );
 
     VkWaylandSurfaceCreateInfoKHR createInfo = { VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR };
     createInfo.display = dpy;

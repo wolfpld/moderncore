@@ -203,28 +203,32 @@ static bool LoadCursor( CursorType cursorType, unordered_flat_map<uint32_t, Curs
             return false;
         }
 
-        auto msz = w*h/8;
+        const auto stride = ( w + 31 ) / 32 * 32;
+        const auto msz = stride*h/8;
         auto mask = (uint8_t*)alloca( msz );
         if( !f.Read( mask, msz ) ) return false;
 
         auto dst = bitmap->Data();
-        while( msz > 0 )
+        for( int y=0; y<h; y++ )
         {
-            auto px = *mask++;
-            for( int i=0; i<8; i++ )
+            for( int x=0; x<w/8; x++ )
             {
-                if( (px & 0x80) == 0 )
+                auto px = *mask++;
+                for( int i=0; i<8; i++ )
                 {
-                    *(dst+3) = 0xFF;
+                    if( (px & 0x80) == 0 )
+                    {
+                        *(dst+3) = 0xFF;
+                    }
+                    else
+                    {
+                        memset( dst, 0, 4 );
+                    }
+                    dst += 4;
+                    px <<= 1;
                 }
-                else
-                {
-                    memset( dst, 0, 4 );
-                }
-                dst += 4;
-                px <<= 1;
             }
-            msz--;
+            mask += ( stride - w ) / 8;
         }
 
         if( bmpHdr.height > 0 ) bitmap->FlipVertical();

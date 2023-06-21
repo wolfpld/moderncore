@@ -49,6 +49,7 @@ void BackendWayland::VulkanInit( VlkDevice& device, VkRenderPass renderPass, con
 
 void BackendWayland::Run( const std::function<void()>& render )
 {
+    if( m_scale != 1 ) m_window->SetScale( m_scale );
     m_window->Show( render );
     while( m_keepRunning && wl_display_dispatch( m_dpy ) != -1 ) {}
 }
@@ -132,10 +133,14 @@ void BackendWayland::OnOutput()
         const auto outputScale = it.second->GetScale();
         if( outputScale > scale ) scale = outputScale;
     }
-    m_scale = scale;
+    if( scale != m_scale )
+    {
+        if( m_window ) m_window->SetScale( scale );
+        m_scale = scale;
+    }
 }
 
 void BackendWayland::PointerMotion( double x, double y )
 {
-    m_window->PointerMotion( x, y );
+    m_window->PointerMotion( x * m_scale, y * m_scale );
 }

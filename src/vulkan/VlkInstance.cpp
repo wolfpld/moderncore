@@ -123,6 +123,8 @@ VlkInstance::VlkInstance( VlkInstanceType instanceType )
 
     VkVerify( vkCreateInstance( &createInfo, nullptr, &m_instance ) );
     if( hasValidationLayers ) VkVerify( CreateDebugUtilsMessengerEXT( m_instance, &dbgInfo, nullptr, &m_debugMessenger ) );
+
+    VkVerify( LoadVulkanExtensions( m_instance ) );
 }
 
 VlkInstance::~VlkInstance()

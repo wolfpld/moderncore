@@ -5,13 +5,11 @@
 #include <memory>
 #include <vulkan/vulkan.h>
 
-#include "VlkDescriptorPool.hpp"
 #include "VlkQueueType.hpp"
 #include "../../contrib/vk_mem_alloc.h"
 
 class VlkCommandBuffer;
 class VlkCommandPool;
-class VlkDescriptorPool;
 
 class VlkDevice
 {
@@ -44,7 +42,6 @@ public:
 
     operator VkDevice() const { return m_device; }
     operator VmaAllocator() const { return m_allocator; }
-    operator VkDescriptorPool() const { return *m_descriptorPool; }
 
 private:
     VkDevice m_device;
@@ -54,8 +51,6 @@ private:
     VmaAllocator m_allocator;
 
     std::array<std::shared_ptr<VlkCommandPool>, 4> m_commandPool;
-
-    std::unique_ptr<VlkDescriptorPool> m_descriptorPool;
 };
 
 #endif

@@ -7,7 +7,6 @@
 
 class Texture;
 class VlkBuffer;
-class VlkDescriptorSet;
 class VlkDescriptorSetLayout;
 class VlkDevice;
 class VlkPipeline;
@@ -38,13 +37,15 @@ private:
 
     std::unique_ptr<VlkShader> m_shader;
     std::unique_ptr<VlkDescriptorSetLayout> m_descriptorSetLayout;
-    std::unique_ptr<VlkDescriptorSet> m_descriptorSet;
     std::unique_ptr<VlkPipelineLayout> m_pipelineLayout;
     std::unique_ptr<VlkPipeline> m_pipeline;
     std::unique_ptr<VlkBuffer> m_vertexBuffer;
     std::unique_ptr<VlkBuffer> m_indexBuffer;
     std::unique_ptr<Texture> m_image;
     std::unique_ptr<VlkSampler> m_sampler;
+
+    VkDescriptorImageInfo m_imageInfo;
+    VkWriteDescriptorSet m_descriptorWrite;
 };
 
 #endif

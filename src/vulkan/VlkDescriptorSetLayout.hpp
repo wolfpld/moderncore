@@ -13,7 +13,6 @@ public:
 
     operator VkDescriptorSetLayout() const { return m_descriptorSetLayout; }
     operator VkDevice() const { return m_device; }
-    operator VkDescriptorPool() const { return m_device; }
 
 private:
     const VlkDevice& m_device;

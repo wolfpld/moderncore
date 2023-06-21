@@ -28,8 +28,6 @@ files = [
     'src/vulkan/VlkBuffer.cpp',
     'src/vulkan/VlkCommandBuffer.cpp',
     'src/vulkan/VlkCommandPool.cpp',
-    'src/vulkan/VlkDescriptorPool.cpp',
-    'src/vulkan/VlkDescriptorSet.cpp',
     'src/vulkan/VlkDescriptorSetLayout.cpp',
     'src/vulkan/VlkDevice.cpp',
     'src/vulkan/VlkFence.cpp',

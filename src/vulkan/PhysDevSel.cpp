@@ -19,6 +19,7 @@ VkPhysicalDevice PickBest( const std::vector<VkPhysicalDevice>& list, VkSurfaceK
             VlkPhysicalDevice physDev( dev );
             if( flags & RequireGraphic && !physDev.IsGraphicCapable() ) continue;
             if( flags & RequireCompute && !physDev.IsComputeCapable() ) continue;
+            if( !physDev.HasPushDescriptor() ) continue;
             if( presentSurface != VK_NULL_HANDLE )
             {
                 if( !physDev.IsSwapchainCapable() ) continue;

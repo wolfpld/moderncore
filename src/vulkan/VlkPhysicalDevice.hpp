@@ -15,6 +15,7 @@ public:
     [[nodiscard]] bool IsGraphicCapable();
     [[nodiscard]] bool IsComputeCapable();
     [[nodiscard]] bool IsSwapchainCapable();
+    [[nodiscard]] bool HasPushDescriptor();
 
 private:
     [[nodiscard]] bool IsExtensionAvailable( const char* extensionName ) const;

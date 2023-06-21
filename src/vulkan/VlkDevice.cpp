@@ -260,7 +260,10 @@ VlkDevice::VlkDevice( VkInstance instance, VkPhysicalDevice physDev, int flags, 
         queueCreate.emplace_back( qi );
     }
 
-    std::array deviceExtensions { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+    constexpr std::array deviceExtensions {
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+        VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME
+    };
 
     VkDeviceCreateInfo devInfo = { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
     devInfo.queueCreateInfoCount = (uint32_t)queueCreate.size();

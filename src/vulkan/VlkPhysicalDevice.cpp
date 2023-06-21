@@ -34,6 +34,11 @@ bool VlkPhysicalDevice::IsSwapchainCapable()
     return IsExtensionAvailable( VK_KHR_SWAPCHAIN_EXTENSION_NAME );
 }
 
+bool VlkPhysicalDevice::HasPushDescriptor()
+{
+    return IsExtensionAvailable( VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME );
+}
+
 bool VlkPhysicalDevice::IsExtensionAvailable( const char* extensionName ) const
 {
     auto it = std::lower_bound( m_extensionProperties.begin(), m_extensionProperties.end(), extensionName,

@@ -6,6 +6,7 @@
 #include <vulkan/vulkan.h>
 
 class Backend;
+class Background;
 class Display;
 class VlkCommandBuffer;
 class VlkCommandPool;
@@ -43,6 +44,8 @@ private:
     std::vector<std::unique_ptr<VlkFence>> m_inFlightFences;
 
     uint32_t m_frameIdx = 0;
+
+    std::unique_ptr<Background> m_background;
 };
 
 #endif

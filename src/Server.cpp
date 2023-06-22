@@ -4,6 +4,7 @@
 #include "Server.hpp"
 #include "backend/wayland/BackendWayland.hpp"
 #include "plumbing/Display.hpp"
+#include "render/Background.hpp"
 #include "util/Logs.hpp"
 #include "util/Panic.hpp"
 #include "vulkan/PhysDevSel.hpp"
@@ -114,6 +115,7 @@ Server::Server()
     setenv( "WAYLAND_DISPLAY", m_dpy->Socket(), 1 );
 
     m_backend->VulkanInit( *m_vkDevice, *m_renderPass, *m_swapchain );
+    m_background = std::make_unique<Background>();
 }
 
 Server::~Server()
@@ -142,15 +144,13 @@ void Server::Render()
     m_cmdBufs[frameIdx]->Reset();
     m_cmdBufs[frameIdx]->Begin( VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT );
 
-    VkClearValue clearColor = {{{ 0.25f, 0.25f, 0.25f, 1.0f }}};
-
     VkRenderPassBeginInfo renderPassInfo = { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
     renderPassInfo.renderPass = *m_renderPass;
     renderPassInfo.framebuffer = *m_framebuffers[imgIndex];
     renderPassInfo.renderArea.offset = { 0, 0 };
     renderPassInfo.renderArea.extent = { m_swapchain->GetWidth(), m_swapchain->GetHeight() };
     renderPassInfo.clearValueCount = 1;
-    renderPassInfo.pClearValues = &clearColor;
+    renderPassInfo.pClearValues = &m_background->GetColor();
 
     vkCmdBeginRenderPass( *m_cmdBufs[frameIdx], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
 

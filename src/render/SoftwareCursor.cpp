@@ -19,6 +19,7 @@
 #include "../vulkan/VlkShaderModule.hpp"
 
 SoftwareCursor::SoftwareCursor( VlkDevice& device, VkRenderPass renderPass, uint32_t screenWidth, uint32_t screenHeight )
+    : m_position {}
 {
     FileBuffer vert( "SoftwareCursor.vert.spv" );
     FileBuffer frag( "SoftwareCursor.frag.spv" );
@@ -98,11 +99,18 @@ SoftwareCursor::SoftwareCursor( VlkDevice& device, VkRenderPass renderPass, uint
     colorBlending.attachmentCount = 1;
     colorBlending.pAttachments = &colorBlendAttachment;
 
+    VkPushConstantRange pushConstantRange = {};
+    pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    pushConstantRange.offset = 0;
+    pushConstantRange.size = sizeof( Position );
+
     const std::array<VkDescriptorSetLayout, 1> layouts = { *m_descriptorSetLayout };
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo = { VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO };
     pipelineLayoutInfo.setLayoutCount = layouts.size();
     pipelineLayoutInfo.pSetLayouts = layouts.data();
+    pipelineLayoutInfo.pushConstantRangeCount = 1;
+    pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
 
     m_pipelineLayout = std::make_unique<VlkPipelineLayout>( device, pipelineLayoutInfo );
 
@@ -185,22 +193,12 @@ SoftwareCursor::~SoftwareCursor()
 
 void SoftwareCursor::SetPosition( float x, float y )
 {
-    m_x = x;
-    m_y = y;
+    m_position.pos.x = x;
+    m_position.pos.y = y;
 }
 
 void SoftwareCursor::Render( VkCommandBuffer cmdBuf )
 {
-    Vertex vertices[] = {
-        { { m_x, m_y }, { 0, 0 } },
-        { { m_x, m_y + m_h }, { 0, 1 } },
-        { { m_x + m_w, m_y }, { 1, 0 } },
-        { { m_x + m_w, m_y + m_h }, { 1, 1 } }
-    };
-
-    memcpy( m_vertexBuffer->Ptr(), vertices, sizeof( vertices ) );
-    m_vertexBuffer->Flush( 0, sizeof( vertices ) );
-
     const std::array<VkBuffer, 1> vtx = { *m_vertexBuffer };
     const std::array<VkDeviceSize, 1> offsets = { 0 };
 
@@ -208,5 +206,6 @@ void SoftwareCursor::Render( VkCommandBuffer cmdBuf )
     vkCmdBindVertexBuffers( cmdBuf, 0, 1, vtx.data(), offsets.data() );
     vkCmdBindIndexBuffer( cmdBuf, *m_indexBuffer, 0, VK_INDEX_TYPE_UINT16 );
     CmdPushDescriptorSetKHR( cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, *m_pipelineLayout, 0, 1, &m_descriptorWrite );
+    vkCmdPushConstants( cmdBuf, *m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof( Position ), &m_position );
     vkCmdDrawIndexed( cmdBuf, 6, 1, 0, 0, 0 );
 }

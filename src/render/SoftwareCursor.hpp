@@ -22,6 +22,11 @@ class SoftwareCursor
         glm::vec2 uv;
     };
 
+    struct Position
+    {
+        glm::vec2 pos;
+    };
+
 public:
     explicit SoftwareCursor( VlkDevice& device, VkRenderPass renderPass, uint32_t screenWidth, uint32_t screenHeight );
     ~SoftwareCursor();
@@ -30,8 +35,7 @@ public:
     void Render( VkCommandBuffer cmdBuf );
 
 private:
-    double m_x = 0;
-    double m_y = 0;
+    Position m_position;
 
     uint32_t m_w, m_h;
 

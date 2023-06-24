@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string>
+#include <string.h>
 #include <vector>
 
 #include "CursorType.hpp"

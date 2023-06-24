@@ -20,7 +20,7 @@ public:
     NoCopy( CursorLogic );
 
     void SetCursor( CursorType type );
-    [[nodiscard]] const CursorBitmap& GetCurrentCursorFrame() const { assert( m_cursor ); return m_cursor->bitmaps[m_frame]; }
+    [[nodiscard]] const CursorBitmap& GetCurrentCursorFrame() const;
 
     bool NeedUpdate();
 
@@ -30,6 +30,8 @@ private:
 
     const CursorData* m_cursor;
     uint32_t m_frame;
+    uint32_t m_frameTime;
+    uint64_t m_lastTime;
 
     bool m_needUpdate;
 };

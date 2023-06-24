@@ -6,6 +6,7 @@ files = [
     'src/Server.cpp',
     'src/cursor/CursorBase.cpp',
     'src/cursor/CursorBaseMulti.cpp',
+    'src/cursor/CursorLogic.cpp',
     'src/cursor/CursorTheme.cpp',
     'src/cursor/WinCursor.cpp',
     'src/cursor/XCursor.cpp',

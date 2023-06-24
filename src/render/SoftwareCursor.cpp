@@ -22,7 +22,8 @@
 #include "../vulkan/VlkShaderModule.hpp"
 
 SoftwareCursor::SoftwareCursor( VlkDevice& device, VkRenderPass renderPass, uint32_t screenWidth, uint32_t screenHeight )
-    : m_position {}
+    : m_x( 0 )
+    , m_y( 0 )
     , m_w( 0 )
     , m_h( 0 )
     , m_currentBitmap( nullptr )
@@ -190,8 +191,8 @@ SoftwareCursor::~SoftwareCursor()
 
 void SoftwareCursor::SetPosition( float x, float y )
 {
-    m_position.pos.x = x;
-    m_position.pos.y = y;
+    m_x = x;
+    m_y = y;
 }
 
 void SoftwareCursor::Render( VkCommandBuffer cmdBuf, CursorLogic& cursorLogic )
@@ -209,12 +210,13 @@ void SoftwareCursor::Render( VkCommandBuffer cmdBuf, CursorLogic& cursorLogic )
 
     const std::array<VkBuffer, 1> vtx = { *m_vertexBuffer };
     const std::array<VkDeviceSize, 1> offsets = { 0 };
+    const Position position = { { m_x - m_xhot, m_y - m_yhot } };
 
     vkCmdBindPipeline( cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, *m_pipeline );
     vkCmdBindVertexBuffers( cmdBuf, 0, 1, vtx.data(), offsets.data() );
     vkCmdBindIndexBuffer( cmdBuf, *m_indexBuffer, 0, VK_INDEX_TYPE_UINT16 );
     CmdPushDescriptorSetKHR( cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, *m_pipelineLayout, 0, 2, m_descriptorWrite );
-    vkCmdPushConstants( cmdBuf, *m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof( Position ), &m_position );
+    vkCmdPushConstants( cmdBuf, *m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof( Position ), &position );
     vkCmdDrawIndexed( cmdBuf, 6, 1, 0, 0, 0 );
 }
 
@@ -251,4 +253,7 @@ void SoftwareCursor::UpdateImage( const CursorBitmap& cursorData )
 
     m_image = std::make_unique<Texture>( m_device, *cursorPtr );
     m_imageInfo.imageView = *m_image;
+
+    m_xhot = cursorData.xhot;
+    m_yhot = cursorData.yhot;
 }

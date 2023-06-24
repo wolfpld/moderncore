@@ -50,9 +50,9 @@ private:
     void UpdateVertexBuffer( uint32_t width, uint32_t height );
     void UpdateImage( const CursorBitmap& cursorData );
 
-    Position m_position;
-
+    float m_x, m_y;
     uint32_t m_w, m_h;
+    uint32_t m_xhot, m_yhot;
     Bitmap* m_currentBitmap;
 
     std::unique_ptr<VlkShader> m_shader;

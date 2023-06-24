@@ -3,6 +3,8 @@
 
 #include <memory>
 
+#include "../util/NoCopy.hpp"
+
 class CursorBase;
 
 class CursorTheme
@@ -10,6 +12,8 @@ class CursorTheme
 public:
     CursorTheme();
     ~CursorTheme();
+
+    NoCopy( CursorTheme );
 
     [[nodiscard]] const CursorBase& Cursor() const { return *m_cursor; }
     [[nodiscard]] uint32_t Size() const { return m_size; }

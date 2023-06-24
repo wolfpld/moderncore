@@ -4,6 +4,8 @@
 #include <memory>
 #include <wayland-client.h>
 
+#include "../../util/NoCopy.hpp"
+
 class BackendWayland;
 class WaylandKeyboard;
 class WaylandPointer;
@@ -13,6 +15,8 @@ class WaylandSeat
 public:
     explicit WaylandSeat( wl_seat* seat, BackendWayland& backend );
     ~WaylandSeat();
+
+    NoCopy( WaylandSeat );
 
     void PointerMotion( double x, double y );
 

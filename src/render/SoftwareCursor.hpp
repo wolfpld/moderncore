@@ -5,6 +5,8 @@
 #include <memory>
 #include <vulkan/vulkan.h>
 
+#include "../util/NoCopy.hpp"
+
 class Texture;
 class VlkBuffer;
 class VlkDescriptorSetLayout;
@@ -30,6 +32,8 @@ class SoftwareCursor
 public:
     explicit SoftwareCursor( VlkDevice& device, VkRenderPass renderPass, uint32_t screenWidth, uint32_t screenHeight );
     ~SoftwareCursor();
+
+    NoCopy( SoftwareCursor );
 
     void SetPosition( float x, float y );
     void Render( VkCommandBuffer cmdBuf );

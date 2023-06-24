@@ -5,11 +5,15 @@
 #include <stdint.h>
 #include <wayland-client.h>
 
+#include "../../util/NoCopy.hpp"
+
 class WaylandOutput
 {
 public:
     WaylandOutput( wl_output* output, std::function<void()> onOutput );
     ~WaylandOutput();
+
+    NoCopy( WaylandOutput );
 
     [[nodiscard]] int32_t GetScale() const { return m_scale; }
 

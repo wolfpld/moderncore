@@ -5,6 +5,8 @@
 #include <vector>
 #include <vulkan/vulkan.h>
 
+#include "util/NoCopy.hpp"
+
 class Backend;
 class Background;
 class Display;
@@ -23,6 +25,8 @@ class Server
 public:
     Server();
     ~Server();
+
+    NoCopy( Server );
 
     void Run();
 

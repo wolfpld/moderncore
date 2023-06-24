@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "CursorType.hpp"
+#include "../util/NoCopy.hpp"
 #include "../util/RobinHood.hpp"
 
 class Bitmap;
@@ -26,7 +27,10 @@ struct CursorSize
 class CursorBase
 {
 public:
+    CursorBase() = default;
     virtual ~CursorBase() = default;
+
+    NoCopy( CursorBase );
 
     [[nodiscard]] virtual uint32_t FitSize( uint32_t size ) const = 0;
     [[nodiscard]] const std::vector<CursorBitmap>* Get( uint32_t size, CursorType type ) const;

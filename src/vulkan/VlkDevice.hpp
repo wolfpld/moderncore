@@ -7,6 +7,7 @@
 
 #include "VlkQueueType.hpp"
 #include "../../contrib/vk_mem_alloc.h"
+#include "../util/NoCopy.hpp"
 
 class VlkCommandBuffer;
 class VlkCommandPool;
@@ -33,6 +34,8 @@ public:
 
     VlkDevice( VkInstance instance, VkPhysicalDevice physDev, int flags, VkSurfaceKHR presentSurface = VK_NULL_HANDLE );
     ~VlkDevice();
+
+    NoCopy( VlkDevice );
 
     void Submit( const VlkCommandBuffer& cmdbuf, VkFence fence );
 

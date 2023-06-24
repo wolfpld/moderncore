@@ -3,11 +3,15 @@
 
 #include <wayland-client.h>
 
+#include "../../util/NoCopy.hpp"
+
 class WaylandKeyboard
 {
 public:
     explicit WaylandKeyboard( wl_keyboard* keyboard );
     ~WaylandKeyboard();
+
+    NoCopy( WaylandKeyboard );
 
 private:
     wl_keyboard* m_keyboard;

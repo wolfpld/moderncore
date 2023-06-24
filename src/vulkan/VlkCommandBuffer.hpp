@@ -4,12 +4,15 @@
 #include <vulkan/vulkan.h>
 
 #include "VlkCommandPool.hpp"
+#include "../util/NoCopy.hpp"
 
 class VlkCommandBuffer
 {
 public:
     explicit VlkCommandBuffer( const VlkCommandPool& pool, bool primary = true );
     ~VlkCommandBuffer();
+
+    NoCopy( VlkCommandBuffer );
 
     void Begin( VkCommandBufferUsageFlags flags = 0 );
     void End();

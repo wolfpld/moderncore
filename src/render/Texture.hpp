@@ -3,6 +3,7 @@
 
 #include <memory>
 
+#include "../util/NoCopy.hpp"
 #include "../vulkan/VlkImage.hpp"
 #include "../vulkan/VlkImageView.hpp"
 
@@ -13,6 +14,8 @@ class Texture
 {
 public:
     Texture( VlkDevice& device, const Bitmap& bitmap );
+
+    NoCopy( Texture );
 
     operator VkImageView() const { return *m_imageView; }
 

@@ -1,6 +1,8 @@
 #ifndef __CONFIG_HPP__
 #define __CONFIG_HPP__
 
+#include "NoCopy.hpp"
+
 extern "C" {
     struct ini_t;
 }
@@ -10,6 +12,8 @@ class Config
 public:
     explicit Config( const char* name );
     ~Config();
+
+    NoCopy( Config );
 
     template<typename T>
     T Get( const char* section, const char* key, T defaultVal );

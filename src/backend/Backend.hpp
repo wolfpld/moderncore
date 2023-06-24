@@ -4,6 +4,8 @@
 #include <functional>
 #include <vulkan/vulkan.h>
 
+#include "../util/NoCopy.hpp"
+
 class VlkDevice;
 class VlkSwapchain;
 
@@ -11,6 +13,8 @@ class Backend
 {
 public:
     virtual ~Backend() = default;
+
+    NoCopy( Backend );
 
     virtual void VulkanInit( VlkDevice& device, VkRenderPass renderPass, const VlkSwapchain& swapchain ) = 0;
 

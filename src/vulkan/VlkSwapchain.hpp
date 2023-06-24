@@ -6,6 +6,7 @@
 #include <vulkan/vulkan.h>
 
 #include "VlkSwapchainProperties.hpp"
+#include "../util/NoCopy.hpp"
 
 class VlkDevice;
 
@@ -14,6 +15,8 @@ class VlkSwapchain
 public:
     VlkSwapchain( VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, const VlkDevice& device );
     ~VlkSwapchain();
+
+    NoCopy( VlkSwapchain );
 
     [[nodiscard]] VkFormat GetFormat() const { return m_format.format; }
     [[nodiscard]] uint32_t GetWidth() const { return m_extent.width; }

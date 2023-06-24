@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 
+#include "NoCopy.hpp"
+
 class FileWrapper
 {
 public:
@@ -15,6 +17,8 @@ public:
     {
         if( m_file ) fclose( m_file );
     }
+
+    NoCopy( FileWrapper );
 
     bool Read( void* dst, size_t size )
     {

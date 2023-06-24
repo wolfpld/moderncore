@@ -4,6 +4,8 @@
 #include <functional>
 #include <wayland-server-core.h>
 
+#include "NoCopy.hpp"
+
 template<typename T>
 class Listener
 {
@@ -26,10 +28,7 @@ public:
         wl_list_remove( &m_listener.link );
     }
 
-    Listener( const Listener& ) = delete;
-    Listener( Listener&& ) = delete;
-    Listener& operator=( const Listener& ) = delete;
-    Listener& operator=( Listener&& ) = delete;
+    NoCopy( Listener );
 
 private:
     wl_listener m_listener;

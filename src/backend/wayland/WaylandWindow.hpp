@@ -9,6 +9,8 @@
 #include "xdg-decoration-unstable-v1-client-protocol.h"
 #include "xdg-shell-client-protocol.h"
 
+#include "../../util/NoCopy.hpp"
+
 class SoftwareCursor;
 class VlkDevice;
 
@@ -17,6 +19,8 @@ class WaylandWindow
 public:
     WaylandWindow( wl_compositor* compositor, xdg_wm_base* xdgWmBase, zxdg_decoration_manager_v1* decorationManager, wl_display* dpy, VkInstance vkInstance, std::function<void()> onClose );
     ~WaylandWindow();
+
+    NoCopy( WaylandWindow );
 
     void VulkanInit( VlkDevice& device, VkRenderPass renderPass, uint32_t width, uint32_t height );
 

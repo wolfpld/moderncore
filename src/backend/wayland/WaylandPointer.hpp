@@ -3,6 +3,8 @@
 
 #include <wayland-client.h>
 
+#include "../../util/NoCopy.hpp"
+
 class WaylandSeat;
 
 class WaylandPointer
@@ -10,6 +12,8 @@ class WaylandPointer
 public:
     explicit WaylandPointer( wl_pointer* pointer, WaylandSeat& seat );
     ~WaylandPointer();
+
+    NoCopy( WaylandPointer );
 
 private:
     void PointerEnter( wl_pointer* pointer, uint32_t serial, wl_surface* surf, wl_fixed_t sx, wl_fixed_t sy );

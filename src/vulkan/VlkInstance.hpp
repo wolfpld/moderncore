@@ -5,6 +5,8 @@
 #include <vector>
 #include <vulkan/vulkan.h>
 
+#include "../util/NoCopy.hpp"
+
 enum class VlkInstanceType
 {
     Wayland
@@ -15,6 +17,8 @@ class VlkInstance
 public:
     explicit VlkInstance( VlkInstanceType instanceType );
     ~VlkInstance();
+
+    NoCopy( VlkInstance );
 
     [[nodiscard]] std::vector<VkPhysicalDevice> QueryPhysicalDevices() const;
 

@@ -4,6 +4,7 @@
 #include <vulkan/vulkan.h>
 
 #include "../../contrib/vk_mem_alloc.h"
+#include "../util/NoCopy.hpp"
 
 class VlkBuffer
 {
@@ -18,6 +19,8 @@ public:
 
     VlkBuffer( VmaAllocator allocator, const VkBufferCreateInfo& createInfo, int flags = 0 );
     ~VlkBuffer();
+
+    NoCopy( VlkBuffer );
 
     void Flush( VkDeviceSize offset, VkDeviceSize size );
     void Invalidate( VkDeviceSize offset, VkDeviceSize size );

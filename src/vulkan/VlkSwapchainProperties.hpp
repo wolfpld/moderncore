@@ -4,10 +4,14 @@
 #include <vector>
 #include <vulkan/vulkan.h>
 
+#include "../util/NoCopy.hpp"
+
 class VlkSwapchainProperties
 {
 public:
     VlkSwapchainProperties( VkPhysicalDevice physicalDevice, VkSurfaceKHR surface );
+
+    NoCopy( VlkSwapchainProperties );
 
     [[nodiscard]] VkSurfaceCapabilitiesKHR GetCapabilities() const { return m_capabilities; }
     [[nodiscard]] const std::vector<VkSurfaceFormatKHR>& GetFormats() const { return m_formats; }

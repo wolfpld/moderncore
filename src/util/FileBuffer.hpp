@@ -3,11 +3,15 @@
 
 #include <stddef.h>
 
+#include "NoCopy.hpp"
+
 class FileBuffer
 {
 public:
     explicit FileBuffer( const char* fn );
     ~FileBuffer();
+
+    NoCopy( FileBuffer );
 
     [[nodiscard]] const char* Data() const { return m_buffer; }
     [[nodiscard]] size_t Size() const { return m_size; }

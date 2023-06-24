@@ -107,7 +107,7 @@ struct BitmapInfoHeader
 };
 
 // TODO: Support 16-bit color and PNG payload.
-static bool LoadCursor( CursorType cursorType, unordered_flat_map<uint32_t, CursorSize>& cursor, FileWrapper& f, size_t offset )
+static bool LoadCursor( CursorType cursorType, unordered_flat_map<uint32_t, CursorSize>& cursor, FileWrapper& f, size_t offset, bool insertFrame )
 {
     IconHeader hdr;
     if( !f.Read( &hdr, sizeof( hdr ) ) ) return false;
@@ -236,7 +236,9 @@ static bool LoadCursor( CursorType cursorType, unordered_flat_map<uint32_t, Curs
         auto it = cursor.find( w );
         if( it == cursor.end() ) it = cursor.emplace( w, CursorSize {} ).first;
 
-        it->second.type[type].bitmaps.emplace_back( CursorBitmap { std::move( bitmap ), v.xhot, v.yhot } );
+        auto& cursorData = it->second.type[type];
+        cursorData.bitmaps.emplace_back( CursorBitmap { std::move( bitmap ), v.xhot, v.yhot } );
+        if( insertFrame ) cursorData.frames.emplace_back( CursorFrame {} );
     }
 
     return true;
@@ -272,7 +274,7 @@ static bool LoadCursor( const std::string& path, CursorType cursorType, unordere
     if( memcmp( &magic, "RIFF", 4 ) != 0 )
     {
         fseek( f, 0, SEEK_SET );
-        return LoadCursor( cursorType, cursor, f, 0 );
+        return LoadCursor( cursorType, cursor, f, 0, true );
     }
 
     if( fseek( f, 4, SEEK_CUR ) != 0 ) return false;
@@ -305,7 +307,7 @@ static bool LoadCursor( const std::string& path, CursorType cursorType, unordere
                 if( !f.Read( &icon, sizeof( RiffChunk ) ) ) return false;
                 if( memcmp( &icon.fourcc, "icon", 4 ) != 0 ) return false;
 
-                if( !LoadCursor( cursorType, cursor, f, ftell( f ) ) ) return false;
+                if( !LoadCursor( cursorType, cursor, f, ftell( f ), false ) ) return false;
             }
             gotFrames = true;
         }

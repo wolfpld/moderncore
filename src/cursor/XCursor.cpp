@@ -207,8 +207,9 @@ static bool LoadCursor( const std::string& path, int cursorType, unordered_flat_
         auto it = cursor.find( v.subtype );
         if( it == cursor.end() ) it = cursor.emplace( v.subtype, CursorSize {} ).first;
 
-        it->second.type[cursorType].bitmaps.emplace_back( CursorBitmap { std::move( bitmap ), img.xhot, img.yhot } );
-        // TODO
+        auto& cursorData = it->second.type[cursorType];
+        cursorData.frames.emplace_back( CursorFrame { img.delay * 1000, (uint32_t)cursorData.bitmaps.size() } );
+        cursorData.bitmaps.emplace_back( CursorBitmap { std::move( bitmap ), img.xhot, img.yhot } );
     }
 
     return true;

@@ -20,7 +20,7 @@ struct CursorBitmap
 
 struct CursorFrame
 {
-    uint32_t delay;
+    uint32_t delay;     // microseconds
     uint32_t frame;
 };
 

@@ -269,7 +269,6 @@ struct AniHeader
     uint32_t flags;
 };
 
-// TODO: Handle rate and seq tables.
 static bool LoadCursor( const std::string& path, CursorType cursorType, unordered_flat_map<uint32_t, CursorSize>& cursor )
 {
     FileWrapper f( path.c_str(), "rb" );
@@ -290,6 +289,9 @@ static bool LoadCursor( const std::string& path, CursorType cursorType, unordere
     bool gotFrames = false;
     bool gotAniHeader = false;
     AniHeader aniHeader;
+
+    std::vector<uint32_t> rate;
+    std::vector<uint32_t> seq;
 
     for(;;)
     {
@@ -330,11 +332,17 @@ static bool LoadCursor( const std::string& path, CursorType cursorType, unordere
         }
         else if( memcmp( &chunk.fourcc, "rate", 4 ) == 0 )
         {
-            fseek( f, chunk.size, SEEK_CUR );
+            assert( gotAniHeader );
+            if( chunk.size != sizeof( uint32_t ) * aniHeader.numSteps ) return false;
+            rate.resize( aniHeader.numSteps );
+            if( !f.Read( rate.data(), sizeof( uint32_t ) * aniHeader.numSteps ) ) return false;
         }
         else if( memcmp( &chunk.fourcc, "seq ", 4 ) == 0 )
         {
-            fseek( f, chunk.size, SEEK_CUR );
+            assert( gotAniHeader );
+            if( chunk.size != sizeof( uint32_t ) * aniHeader.numSteps ) return false;
+            seq.resize( aniHeader.numSteps );
+            if( !f.Read( seq.data(), sizeof( uint32_t ) * aniHeader.numSteps ) ) return false;
         }
         else
         {
@@ -345,11 +353,49 @@ static bool LoadCursor( const std::string& path, CursorType cursorType, unordere
     for( auto& v : cursor )
     {
         auto& cursorData = v.second.type[(int)cursorType];
-        cursorData.frames.resize( cursorData.bitmaps.size() );
-        for( uint32_t i=0; i<cursorData.bitmaps.size(); i++ )
+        if( rate.empty() )
         {
-            cursorData.frames[i].delay = aniHeader.displayRate * 16667;
-            cursorData.frames[i].frame = i;
+            if( seq.empty() )
+            {
+                cursorData.frames.resize( cursorData.bitmaps.size() );
+                for( uint32_t i=0; i<cursorData.bitmaps.size(); i++ )
+                {
+                    cursorData.frames[i].delay = aniHeader.displayRate * 16667;
+                    cursorData.frames[i].frame = i;
+                }
+            }
+            else
+            {
+                cursorData.frames.resize( seq.size() );
+                for( uint32_t i=0; i<seq.size(); i++ )
+                {
+                    cursorData.frames[i].delay = aniHeader.displayRate * 16667;
+                    cursorData.frames[i].frame = seq[i];
+                }
+            }
+        }
+        else
+        {
+            if( seq.empty() )
+            {
+                if( rate.size() != cursorData.bitmaps.size() ) return false;
+                cursorData.frames.resize( rate.size() );
+                for( uint32_t i=0; i<rate.size(); i++ )
+                {
+                    cursorData.frames[i].delay = rate[i] * 16667;
+                    cursorData.frames[i].frame = i;
+                }
+            }
+            else
+            {
+                if( rate.size() != seq.size() ) return false;
+                cursorData.frames.resize( seq.size() );
+                for( uint32_t i=0; i<seq.size(); i++ )
+                {
+                    cursorData.frames[i].delay = rate[i] * 16667;
+                    cursorData.frames[i].frame = seq[i];
+                }
+            }
         }
     }
 

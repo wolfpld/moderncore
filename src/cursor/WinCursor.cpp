@@ -342,6 +342,17 @@ static bool LoadCursor( const std::string& path, CursorType cursorType, unordere
         }
     }
 
+    for( auto& v : cursor )
+    {
+        auto& cursorData = v.second.type[(int)cursorType];
+        cursorData.frames.resize( cursorData.bitmaps.size() );
+        for( uint32_t i=0; i<cursorData.bitmaps.size(); i++ )
+        {
+            cursorData.frames[i].delay = aniHeader.displayRate * 16667;
+            cursorData.frames[i].frame = i;
+        }
+    }
+
     return gotFrames;
 }
 

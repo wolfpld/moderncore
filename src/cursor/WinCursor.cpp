@@ -116,6 +116,18 @@ static bool LoadCursor( CursorType cursorType, unordered_flat_map<uint32_t, Curs
     std::vector<IconEntry> entries( hdr.count );
     if( !f.Read( entries.data(), sizeof( IconEntry ) * hdr.count ) ) return false;
 
+    uint32_t bestBitCount = 0;
+    for( uint32_t i=0; i<hdr.count; i++ )
+    {
+        BitmapInfoHeader bmpHdr;
+        fseek( f, offset + entries[i].dataOffset, SEEK_SET );
+        if( !f.Read( &bmpHdr, sizeof( bmpHdr ) ) ) return false;
+        if( bmpHdr.size != sizeof( bmpHdr ) ) return false;
+        if( bmpHdr.compression != 0 ) return false;
+
+        if( bmpHdr.bitCount > bestBitCount ) bestBitCount = bmpHdr.bitCount;
+    }
+
     const auto type = (int)cursorType;
     for( auto& v : entries )
     {
@@ -132,13 +144,41 @@ static bool LoadCursor( CursorType cursorType, unordered_flat_map<uint32_t, Curs
 
         if( (w*h) % 8 != 0 ) return false;
 
+        const auto stride = ( w + 31 ) / 32 * 32;
+        const auto msz = stride*h/8;
+
+        if( bmpHdr.bitCount != bestBitCount )
+        {
+            const int colors = bmpHdr.clrUsed ? bmpHdr.clrUsed : (1 << bmpHdr.bitCount);
+            switch( bmpHdr.bitCount )
+            {
+            case 1:
+                fseek( f, sizeof( uint32_t ) * colors + (w*h/8) + msz, SEEK_CUR );
+                break;
+            case 4:
+                fseek( f, sizeof( uint32_t ) * colors + (w*h/2) + msz, SEEK_CUR );
+                break;
+            case 8:
+                fseek( f, sizeof( uint32_t ) * colors + (w*h) + msz, SEEK_CUR );
+                break;
+            case 16:
+                return false;
+            case 32:
+                fseek( f, w*h*4 + msz, SEEK_CUR );
+                break;
+            default:
+                return false;
+            };
+            continue;
+        }
+
         auto bitmap = std::make_unique<Bitmap>( w, h );
 
         switch( bmpHdr.bitCount )
         {
         case 1:
         {
-            int colors = bmpHdr.clrUsed ? bmpHdr.clrUsed : (1 << bmpHdr.bitCount);
+            const int colors = bmpHdr.clrUsed ? bmpHdr.clrUsed : (1 << bmpHdr.bitCount);
             std::vector<uint32_t> palette( colors );
             if( !f.Read( palette.data(), sizeof( uint32_t ) * colors ) ) return false;
 
@@ -162,7 +202,7 @@ static bool LoadCursor( CursorType cursorType, unordered_flat_map<uint32_t, Curs
         case 4:
         case 8:
         {
-            int colors = bmpHdr.clrUsed ? bmpHdr.clrUsed : (1 << bmpHdr.bitCount);
+            const int colors = bmpHdr.clrUsed ? bmpHdr.clrUsed : (1 << bmpHdr.bitCount);
             std::vector<uint32_t> palette( colors );
             if( !f.Read( palette.data(), sizeof( uint32_t ) * colors ) ) return false;
 
@@ -209,8 +249,6 @@ static bool LoadCursor( CursorType cursorType, unordered_flat_map<uint32_t, Curs
             std::swap( px[0], px[2] );
         }
 
-        const auto stride = ( w + 31 ) / 32 * 32;
-        const auto msz = stride*h/8;
         auto mask = (uint8_t*)alloca( msz );
         if( !f.Read( mask, msz ) ) return false;
 

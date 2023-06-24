@@ -32,16 +32,15 @@ SoftwareCursor::SoftwareCursor( VlkDevice& device, VkRenderPass renderPass, uint
 
     m_shader = std::make_unique<VlkShader>( stages );
 
-    VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
-    samplerLayoutBinding.binding = 0;
-    samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    samplerLayoutBinding.descriptorCount = 1;
-    samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    constexpr std::array bindings = {
+        VkDescriptorSetLayoutBinding { 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT },
+        VkDescriptorSetLayoutBinding { 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT }
+    };
 
     VkDescriptorSetLayoutCreateInfo descriptorSetLayoutInfo = { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO };
     descriptorSetLayoutInfo.flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_PUSH_DESCRIPTOR_BIT_KHR;
-    descriptorSetLayoutInfo.bindingCount = 1;
-    descriptorSetLayoutInfo.pBindings = &samplerLayoutBinding;
+    descriptorSetLayoutInfo.bindingCount = bindings.size();
+    descriptorSetLayoutInfo.pBindings = bindings.data();
 
     m_descriptorSetLayout = std::make_unique<VlkDescriptorSetLayout>( device, descriptorSetLayoutInfo );
 
@@ -50,7 +49,7 @@ SoftwareCursor::SoftwareCursor( VlkDevice& device, VkRenderPass renderPass, uint
     bindingDescription.stride = sizeof( Vertex );
     bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-    VkVertexInputAttributeDescription attributeDescriptions[] = {
+    constexpr VkVertexInputAttributeDescription attributeDescriptions[] = {
         { 0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof( Vertex, pos ) },
         { 1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof( Vertex, uv ) }
     };
@@ -141,6 +140,11 @@ SoftwareCursor::SoftwareCursor( VlkDevice& device, VkRenderPass renderPass, uint
 
     m_indexBuffer = std::make_unique<VlkBuffer>( device, bufferInfo, VlkBuffer::WillWrite );
 
+    bufferInfo.size = sizeof( ScreenUniform );
+    bufferInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+
+    m_uniformBuffer = std::make_unique<VlkBuffer>( device, bufferInfo, VlkBuffer::WillWrite );
+
     CursorTheme theme;
     auto& cursor = theme.Cursor();
     const auto& bitmaps = *cursor.Get( theme.Size(), CursorType::Default );
@@ -163,7 +167,7 @@ SoftwareCursor::SoftwareCursor( VlkDevice& device, VkRenderPass renderPass, uint
     memcpy( stagingBuffer->Ptr(), bmp.bitmap->Data(), m_w * m_h * 4 );
     stagingBuffer->Flush();
 
-    Vertex vertices[] = {
+    const Vertex vertices[] = {
         { { 0, 0 }, { 0, 0 } },
         { { 0, m_h }, { 0, 1 } },
         { { m_w, 0 }, { 1, 0 } },
@@ -173,19 +177,34 @@ SoftwareCursor::SoftwareCursor( VlkDevice& device, VkRenderPass renderPass, uint
     memcpy( m_vertexBuffer->Ptr(), vertices, sizeof( vertices ) );
     m_vertexBuffer->Flush();
 
-    uint16_t indices[] = { 0, 1, 2, 2, 1, 3 };
+    constexpr uint16_t indices[] = { 0, 1, 2, 2, 1, 3 };
     memcpy( m_indexBuffer->Ptr(), indices, sizeof( indices ) );
     m_indexBuffer->Flush();
+
+    const ScreenUniform uniform = { { float( screenWidth ), float( screenHeight ) } };
+    memcpy( m_uniformBuffer->Ptr(), &uniform, sizeof( uniform ) );
+    m_uniformBuffer->Flush();
 
     m_imageInfo = {};
     m_imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
     m_imageInfo.imageView = *m_image;
     m_imageInfo.sampler = *m_sampler;
 
-    m_descriptorWrite = { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };
-    m_descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    m_descriptorWrite.descriptorCount = 1;
-    m_descriptorWrite.pImageInfo = &m_imageInfo;
+    m_uniformInfo = {};
+    m_uniformInfo.buffer = *m_uniformBuffer;
+    m_uniformInfo.offset = 0;
+    m_uniformInfo.range = sizeof( ScreenUniform );
+
+    m_descriptorWrite[0] = { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };
+    m_descriptorWrite[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    m_descriptorWrite[0].descriptorCount = 1;
+    m_descriptorWrite[0].pBufferInfo = &m_uniformInfo;
+
+    m_descriptorWrite[1] = { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET };
+    m_descriptorWrite[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    m_descriptorWrite[1].descriptorCount = 1;
+    m_descriptorWrite[1].pImageInfo = &m_imageInfo;
+    m_descriptorWrite[1].dstBinding = 1;
 }
 
 SoftwareCursor::~SoftwareCursor()
@@ -206,7 +225,7 @@ void SoftwareCursor::Render( VkCommandBuffer cmdBuf )
     vkCmdBindPipeline( cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, *m_pipeline );
     vkCmdBindVertexBuffers( cmdBuf, 0, 1, vtx.data(), offsets.data() );
     vkCmdBindIndexBuffer( cmdBuf, *m_indexBuffer, 0, VK_INDEX_TYPE_UINT16 );
-    CmdPushDescriptorSetKHR( cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, *m_pipelineLayout, 0, 1, &m_descriptorWrite );
+    CmdPushDescriptorSetKHR( cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, *m_pipelineLayout, 0, 2, m_descriptorWrite );
     vkCmdPushConstants( cmdBuf, *m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof( Position ), &m_position );
     vkCmdDrawIndexed( cmdBuf, 6, 1, 0, 0, 0 );
 }

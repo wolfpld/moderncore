@@ -29,6 +29,11 @@ class SoftwareCursor
         glm::vec2 pos;
     };
 
+    struct ScreenUniform
+    {
+        glm::vec2 screenSize;
+    };
+
 public:
     explicit SoftwareCursor( VlkDevice& device, VkRenderPass renderPass, uint32_t screenWidth, uint32_t screenHeight );
     ~SoftwareCursor();
@@ -49,11 +54,13 @@ private:
     std::unique_ptr<VlkPipeline> m_pipeline;
     std::unique_ptr<VlkBuffer> m_vertexBuffer;
     std::unique_ptr<VlkBuffer> m_indexBuffer;
+    std::unique_ptr<VlkBuffer> m_uniformBuffer;
     std::unique_ptr<Texture> m_image;
     std::unique_ptr<VlkSampler> m_sampler;
 
     VkDescriptorImageInfo m_imageInfo;
-    VkWriteDescriptorSet m_descriptorWrite;
+    VkDescriptorBufferInfo m_uniformInfo;
+    VkWriteDescriptorSet m_descriptorWrite[2];
 };
 
 #endif

@@ -1,3 +1,4 @@
+#include <array>
 #include <string.h>
 
 #include "SoftwareCursor.hpp"
@@ -24,12 +25,12 @@ SoftwareCursor::SoftwareCursor( VlkDevice& device, VkRenderPass renderPass, uint
     FileBuffer vert( "SoftwareCursor.vert.spv" );
     FileBuffer frag( "SoftwareCursor.frag.spv" );
 
-    VlkShader::Stage stages[] = {
-        { std::make_shared<VlkShaderModule>( device, vert.Data(), vert.Size() ), VK_SHADER_STAGE_VERTEX_BIT },
-        { std::make_shared<VlkShaderModule>( device, frag.Data(), frag.Size() ), VK_SHADER_STAGE_FRAGMENT_BIT }
+    std::array stages = {
+        VlkShader::Stage { std::make_shared<VlkShaderModule>( device, vert.Data(), vert.Size() ), VK_SHADER_STAGE_VERTEX_BIT },
+        VlkShader::Stage { std::make_shared<VlkShaderModule>( device, frag.Data(), frag.Size() ), VK_SHADER_STAGE_FRAGMENT_BIT }
     };
 
-    m_shader = std::make_unique<VlkShader>( stages, 2 );
+    m_shader = std::make_unique<VlkShader>( stages.data(), stages.size() );
 
     VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
     samplerLayoutBinding.binding = 0;

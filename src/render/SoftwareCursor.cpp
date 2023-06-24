@@ -30,7 +30,7 @@ SoftwareCursor::SoftwareCursor( VlkDevice& device, VkRenderPass renderPass, uint
         VlkShader::Stage { std::make_shared<VlkShaderModule>( device, frag.Data(), frag.Size() ), VK_SHADER_STAGE_FRAGMENT_BIT }
     };
 
-    m_shader = std::make_unique<VlkShader>( stages.data(), stages.size() );
+    m_shader = std::make_unique<VlkShader>( stages );
 
     VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
     samplerLayoutBinding.binding = 0;

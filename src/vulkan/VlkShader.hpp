@@ -5,6 +5,8 @@
 #include <vector>
 #include <vulkan/vulkan.h>
 
+#include "../util/DataContainer.hpp"
+
 class VlkShaderModule;
 
 class VlkShader
@@ -15,6 +17,9 @@ public:
         std::shared_ptr<VlkShaderModule> module;    // Shader ctor will move this into m_modules
         VkShaderStageFlagBits stage;
     };
+
+    template<DataContainer T>
+    explicit VlkShader( T& stages ) : VlkShader( stages.data(), stages.size() ) {}
 
     VlkShader( Stage* stages, size_t count );
 

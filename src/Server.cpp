@@ -3,6 +3,7 @@
 
 #include "Server.hpp"
 #include "backend/wayland/BackendWayland.hpp"
+#include "cursor/CursorLogic.hpp"
 #include "plumbing/Display.hpp"
 #include "render/Background.hpp"
 #include "util/Logs.hpp"
@@ -115,7 +116,9 @@ Server::Server()
     setenv( "WAYLAND_DISPLAY", m_dpy->Socket(), 1 );
 
     m_backend->VulkanInit( *m_vkDevice, *m_renderPass, *m_swapchain );
+
     m_background = std::make_unique<Background>();
+    m_cursorLogic = std::make_unique<CursorLogic>();
 }
 
 Server::~Server()
@@ -154,7 +157,7 @@ void Server::Render()
 
     vkCmdBeginRenderPass( *m_cmdBufs[frameIdx], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
 
-    m_backend->RenderCursor( *m_cmdBufs[frameIdx] );
+    m_backend->RenderCursor( *m_cmdBufs[frameIdx], *m_cursorLogic );
 
     vkCmdEndRenderPass( *m_cmdBufs[frameIdx] );
     m_cmdBufs[frameIdx]->End();

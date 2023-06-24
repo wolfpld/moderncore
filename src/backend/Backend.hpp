@@ -6,6 +6,7 @@
 
 #include "../util/NoCopy.hpp"
 
+class CursorLogic;
 class VlkDevice;
 class VlkSwapchain;
 
@@ -21,7 +22,7 @@ public:
     virtual void Run( const std::function<void()>& render ) = 0;
     virtual void Stop() = 0;
 
-    virtual void RenderCursor( VkCommandBuffer cmdBuf ) = 0;
+    virtual void RenderCursor( VkCommandBuffer cmdBuf, CursorLogic& cursorLogic ) = 0;
 
     virtual operator VkSurfaceKHR() const = 0;
 

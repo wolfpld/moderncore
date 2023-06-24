@@ -79,9 +79,9 @@ void WaylandWindow::SetScale( int32_t scale )
     wl_surface_set_buffer_scale( m_surface, scale );
 }
 
-void WaylandWindow::RenderCursor( VkCommandBuffer cmdBuf )
+void WaylandWindow::RenderCursor( VkCommandBuffer cmdBuf, CursorLogic& cursorLogic )
 {
-    m_cursor->Render( cmdBuf );
+    m_cursor->Render( cmdBuf, cursorLogic );
 }
 
 void WaylandWindow::PointerMotion( double x, double y )

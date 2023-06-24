@@ -7,6 +7,9 @@
 
 #include "../util/NoCopy.hpp"
 
+class Bitmap;
+struct CursorBitmap;
+class CursorLogic;
 class Texture;
 class VlkBuffer;
 class VlkDescriptorSetLayout;
@@ -41,12 +44,16 @@ public:
     NoCopy( SoftwareCursor );
 
     void SetPosition( float x, float y );
-    void Render( VkCommandBuffer cmdBuf );
+    void Render( VkCommandBuffer cmdBuf, CursorLogic& cursorLogic );
 
 private:
+    void UpdateVertexBuffer( uint32_t width, uint32_t height );
+    void UpdateImage( const CursorBitmap& cursorData );
+
     Position m_position;
 
     uint32_t m_w, m_h;
+    Bitmap* m_currentBitmap;
 
     std::unique_ptr<VlkShader> m_shader;
     std::unique_ptr<VlkDescriptorSetLayout> m_descriptorSetLayout;
@@ -58,6 +65,7 @@ private:
     std::unique_ptr<Texture> m_image;
     std::unique_ptr<VlkSampler> m_sampler;
 
+    VlkDevice& m_device;
     VkDescriptorImageInfo m_imageInfo;
     VkDescriptorBufferInfo m_uniformInfo;
     VkWriteDescriptorSet m_descriptorWrite[2];

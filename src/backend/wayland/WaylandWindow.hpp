@@ -11,6 +11,7 @@
 
 #include "../../util/NoCopy.hpp"
 
+class CursorLogic;
 class SoftwareCursor;
 class VlkDevice;
 
@@ -26,7 +27,7 @@ public:
 
     void Show( const std::function<void()>& render );
     void SetScale( int32_t scale );
-    void RenderCursor( VkCommandBuffer cmdBuf );
+    void RenderCursor( VkCommandBuffer cmdBuf, CursorLogic& cursorLogic );
 
     void PointerMotion( double x, double y );
 

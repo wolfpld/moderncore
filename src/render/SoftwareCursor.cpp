@@ -1,9 +1,11 @@
+#include <assert.h>
 #include <array>
 #include <string.h>
 
 #include "SoftwareCursor.hpp"
 #include "Texture.hpp"
 #include "../cursor/CursorBase.hpp"
+#include "../cursor/CursorLogic.hpp"
 #include "../cursor/CursorTheme.hpp"
 #include "../util/Bitmap.hpp"
 #include "../util/FileBuffer.hpp"
@@ -21,6 +23,10 @@
 
 SoftwareCursor::SoftwareCursor( VlkDevice& device, VkRenderPass renderPass, uint32_t screenWidth, uint32_t screenHeight )
     : m_position {}
+    , m_w( 0 )
+    , m_h( 0 )
+    , m_currentBitmap( nullptr )
+    , m_device( device )
 {
     FileBuffer vert( "SoftwareCursor.vert.spv" );
     FileBuffer frag( "SoftwareCursor.frag.spv" );
@@ -129,14 +135,9 @@ SoftwareCursor::SoftwareCursor( VlkDevice& device, VkRenderPass renderPass, uint
     m_pipeline = std::make_unique<VlkPipeline>( device, pipelineInfo );
 
     VkBufferCreateInfo bufferInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
-    bufferInfo.size = sizeof( Vertex ) * 4;
-    bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-    m_vertexBuffer = std::make_unique<VlkBuffer>( device, bufferInfo, VlkBuffer::WillWrite );
-
     bufferInfo.size = sizeof( uint16_t ) * 6;
     bufferInfo.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
     m_indexBuffer = std::make_unique<VlkBuffer>( device, bufferInfo, VlkBuffer::WillWrite );
 
@@ -144,13 +145,6 @@ SoftwareCursor::SoftwareCursor( VlkDevice& device, VkRenderPass renderPass, uint
     bufferInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 
     m_uniformBuffer = std::make_unique<VlkBuffer>( device, bufferInfo, VlkBuffer::WillWrite );
-
-    CursorTheme theme;
-    auto& cursor = theme.Cursor();
-    const auto& bitmaps = *cursor.Get( theme.Size(), CursorType::Default );
-    auto bmp = bitmaps[0];
-    m_w = bmp.bitmap->Width();
-    m_h = bmp.bitmap->Height();
 
     VkSamplerCreateInfo samplerInfo = { VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
     samplerInfo.magFilter = VK_FILTER_NEAREST;
@@ -160,22 +154,6 @@ SoftwareCursor::SoftwareCursor( VlkDevice& device, VkRenderPass renderPass, uint
     samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 
     m_sampler = std::make_unique<VlkSampler>( device, samplerInfo );
-
-    m_image = std::make_unique<Texture>( device, *bmp.bitmap );
-
-    auto stagingBuffer = std::make_unique<VlkBuffer>( device, bufferInfo, VlkBuffer::WillWrite | VlkBuffer::PreferHost );
-    memcpy( stagingBuffer->Ptr(), bmp.bitmap->Data(), m_w * m_h * 4 );
-    stagingBuffer->Flush();
-
-    const Vertex vertices[] = {
-        { { 0, 0 }, { 0, 0 } },
-        { { 0, m_h }, { 0, 1 } },
-        { { m_w, 0 }, { 1, 0 } },
-        { { m_w, m_h }, { 1, 1 } }
-    };
-
-    memcpy( m_vertexBuffer->Ptr(), vertices, sizeof( vertices ) );
-    m_vertexBuffer->Flush();
 
     constexpr uint16_t indices[] = { 0, 1, 2, 2, 1, 3 };
     memcpy( m_indexBuffer->Ptr(), indices, sizeof( indices ) );
@@ -187,7 +165,6 @@ SoftwareCursor::SoftwareCursor( VlkDevice& device, VkRenderPass renderPass, uint
 
     m_imageInfo = {};
     m_imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    m_imageInfo.imageView = *m_image;
     m_imageInfo.sampler = *m_sampler;
 
     m_uniformInfo = {};
@@ -217,8 +194,19 @@ void SoftwareCursor::SetPosition( float x, float y )
     m_position.pos.y = y;
 }
 
-void SoftwareCursor::Render( VkCommandBuffer cmdBuf )
+void SoftwareCursor::Render( VkCommandBuffer cmdBuf, CursorLogic& cursorLogic )
 {
+    // NeedUpdate() needs to be called first, as it pushes the logic forward.
+    if( cursorLogic.NeedUpdate() || m_w == 0 )
+    {
+        auto& cursorData = cursorLogic.GetCursorData();
+
+        const auto w = cursorData.bitmap->Width();
+        const auto h = cursorData.bitmap->Height();
+        if( w != m_w || h != m_h ) UpdateVertexBuffer( w, h );
+        if( cursorData.bitmap.get() != m_currentBitmap ) UpdateImage( cursorData );
+    }
+
     const std::array<VkBuffer, 1> vtx = { *m_vertexBuffer };
     const std::array<VkDeviceSize, 1> offsets = { 0 };
 
@@ -228,4 +216,39 @@ void SoftwareCursor::Render( VkCommandBuffer cmdBuf )
     CmdPushDescriptorSetKHR( cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, *m_pipelineLayout, 0, 2, m_descriptorWrite );
     vkCmdPushConstants( cmdBuf, *m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof( Position ), &m_position );
     vkCmdDrawIndexed( cmdBuf, 6, 1, 0, 0, 0 );
+}
+
+void SoftwareCursor::UpdateVertexBuffer( uint32_t width, uint32_t height )
+{
+    assert( m_w != width );
+    assert( m_h != height );
+    m_w = width;
+    m_h = height;
+
+    VkBufferCreateInfo bufferInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+    bufferInfo.size = sizeof( Vertex ) * 4;
+    bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    m_vertexBuffer = std::make_unique<VlkBuffer>( m_device, bufferInfo, VlkBuffer::WillWrite );
+
+    const Vertex vertices[] = {
+        { { 0, 0 }, { 0, 0 } },
+        { { 0, height }, { 0, 1 } },
+        { { width, 0 }, { 1, 0 } },
+        { { width, height }, { 1, 1 } }
+    };
+
+    memcpy( m_vertexBuffer->Ptr(), vertices, sizeof( vertices ) );
+    m_vertexBuffer->Flush();
+}
+
+void SoftwareCursor::UpdateImage( const CursorBitmap& cursorData )
+{
+    const auto cursorPtr = cursorData.bitmap.get();
+    assert( cursorPtr != m_currentBitmap );
+    m_currentBitmap = cursorPtr;
+
+    m_image = std::make_unique<Texture>( m_device, *cursorPtr );
+    m_imageInfo.imageView = *m_image;
 }

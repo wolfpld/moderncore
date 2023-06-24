@@ -9,6 +9,7 @@
 
 class Backend;
 class Background;
+class CursorLogic;
 class Display;
 class VlkCommandBuffer;
 class VlkCommandPool;
@@ -49,6 +50,7 @@ private:
 
     uint32_t m_frameIdx = 0;
 
+    std::unique_ptr<CursorLogic> m_cursorLogic;
     std::unique_ptr<Background> m_background;
 };
 

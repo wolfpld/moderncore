@@ -236,7 +236,7 @@ static bool LoadCursor( CursorType cursorType, unordered_flat_map<uint32_t, Curs
         auto it = cursor.find( w );
         if( it == cursor.end() ) it = cursor.emplace( w, CursorSize {} ).first;
 
-        it->second.type[type].emplace_back( CursorBitmap { std::move( bitmap ), v.xhot, v.yhot, 0 } );
+        it->second.type[type].bitmaps.emplace_back( CursorBitmap { std::move( bitmap ), v.xhot, v.yhot } );
     }
 
     return true;

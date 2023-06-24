@@ -207,7 +207,8 @@ static bool LoadCursor( const std::string& path, int cursorType, unordered_flat_
         auto it = cursor.find( v.subtype );
         if( it == cursor.end() ) it = cursor.emplace( v.subtype, CursorSize {} ).first;
 
-        it->second.type[cursorType].emplace_back( CursorBitmap { std::move( bitmap ), img.xhot, img.yhot, img.delay } );
+        it->second.type[cursorType].bitmaps.emplace_back( CursorBitmap { std::move( bitmap ), img.xhot, img.yhot } );
+        // TODO
     }
 
     return true;
@@ -223,7 +224,7 @@ XCursor::XCursor( const char* theme )
     {
         for( int i=0; i<numTypes; i++ )
         {
-            if( std::any_of( m_cursor.begin(), m_cursor.end(), [i]( const auto& v ){ return !v.second.type[i].empty(); } ) ) continue;
+            if( std::any_of( m_cursor.begin(), m_cursor.end(), [i]( const auto& v ){ return !v.second.type[i].bitmaps.empty(); } ) ) continue;
 
             const auto path = td + CursorNames[i];
             if( LoadCursor( path, i, m_cursor ) ) left--;

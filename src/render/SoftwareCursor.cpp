@@ -200,7 +200,7 @@ void SoftwareCursor::Render( VkCommandBuffer cmdBuf, CursorLogic& cursorLogic )
     // NeedUpdate() needs to be called first, as it pushes the logic forward.
     if( cursorLogic.NeedUpdate() || m_w == 0 )
     {
-        auto& cursorData = cursorLogic.GetCursorData();
+        auto& cursorData = cursorLogic.GetCurrentCursorFrame();
 
         const auto w = cursorData.bitmap->Width();
         const auto h = cursorData.bitmap->Height();

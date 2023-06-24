@@ -43,7 +43,7 @@ void CursorLogic::SetCursor( CursorType type )
 bool CursorLogic::NeedUpdate()
 {
     assert( m_cursor );
-    if( m_cursor->size() == 1 )
+    if( m_cursor->bitmaps.size() == 1 )
     {
         const auto ret = m_needUpdate;
         m_needUpdate = false;
@@ -51,7 +51,7 @@ bool CursorLogic::NeedUpdate()
     }
     else
     {
-        m_frame = ( m_frame + 1 ) % m_cursor->size();
+        m_frame = ( m_frame + 1 ) % m_cursor->bitmaps.size();
         m_needUpdate = false;
         return true;
     }

@@ -16,12 +16,23 @@ struct CursorBitmap
     std::shared_ptr<Bitmap> bitmap;
     uint32_t xhot;
     uint32_t yhot;
+};
+
+struct CursorFrame
+{
     uint32_t delay;
+    uint32_t frame;
+};
+
+struct CursorData
+{
+    std::vector<CursorBitmap> bitmaps;
+    std::vector<CursorFrame> frames;
 };
 
 struct CursorSize
 {
-    std::array<std::vector<CursorBitmap>, (int)CursorType::NUM> type;
+    std::array<CursorData, (int)CursorType::NUM> type;
 };
 
 class CursorBase
@@ -33,7 +44,7 @@ public:
     NoCopy( CursorBase );
 
     [[nodiscard]] virtual uint32_t FitSize( uint32_t size ) const = 0;
-    [[nodiscard]] const std::vector<CursorBitmap>* Get( uint32_t size, CursorType type ) const;
+    [[nodiscard]] const CursorData* Get( uint32_t size, CursorType type ) const;
     [[nodiscard]] bool Valid() const { return !m_cursor.empty(); }
 
 protected:

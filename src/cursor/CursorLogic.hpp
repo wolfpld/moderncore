@@ -20,7 +20,7 @@ public:
     NoCopy( CursorLogic );
 
     void SetCursor( CursorType type );
-    [[nodiscard]] const CursorBitmap& GetCursorData() const { assert( m_cursor ); return (*m_cursor)[m_frame]; }
+    [[nodiscard]] const CursorBitmap& GetCurrentCursorFrame() const { assert( m_cursor ); return m_cursor->bitmaps[m_frame]; }
 
     bool NeedUpdate();
 
@@ -28,7 +28,7 @@ private:
     std::unique_ptr<CursorTheme> m_theme;
     CursorType m_type;
 
-    const std::vector<CursorBitmap>* m_cursor;
+    const CursorData* m_cursor;
     uint32_t m_frame;
 
     bool m_needUpdate;

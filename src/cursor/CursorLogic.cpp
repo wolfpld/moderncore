@@ -42,7 +42,17 @@ void CursorLogic::SetCursor( CursorType type )
 
 bool CursorLogic::NeedUpdate()
 {
-    const auto ret = m_needUpdate;
-    m_needUpdate = false;
-    return ret;
+    assert( m_cursor );
+    if( m_cursor->size() == 1 )
+    {
+        const auto ret = m_needUpdate;
+        m_needUpdate = false;
+        return ret;
+    }
+    else
+    {
+        m_frame = ( m_frame + 1 ) % m_cursor->size();
+        m_needUpdate = false;
+        return true;
+    }
 }

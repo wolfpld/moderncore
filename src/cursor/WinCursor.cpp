@@ -263,7 +263,7 @@ static bool LoadCursor( CursorType cursorType, unordered_flat_map<uint32_t, Curs
                 {
                     if( (px & 0x80) == 0 )
                     {
-                        *(dst+3) = 0xFF;
+                        if( bmpHdr.bitCount != 32 ) *(dst+3) = 0xFF;
                     }
                     else
                     {

@@ -25,6 +25,9 @@ public:
     void Flush( VkDeviceSize offset, VkDeviceSize size );
     void Invalidate( VkDeviceSize offset, VkDeviceSize size );
 
+    void Flush() { Flush( 0, m_size ); }
+    void Invalidate() { Invalidate( 0, m_size ); }
+
     [[nodiscard]] void* Ptr() const { return m_map; }
 
     operator VkBuffer() const { return m_buffer; }
@@ -35,6 +38,7 @@ private:
     VmaAllocator m_allocator;
 
     void* m_map;
+    VkDeviceSize m_size;
 };
 
 #endif

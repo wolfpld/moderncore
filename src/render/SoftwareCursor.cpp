@@ -161,7 +161,7 @@ SoftwareCursor::SoftwareCursor( VlkDevice& device, VkRenderPass renderPass, uint
 
     auto stagingBuffer = std::make_unique<VlkBuffer>( device, bufferInfo, VlkBuffer::WillWrite | VlkBuffer::PreferHost );
     memcpy( stagingBuffer->Ptr(), bmp.bitmap->Data(), m_w * m_h * 4 );
-    stagingBuffer->Flush( 0, m_w * m_h * 4 );
+    stagingBuffer->Flush();
 
     Vertex vertices[] = {
         { { 0, 0 }, { 0, 0 } },
@@ -171,11 +171,11 @@ SoftwareCursor::SoftwareCursor( VlkDevice& device, VkRenderPass renderPass, uint
     };
 
     memcpy( m_vertexBuffer->Ptr(), vertices, sizeof( vertices ) );
-    m_vertexBuffer->Flush( 0, sizeof( vertices ) );
+    m_vertexBuffer->Flush();
 
     uint16_t indices[] = { 0, 1, 2, 2, 1, 3 };
     memcpy( m_indexBuffer->Ptr(), indices, sizeof( indices ) );
-    m_indexBuffer->Flush( 0, sizeof( indices ) );
+    m_indexBuffer->Flush();
 
     m_imageInfo = {};
     m_imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;

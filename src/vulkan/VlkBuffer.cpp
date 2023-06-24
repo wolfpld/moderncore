@@ -3,6 +3,7 @@
 
 VlkBuffer::VlkBuffer( VmaAllocator allocator, const VkBufferCreateInfo& createInfo, int flags )
     : m_allocator( allocator )
+    , m_size( createInfo.size )
 {
     VmaAllocationCreateInfo allocInfo = {};
 

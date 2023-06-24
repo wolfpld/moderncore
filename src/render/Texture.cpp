@@ -43,7 +43,7 @@ Texture::Texture( VlkDevice& device, const Bitmap& bitmap )
 
     auto stagingBuffer = std::make_unique<VlkBuffer>( device, bufferInfo, VlkBuffer::WillWrite | VlkBuffer::PreferHost );
     memcpy( stagingBuffer->Ptr(), bitmap.Data(), bitmap.Width() * bitmap.Height() * 4 );
-    stagingBuffer->Flush( 0, bitmap.Width() * bitmap.Height() * 4 );
+    stagingBuffer->Flush();
 
     auto cmdBuf = std::make_unique<VlkCommandBuffer>( *device.GetCommandPool( QueueType::Graphic ), true );
     cmdBuf->Begin( VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT );

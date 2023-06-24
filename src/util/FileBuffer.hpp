@@ -13,8 +13,8 @@ public:
 
     NoCopy( FileBuffer );
 
-    [[nodiscard]] const char* Data() const { return m_buffer; }
-    [[nodiscard]] size_t Size() const { return m_size; }
+    [[nodiscard]] const char* data() const { return m_buffer; }
+    [[nodiscard]] size_t size() const { return m_size; }
 
 private:
     char* m_buffer;

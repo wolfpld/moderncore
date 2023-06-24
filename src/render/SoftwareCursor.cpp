@@ -26,8 +26,8 @@ SoftwareCursor::SoftwareCursor( VlkDevice& device, VkRenderPass renderPass, uint
     FileBuffer frag( "SoftwareCursor.frag.spv" );
 
     std::array stages = {
-        VlkShader::Stage { std::make_shared<VlkShaderModule>( device, vert.Data(), vert.Size() ), VK_SHADER_STAGE_VERTEX_BIT },
-        VlkShader::Stage { std::make_shared<VlkShaderModule>( device, frag.Data(), frag.Size() ), VK_SHADER_STAGE_FRAGMENT_BIT }
+        VlkShader::Stage { std::make_shared<VlkShaderModule>( device, vert ), VK_SHADER_STAGE_VERTEX_BIT },
+        VlkShader::Stage { std::make_shared<VlkShaderModule>( device, frag ), VK_SHADER_STAGE_FRAGMENT_BIT }
     };
 
     m_shader = std::make_unique<VlkShader>( stages );

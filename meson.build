@@ -10,6 +10,7 @@ files = [
     'src/cursor/CursorTheme.cpp',
     'src/cursor/WinCursor.cpp',
     'src/cursor/XCursor.cpp',
+    'src/image/ImageLoader.cpp',
     'src/image/PngLoader.cpp',
     'src/backend/wayland/BackendWayland.cpp',
     'src/backend/wayland/WaylandKeyboard.cpp',

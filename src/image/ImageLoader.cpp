@@ -1,4 +1,5 @@
 #include "ImageLoader.hpp"
+#include "JpgLoader.hpp"
 #include "PngLoader.hpp"
 #include "../util/Bitmap.hpp"
 #include "../util/FileWrapper.hpp"
@@ -20,6 +21,14 @@ Bitmap* LoadImage( const char* filename )
 
     {
         PngLoader loader( file );
+        if( loader.IsValid() )
+        {
+            auto img = loader.Load();
+            if( img ) return img;
+        }
+    }
+    {
+        JpgLoader loader( file );
         if( loader.IsValid() )
         {
             auto img = loader.Load();

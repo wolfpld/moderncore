@@ -54,6 +54,8 @@ files = [
 ]
 
 shaders = [
+    'shader/Background.frag',
+    'shader/Background.vert',
     'shader/SoftwareCursor.frag',
     'shader/SoftwareCursor.vert',
 ]

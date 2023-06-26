@@ -117,7 +117,7 @@ Server::Server()
 
     m_backend->VulkanInit( *m_vkDevice, *m_renderPass, *m_swapchain );
 
-    m_background = std::make_unique<Background>();
+    m_background = std::make_unique<Background>( *m_vkDevice, *m_renderPass, m_swapchain->GetWidth(), m_swapchain->GetHeight() );
     m_cursorLogic = std::make_unique<CursorLogic>();
 }
 
@@ -157,6 +157,7 @@ void Server::Render()
 
     vkCmdBeginRenderPass( *m_cmdBufs[frameIdx], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
 
+    m_background->Render( *m_cmdBufs[frameIdx] );
     m_backend->RenderCursor( *m_cmdBufs[frameIdx], *m_cursorLogic );
 
     vkCmdEndRenderPass( *m_cmdBufs[frameIdx] );

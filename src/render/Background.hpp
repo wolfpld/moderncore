@@ -37,7 +37,7 @@ public:
     [[nodiscard]] const VkClearValue& GetColor() const { return m_color; }
 
 private:
-    void UpdateVertexBuffer();
+    void UpdateVertexBuffer( uint32_t imageWidth, uint32_t imageHeight );
 
     VkClearValue m_color;
 
@@ -54,6 +54,9 @@ private:
 
     VkDescriptorImageInfo m_imageInfo;
     VkWriteDescriptorSet m_descriptorWrite;
+
+    uint32_t m_screenWidth;
+    uint32_t m_screenHeight;
 };
 
 #endif

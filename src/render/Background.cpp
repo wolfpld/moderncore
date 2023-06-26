@@ -21,6 +21,8 @@
 
 Background::Background( VlkDevice& device, VkRenderPass renderPass, uint32_t screenWidth, uint32_t screenHeight )
     : m_color {{{ 0.0f, 0.0f, 0.0f, 1.0f }}}
+    , m_screenWidth( screenWidth )
+    , m_screenHeight( screenHeight )
 {
     Config cfg( "background.ini" );
     const auto cstr = cfg.Get( "Background", "Color", "404040" );
@@ -171,7 +173,7 @@ Background::Background( VlkDevice& device, VkRenderPass renderPass, uint32_t scr
             m_bitmap.reset( img );
             m_texture = std::make_unique<Texture>( device, *m_bitmap );
             m_imageInfo.imageView = *m_texture;
-            UpdateVertexBuffer();
+            UpdateVertexBuffer( m_bitmap->Width(), m_bitmap->Height() );
         }
     }
 }
@@ -194,14 +196,41 @@ void Background::Render( VkCommandBuffer cmdBuf )
     vkCmdDrawIndexed( cmdBuf, 6, 1, 0, 0, 0 );
 }
 
-void Background::UpdateVertexBuffer()
+void Background::UpdateVertexBuffer( uint32_t imageWidth, uint32_t imageHeight )
 {
-    constexpr std::array vertices = {
-        Vertex { { -1.0f, -1.0f }, { 0.0f, 0.0f } },
-        Vertex { {  1.0f, -1.0f }, { 1.0f, 0.0f } },
-        Vertex { {  1.0f,  1.0f }, { 1.0f, 1.0f } },
-        Vertex { { -1.0f,  1.0f }, { 0.0f, 1.0f } }
-    };
+    const float widthRatio = float( m_screenWidth ) / imageWidth;
+    const float heightRatio = float( m_screenHeight ) / imageHeight;
+
+    std::array<Vertex, 4> vertices;
+
+    if( widthRatio > heightRatio )
+    {
+        const auto height = imageHeight * widthRatio;
+        const auto offset = ( height - m_screenHeight ) / 2.0f;
+
+        vertices = {
+            Vertex { { -1.0f, -1.0f }, { 0.0f, offset / height } },
+            Vertex { {  1.0f, -1.0f }, { 1.0f, offset / height } },
+            Vertex { {  1.0f,  1.0f }, { 1.0f, ( height - offset ) / height } },
+            Vertex { { -1.0f,  1.0f }, { 0.0f, ( height - offset ) / height } }
+        };
+
+        memcpy( m_vertexBuffer->Ptr(), vertices.data(), sizeof( vertices ) );
+        m_vertexBuffer->Flush();
+    }
+    else
+    {
+        const auto width = imageWidth * heightRatio;
+        const auto offset = ( width - m_screenWidth ) / 2.0f;
+
+        vertices = {
+            Vertex { { -1.0f, -1.0f }, { offset / width,             0.0f } },
+            Vertex { {  1.0f, -1.0f }, { ( width - offset ) / width, 0.0f } },
+            Vertex { {  1.0f,  1.0f }, { ( width - offset ) / width, 1.0f } },
+            Vertex { { -1.0f,  1.0f }, { offset / width,             1.0f } }
+        };
+    }
+
     memcpy( m_vertexBuffer->Ptr(), vertices.data(), sizeof( vertices ) );
     m_vertexBuffer->Flush();
 }

@@ -1,5 +1,6 @@
 #include <concepts>
 
+#include "HeifLoader.hpp"
 #include "ImageLoader.hpp"
 #include "JpgLoader.hpp"
 #include "JxlLoader.hpp"
@@ -45,6 +46,8 @@ Bitmap* LoadImage( const char* filename )
     img = LoadImage<JxlLoader>( file );
     if( img ) return img;
     img = LoadImage<WebpLoader>( file );
+    if( img ) return img;
+    img = LoadImage<HeifLoader>( file );
     if( img ) return img;
 
     mclog( LogLevel::Error, "Failed to load image %s", path.c_str() );

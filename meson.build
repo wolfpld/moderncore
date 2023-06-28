@@ -12,6 +12,7 @@ files = [
     'src/cursor/XCursor.cpp',
     'src/image/ImageLoader.cpp',
     'src/image/JpgLoader.cpp',
+    'src/image/JxlLoader.cpp',
     'src/image/PngLoader.cpp',
     'src/backend/wayland/BackendWayland.cpp',
     'src/backend/wayland/WaylandKeyboard.cpp',
@@ -73,6 +74,7 @@ wl_scanner = dependency('wayland-scanner')
 glm = dependency('glm')
 libpng = dependency('libpng')
 libjpeg = dependency('libjpeg')
+libjxl = dependency('libjxl')
 
 wl_proto_dir = wl_proto.get_variable('pkgdatadir')
 wl_scanner_bin = find_program(wl_scanner.get_variable('wayland_scanner'))
@@ -134,5 +136,5 @@ add_project_arguments(compile_args, language: ['c', 'cpp'])
 
 executable('mcore',
     files,
-    dependencies: [vulkan, wayland_server, wayland_client, xkbcommon, glm, libpng, libjpeg]
+    dependencies: [vulkan, wayland_server, wayland_client, xkbcommon, glm, libpng, libjpeg, libjxl]
 )

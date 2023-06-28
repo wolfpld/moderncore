@@ -2,6 +2,7 @@
 
 #include "ImageLoader.hpp"
 #include "JpgLoader.hpp"
+#include "JxlLoader.hpp"
 #include "PngLoader.hpp"
 #include "../util/Bitmap.hpp"
 #include "../util/FileWrapper.hpp"
@@ -39,6 +40,8 @@ Bitmap* LoadImage( const char* filename )
     Bitmap* img = LoadImage<PngLoader>( file );
     if( img ) return img;
     img = LoadImage<JpgLoader>( file );
+    if( img ) return img;
+    img = LoadImage<JxlLoader>( file );
     if( img ) return img;
 
     mclog( LogLevel::Error, "Failed to load image %s", path.c_str() );

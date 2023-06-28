@@ -74,7 +74,7 @@ wl_scanner = dependency('wayland-scanner')
 glm = dependency('glm')
 libpng = dependency('libpng')
 libjpeg = dependency('libjpeg')
-libjxl = dependency('libjxl')
+libjxl = [dependency('libjxl'), dependency('libjxl_threads')]
 
 wl_proto_dir = wl_proto.get_variable('pkgdatadir')
 wl_scanner_bin = find_program(wl_scanner.get_variable('wayland_scanner'))

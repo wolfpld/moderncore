@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <jxl/decode.h>
+#include <jxl/resizable_parallel_runner.h>
 #include <vector>
 
 #include "JxlLoader.hpp"
@@ -33,8 +34,12 @@ Bitmap* JxlLoader::Load()
 
     Bitmap* bmp = nullptr;
 
+    auto runner = JxlResizableParallelRunnerCreate( nullptr );
+
     auto dec = JxlDecoderCreate( nullptr );
     JxlDecoderSubscribeEvents( dec, JXL_DEC_BASIC_INFO | JXL_DEC_FULL_IMAGE );
+    JxlDecoderSetParallelRunner( dec, JxlResizableParallelRunner, runner );
+
     JxlDecoderSetInput( dec, buf.data(), buf.size() );
     JxlDecoderCloseInput( dec );
 
@@ -45,6 +50,7 @@ Bitmap* JxlLoader::Load()
         {
             delete bmp;
             JxlDecoderDestroy( dec );
+            JxlResizableParallelRunnerDestroy( runner );
             return nullptr;
         }
         if( res == JXL_DEC_SUCCESS || res == JXL_DEC_FULL_IMAGE ) break;
@@ -52,6 +58,8 @@ Bitmap* JxlLoader::Load()
         {
             JxlBasicInfo info;
             JxlDecoderGetBasicInfo( dec, &info );
+            JxlResizableParallelRunnerSetThreads( runner, JxlResizableParallelRunnerSuggestThreads( info.xsize, info.ysize ) );
+
             bmp = new Bitmap( info.xsize, info.ysize );
 
             JxlPixelFormat format = { 4, JXL_TYPE_UINT8, JXL_LITTLE_ENDIAN, 0 };
@@ -59,11 +67,13 @@ Bitmap* JxlLoader::Load()
             {
                 delete bmp;
                 JxlDecoderDestroy( dec );
+                JxlResizableParallelRunnerDestroy( runner );
                 return nullptr;
             }
         }
     }
 
     JxlDecoderDestroy( dec );
+    JxlResizableParallelRunnerDestroy( runner );
     return bmp;
 }

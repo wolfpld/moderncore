@@ -39,16 +39,11 @@ Bitmap* LoadImage( const char* filename )
 
     mclog( LogLevel::Info, "Loading image %s", path.c_str() );
 
-    Bitmap* img = LoadImage<PngLoader>( file );
-    if( img ) return img;
-    img = LoadImage<JpgLoader>( file );
-    if( img ) return img;
-    img = LoadImage<JxlLoader>( file );
-    if( img ) return img;
-    img = LoadImage<WebpLoader>( file );
-    if( img ) return img;
-    img = LoadImage<HeifLoader>( file );
-    if( img ) return img;
+    if( auto img = LoadImage<PngLoader>( file ); img ) return img;
+    if( auto img = LoadImage<JpgLoader>( file ); img ) return img;
+    if( auto img = LoadImage<JxlLoader>( file ); img ) return img;
+    if( auto img = LoadImage<WebpLoader>( file ); img ) return img;
+    if( auto img = LoadImage<HeifLoader>( file ); img ) return img;
 
     mclog( LogLevel::Error, "Failed to load image %s", path.c_str() );
     return nullptr;

@@ -10,6 +10,7 @@ files = [
     'src/cursor/CursorTheme.cpp',
     'src/cursor/WinCursor.cpp',
     'src/cursor/XCursor.cpp',
+    'src/dbus/DbusMessage.cpp',
     'src/dbus/DbusSession.cpp',
     'src/image/HeifLoader.cpp',
     'src/image/ImageLoader.cpp',

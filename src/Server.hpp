@@ -10,6 +10,7 @@
 class Backend;
 class Background;
 class CursorLogic;
+class DbusSession;
 class Display;
 class VlkCommandBuffer;
 class VlkCommandPool;
@@ -33,6 +34,8 @@ public:
 
 private:
     void Render();
+
+    std::unique_ptr<DbusSession> m_dbusSession;
 
     std::unique_ptr<VlkInstance> m_vkInstance;
     std::unique_ptr<VlkDevice> m_vkDevice;

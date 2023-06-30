@@ -10,6 +10,7 @@ files = [
     'src/cursor/CursorTheme.cpp',
     'src/cursor/WinCursor.cpp',
     'src/cursor/XCursor.cpp',
+    'src/dbus/DbusSession.cpp',
     'src/image/HeifLoader.cpp',
     'src/image/ImageLoader.cpp',
     'src/image/JpgLoader.cpp',
@@ -79,6 +80,7 @@ libjpeg = dependency('libjpeg')
 libjxl = [dependency('libjxl'), dependency('libjxl_threads')]
 libwebp = dependency('libwebp')
 libheif = dependency('libheif')
+libsystemd = dependency('libsystemd')
 
 wl_proto_dir = wl_proto.get_variable('pkgdatadir')
 wl_scanner_bin = find_program(wl_scanner.get_variable('wayland_scanner'))
@@ -140,5 +142,5 @@ add_project_arguments(compile_args, language: ['c', 'cpp'])
 
 executable('mcore',
     files,
-    dependencies: [vulkan, wayland_server, wayland_client, xkbcommon, glm, libpng, libjpeg, libjxl, libwebp, libheif]
+    dependencies: [vulkan, wayland_server, wayland_client, xkbcommon, glm, libpng, libjpeg, libjxl, libwebp, libheif, libsystemd]
 )

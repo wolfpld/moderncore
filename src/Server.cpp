@@ -4,6 +4,7 @@
 #include "Server.hpp"
 #include "backend/wayland/BackendWayland.hpp"
 #include "cursor/CursorLogic.hpp"
+#include "dbus/DbusSession.hpp"
 #include "plumbing/Display.hpp"
 #include "render/Background.hpp"
 #include "util/Logs.hpp"
@@ -22,6 +23,7 @@
 #include "vulkan/VlkSwapchain.hpp"
 
 Server::Server()
+    : m_dbusSession( std::make_unique<DbusSession>() )
 {
     const auto waylandDpy = getenv( "WAYLAND_DISPLAY" );
     if( waylandDpy )

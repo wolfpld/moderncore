@@ -17,6 +17,8 @@ public:
 
     NoCopy( DbusMessage );
 
+    bool Read( const char* sig, ... );
+
     operator bool() const { return m_msg; }
 
 private:

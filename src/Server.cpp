@@ -37,7 +37,7 @@ Server::Server()
     else
     {
         m_vkInstance = std::make_unique<VlkInstance>( VlkInstanceType::Drm );
-        m_backend = std::make_unique<BackendDrm>( *m_vkInstance );
+        m_backend = std::make_unique<BackendDrm>( *m_vkInstance, *m_dbusSession );
     }
 
     auto physDev = PhysDevSel::PickBest( m_vkInstance->QueryPhysicalDevices(), *m_backend, PhysDevSel::RequireGraphic );

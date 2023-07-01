@@ -18,6 +18,7 @@ files = [
     'src/image/JxlLoader.cpp',
     'src/image/PngLoader.cpp',
     'src/image/WebpLoader.cpp',
+    'src/backend/drm/BackendDrm.cpp',
     'src/backend/wayland/BackendWayland.cpp',
     'src/backend/wayland/WaylandKeyboard.cpp',
     'src/backend/wayland/WaylandOutput.cpp',

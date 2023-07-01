@@ -98,7 +98,6 @@ VlkInstance::VlkInstance( VlkInstanceType instanceType )
         instanceExtensions.push_back( VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME );
         break;
     default:
-        assert( false );
         break;
     }
 

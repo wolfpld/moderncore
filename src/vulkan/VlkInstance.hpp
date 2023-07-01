@@ -9,7 +9,8 @@
 
 enum class VlkInstanceType
 {
-    Wayland
+    Wayland,
+    Drm
 };
 
 class VlkInstance

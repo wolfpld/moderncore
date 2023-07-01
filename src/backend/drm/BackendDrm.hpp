@@ -2,6 +2,7 @@
 #define __BACKENDDRM_HPP__
 
 #include <string>
+#include <vector>
 
 #include "../Backend.hpp"
 
@@ -33,6 +34,8 @@ private:
 
     std::string m_sessionPath;
     std::string m_seatPath;
+
+    std::vector<int> m_drmDevices;
 };
 
 #endif

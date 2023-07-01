@@ -1,7 +1,11 @@
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/sysmacros.h>
+#include <systemd/sd-device.h>
 #include <systemd/sd-login.h>
 #include <unistd.h>
 
@@ -54,6 +58,98 @@ BackendDrm::BackendDrm( VkInstance vkInstance, DbusSession& bus )
 
     CheckPanic( bus.Call( LoginService, m_sessionPath.c_str(), LoginSessionIface, "Activate" ), "Failed to activate session" );
     CheckPanic( bus.Call( LoginService, m_sessionPath.c_str(), LoginSessionIface, "TakeControl", "b", false ), "Failed to take control of session" );
+
+    sd_device_enumerator* e = nullptr;
+    CheckPanic( sd_device_enumerator_new( &e ) >= 0, "Failed to create device enumerator" );
+    CheckPanic( sd_device_enumerator_add_match_subsystem( e, "drm", true ) >= 0, "Failed to mach drm subsystem" );
+    CheckPanic( sd_device_enumerator_add_match_sysname( e, "card[0-9]*" ) >= 0, "Failed to match drm device" );
+
+    for( sd_device* dev = sd_device_enumerator_get_device_first( e ); dev; dev = sd_device_enumerator_get_device_next( e ) )
+    {
+        const char* seat = nullptr;
+        sd_device_get_property_value( dev, "ID_SEAT", &seat );
+        if( !seat ) seat = "seat0";
+
+        const char* sysPath;
+        sd_device_get_syspath( dev, &sysPath );
+
+        if( strcmp( seat, m_seat ) != 0 )
+        {
+            mclog( LogLevel::Debug, "Skipping DRM device %s on seat %s", sysPath, seat );
+            continue;
+        }
+
+        bool isBoot = false;
+        sd_device* pci = nullptr;
+        sd_device_get_parent_with_subsystem_devtype( dev, "pci", nullptr, &pci );
+        if( pci )
+        {
+            const char* bootVga;
+            sd_device_get_sysattr_value( pci, "boot_vga", &bootVga );
+            if( bootVga && strcmp( bootVga, "1" ) == 0 )
+            {
+                isBoot = true;
+            }
+        }
+
+        const char* devName = nullptr;
+        sd_device_get_devname( dev, &devName );
+        if( !devName )
+        {
+            mclog( LogLevel::Debug, "Skipping DRM device %s: no devname", sysPath );
+            continue;
+        }
+
+        struct stat st;
+        if( stat( devName, &st ) != 0 )
+        {
+            mclog( LogLevel::Debug, "Skipping DRM device %s: stat failed: %s", sysPath, strerror( errno ) );
+            continue;
+        }
+
+        if( major( st.st_rdev ) != 226 )
+        {
+            mclog( LogLevel::Debug, "Skipping DRM device %s: not a DRM device", sysPath );
+            continue;
+        }
+
+        auto devMsg = bus.Call( LoginService, m_sessionPath.c_str(), LoginSessionIface, "TakeDevice", "uu", major( st.st_rdev ), minor( st.st_rdev ) );
+        if( !devMsg )
+        {
+            mclog( LogLevel::Debug, "Skipping DRM device %s: failed to take device", sysPath );
+            continue;
+        }
+
+        int fd;
+        int paused;
+        if( !devMsg.Read( "hb", &fd, &paused ) )
+        {
+            mclog( LogLevel::Debug, "Skipping DRM device %s: failed to read device fd", sysPath );
+            continue;
+        }
+
+        fd = fcntl( fd, F_DUPFD_CLOEXEC, 0 );
+        if( fd < 0 )
+        {
+            mclog( LogLevel::Debug, "Skipping DRM device %s: failed to dup fd: %s", sysPath, strerror( errno ) );
+            continue;
+        }
+
+        if( isBoot )
+        {
+            m_drmDevices.insert( m_drmDevices.begin(), fd );
+        }
+        else
+        {
+            m_drmDevices.emplace_back( fd );
+        }
+
+        mclog( LogLevel::Debug, "DRM device %s on seat %s%s", sysPath, seat, isBoot ? " (boot vga)" : "" );
+    }
+
+    sd_device_enumerator_unref( e );
+
+    mclog( LogLevel::Info, "Found %zu DRM device(s)", m_drmDevices.size() );
 }
 
 BackendDrm::~BackendDrm()

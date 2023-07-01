@@ -2,6 +2,7 @@
 #include <vulkan/vk_enum_string_helper.h>
 
 #include "Server.hpp"
+#include "backend/drm/BackendDrm.hpp"
 #include "backend/wayland/BackendWayland.hpp"
 #include "cursor/CursorLogic.hpp"
 #include "dbus/DbusSession.hpp"
@@ -35,8 +36,8 @@ Server::Server()
     }
     else
     {
-        mclog( LogLevel::Fatal, "Direct rendering is not implemented yet" );
-        abort();
+        m_vkInstance = std::make_unique<VlkInstance>( VlkInstanceType::Drm );
+        m_backend = std::make_unique<BackendDrm>( *m_vkInstance );
     }
 
     auto physDev = PhysDevSel::PickBest( m_vkInstance->QueryPhysicalDevices(), *m_backend, PhysDevSel::RequireGraphic );

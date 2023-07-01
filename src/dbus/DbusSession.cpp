@@ -1,3 +1,5 @@
+#include <systemd/sd-bus.h>
+
 #include "DbusMessage.hpp"
 #include "DbusSession.hpp"
 #include "../util/Logs.hpp"
@@ -53,5 +55,19 @@ bool DbusSession::MatchSignal( const char* sender, const char* path, const char*
         mclog( LogLevel::Error, "Failed to match signal %s.%s: %s", iface, member, strerror( -res ) );
         return false;
     }
+    return true;
+}
+
+bool DbusSession::GetProperty( const char* dst, const char* path, const char* iface, const char* member, bool& out )
+{
+    sd_bus_error err = SD_BUS_ERROR_NULL;
+    int val;
+    if( sd_bus_get_property_trivial( m_bus, dst, path, iface, member, &err, 'b', &val ) < 0 )
+    {
+        mclog( LogLevel::Error, "Failed to get property %s.%s: %s", iface, member, err.message );
+        sd_bus_error_free( &err );
+        return false;
+    }
+    out = val;
     return true;
 }

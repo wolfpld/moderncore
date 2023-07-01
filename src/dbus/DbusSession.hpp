@@ -3,11 +3,12 @@
 
 #include <functional>
 #include <memory>
-#include <systemd/sd-bus.h>
 #include <vector>
 
 #include "DbusMessage.hpp"
 #include "../util/NoCopy.hpp"
+
+struct sd_bus;
 
 class DbusSession
 {
@@ -19,6 +20,8 @@ public:
 
     DbusMessage Call( const char* dst, const char* path, const char* iface, const char* member, const char* sig = nullptr, ... );
     bool MatchSignal( const char* sender, const char* path, const char* iface, const char* member, std::function<int(DbusMessage)> callback );
+
+    bool GetProperty( const char* dst, const char* path, const char* iface, const char* member, bool& out );
 
     operator bool() const { return m_bus; }
 

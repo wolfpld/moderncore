@@ -8,6 +8,7 @@
 #include <systemd/sd-device.h>
 #include <systemd/sd-login.h>
 #include <unistd.h>
+#include <xf86drmMode.h>
 
 #include "BackendDrm.hpp"
 #include "../../dbus/DbusSession.hpp"
@@ -125,6 +126,13 @@ BackendDrm::BackendDrm( VkInstance vkInstance, DbusSession& bus )
         if( !devMsg.Read( "hb", &fd, &paused ) )
         {
             mclog( LogLevel::Debug, "Skipping DRM device %s: failed to read device fd", sysPath );
+            continue;
+        }
+
+        if( !drmIsKMS( fd ) )
+        {
+            bus.Call( LoginService, m_sessionPath.c_str(), LoginSessionIface, "ReleaseDevice", "uu", major( st.st_rdev ), minor( st.st_rdev ) );
+            mclog( LogLevel::Debug, "Skipping DRM device %s: not a KMS device", sysPath );
             continue;
         }
 

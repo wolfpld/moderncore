@@ -83,6 +83,7 @@ libjxl = [dependency('libjxl'), dependency('libjxl_threads')]
 libwebp = dependency('libwebp')
 libheif = dependency('libheif')
 libsystemd = dependency('libsystemd')
+libdrm = dependency('libdrm')
 
 wl_proto_dir = wl_proto.get_variable('pkgdatadir')
 wl_scanner_bin = find_program(wl_scanner.get_variable('wayland_scanner'))
@@ -144,5 +145,5 @@ add_project_arguments(compile_args, language: ['c', 'cpp'])
 
 executable('mcore',
     files,
-    dependencies: [vulkan, wayland_server, wayland_client, xkbcommon, glm, libpng, libjpeg, libjxl, libwebp, libheif, libsystemd]
+    dependencies: [vulkan, wayland_server, wayland_client, xkbcommon, glm, libpng, libjpeg, libjxl, libwebp, libheif, libsystemd, libdrm]
 )

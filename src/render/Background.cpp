@@ -171,7 +171,7 @@ Background::Background( VlkDevice& device, VkRenderPass renderPass, uint32_t scr
         if( img )
         {
             m_bitmap.reset( img );
-            m_texture = std::make_unique<Texture>( device, *m_bitmap );
+            m_texture = std::make_unique<Texture>( device, *m_bitmap, VK_FORMAT_R8G8B8A8_SRGB );
             m_imageInfo.imageView = *m_texture;
             UpdateVertexBuffer( m_bitmap->Width(), m_bitmap->Height() );
         }

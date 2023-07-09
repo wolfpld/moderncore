@@ -2,6 +2,7 @@
 #define __TEXTURE_HPP__
 
 #include <memory>
+#include <vulkan/vulkan.h>
 
 #include "../util/NoCopy.hpp"
 #include "../vulkan/VlkImage.hpp"
@@ -13,7 +14,7 @@ class VlkDevice;
 class Texture
 {
 public:
-    Texture( VlkDevice& device, const Bitmap& bitmap );
+    Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format );
 
     NoCopy( Texture );
 

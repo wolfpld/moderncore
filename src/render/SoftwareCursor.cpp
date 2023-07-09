@@ -251,7 +251,7 @@ void SoftwareCursor::UpdateImage( const CursorBitmap& cursorData )
     assert( cursorPtr != m_currentBitmap );
     m_currentBitmap = cursorPtr;
 
-    m_image = std::make_unique<Texture>( m_device, *cursorPtr );
+    m_image = std::make_unique<Texture>( m_device, *cursorPtr, VK_FORMAT_B8G8R8A8_SRGB );
     m_imageInfo.imageView = *m_image;
 
     m_xhot = cursorData.xhot;

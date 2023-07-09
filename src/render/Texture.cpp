@@ -8,11 +8,11 @@
 #include "../vulkan/VlkDevice.hpp"
 #include "../vulkan/VlkFence.hpp"
 
-Texture::Texture( VlkDevice& device, const Bitmap& bitmap )
+Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format )
 {
     VkImageCreateInfo imageInfo = { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
     imageInfo.imageType = VK_IMAGE_TYPE_2D;
-    imageInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
+    imageInfo.format = format;
     imageInfo.extent.width = bitmap.Width();
     imageInfo.extent.height = bitmap.Height();
     imageInfo.extent.depth = 1;
@@ -29,7 +29,7 @@ Texture::Texture( VlkDevice& device, const Bitmap& bitmap )
     VkImageViewCreateInfo imageViewInfo = { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
     imageViewInfo.image = *m_image;
     imageViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    imageViewInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
+    imageViewInfo.format = format;
     imageViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     imageViewInfo.subresourceRange.levelCount = 1;
     imageViewInfo.subresourceRange.layerCount = 1;

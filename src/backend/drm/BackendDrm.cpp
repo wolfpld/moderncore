@@ -144,15 +144,6 @@ BackendDrm::BackendDrm( VkInstance vkInstance, DbusSession& bus )
             continue;
         }
 
-        if( isBoot )
-        {
-            m_drmDevices.insert( m_drmDevices.begin(), fd );
-        }
-        else
-        {
-            m_drmDevices.emplace_back( fd );
-        }
-
         const auto name = drmGetDeviceNameFromFd2( fd );
         auto ver = drmGetVersion( fd );
 
@@ -160,6 +151,47 @@ BackendDrm::BackendDrm( VkInstance vkInstance, DbusSession& bus )
 
         drmFreeVersion( ver );
         free( name );
+
+        DrmDevice drmDev = {};
+        drmDev.fd = fd;
+        drmGetCap( fd, DRM_CAP_DUMB_BUFFER, &drmDev.caps.dumbBuffer );
+        drmGetCap( fd, DRM_CAP_VBLANK_HIGH_CRTC, &drmDev.caps.vblankHighCrtc );
+        drmGetCap( fd, DRM_CAP_DUMB_PREFERRED_DEPTH, &drmDev.caps.dumbPreferredDepth );
+        drmGetCap( fd, DRM_CAP_DUMB_PREFER_SHADOW, &drmDev.caps.dumbPreferShadow );
+        drmGetCap( fd, DRM_CAP_PRIME, &drmDev.caps.prime );
+        drmGetCap( fd, DRM_CAP_TIMESTAMP_MONOTONIC, &drmDev.caps.timestampMonotonic );
+        drmGetCap( fd, DRM_CAP_ASYNC_PAGE_FLIP, &drmDev.caps.asyncPageFlip );
+        drmGetCap( fd, DRM_CAP_CURSOR_WIDTH, &drmDev.caps.cursorWidth );
+        drmGetCap( fd, DRM_CAP_CURSOR_HEIGHT, &drmDev.caps.cursorHeight );
+        drmGetCap( fd, DRM_CAP_ADDFB2_MODIFIERS, &drmDev.caps.addFB2Modifiers );
+        drmGetCap( fd, DRM_CAP_PAGE_FLIP_TARGET, &drmDev.caps.pageFlipTarget );
+        drmGetCap( fd, DRM_CAP_CRTC_IN_VBLANK_EVENT, &drmDev.caps.crtcInVblankEvent );
+        drmGetCap( fd, DRM_CAP_SYNCOBJ, &drmDev.caps.syncObj );
+        drmGetCap( fd, DRM_CAP_SYNCOBJ_TIMELINE, &drmDev.caps.syncObjTimeline );
+
+        mclog( LogLevel::Debug, "  dumb buffer: %" PRIu64, drmDev.caps.dumbBuffer );
+        mclog( LogLevel::Debug, "  vblank high crtc: %" PRIu64, drmDev.caps.vblankHighCrtc );
+        mclog( LogLevel::Debug, "  dumb preferred depth: %" PRIu64, drmDev.caps.dumbPreferredDepth );
+        mclog( LogLevel::Debug, "  dumb prefer shadow: %" PRIu64, drmDev.caps.dumbPreferShadow );
+        mclog( LogLevel::Debug, "  prime: %" PRIu64, drmDev.caps.prime );
+        mclog( LogLevel::Debug, "  timestamp monotonic: %" PRIu64, drmDev.caps.timestampMonotonic );
+        mclog( LogLevel::Debug, "  async page flip: %" PRIu64, drmDev.caps.asyncPageFlip );
+        mclog( LogLevel::Debug, "  cursor width: %" PRIu64, drmDev.caps.cursorWidth );
+        mclog( LogLevel::Debug, "  cursor height: %" PRIu64, drmDev.caps.cursorHeight );
+        mclog( LogLevel::Debug, "  addfb2 modifiers: %" PRIu64, drmDev.caps.addFB2Modifiers );
+        mclog( LogLevel::Debug, "  page flip target: %" PRIu64, drmDev.caps.pageFlipTarget );
+        mclog( LogLevel::Debug, "  crtc in vblank event: %" PRIu64, drmDev.caps.crtcInVblankEvent );
+        mclog( LogLevel::Debug, "  sync obj: %" PRIu64, drmDev.caps.syncObj );
+        mclog( LogLevel::Debug, "  sync obj timeline: %" PRIu64, drmDev.caps.syncObjTimeline );
+
+        if( isBoot )
+        {
+            m_drmDevices.insert( m_drmDevices.begin(), drmDev );
+        }
+        else
+        {
+            m_drmDevices.emplace_back( drmDev );
+        }
     }
 
     sd_device_enumerator_unref( e );

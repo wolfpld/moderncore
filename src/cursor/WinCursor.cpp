@@ -244,12 +244,6 @@ static bool LoadCursor( CursorType cursorType, unordered_flat_map<uint32_t, Curs
             return false;
         }
 
-        for( int i=0; i<w*h; i++ )
-        {
-            auto px = bitmap->Data() + i*4;
-            std::swap( px[0], px[2] );
-        }
-
         auto mask = (uint8_t*)alloca( msz );
         if( !f.Read( mask, msz ) ) return false;
 

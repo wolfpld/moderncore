@@ -8,6 +8,7 @@
 #include <systemd/sd-device.h>
 #include <systemd/sd-login.h>
 #include <unistd.h>
+#include <xf86drm.h>
 #include <xf86drmMode.h>
 
 #include "BackendDrm.hpp"
@@ -152,7 +153,13 @@ BackendDrm::BackendDrm( VkInstance vkInstance, DbusSession& bus )
             m_drmDevices.emplace_back( fd );
         }
 
-        mclog( LogLevel::Debug, "DRM device %s on seat %s%s", sysPath, seat, isBoot ? " (boot vga)" : "" );
+        const auto name = drmGetDeviceNameFromFd2( fd );
+        auto ver = drmGetVersion( fd );
+
+        mclog( LogLevel::Info, "DRM device %s (%s) on seat %s%s, driver: %s (%s)", sysPath, name, seat, isBoot ? " (boot vga)" : "", ver ? ver->name : "unknown", ver ? ver->desc : "unknown" );
+
+        drmFreeVersion( ver );
+        free( name );
     }
 
     sd_device_enumerator_unref( e );

@@ -10,6 +10,10 @@
 #include <unistd.h>
 #include <xf86drm.h>
 
+extern "C" {
+#include <libdisplay-info/info.h>
+}
+
 #include "BackendDrm.hpp"
 #include "../../dbus/DbusSession.hpp"
 #include "../../util/Panic.hpp"
@@ -223,7 +227,36 @@ BackendDrm::BackendDrm( VkInstance vkInstance, DbusSession& bus )
             }
             else
             {
-                mclog( LogLevel::Debug, "  Connector %d: %dx%d mm", i, conn->mmWidth, conn->mmHeight );
+                std::string model = "unknown";
+                auto props = drmModeObjectGetProperties( fd, conn->connector_id, DRM_MODE_OBJECT_CONNECTOR );
+                if( props )
+                {
+                    for( int j=0; j<props->count_props; j++ )
+                    {
+                        auto prop = drmModeGetProperty( fd, props->props[j] );
+                        if( prop )
+                        {
+                            if( strcmp( prop->name, "EDID" ) == 0 )
+                            {
+                                auto blob = drmModeGetPropertyBlob( fd, props->prop_values[j] );
+                                if( blob )
+                                {
+                                    auto info = di_info_parse_edid( blob->data, blob->length );
+                                    if( info )
+                                    {
+                                        model = di_info_get_model( info );
+                                        di_info_destroy( info );
+                                    }
+                                    drmModeFreePropertyBlob( blob );
+                                }
+                            }
+                            drmModeFreeProperty( prop );
+                        }
+                    }
+                }
+                drmModeFreeObjectProperties( props );
+
+                mclog( LogLevel::Debug, "  Connector %d: %s, %dx%d mm", i, model.c_str(), conn->mmWidth, conn->mmHeight );
 
                 for( int j=0; j<conn->count_modes; j++ )
                 {

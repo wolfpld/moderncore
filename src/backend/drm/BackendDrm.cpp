@@ -9,7 +9,6 @@
 #include <systemd/sd-login.h>
 #include <unistd.h>
 #include <xf86drm.h>
-#include <xf86drmMode.h>
 
 #include "BackendDrm.hpp"
 #include "../../dbus/DbusSession.hpp"
@@ -22,6 +21,20 @@ constexpr const char* LoginPath = "/org/freedesktop/login1";
 constexpr const char* LoginManagerIface = "org.freedesktop.login1.Manager";
 constexpr const char* LoginSessionIface = "org.freedesktop.login1.Session";
 constexpr const char* DbusPropertiesIface = "org.freedesktop.DBus.Properties";
+
+static uint32_t GetRefreshRate( const drmModeModeInfo& mode )
+{
+    uint32_t refresh = mode.clock * 1000000ull / ( mode.htotal * mode.vtotal );
+    if( mode.flags & DRM_MODE_FLAG_INTERLACE ) refresh *= 2;
+    if( mode.flags & DRM_MODE_FLAG_DBLSCAN ) refresh /= 2;
+    if( mode.vscan > 1 ) refresh /= mode.vscan;
+    return refresh;
+}
+
+DrmDevice::~DrmDevice()
+{
+    drmModeFreeResources( res );
+}
 
 BackendDrm::BackendDrm( VkInstance vkInstance, DbusSession& bus )
     : m_session( nullptr )
@@ -154,6 +167,14 @@ BackendDrm::BackendDrm( VkInstance vkInstance, DbusSession& bus )
 
         DrmDevice drmDev = {};
         drmDev.fd = fd;
+        drmDev.res = drmModeGetResources( fd );
+
+        if( !drmDev.res )
+        {
+            mclog( LogLevel::Debug, "Skipping DRM device %s: failed to get resources", sysPath );
+            continue;
+        }
+
         drmGetCap( fd, DRM_CAP_DUMB_BUFFER, &drmDev.caps.dumbBuffer );
         drmGetCap( fd, DRM_CAP_VBLANK_HIGH_CRTC, &drmDev.caps.vblankHighCrtc );
         drmGetCap( fd, DRM_CAP_DUMB_PREFERRED_DEPTH, &drmDev.caps.dumbPreferredDepth );
@@ -183,6 +204,36 @@ BackendDrm::BackendDrm( VkInstance vkInstance, DbusSession& bus )
         mclog( LogLevel::Debug, "  crtc in vblank event: %" PRIu64, drmDev.caps.crtcInVblankEvent );
         mclog( LogLevel::Debug, "  sync obj: %" PRIu64, drmDev.caps.syncObj );
         mclog( LogLevel::Debug, "  sync obj timeline: %" PRIu64, drmDev.caps.syncObjTimeline );
+
+        mclog( LogLevel::Debug, "  %d connectors, %d encoders, %d crtcs, %d framebuffers", drmDev.res->count_connectors, drmDev.res->count_encoders, drmDev.res->count_crtcs, drmDev.res->count_fbs );
+        mclog( LogLevel::Debug, "  min resolution: %dx%d, max resolution: %dx%d", drmDev.res->min_width, drmDev.res->min_height, drmDev.res->max_width, drmDev.res->max_height );
+
+        for( int i=0; i<drmDev.res->count_connectors; i++ )
+        {
+            auto conn = drmModeGetConnector( fd, drmDev.res->connectors[i] );
+            if( !conn )
+            {
+                mclog( LogLevel::Debug, "  Skipping connector %d: failed to get connector", i );
+                continue;
+            }
+
+            if( conn->connection == DRM_MODE_DISCONNECTED )
+            {
+                mclog( LogLevel::Debug, "  Connector %d: disconnected", i );
+            }
+            else
+            {
+                mclog( LogLevel::Debug, "  Connector %d: %dx%d mm", i, conn->mmWidth, conn->mmHeight );
+
+                for( int j=0; j<conn->count_modes; j++ )
+                {
+                    const auto& mode = conn->modes[j];
+                    mclog( LogLevel::Debug, "    Mode %d: %dx%d @ %.3f Hz", j, mode.hdisplay, mode.vdisplay, GetRefreshRate( mode ) / 1000.f );
+                }
+            }
+
+            drmModeFreeConnector( conn );
+        }
 
         if( isBoot )
         {

@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <xf86drmMode.h>
 
 #include "../Backend.hpp"
 
@@ -29,8 +30,11 @@ struct DrmCaps
 
 struct DrmDevice
 {
+    ~DrmDevice();
+
     int fd;
     DrmCaps caps;
+    drmModeRes* res;
 };
 
 class BackendDrm : public Backend

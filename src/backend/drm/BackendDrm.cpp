@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <format>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -221,9 +222,13 @@ BackendDrm::BackendDrm( VkInstance vkInstance, DbusSession& bus )
                 continue;
             }
 
+            auto cTypeName = drmModeGetConnectorTypeName( conn->connector_type );
+            if( !cTypeName ) cTypeName = "unknown";
+            auto cName = std::format( "{}-{}", cTypeName, conn->connector_type_id );
+
             if( conn->connection == DRM_MODE_DISCONNECTED )
             {
-                mclog( LogLevel::Debug, "  Connector %d: disconnected", i );
+                mclog( LogLevel::Debug, "  Connector %s: disconnected", cName.c_str() );
             }
             else
             {
@@ -256,7 +261,7 @@ BackendDrm::BackendDrm( VkInstance vkInstance, DbusSession& bus )
                 }
                 drmModeFreeObjectProperties( props );
 
-                mclog( LogLevel::Debug, "  Connector %d: %s, %dx%d mm", i, model.c_str(), conn->mmWidth, conn->mmHeight );
+                mclog( LogLevel::Debug, "  Connector %s: %s, %dx%d mm", cName.c_str(), model.c_str(), conn->mmWidth, conn->mmHeight );
 
                 for( int j=0; j<conn->count_modes; j++ )
                 {

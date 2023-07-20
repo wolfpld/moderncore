@@ -41,15 +41,61 @@ DrmDevice::~DrmDevice()
     drmModeFreeResources( res );
 }
 
+static bool GetCurrentSession( char*& session, char*& seat )
+{
+    if( const auto res = sd_pid_get_session( 0, &session ); res < 0 ) { mclog( LogLevel::Warning, "Failed to get session: %s", strerror( -res ) ); return false; }
+    if( const auto res = sd_session_get_seat( session, &seat ); res < 0 ) { mclog( LogLevel::Warning, "Failed to get seat for session %s: %s", session, strerror( -res ) ); return false; }
+    if( sd_seat_can_graphical( seat ) <= 0 ) { mclog( LogLevel::Warning, "Seat %s is not graphical", seat ); return false; }
+
+    mclog( LogLevel::Info, "Using current session %s on seat %s", session, seat );
+    return true;
+}
+
+static bool GetActiveLocalSession( char*& session, char*& seat )
+{
+    char** list;
+    sd_uid_get_sessions( getuid(), 1, &list );
+    if( !list ) return false;
+
+    auto ptr = list;
+    while( *ptr )
+    {
+        mclog( LogLevel::Debug, "Checking session %s", *ptr );
+        if( sd_session_get_seat( *ptr, &seat ) >= 0 )
+        {
+            mclog( LogLevel::Debug, "Session %s is on seat %s", *ptr, seat );
+            if( sd_seat_can_graphical( seat ) > 0 )
+            {
+                mclog( LogLevel::Info, "Found remote active graphical session %s on seat %s", *ptr, seat );
+                session = strdup( *ptr );
+                break;
+            }
+            free( seat );
+        }
+        ptr++;
+    }
+
+    ptr = list;
+    while( *ptr ) free( *ptr++ );
+    free( list );
+
+    return session != nullptr;
+}
+
 BackendDrm::BackendDrm( VkInstance vkInstance, DbusSession& bus )
     : m_session( nullptr )
     , m_seat( nullptr )
 {
     CheckPanic( bus, "Cannot continue without a valid Dbus connection." );
 
-    if( const auto res = sd_pid_get_session( 0, &m_session ); res < 0 ) CheckPanic( false, "Failed to get session: %s", strerror( -res ) );
-    if( const auto res = sd_session_get_seat( m_session, &m_seat ); res < 0 ) CheckPanic( false, "Failed to get seat for session %s: %s", m_session, strerror( -res ) );
-    if( sd_seat_can_graphical( m_seat ) <= 0 ) CheckPanic( false, "Seat %s is not graphical", m_seat );
+    if( !GetCurrentSession( m_session, m_seat ) )
+    {
+        free( m_session );
+        free( m_seat );
+        m_session = nullptr;
+        m_seat = nullptr;
+        CheckPanic( GetActiveLocalSession( m_session, m_seat ), "Failed to get an active local session" );
+    }
 
     mclog( LogLevel::Debug, "Login session: %s, seat: %s", m_session, m_seat );
 

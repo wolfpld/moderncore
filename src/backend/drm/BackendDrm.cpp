@@ -76,7 +76,6 @@ BackendDrm::BackendDrm( VkInstance vkInstance, DbusSession& bus )
     bus.MatchSignal( LoginService, m_sessionPath.c_str(), LoginSessionIface, "ResumeDevice", DbusCallback( ResumeDevice ) );
     bus.MatchSignal( LoginService, m_sessionPath.c_str(), DbusPropertiesIface, "PropertiesChanged", DbusCallback( PropertiesChanged ) );
 
-    CheckPanic( bus.Call( LoginService, m_sessionPath.c_str(), LoginSessionIface, "Activate" ), "Failed to activate session" );
     CheckPanic( bus.Call( LoginService, m_sessionPath.c_str(), LoginSessionIface, "TakeControl", "b", false ), "Failed to take control of session" );
 
     sd_device_enumerator* e = nullptr;

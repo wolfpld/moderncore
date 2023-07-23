@@ -1,45 +1,19 @@
 #include <assert.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <format>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
-#include <sys/sysmacros.h>
 #include <systemd/sd-device.h>
 #include <systemd/sd-login.h>
 #include <unistd.h>
-#include <xf86drm.h>
-
-extern "C" {
-#include <libdisplay-info/info.h>
-}
 
 #include "BackendDrm.hpp"
+#include "DbusLoginPaths.hpp"
+#include "DrmDevice.hpp"
 #include "../../dbus/DbusSession.hpp"
 #include "../../util/Panic.hpp"
 
 #define DbusCallback( func ) [this] ( DbusMessage msg ) { return func( std::move( msg ) ); }
-
-constexpr const char* LoginService = "org.freedesktop.login1";
-constexpr const char* LoginPath = "/org/freedesktop/login1"; 
-constexpr const char* LoginManagerIface = "org.freedesktop.login1.Manager";
-constexpr const char* LoginSessionIface = "org.freedesktop.login1.Session";
-constexpr const char* DbusPropertiesIface = "org.freedesktop.DBus.Properties";
-
-static uint32_t GetRefreshRate( const drmModeModeInfo& mode )
-{
-    uint32_t refresh = mode.clock * 1000000ull / ( mode.htotal * mode.vtotal );
-    if( mode.flags & DRM_MODE_FLAG_INTERLACE ) refresh *= 2;
-    if( mode.flags & DRM_MODE_FLAG_DBLSCAN ) refresh /= 2;
-    if( mode.vscan > 1 ) refresh /= mode.vscan;
-    return refresh;
-}
-
-DrmDevice::~DrmDevice()
-{
-    drmModeFreeResources( res );
-}
 
 static bool GetCurrentSession( char*& session, char*& seat )
 {
@@ -165,166 +139,22 @@ BackendDrm::BackendDrm( VkInstance vkInstance, DbusSession& bus )
             continue;
         }
 
-        struct stat st;
-        if( stat( devName, &st ) != 0 )
+        try
         {
-            mclog( LogLevel::Debug, "Skipping DRM device %s: stat failed: %s", sysPath, strerror( errno ) );
-            continue;
-        }
+            auto drmDevice = std::make_unique<DrmDevice>( devName, bus, m_sessionPath.c_str() );
 
-        if( major( st.st_rdev ) != 226 )
-        {
-            mclog( LogLevel::Debug, "Skipping DRM device %s: not a DRM device", sysPath );
-            continue;
-        }
-
-        auto devMsg = bus.Call( LoginService, m_sessionPath.c_str(), LoginSessionIface, "TakeDevice", "uu", major( st.st_rdev ), minor( st.st_rdev ) );
-        if( !devMsg )
-        {
-            mclog( LogLevel::Debug, "Skipping DRM device %s: failed to take device", sysPath );
-            continue;
-        }
-
-        int fd;
-        int paused;
-        if( !devMsg.Read( "hb", &fd, &paused ) )
-        {
-            mclog( LogLevel::Debug, "Skipping DRM device %s: failed to read device fd", sysPath );
-            continue;
-        }
-
-        if( !drmIsKMS( fd ) )
-        {
-            bus.Call( LoginService, m_sessionPath.c_str(), LoginSessionIface, "ReleaseDevice", "uu", major( st.st_rdev ), minor( st.st_rdev ) );
-            mclog( LogLevel::Debug, "Skipping DRM device %s: not a KMS device", sysPath );
-            continue;
-        }
-
-        fd = fcntl( fd, F_DUPFD_CLOEXEC, 0 );
-        if( fd < 0 )
-        {
-            mclog( LogLevel::Debug, "Skipping DRM device %s: failed to dup fd: %s", sysPath, strerror( errno ) );
-            continue;
-        }
-
-        const auto name = drmGetDeviceNameFromFd2( fd );
-        auto ver = drmGetVersion( fd );
-
-        mclog( LogLevel::Info, "DRM device %s (%s) on seat %s%s, driver: %s (%s)", sysPath, name, seat, isBoot ? " (boot vga)" : "", ver ? ver->name : "unknown", ver ? ver->desc : "unknown" );
-
-        drmFreeVersion( ver );
-        free( name );
-
-        DrmDevice drmDev = {};
-        drmDev.fd = fd;
-        drmDev.res = drmModeGetResources( fd );
-
-        if( !drmDev.res )
-        {
-            mclog( LogLevel::Debug, "Skipping DRM device %s: failed to get resources", sysPath );
-            continue;
-        }
-
-        drmGetCap( fd, DRM_CAP_DUMB_BUFFER, &drmDev.caps.dumbBuffer );
-        drmGetCap( fd, DRM_CAP_VBLANK_HIGH_CRTC, &drmDev.caps.vblankHighCrtc );
-        drmGetCap( fd, DRM_CAP_DUMB_PREFERRED_DEPTH, &drmDev.caps.dumbPreferredDepth );
-        drmGetCap( fd, DRM_CAP_DUMB_PREFER_SHADOW, &drmDev.caps.dumbPreferShadow );
-        drmGetCap( fd, DRM_CAP_PRIME, &drmDev.caps.prime );
-        drmGetCap( fd, DRM_CAP_TIMESTAMP_MONOTONIC, &drmDev.caps.timestampMonotonic );
-        drmGetCap( fd, DRM_CAP_ASYNC_PAGE_FLIP, &drmDev.caps.asyncPageFlip );
-        drmGetCap( fd, DRM_CAP_CURSOR_WIDTH, &drmDev.caps.cursorWidth );
-        drmGetCap( fd, DRM_CAP_CURSOR_HEIGHT, &drmDev.caps.cursorHeight );
-        drmGetCap( fd, DRM_CAP_ADDFB2_MODIFIERS, &drmDev.caps.addFB2Modifiers );
-        drmGetCap( fd, DRM_CAP_PAGE_FLIP_TARGET, &drmDev.caps.pageFlipTarget );
-        drmGetCap( fd, DRM_CAP_CRTC_IN_VBLANK_EVENT, &drmDev.caps.crtcInVblankEvent );
-        drmGetCap( fd, DRM_CAP_SYNCOBJ, &drmDev.caps.syncObj );
-        drmGetCap( fd, DRM_CAP_SYNCOBJ_TIMELINE, &drmDev.caps.syncObjTimeline );
-
-        mclog( LogLevel::Debug, "  dumb buffer: %" PRIu64, drmDev.caps.dumbBuffer );
-        mclog( LogLevel::Debug, "  vblank high crtc: %" PRIu64, drmDev.caps.vblankHighCrtc );
-        mclog( LogLevel::Debug, "  dumb preferred depth: %" PRIu64, drmDev.caps.dumbPreferredDepth );
-        mclog( LogLevel::Debug, "  dumb prefer shadow: %" PRIu64, drmDev.caps.dumbPreferShadow );
-        mclog( LogLevel::Debug, "  prime: %" PRIu64, drmDev.caps.prime );
-        mclog( LogLevel::Debug, "  timestamp monotonic: %" PRIu64, drmDev.caps.timestampMonotonic );
-        mclog( LogLevel::Debug, "  async page flip: %" PRIu64, drmDev.caps.asyncPageFlip );
-        mclog( LogLevel::Debug, "  cursor width: %" PRIu64, drmDev.caps.cursorWidth );
-        mclog( LogLevel::Debug, "  cursor height: %" PRIu64, drmDev.caps.cursorHeight );
-        mclog( LogLevel::Debug, "  addfb2 modifiers: %" PRIu64, drmDev.caps.addFB2Modifiers );
-        mclog( LogLevel::Debug, "  page flip target: %" PRIu64, drmDev.caps.pageFlipTarget );
-        mclog( LogLevel::Debug, "  crtc in vblank event: %" PRIu64, drmDev.caps.crtcInVblankEvent );
-        mclog( LogLevel::Debug, "  sync obj: %" PRIu64, drmDev.caps.syncObj );
-        mclog( LogLevel::Debug, "  sync obj timeline: %" PRIu64, drmDev.caps.syncObjTimeline );
-
-        mclog( LogLevel::Debug, "  %d connectors, %d encoders, %d crtcs, %d framebuffers", drmDev.res->count_connectors, drmDev.res->count_encoders, drmDev.res->count_crtcs, drmDev.res->count_fbs );
-        mclog( LogLevel::Debug, "  min resolution: %dx%d, max resolution: %dx%d", drmDev.res->min_width, drmDev.res->min_height, drmDev.res->max_width, drmDev.res->max_height );
-
-        for( int i=0; i<drmDev.res->count_connectors; i++ )
-        {
-            auto conn = drmModeGetConnector( fd, drmDev.res->connectors[i] );
-            if( !conn )
+            if( isBoot )
             {
-                mclog( LogLevel::Debug, "  Skipping connector %d: failed to get connector", i );
-                continue;
-            }
-
-            auto cTypeName = drmModeGetConnectorTypeName( conn->connector_type );
-            if( !cTypeName ) cTypeName = "unknown";
-            auto cName = std::format( "{}-{}", cTypeName, conn->connector_type_id );
-
-            if( conn->connection == DRM_MODE_DISCONNECTED )
-            {
-                mclog( LogLevel::Debug, "  Connector %s: disconnected", cName.c_str() );
+                m_drmDevices.insert( m_drmDevices.begin(), std::move( drmDevice ) );
             }
             else
             {
-                std::string model = "unknown";
-                auto props = drmModeObjectGetProperties( fd, conn->connector_id, DRM_MODE_OBJECT_CONNECTOR );
-                if( props )
-                {
-                    for( int j=0; j<props->count_props; j++ )
-                    {
-                        auto prop = drmModeGetProperty( fd, props->props[j] );
-                        if( prop )
-                        {
-                            if( strcmp( prop->name, "EDID" ) == 0 )
-                            {
-                                auto blob = drmModeGetPropertyBlob( fd, props->prop_values[j] );
-                                if( blob )
-                                {
-                                    auto info = di_info_parse_edid( blob->data, blob->length );
-                                    if( info )
-                                    {
-                                        model = di_info_get_model( info );
-                                        di_info_destroy( info );
-                                    }
-                                    drmModeFreePropertyBlob( blob );
-                                }
-                            }
-                            drmModeFreeProperty( prop );
-                        }
-                    }
-                }
-                drmModeFreeObjectProperties( props );
-
-                mclog( LogLevel::Debug, "  Connector %s: %s, %dx%d mm", cName.c_str(), model.c_str(), conn->mmWidth, conn->mmHeight );
-
-                for( int j=0; j<conn->count_modes; j++ )
-                {
-                    const auto& mode = conn->modes[j];
-                    mclog( LogLevel::Debug, "    Mode %d: %dx%d @ %.3f Hz", j, mode.hdisplay, mode.vdisplay, GetRefreshRate( mode ) / 1000.f );
-                }
+                m_drmDevices.emplace_back( std::move( drmDevice ) );
             }
-
-            drmModeFreeConnector( conn );
         }
-
-        if( isBoot )
+        catch( DrmDevice::DeviceException& e )
         {
-            m_drmDevices.insert( m_drmDevices.begin(), drmDev );
-        }
-        else
-        {
-            m_drmDevices.emplace_back( drmDev );
+            mclog( LogLevel::Debug, "Skipping DRM device %s: %s", devName, e.what() );
         }
     }
 

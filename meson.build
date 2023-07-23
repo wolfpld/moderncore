@@ -19,6 +19,7 @@ files = [
     'src/image/PngLoader.cpp',
     'src/image/WebpLoader.cpp',
     'src/backend/drm/BackendDrm.cpp',
+    'src/backend/drm/DrmDevice.cpp',
     'src/backend/wayland/BackendWayland.cpp',
     'src/backend/wayland/WaylandKeyboard.cpp',
     'src/backend/wayland/WaylandOutput.cpp',

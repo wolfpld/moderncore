@@ -1,3 +1,5 @@
+#include <format>
+
 #include "CursorTheme.hpp"
 #include "WinCursor.hpp"
 #include "XCursor.hpp"
@@ -14,8 +16,8 @@ CursorTheme::CursorTheme()
     if( !m_cursor->Valid() )
     {
         m_cursor = std::make_unique<WinCursor>( themeName );
+        if( !m_cursor->Valid() ) throw( CursorException( std::format( "Cannot load mouse cursor theme {}", themeName ) ) );
     }
-    CheckPanic( m_cursor->Valid(), "Cannot load mouse cursor theme" );
 
     m_size = m_cursor->FitSize( config.Get( "Theme", "Size", 24 ) );
 }

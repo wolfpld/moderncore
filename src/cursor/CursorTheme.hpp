@@ -2,6 +2,8 @@
 #define __CURSORTHEME_HPP__
 
 #include <memory>
+#include <stdexcept>
+#include <string>
 
 #include "../util/NoCopy.hpp"
 
@@ -10,6 +12,8 @@ class CursorBase;
 class CursorTheme
 {
 public:
+    struct CursorException : public std::runtime_error { explicit CursorException( const std::string& msg ) : std::runtime_error( msg ) {} };
+
     CursorTheme();
     ~CursorTheme();
 

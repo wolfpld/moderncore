@@ -1,7 +1,6 @@
 #ifndef __CURSORLOGIC_HPP__
 #define __CURSORLOGIC_HPP__
 
-#include <assert.h>
 #include <memory>
 #include <vector>
 

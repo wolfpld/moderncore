@@ -1,7 +1,8 @@
+#include <assert.h>
+
 #include "CursorLogic.hpp"
 #include "CursorTheme.hpp"
 #include "../util/Clock.hpp"
-#include "../util/Panic.hpp"
 
 CursorLogic::CursorLogic()
     : m_theme( std::make_unique<CursorTheme>() )
@@ -10,7 +11,7 @@ CursorLogic::CursorLogic()
     , m_lastTime( GetTimeMicro() )
     , m_needUpdate( false )
 {
-    CheckPanic( m_theme->Cursor().Valid(), "Cursor theme has no default cursor." );
+    assert( m_theme->Cursor().Valid() );
     m_cursor = m_theme->Cursor().Get( m_theme->Size(), m_type );
     m_frameTime = m_cursor->frames.front().delay;
 }

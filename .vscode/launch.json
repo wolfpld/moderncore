@@ -14,7 +14,7 @@
             "args": [],
             "preLaunchTask": "Meson: Build all targets",
             "env": {
-                "WAYLAND_DISPLAY": "wayland-0"
+                //"WAYLAND_DISPLAY": "wayland-0"
             }
         }
     ]

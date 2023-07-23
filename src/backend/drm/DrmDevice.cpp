@@ -16,6 +16,8 @@ extern "C" {
 #include "../../dbus/DbusSession.hpp"
 #include "../../util/Logs.hpp"
 
+constexpr int DriMajor = 226;
+
 static uint32_t GetRefreshRate( const drmModeModeInfo& mode )
 {
     uint32_t refresh = mode.clock * 1000000ull / ( mode.htotal * mode.vtotal );
@@ -34,7 +36,7 @@ DrmDevice::DrmDevice( const char* devName, DbusSession& bus, const char* session
 {
     struct stat st;
     if( stat( devName, &st ) != 0 ) throw DeviceException( std::format( "Failed to stat DRM device: {}", strerror( errno ) ) );
-    if( major( st.st_rdev ) != 226 ) throw DeviceException( "Not a DRM device" );
+    if( major( st.st_rdev ) != DriMajor ) throw DeviceException( "Not a DRM device" );
 
     auto devMsg = bus.Call( LoginService, sessionPath, LoginSessionIface, "TakeDevice", "uu", major( st.st_rdev ), minor( st.st_rdev ) );
     if( !devMsg ) throw DeviceException( std::format( "Failed to take device" ) );

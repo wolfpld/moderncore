@@ -7,25 +7,13 @@
 #include <xf86drm.h>
 #include <xf86drmMode.h>
 
-extern "C" {
-#include <libdisplay-info/info.h>
-}
-
 #include "DbusLoginPaths.hpp"
+#include "DrmConnector.hpp"
 #include "DrmDevice.hpp"
 #include "../../dbus/DbusSession.hpp"
 #include "../../util/Logs.hpp"
 
 constexpr int DriMajor = 226;
-
-static uint32_t GetRefreshRate( const drmModeModeInfo& mode )
-{
-    uint32_t refresh = mode.clock * 1000000ull / ( mode.htotal * mode.vtotal );
-    if( mode.flags & DRM_MODE_FLAG_INTERLACE ) refresh *= 2;
-    if( mode.flags & DRM_MODE_FLAG_DBLSCAN ) refresh /= 2;
-    if( mode.vscan > 1 ) refresh /= mode.vscan;
-    return refresh;
-}
 
 DrmDevice::DrmDevice( const char* devName, DbusSession& bus, const char* sessionPath )
     : m_bus( bus )
@@ -93,67 +81,21 @@ DrmDevice::DrmDevice( const char* devName, DbusSession& bus, const char* session
 
     for( int i=0; i<m_res->count_connectors; i++ )
     {
-        auto conn = drmModeGetConnector( fd, m_res->connectors[i] );
-        if( !conn )
+        try
         {
-            mclog( LogLevel::Debug, "  Skipping connector %d: failed to get connector", i );
-            continue;
+            m_connectors.emplace_back( std::make_unique<DrmConnector>( m_fd, m_res->connectors[i] ) );
         }
-
-        auto cTypeName = drmModeGetConnectorTypeName( conn->connector_type );
-        if( !cTypeName ) cTypeName = "unknown";
-        auto cName = std::format( "{}-{}", cTypeName, conn->connector_type_id );
-
-        if( conn->connection == DRM_MODE_DISCONNECTED )
+        catch( DrmConnector::ConnectorException& e )
         {
-            mclog( LogLevel::Debug, "  Connector %s: disconnected", cName.c_str() );
+            mclog( LogLevel::Warning, "  Skipping connector %d: %s", i, e.what() );
         }
-        else
-        {
-            std::string model = "unknown";
-            auto props = drmModeObjectGetProperties( fd, conn->connector_id, DRM_MODE_OBJECT_CONNECTOR );
-            if( props )
-            {
-                for( int j=0; j<props->count_props; j++ )
-                {
-                    auto prop = drmModeGetProperty( fd, props->props[j] );
-                    if( prop )
-                    {
-                        if( strcmp( prop->name, "EDID" ) == 0 )
-                        {
-                            auto blob = drmModeGetPropertyBlob( fd, props->prop_values[j] );
-                            if( blob )
-                            {
-                                auto info = di_info_parse_edid( blob->data, blob->length );
-                                if( info )
-                                {
-                                    model = di_info_get_model( info );
-                                    di_info_destroy( info );
-                                }
-                                drmModeFreePropertyBlob( blob );
-                            }
-                        }
-                        drmModeFreeProperty( prop );
-                    }
-                }
-            }
-            drmModeFreeObjectProperties( props );
-
-            mclog( LogLevel::Debug, "  Connector %s: %s, %dx%d mm", cName.c_str(), model.c_str(), conn->mmWidth, conn->mmHeight );
-
-            for( int j=0; j<conn->count_modes; j++ )
-            {
-                const auto& mode = conn->modes[j];
-                mclog( LogLevel::Debug, "    Mode %d: %dx%d @ %.3f Hz", j, mode.hdisplay, mode.vdisplay, GetRefreshRate( mode ) / 1000.f );
-            }
-        }
-
-        drmModeFreeConnector( conn );
     }
 }
 
 DrmDevice::~DrmDevice()
 {
+    m_connectors.clear();
+
     drmModeFreeResources( m_res );
 
     if( m_fd >= 0 ) close( m_fd );

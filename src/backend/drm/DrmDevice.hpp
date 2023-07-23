@@ -1,13 +1,16 @@
 #ifndef __DRMDEVICE_HPP__
 #define __DRMDEVICE_HPP__
 
+#include <memory>
 #include <stdexcept>
 #include <stdint.h>
 #include <string>
 #include <sys/types.h>
+#include <vector>
 
 using drmModeRes = struct _drmModeRes;
 class DbusSession;
+class DrmConnector;
 
 struct DrmCaps
 {
@@ -44,6 +47,8 @@ private:
 
     DrmCaps m_caps;
     drmModeRes* m_res;
+
+    std::vector<std::unique_ptr<DrmConnector>> m_connectors;
 };
 
 #endif

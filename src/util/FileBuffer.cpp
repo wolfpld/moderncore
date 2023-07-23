@@ -1,3 +1,5 @@
+#include <format>
+
 #include "FileBuffer.hpp"
 #include "FileWrapper.hpp"
 #include "../util/Logs.hpp"
@@ -9,8 +11,8 @@ FileBuffer::FileBuffer( const char* fn )
     FileWrapper file( fn, "rb" );
     if( !file )
     {
-        mclog( LogLevel::Warning, "Failed to open file: %s", fn );
-        return;
+        mclog( LogLevel::Error, "Failed to open file: %s", fn );
+        throw FileException( std::format( "Failed to open file: {}", fn ) );
     }
 
     mclog( LogLevel::Debug, "Loading file: %s", fn );

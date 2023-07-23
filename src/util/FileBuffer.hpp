@@ -2,12 +2,16 @@
 #define __FILEBUFFER_HPP__
 
 #include <stddef.h>
+#include <stdexcept>
+#include <string>
 
 #include "NoCopy.hpp"
 
 class FileBuffer
 {
 public:
+    struct FileException : public std::runtime_error { explicit FileException( const std::string& msg ) : std::runtime_error( msg ) {} };
+
     explicit FileBuffer( const char* fn );
     ~FileBuffer();
 

@@ -160,6 +160,7 @@ BackendDrm::BackendDrm( VkInstance vkInstance, DbusSession& bus )
 
     sd_device_enumerator_unref( e );
 
+    CheckPanic( !m_drmDevices.empty(), "No DRM devices found" );
     mclog( LogLevel::Info, "Found %zu DRM device(s)", m_drmDevices.size() );
 }
 

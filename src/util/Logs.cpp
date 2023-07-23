@@ -5,11 +5,8 @@
 #include "Logs.hpp"
 #include "../util/Ansi.hpp"
 
-void MCoreLogMessage( LogLevel level, const char* fileName, size_t line, const char *fmt, ... )
+static void PrintLevel( LogLevel level )
 {
-    va_list args;
-    va_start( args, fmt );
-
     switch( level )
     {
     case LogLevel::Debug: printf( ANSI_BOLD ANSI_BLACK "[DEBUG] " ); break;
@@ -19,10 +16,25 @@ void MCoreLogMessage( LogLevel level, const char* fileName, size_t line, const c
     case LogLevel::Fatal: printf( ANSI_BOLD ANSI_MAGENTA "[FATAL] " ); break;
     default: assert( false ); break;
     }
+}
 
+void MCoreLogMessage( LogLevel level, const char* fileName, size_t line, const char *fmt, ... )
+{
+    va_list args;
+    va_start( args, fmt );
+
+    PrintLevel( level );
     printf( "[%s:%zu] ", fileName, line );
     vprintf( fmt, args );
     printf( ANSI_RESET "\n" );
     fflush( stdout );
+
     va_end( args );
+}
+
+void MCoreLogMessage( LogLevel level, const char* fileName, size_t line, const std::string& str )
+{
+    PrintLevel( level );
+    printf( "[%s:%zu] %s" ANSI_RESET "\n", fileName, line, str.c_str() );
+    fflush( stdout );
 }

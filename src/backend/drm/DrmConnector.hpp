@@ -16,6 +16,8 @@ public:
     ~DrmConnector();
 
 private:
+    uint32_t m_id;
+
     bool m_connected;
 
     std::string m_name;

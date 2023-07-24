@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <format>
 #include <string.h>
 #include <xf86drmMode.h>
@@ -19,10 +20,12 @@ static uint32_t GetRefreshRate( const drmModeModeInfo& mode )
 }
 
 DrmConnector::DrmConnector( int fd, uint32_t id )
-    : m_monitor( "unknown" )
+    : m_id( id )
+    , m_monitor( "unknown" )
 {
     auto conn = drmModeGetConnector( fd, id );
     if( !conn ) throw ConnectorException( "Failed to get connector" );
+    assert( id == conn->connector_id );
 
     auto cTypeName = drmModeGetConnectorTypeName( conn->connector_type );
     if( !cTypeName ) cTypeName = "unknown";

@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <bit>
 #include <format>
 #include <string.h>
 #include <xf86drmMode.h>
@@ -19,7 +20,7 @@ static uint32_t GetRefreshRate( const drmModeModeInfo& mode )
     return refresh;
 }
 
-DrmConnector::DrmConnector( int fd, uint32_t id )
+DrmConnector::DrmConnector( int fd, uint32_t id, const drmModeRes* res )
     : m_id( id )
     , m_monitor( "unknown" )
 {
@@ -32,6 +33,21 @@ DrmConnector::DrmConnector( int fd, uint32_t id )
     m_name = std::format( "{}-{}", cTypeName, conn->connector_type_id );
 
     m_connected = conn->connection != DRM_MODE_DISCONNECTED;
+
+    auto crtcs = drmModeConnectorGetPossibleCrtcs( fd, conn );
+    if( crtcs == 0 )
+    {
+        drmModeFreeConnector( conn );
+        throw ConnectorException( "Connector has no CRTCs" );
+    }
+
+    while( crtcs != 0 )
+    {
+        auto bit = std::countr_zero( crtcs );
+        crtcs &= ~( 1 << bit );
+        assert( bit < res->count_crtcs );
+        m_crtcs.push_back( res->crtcs[bit] );
+    }
 
     if( !m_connected )
     {

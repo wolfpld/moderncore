@@ -17,6 +17,8 @@ public:
     DrmConnector( int fd, uint32_t id, const drmModeRes* res );
     ~DrmConnector();
 
+    [[nodiscard]] uint32_t GetId() const { return m_id; }
+
 private:
     uint32_t m_id;
 

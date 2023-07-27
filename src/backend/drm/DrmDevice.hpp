@@ -11,6 +11,7 @@
 using drmModeRes = struct _drmModeRes;
 class DbusSession;
 class DrmConnector;
+class DrmCrtc;
 
 struct DrmCaps
 {
@@ -48,6 +49,7 @@ private:
     DrmCaps m_caps;
     drmModeRes* m_res;
 
+    std::vector<std::unique_ptr<DrmCrtc>> m_crtcs;
     std::vector<std::unique_ptr<DrmConnector>> m_connectors;
 };
 

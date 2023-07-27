@@ -20,6 +20,7 @@ files = [
     'src/image/WebpLoader.cpp',
     'src/backend/drm/BackendDrm.cpp',
     'src/backend/drm/DrmConnector.cpp',
+    'src/backend/drm/DrmCrtc.cpp',
     'src/backend/drm/DrmDevice.cpp',
     'src/backend/wayland/BackendWayland.cpp',
     'src/backend/wayland/WaylandKeyboard.cpp',

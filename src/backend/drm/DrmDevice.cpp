@@ -13,6 +13,7 @@
 #include "DrmDevice.hpp"
 #include "../../dbus/DbusSession.hpp"
 #include "../../util/Logs.hpp"
+#include "../../util/Panic.hpp"
 
 constexpr int DriMajor = 226;
 
@@ -103,14 +104,46 @@ DrmDevice::DrmDevice( const char* devName, DbusSession& bus, const char* session
             mclog( LogLevel::Warning, "  Skipping connector %d: %s", i, e.what() );
         }
     }
+
+    bool found = false;
+    for( auto& conn : m_connectors )
+    {
+        if( !conn->IsConnected() ) continue;
+
+        auto& mode = conn->GetBestDisplayMode();
+        mclog( LogLevel::Info, "  Setting connector %s to %dx%d @ %d Hz", conn->GetName().c_str(), mode.hdisplay, mode.vdisplay, mode.vrefresh );
+        SetMode( *conn, mode );
+        found = true;
+        break;
+    }
+    CheckPanic( found, "There are no displays connected" );
+
+    for( auto& crtc : m_crtcs )
+    {
+        if( !crtc->IsUsed() ) crtc->Disable();
+    }
 }
 
 DrmDevice::~DrmDevice()
 {
     m_connectors.clear();
+    m_crtcs.clear();
 
     drmModeFreeResources( m_res );
 
     if( m_fd >= 0 ) close( m_fd );
     if( m_dev != 0 ) m_bus.Call( LoginService, m_sessionPath.c_str(), LoginSessionIface, "ReleaseDevice", "uu", major( m_dev ), minor( m_dev ) );
+}
+
+void DrmDevice::SetMode( const DrmConnector& conn, const drmModeModeInfo& mode )
+{
+    auto it = std::find_if( m_crtcs.begin(), m_crtcs.end(), []( const auto& c ) { return !c->IsUsed(); } );
+    if( it == m_crtcs.end() ) throw ModesetException( "No free CRTC" );
+    auto& crtc = *it;
+
+    uint32_t connId = conn.GetId();
+    auto modeInfo = mode;
+
+    if( drmModeSetCrtc( m_fd, crtc->GetId(), 0, 0, 0, &connId, 1, &modeInfo ) != 0 ) throw ModesetException( "Failed to set CRTC mode" );
+    crtc->Enable();
 }

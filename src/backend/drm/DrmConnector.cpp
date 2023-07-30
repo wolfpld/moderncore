@@ -46,7 +46,7 @@ DrmConnector::DrmConnector( int fd, uint32_t id, const drmModeRes* res )
         auto bit = std::countr_zero( crtcs );
         crtcs &= ~( 1 << bit );
         assert( bit < res->count_crtcs );
-        m_crtcs.push_back( res->crtcs[bit] );
+        m_crtcs.push_back( bit );
     }
 
     if( !m_connected )

@@ -149,5 +149,19 @@ add_project_arguments(compile_args, language: ['c', 'cpp'])
 
 executable('mcore',
     files,
-    dependencies: [vulkan, wayland_server, wayland_client, xkbcommon, glm, libpng, libjpeg, libjxl, libwebp, libheif, libsystemd, libdrm, libdisplayinfo]
+    dependencies: [
+        vulkan,
+        wayland_server,
+        wayland_client,
+        xkbcommon,
+        glm,
+        libpng,
+        libjpeg,
+        libjxl,
+        libwebp,
+        libheif,
+        libsystemd,
+        libdrm,
+        libdisplayinfo,
+    ]
 )

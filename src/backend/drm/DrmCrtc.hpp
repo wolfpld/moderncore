@@ -13,10 +13,17 @@ public:
     DrmCrtc( int fd, uint32_t id );
     ~DrmCrtc();
 
+    void Enable();
+    void Disable();
+
     [[nodiscard]] uint32_t GetId() const { return m_id; }
+    [[nodiscard]] bool IsUsed() const { return m_inUse; }
 
 private:
+    int m_fd;
     uint32_t m_id;
+    bool m_inUse;
+    bool m_isAttached;
 };
 
 #endif

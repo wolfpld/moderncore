@@ -41,6 +41,8 @@ DrmDevice::DrmDevice( const char* devName, DbusSession& bus, const char* session
     m_fd = fcntl( fd, F_DUPFD_CLOEXEC, 0 );
     if( m_fd < 0 ) throw DeviceException( std::format( "Failed to dup fd: {}", strerror( errno ) ) );
 
+    if( drmSetClientCap( m_fd, DRM_CLIENT_CAP_ATOMIC, 1 ) != 0 ) throw DeviceException( "Failed to set atomic cap" );
+
     auto ver = drmGetVersion( fd );
     mclog( LogLevel::Info, "DRM device %s: %s (%s)", devName, ver->name ? ver->name : "unknown", ver->desc ? ver->desc : "unknown" );
     drmFreeVersion( ver );

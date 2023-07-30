@@ -88,6 +88,7 @@ DrmConnector::DrmConnector( int fd, uint32_t id, const drmModeRes* res )
         for( int j=0; j<conn->count_modes; j++ )
         {
             const auto& mode = conn->modes[j];
+            m_modes.emplace_back( mode );
             mclog( LogLevel::Debug, "    Mode %d: %dx%d @ %.3f Hz", j, mode.hdisplay, mode.vdisplay, GetRefreshRate( mode ) / 1000.f );
         }
     }
@@ -97,4 +98,32 @@ DrmConnector::DrmConnector( int fd, uint32_t id, const drmModeRes* res )
 
 DrmConnector::~DrmConnector()
 {
+}
+
+const drmModeModeInfo& DrmConnector::GetBestDisplayMode() const
+{
+    assert( m_connected );
+    assert( !m_modes.empty() );
+
+    uint32_t best = 0;
+    uint32_t bestRes = m_modes[0].hdisplay * m_modes[0].vdisplay;
+    uint32_t bestRefresh = GetRefreshRate( m_modes[0] );
+    for( uint32_t i=1; i<m_modes.size(); i++ )
+    {
+        const auto refresh = GetRefreshRate( m_modes[i] );
+        const uint32_t res = m_modes[i].hdisplay * m_modes[i].vdisplay;
+        if( res > bestRes )
+        {
+            best = i;
+            bestRes = res;
+            bestRefresh = refresh;
+        }
+        else if( refresh > bestRefresh )
+        {
+            best = i;
+            bestRefresh = refresh;
+        }
+    }
+
+    return m_modes[best];
 }

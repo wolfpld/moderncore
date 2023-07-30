@@ -8,6 +8,7 @@
 
 using drmModeConnector = struct _drmModeConnector;
 using drmModeRes = struct _drmModeRes;
+using drmModeModeInfo = struct _drmModeModeInfo;
 
 class DrmConnector
 {
@@ -16,6 +17,8 @@ public:
 
     DrmConnector( int fd, uint32_t id, const drmModeRes* res );
     ~DrmConnector();
+
+    [[nodiscard]] const drmModeModeInfo& GetBestDisplayMode() const;
 
     [[nodiscard]] uint32_t GetId() const { return m_id; }
     [[nodiscard]] bool IsConnected() const { return m_connected; }
@@ -32,6 +35,7 @@ private:
     std::string m_monitor;
 
     std::vector<uint32_t> m_crtcs;
+    std::vector<drmModeModeInfo> m_modes;
 };
 
 #endif

@@ -7,7 +7,7 @@ jobs:
     runs-on: arch-latest
     steps:
     - name: Install dependencies
-      run: pacman -Syu --noconfirm && pacman -S --noconfirm nodejs git clang meson shaderc vulkan-validation-layers wayland wayland-protocols libxkbcommon glm libpng libjpeg-turbo libjxl libwebp libheif systemd-libs libdrm libdisplay-info
+      run: pacman -Syu --noconfirm && pacman -S --noconfirm nodejs git clang meson shaderc vulkan-validation-layers wayland wayland-protocols libxkbcommon glm libpng libjpeg-turbo libjxl libwebp libheif systemd-libs libdrm libdisplay-info mesa
     - uses: actions/checkout@v3
     - name: Setup build
       run: meson setup build

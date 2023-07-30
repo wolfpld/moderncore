@@ -18,6 +18,10 @@ public:
     ~DrmConnector();
 
     [[nodiscard]] uint32_t GetId() const { return m_id; }
+    [[nodiscard]] bool IsConnected() const { return m_connected; }
+    [[nodiscard]] const std::string& GetName() const { return m_name; }
+    [[nodiscard]] const std::string& GetMonitor() const { return m_monitor; }
+    [[nodiscard]] const std::vector<uint32_t>& GetCrtcs() const { return m_crtcs; }
 
 private:
     uint32_t m_id;

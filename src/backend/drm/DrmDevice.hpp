@@ -10,7 +10,7 @@
 
 using drmModeRes = struct _drmModeRes;
 using drmModeModeInfo = struct _drmModeModeInfo;
-
+struct gbm_device;
 class DbusSession;
 class DrmConnector;
 class DrmCrtc;
@@ -50,6 +50,8 @@ private:
 
     dev_t m_dev;
     int m_fd;
+
+    gbm_device* m_gbm;
 
     DrmCaps m_caps;
     drmModeRes* m_res;

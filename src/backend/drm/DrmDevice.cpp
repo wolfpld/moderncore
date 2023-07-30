@@ -1,5 +1,6 @@
 #include <fcntl.h>
 #include <format>
+#include <gbm.h>
 #include <inttypes.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -42,6 +43,9 @@ DrmDevice::DrmDevice( const char* devName, DbusSession& bus, const char* session
     if( m_fd < 0 ) throw DeviceException( std::format( "Failed to dup fd: {}", strerror( errno ) ) );
 
     if( drmSetClientCap( m_fd, DRM_CLIENT_CAP_ATOMIC, 1 ) != 0 ) throw DeviceException( "Failed to set atomic cap" );
+
+    m_gbm = gbm_create_device( m_fd );
+    if( !m_gbm ) throw DeviceException( "Failed to create GBM device" );
 
     auto ver = drmGetVersion( fd );
     mclog( LogLevel::Info, "DRM device %s: %s (%s)", devName, ver->name ? ver->name : "unknown", ver->desc ? ver->desc : "unknown" );
@@ -132,6 +136,8 @@ DrmDevice::~DrmDevice()
     m_crtcs.clear();
 
     drmModeFreeResources( m_res );
+
+    gbm_device_destroy( m_gbm );
 
     if( m_fd >= 0 ) close( m_fd );
     if( m_dev != 0 ) m_bus.Call( LoginService, m_sessionPath.c_str(), LoginSessionIface, "ReleaseDevice", "uu", major( m_dev ), minor( m_dev ) );

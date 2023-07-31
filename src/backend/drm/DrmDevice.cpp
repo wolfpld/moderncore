@@ -84,7 +84,7 @@ DrmDevice::DrmDevice( const char* devName, DbusSession& bus, const char* session
     mclog( LogLevel::Debug, "  sync obj: %" PRIu64, m_caps.syncObj );
     mclog( LogLevel::Debug, "  sync obj timeline: %" PRIu64, m_caps.syncObjTimeline );
 
-    mclog( LogLevel::Debug, "  %d connectors, %d encoders, %d crtcs, %d framebuffers", m_res->count_connectors, m_res->count_encoders, m_res->count_crtcs, m_res->count_fbs );
+    mclog( LogLevel::Debug, "  %d connectors, %d crtcs, %d framebuffers", m_res->count_connectors, m_res->count_crtcs, m_res->count_fbs );
     mclog( LogLevel::Debug, "  min resolution: %dx%d, max resolution: %dx%d", m_res->min_width, m_res->min_height, m_res->max_width, m_res->max_height );
 
     for( int i=0; i<m_res->count_crtcs; i++ )

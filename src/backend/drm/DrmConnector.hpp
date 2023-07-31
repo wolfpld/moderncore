@@ -10,6 +10,7 @@ using drmModeConnector = struct _drmModeConnector;
 using drmModeRes = struct _drmModeRes;
 using drmModeModeInfo = struct _drmModeModeInfo;
 class DrmDevice;
+struct gbm_bo;
 
 class DrmConnector
 {
@@ -18,6 +19,8 @@ public:
 
     DrmConnector( DrmDevice& device, uint32_t id, const drmModeRes* res );
     ~DrmConnector();
+
+    bool SetMode( const drmModeModeInfo& mode );
 
     [[nodiscard]] const drmModeModeInfo& GetBestDisplayMode() const;
 
@@ -30,6 +33,8 @@ public:
 private:
     uint32_t m_id;
 
+    gbm_bo* m_bo;
+    uint32_t m_fbId;
     bool m_connected;
 
     std::string m_name;

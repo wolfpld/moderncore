@@ -1,6 +1,8 @@
+#include <algorithm>
 #include <assert.h>
 #include <bit>
 #include <format>
+#include <gbm.h>
 #include <string.h>
 #include <xf86drmMode.h>
 
@@ -10,6 +12,7 @@ extern "C" {
 
 #include "DrmDevice.hpp"
 #include "DrmConnector.hpp"
+#include "DrmCrtc.hpp"
 #include "../../util/Logs.hpp"
 
 static uint32_t GetRefreshRate( const drmModeModeInfo& mode )
@@ -23,6 +26,7 @@ static uint32_t GetRefreshRate( const drmModeModeInfo& mode )
 
 DrmConnector::DrmConnector( DrmDevice& device, uint32_t id, const drmModeRes* res )
     : m_id( id )
+    , m_bo( nullptr )
     , m_monitor( "unknown" )
     , m_device( device )
 {
@@ -100,6 +104,48 @@ DrmConnector::DrmConnector( DrmDevice& device, uint32_t id, const drmModeRes* re
 
 DrmConnector::~DrmConnector()
 {
+    if( m_bo )
+    {
+        drmModeRmFB( m_device.Descriptor(), m_fbId );
+        gbm_bo_destroy( m_bo );
+    }
+}
+
+bool DrmConnector::SetMode( const drmModeModeInfo& mode )
+{
+    assert( m_connected );
+
+    auto& crtcs = m_device.GetCrtcs();
+    auto it = std::find_if( crtcs.begin(), crtcs.end(), []( const auto& c ) { return !c->IsUsed(); } );
+    if( it == crtcs.end() ) return false;
+
+    auto& crtc = *it;
+
+    // todo
+    assert( !m_bo );
+
+    m_bo = gbm_bo_create( m_device, mode.hdisplay, mode.vdisplay, GBM_FORMAT_XRGB8888, GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING );
+    if( !m_bo ) return false;
+
+    if( drmModeAddFB( m_device.Descriptor(), mode.hdisplay, mode.vdisplay, 24, 32, gbm_bo_get_stride( m_bo ), gbm_bo_get_handle( m_bo ).u32, &m_fbId ) != 0 )
+    {
+        gbm_bo_destroy( m_bo );
+        m_bo = nullptr;
+        return false;
+    }
+
+    auto _mode = mode;
+    if( drmModeSetCrtc( m_device.Descriptor(), crtc->GetId(), m_fbId, 0, 0, &m_id, 1, &_mode ) != 0 )
+    {
+        drmModeRmFB( m_device.Descriptor(), m_fbId );
+        gbm_bo_destroy( m_bo );
+        m_bo = nullptr;
+        return false;
+    }
+
+    crtc->Enable();
+
+    return true;
 }
 
 const drmModeModeInfo& DrmConnector::GetBestDisplayMode() const

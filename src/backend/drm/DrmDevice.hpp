@@ -42,11 +42,12 @@ public:
     DrmDevice( const char* devName, DbusSession& bus, const char* sessionPath );
     ~DrmDevice();
 
+    [[nodiscard]] const std::vector<std::unique_ptr<DrmCrtc>>& GetCrtcs() const { return m_crtcs; }
     [[nodiscard]] int Descriptor() const { return m_fd; }
 
-private:
-    void SetMode( const DrmConnector& conn, const drmModeModeInfo& mode );
+    operator gbm_device*() const { return m_gbm; }
 
+private:
     DbusSession& m_bus;
     std::string m_sessionPath;
 

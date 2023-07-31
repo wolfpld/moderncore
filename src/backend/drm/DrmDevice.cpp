@@ -118,7 +118,7 @@ DrmDevice::DrmDevice( const char* devName, DbusSession& bus, const char* session
 
         auto& mode = conn->GetBestDisplayMode();
         mclog( LogLevel::Info, "  Setting connector %s to %dx%d @ %d Hz", conn->GetName().c_str(), mode.hdisplay, mode.vdisplay, mode.vrefresh );
-        SetMode( *conn, mode );
+        conn->SetMode( mode );
         found = true;
         break;
     }
@@ -141,17 +141,4 @@ DrmDevice::~DrmDevice()
 
     if( m_fd >= 0 ) close( m_fd );
     if( m_dev != 0 ) m_bus.Call( LoginService, m_sessionPath.c_str(), LoginSessionIface, "ReleaseDevice", "uu", major( m_dev ), minor( m_dev ) );
-}
-
-void DrmDevice::SetMode( const DrmConnector& conn, const drmModeModeInfo& mode )
-{
-    auto it = std::find_if( m_crtcs.begin(), m_crtcs.end(), []( const auto& c ) { return !c->IsUsed(); } );
-    if( it == m_crtcs.end() ) throw ModesetException( "No free CRTC" );
-    auto& crtc = *it;
-
-    uint32_t connId = conn.GetId();
-    auto modeInfo = mode;
-
-    if( drmModeSetCrtc( m_fd, crtc->GetId(), 0, 0, 0, &connId, 1, &modeInfo ) != 0 ) throw ModesetException( "Failed to set CRTC mode" );
-    crtc->Enable();
 }

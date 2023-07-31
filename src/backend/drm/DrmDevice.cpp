@@ -103,7 +103,7 @@ DrmDevice::DrmDevice( const char* devName, DbusSession& bus, const char* session
     {
         try
         {
-            m_connectors.emplace_back( std::make_unique<DrmConnector>( m_fd, m_res->connectors[i], m_res ) );
+            m_connectors.emplace_back( std::make_unique<DrmConnector>( *this, m_res->connectors[i], m_res ) );
         }
         catch( DrmConnector::ConnectorException& e )
         {

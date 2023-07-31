@@ -42,6 +42,8 @@ public:
     DrmDevice( const char* devName, DbusSession& bus, const char* sessionPath );
     ~DrmDevice();
 
+    [[nodiscard]] int Descriptor() const { return m_fd; }
+
 private:
     void SetMode( const DrmConnector& conn, const drmModeModeInfo& mode );
 

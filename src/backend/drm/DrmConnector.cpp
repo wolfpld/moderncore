@@ -8,6 +8,7 @@ extern "C" {
 #include <libdisplay-info/info.h>
 }
 
+#include "DrmDevice.hpp"
 #include "DrmConnector.hpp"
 #include "../../util/Logs.hpp"
 
@@ -20,11 +21,12 @@ static uint32_t GetRefreshRate( const drmModeModeInfo& mode )
     return refresh;
 }
 
-DrmConnector::DrmConnector( int fd, uint32_t id, const drmModeRes* res )
+DrmConnector::DrmConnector( DrmDevice& device, uint32_t id, const drmModeRes* res )
     : m_id( id )
     , m_monitor( "unknown" )
+    , m_device( device )
 {
-    auto conn = drmModeGetConnector( fd, id );
+    auto conn = drmModeGetConnector( device.Descriptor(), id );
     if( !conn ) throw ConnectorException( "Failed to get connector" );
     assert( id == conn->connector_id );
 
@@ -34,7 +36,7 @@ DrmConnector::DrmConnector( int fd, uint32_t id, const drmModeRes* res )
 
     m_connected = conn->connection != DRM_MODE_DISCONNECTED;
 
-    auto crtcs = drmModeConnectorGetPossibleCrtcs( fd, conn );
+    auto crtcs = drmModeConnectorGetPossibleCrtcs( device.Descriptor(), conn );
     if( crtcs == 0 )
     {
         drmModeFreeConnector( conn );
@@ -55,17 +57,17 @@ DrmConnector::DrmConnector( int fd, uint32_t id, const drmModeRes* res )
     }
     else
     {
-        auto props = drmModeObjectGetProperties( fd, conn->connector_id, DRM_MODE_OBJECT_CONNECTOR );
+        auto props = drmModeObjectGetProperties( device.Descriptor(), conn->connector_id, DRM_MODE_OBJECT_CONNECTOR );
         if( props )
         {
             for( int j=0; j<props->count_props; j++ )
             {
-                auto prop = drmModeGetProperty( fd, props->props[j] );
+                auto prop = drmModeGetProperty( device.Descriptor(), props->props[j] );
                 if( prop )
                 {
                     if( strcmp( prop->name, "EDID" ) == 0 )
                     {
-                        auto blob = drmModeGetPropertyBlob( fd, props->prop_values[j] );
+                        auto blob = drmModeGetPropertyBlob( device.Descriptor(), props->prop_values[j] );
                         if( blob )
                         {
                             auto info = di_info_parse_edid( blob->data, blob->length );

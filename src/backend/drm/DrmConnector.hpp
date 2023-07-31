@@ -9,13 +9,14 @@
 using drmModeConnector = struct _drmModeConnector;
 using drmModeRes = struct _drmModeRes;
 using drmModeModeInfo = struct _drmModeModeInfo;
+class DrmDevice;
 
 class DrmConnector
 {
 public:
     struct ConnectorException : public std::runtime_error { explicit ConnectorException( const std::string& msg ) : std::runtime_error( msg ) {} };
 
-    DrmConnector( int fd, uint32_t id, const drmModeRes* res );
+    DrmConnector( DrmDevice& device, uint32_t id, const drmModeRes* res );
     ~DrmConnector();
 
     [[nodiscard]] const drmModeModeInfo& GetBestDisplayMode() const;
@@ -36,6 +37,8 @@ private:
 
     std::vector<uint32_t> m_crtcs;
     std::vector<drmModeModeInfo> m_modes;
+
+    DrmDevice& m_device;
 };
 
 #endif

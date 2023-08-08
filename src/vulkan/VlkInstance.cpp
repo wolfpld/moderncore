@@ -90,12 +90,13 @@ VlkInstance::VlkInstance( VlkInstanceType instanceType )
     VkInstanceCreateInfo createInfo = { VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO };
     createInfo.pApplicationInfo = &appInfo;
 
-    std::vector<const char*> instanceExtensions { VK_KHR_SURFACE_EXTENSION_NAME };
+    std::vector<const char*> instanceExtensions;
 
     switch( instanceType )
     {
     case VlkInstanceType::Wayland:
-        instanceExtensions.push_back( VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME );
+        instanceExtensions.emplace_back( VK_KHR_SURFACE_EXTENSION_NAME );
+        instanceExtensions.emplace_back( VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME );
         break;
     default:
         break;

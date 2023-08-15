@@ -3,7 +3,7 @@
 
 #include <memory>
 
-#include "util/NoCopy.hpp"
+#include "../util/NoCopy.hpp"
 
 class Backend;
 class Background;

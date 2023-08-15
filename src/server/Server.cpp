@@ -1,16 +1,16 @@
 #include <stdlib.h>
 
-#include "server/GpuDevices.hpp"
+#include "GpuDevices.hpp"
 #include "Server.hpp"
-#include "backend/drm/BackendDrm.hpp"
-#include "backend/wayland/BackendWayland.hpp"
-#include "cursor/CursorLogic.hpp"
-#include "dbus/DbusSession.hpp"
-#include "plumbing/Display.hpp"
-#include "render/Background.hpp"
-#include "util/Logs.hpp"
-#include "util/Panic.hpp"
-#include "vulkan/VlkInstance.hpp"
+#include "../backend/drm/BackendDrm.hpp"
+#include "../backend/wayland/BackendWayland.hpp"
+#include "../cursor/CursorLogic.hpp"
+#include "../dbus/DbusSession.hpp"
+#include "../plumbing/Display.hpp"
+#include "../render/Background.hpp"
+#include "../util/Logs.hpp"
+#include "../util/Panic.hpp"
+#include "../vulkan/VlkInstance.hpp"
 
 Server::Server()
     : m_dbusSession( std::make_unique<DbusSession>() )

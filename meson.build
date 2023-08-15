@@ -3,7 +3,6 @@ project('ModernCore', 'c', 'cpp', default_options: ['cpp_std=c++20'])
 files = [
     'contrib/ini/ini.c',
     'src/MCore.cpp',
-    'src/Server.cpp',
     'src/cursor/CursorBase.cpp',
     'src/cursor/CursorBaseMulti.cpp',
     'src/cursor/CursorLogic.cpp',
@@ -33,6 +32,7 @@ files = [
     'src/render/SoftwareCursor.cpp',
     'src/render/Texture.cpp',
     'src/server/GpuDevices.cpp',
+    'src/server/Server.cpp',
     'src/util/Bitmap.cpp',
     'src/util/Config.cpp',
     'src/util/FileBuffer.cpp',

@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <vulkan/vk_enum_string_helper.h>
 
 #include "Server.hpp"
 #include "backend/drm/BackendDrm.hpp"
@@ -10,18 +9,7 @@
 #include "render/Background.hpp"
 #include "util/Logs.hpp"
 #include "util/Panic.hpp"
-#include "vulkan/PhysDevSel.hpp"
-#include "vulkan/VlkCommandBuffer.hpp"
-#include "vulkan/VlkCommandPool.hpp"
-#include "vulkan/VlkDevice.hpp"
-#include "vulkan/VlkError.hpp"
-#include "vulkan/VlkFence.hpp"
-#include "vulkan/VlkFramebuffer.hpp"
-#include "vulkan/VlkInfo.hpp"
 #include "vulkan/VlkInstance.hpp"
-#include "vulkan/VlkRenderPass.hpp"
-#include "vulkan/VlkSemaphore.hpp"
-#include "vulkan/VlkSwapchain.hpp"
 
 Server::Server()
     : m_dbusSession( std::make_unique<DbusSession>() )
@@ -40,17 +28,7 @@ Server::Server()
         m_backend = std::make_unique<BackendDrm>( *m_vkInstance, *m_dbusSession );
     }
 
-    auto physDev = PhysDevSel::PickBest( m_vkInstance->QueryPhysicalDevices(), *m_backend, PhysDevSel::RequireGraphic );
-    CheckPanic( physDev, "No suitable GPU found" );
-#ifdef DEBUG
-    PrintVulkanPhysicalDevice( physDev );
-#endif
-
-    m_vkDevice = std::make_unique<VlkDevice>( *m_vkInstance, physDev, VlkDevice::RequireGraphic | VlkDevice::RequirePresent, *m_backend );
-#ifdef DEBUG
-    PrintVulkanQueues( *m_vkDevice );
-#endif
-
+    /*
     m_swapchain = std::make_unique<VlkSwapchain>( physDev, *m_backend, *m_vkDevice );
 
     VkAttachmentDescription colorAttachment = {};
@@ -122,11 +100,11 @@ Server::Server()
 
     m_background = std::make_unique<Background>( *m_vkDevice, *m_renderPass, m_swapchain->GetWidth(), m_swapchain->GetHeight() );
     m_cursorLogic = std::make_unique<CursorLogic>();
+    */
 }
 
 Server::~Server()
 {
-    vkDeviceWaitIdle( *m_vkDevice );
 }
 
 void Server::Run()
@@ -136,6 +114,7 @@ void Server::Run()
 
 void Server::Render()
 {
+    /*
     const auto frameIdx = m_frameIdx;
     m_frameIdx = ( m_frameIdx + 1 ) % m_framebuffers.size();
 
@@ -192,4 +171,5 @@ void Server::Render()
     presentInfo.pImageIndices = &imgIndex;
 
     vkQueuePresentKHR( m_vkDevice->GetQueue( QueueType::Graphic ), &presentInfo );
+    */
 }

@@ -1,5 +1,4 @@
-#ifndef __CURSORBASE_HPP__
-#define __CURSORBASE_HPP__
+#pragma once
 
 #include <array>
 #include <memory>
@@ -50,5 +49,3 @@ public:
 protected:
     unordered_flat_map<uint32_t, CursorSize> m_cursor;
 };
-
-#endif

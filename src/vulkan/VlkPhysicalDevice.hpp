@@ -1,5 +1,4 @@
-#ifndef __VLKPHYSICALDEVICE_HPP__
-#define __VLKPHYSICALDEVICE_HPP__
+#pragma once
 
 #include <vector>
 #include <vulkan/vulkan.h>
@@ -27,5 +26,3 @@ private:
     std::vector<VkQueueFamilyProperties> m_queueFamilyProperties;
     std::vector<VkExtensionProperties> m_extensionProperties;
 };
-
-#endif

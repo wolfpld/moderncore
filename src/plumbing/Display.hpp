@@ -1,5 +1,4 @@
-#ifndef __DISPLAY_HPP__
-#define __DISPLAY_HPP__
+#pragma once
 
 #include "../util/NoCopy.hpp"
 
@@ -26,5 +25,3 @@ private:
     wl_display* m_dpy;
     const char* m_socket;
 };
-
-#endif

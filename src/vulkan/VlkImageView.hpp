@@ -1,5 +1,4 @@
-#ifndef __VLKIMAGEVIEW_HPP__
-#define __VLKIMAGEVIEW_HPP__
+#pragma once
 
 #include <vulkan/vulkan.h>
 
@@ -19,5 +18,3 @@ private:
     VkImageView m_imageView;
     VkDevice m_device;
 };
-
-#endif

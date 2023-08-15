@@ -1,5 +1,4 @@
-#ifndef __VLKSAMPLER_HPP__
-#define __VLKSAMPLER_HPP__
+#pragma once
 
 #include <vulkan/vulkan.h>
 
@@ -19,5 +18,3 @@ private:
     VkSampler m_sampler;
     VkDevice m_device;
 };
-
-#endif

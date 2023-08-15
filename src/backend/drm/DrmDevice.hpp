@@ -1,5 +1,4 @@
-#ifndef __DRMDEVICE_HPP__
-#define __DRMDEVICE_HPP__
+#pragma once
 
 #include <memory>
 #include <stdexcept>
@@ -62,5 +61,3 @@ private:
     std::vector<std::unique_ptr<DrmCrtc>> m_crtcs;
     std::vector<std::unique_ptr<DrmConnector>> m_connectors;
 };
-
-#endif

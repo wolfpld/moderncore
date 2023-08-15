@@ -1,5 +1,4 @@
-#ifndef __VLKDESCRIPTORSETLAYOUT_HPP__
-#define __VLKDESCRIPTORSETLAYOUT_HPP__
+#pragma once
 
 #include <vulkan/vulkan.h>
 
@@ -21,5 +20,3 @@ private:
     const VlkDevice& m_device;
     VkDescriptorSetLayout m_descriptorSetLayout;
 };
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef __VLKCOMMANDBUFFER_HPP__
-#define __VLKCOMMANDBUFFER_HPP__
+#pragma once
 
 #include <vulkan/vulkan.h>
 
@@ -27,5 +26,3 @@ private:
     const VlkCommandPool& m_commandPool;
     VkDevice m_device;
 };
-
-#endif

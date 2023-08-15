@@ -1,5 +1,4 @@
-#ifndef __WINCURSOR_HPP__
-#define __WINCURSOR_HPP__
+#pragma once
 
 #include "CursorBaseMulti.hpp"
 
@@ -8,5 +7,3 @@ class WinCursor : public CursorBaseMulti
 public:
     explicit WinCursor( const char* theme );
 };
-
-#endif

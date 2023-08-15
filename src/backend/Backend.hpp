@@ -1,5 +1,4 @@
-#ifndef __BACKEND_HPP__
-#define __BACKEND_HPP__
+#pragma once
 
 #include <functional>
 #include <vulkan/vulkan.h>
@@ -22,5 +21,3 @@ public:
 protected:
     Backend() = default;
 };
-
-#endif

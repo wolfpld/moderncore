@@ -1,5 +1,4 @@
-#ifndef __BITMAP_HPP__
-#define __BITMAP_HPP__
+#pragma once
 
 #include <stdint.h>
 
@@ -26,5 +25,3 @@ private:
     uint32_t m_height;
     uint8_t* m_data;
 };
-
-#endif

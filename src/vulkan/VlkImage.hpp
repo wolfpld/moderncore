@@ -1,5 +1,4 @@
-#ifndef __VLKIMAGE_HPP__
-#define __VLKIMAGE_HPP__
+#pragma once
 
 #include <vulkan/vulkan.h>
 
@@ -21,5 +20,3 @@ private:
     VmaAllocation m_allocation;
     VmaAllocator m_allocator;
 };
-
-#endif

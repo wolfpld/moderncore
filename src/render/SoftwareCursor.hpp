@@ -1,5 +1,4 @@
-#ifndef __SOFTWARECURSOR_HPP__
-#define __SOFTWARECURSOR_HPP__
+#pragma once
 
 #include <glm/glm.hpp>
 #include <memory>
@@ -70,5 +69,3 @@ private:
     VkDescriptorBufferInfo m_uniformInfo;
     VkWriteDescriptorSet m_descriptorWrite[2];
 };
-
-#endif

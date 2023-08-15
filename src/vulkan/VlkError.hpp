@@ -1,5 +1,4 @@
-#ifndef __VLKERROR_HPP__
-#define __VLKERROR_HPP__
+#pragma once
 
 #include <stdlib.h>
 #include <vulkan/vulkan.h>
@@ -15,5 +14,3 @@
             abort(); \
         } \
     }
-
-#endif

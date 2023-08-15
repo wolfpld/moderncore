@@ -1,5 +1,4 @@
-#ifndef __CURSORTYPE_HPP__
-#define __CURSORTYPE_HPP__
+#pragma once
 
 // List based on cursor-shape-v1 protocol
 enum class CursorType
@@ -40,5 +39,3 @@ enum class CursorType
     ZoomOut,
     NUM
 };
-
-#endif

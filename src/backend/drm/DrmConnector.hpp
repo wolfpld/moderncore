@@ -1,5 +1,4 @@
-#ifndef __DRMCONNECTOR_HPP__
-#define __DRMCONNECTOR_HPP__
+#pragma once
 
 #include <stdexcept>
 #include <stdint.h>
@@ -45,5 +44,3 @@ private:
 
     DrmDevice& m_device;
 };
-
-#endif

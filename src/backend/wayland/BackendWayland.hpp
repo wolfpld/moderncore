@@ -1,5 +1,4 @@
-#ifndef __BACKENDWAYLAND_HPP__
-#define __BACKENDWAYLAND_HPP__
+#pragma once
 
 #include <memory>
 #include <stdint.h>
@@ -52,5 +51,3 @@ private:
     int32_t m_scale = 1;
     bool m_keepRunning = true;
 };
-
-#endif

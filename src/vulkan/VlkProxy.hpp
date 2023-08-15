@@ -1,5 +1,4 @@
-#ifndef __VLKPROXY_HPP__
-#define __VLKPROXY_HPP__
+#pragma once
 
 #include <vulkan/vulkan.h>
 
@@ -9,5 +8,3 @@ VkResult CreateDebugUtilsMessengerEXT( VkInstance instance, const VkDebugUtilsMe
 void DestroyDebugUtilsMessengerEXT( VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator );
 
 extern PFN_vkCmdPushDescriptorSetKHR CmdPushDescriptorSetKHR;
-
-#endif

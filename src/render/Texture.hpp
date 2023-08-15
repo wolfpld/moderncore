@@ -1,5 +1,4 @@
-#ifndef __TEXTURE_HPP__
-#define __TEXTURE_HPP__
+#pragma once
 
 #include <memory>
 #include <vulkan/vulkan.h>
@@ -24,5 +23,3 @@ private:
     std::unique_ptr<VlkImage> m_image;
     std::unique_ptr<VlkImageView> m_imageView;
 };
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef __VLKSEMAPHORE_HPP__
-#define __VLKSEMAPHORE_HPP__
+#pragma once
 
 #include <vulkan/vulkan.h>
 
@@ -19,5 +18,3 @@ private:
     VkSemaphore m_semaphore;
     VkDevice m_device;
 };
-
-#endif

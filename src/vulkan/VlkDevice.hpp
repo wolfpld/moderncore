@@ -1,5 +1,4 @@
-#ifndef __VLKDEVICE_HPP__
-#define __VLKDEVICE_HPP__
+#pragma once
 
 #include <array>
 #include <memory>
@@ -55,5 +54,3 @@ private:
 
     std::array<std::shared_ptr<VlkCommandPool>, 4> m_commandPool;
 };
-
-#endif

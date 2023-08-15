@@ -1,5 +1,4 @@
-#ifndef __LISTENER_HPP__
-#define __LISTENER_HPP__
+#pragma once
 
 #include <functional>
 #include <wayland-server-core.h>
@@ -34,5 +33,3 @@ private:
     wl_listener m_listener;
     std::function<void(T*)> m_func;
 };
-
-#endif

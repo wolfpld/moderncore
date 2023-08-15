@@ -1,5 +1,4 @@
-#ifndef __LOGS_HPP__
-#define __LOGS_HPP__
+#pragma once
 
 #include <stddef.h>
 #include <string>
@@ -17,5 +16,3 @@ void MCoreLogMessage( LogLevel level, const char* fileName, size_t line, const c
 void MCoreLogMessage( LogLevel level, const char* fileName, size_t line, const std::string& str );
 
 #define mclog(level, fmt, ...) MCoreLogMessage( level, __FILE__, __LINE__, fmt, ##__VA_ARGS__ )
-
-#endif

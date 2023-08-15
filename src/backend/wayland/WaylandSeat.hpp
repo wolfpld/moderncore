@@ -1,5 +1,4 @@
-#ifndef __WAYLANDSEAT_HPP__
-#define __WAYLANDSEAT_HPP__
+#pragma once
 
 #include <memory>
 #include <wayland-client.h>
@@ -30,5 +29,3 @@ private:
 
     BackendWayland& m_backend;
 };
-
-#endif

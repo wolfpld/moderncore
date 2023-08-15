@@ -1,5 +1,4 @@
-#ifndef __VLKPIPELINE_HPP__
-#define __VLKPIPELINE_HPP__
+#pragma once
 
 #include <vulkan/vulkan.h>
 
@@ -19,5 +18,3 @@ private:
     VkPipeline m_pipeline;
     VkDevice m_device;
 };
-
-#endif

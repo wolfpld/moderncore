@@ -1,5 +1,4 @@
-#ifndef __FILEWRAPPER_HPP__
-#define __FILEWRAPPER_HPP__
+#pragma once
 
 #include <stdio.h>
 
@@ -31,5 +30,3 @@ public:
 private:
     FILE* m_file;
 };
-
-#endif

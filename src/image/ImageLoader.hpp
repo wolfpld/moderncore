@@ -1,8 +1,5 @@
-#ifndef __IMAGELOADER_HPP__
-#define __IMAGELOADER_HPP__
+#pragma once
 
 class Bitmap;
 
 Bitmap* LoadImage( const char* filename );
-
-#endif

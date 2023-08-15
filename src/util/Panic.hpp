@@ -1,5 +1,4 @@
-#ifndef __PANIC_HPP__
-#define __PANIC_HPP__
+#pragma once
 
 #include <stdlib.h>
 
@@ -13,5 +12,3 @@
             abort(); \
         } \
     }
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef __WAYLANDOUTPUT_HPP__
-#define __WAYLANDOUTPUT_HPP__
+#pragma once
 
 #include <functional>
 #include <stdint.h>
@@ -29,5 +28,3 @@ private:
     wl_output* m_output;
     int32_t m_scale;
 };
-
-#endif

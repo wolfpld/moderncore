@@ -1,5 +1,4 @@
-#ifndef __DBUSMESSAGE_HPP__
-#define __DBUSMESSAGE_HPP__
+#pragma once
 
 #include "../util/NoCopy.hpp"
 
@@ -24,5 +23,3 @@ public:
 private:
     sd_bus_message* m_msg;
 };
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef __BACKENDDRM_HPP__
-#define __BACKENDDRM_HPP__
+#pragma once
 
 #include <memory>
 #include <string>
@@ -33,5 +32,3 @@ private:
 
     std::vector<std::unique_ptr<DrmDevice>> m_drmDevices;
 };
-
-#endif

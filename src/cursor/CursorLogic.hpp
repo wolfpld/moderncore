@@ -1,5 +1,4 @@
-#ifndef __CURSORLOGIC_HPP__
-#define __CURSORLOGIC_HPP__
+#pragma once
 
 #include <memory>
 #include <vector>
@@ -34,5 +33,3 @@ private:
 
     bool m_needUpdate;
 };
-
-#endif

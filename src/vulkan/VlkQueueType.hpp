@@ -1,5 +1,4 @@
-#ifndef __VLKQUEUETYPE_HPP__
-#define __VLKQUEUETYPE_HPP__
+#pragma once
 
 enum class QueueType
 {
@@ -8,5 +7,3 @@ enum class QueueType
     Transfer,
     Present
 };
-
-#endif

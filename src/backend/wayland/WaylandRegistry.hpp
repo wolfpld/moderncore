@@ -1,5 +1,4 @@
-#ifndef __WAYLANDREGISTRY_HPP__
-#define __WAYLANDREGISTRY_HPP__
+#pragma once
 
 #include <wayland-client.h>
 
@@ -20,5 +19,3 @@ static inline T* RegistryBindImpl( wl_registry* reg, uint32_t name, const char* 
 
 // Two optional parameters: versionMin and versionMax.
 #define RegistryBind( type, ... ) RegistryBindImpl<type>( reg, name, interface, &type ## _interface, version, ##__VA_ARGS__ )
-
-#endif

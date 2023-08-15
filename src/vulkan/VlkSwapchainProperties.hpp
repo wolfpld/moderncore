@@ -1,5 +1,4 @@
-#ifndef __VLKSWAPCHAINPROPERTIES_HPP__
-#define __VLKSWAPCHAINPROPERTIES_HPP__
+#pragma once
 
 #include <vector>
 #include <vulkan/vulkan.h>
@@ -22,5 +21,3 @@ private:
     std::vector<VkSurfaceFormatKHR> m_formats;
     std::vector<VkPresentModeKHR> m_presentModes;
 };
-
-#endif

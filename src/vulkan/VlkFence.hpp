@@ -1,5 +1,4 @@
-#ifndef __VLKFENCE_HPP__
-#define __VLKFENCE_HPP__
+#pragma once
 
 #include <stdint.h>
 #include <vulkan/vulkan.h>
@@ -23,5 +22,3 @@ private:
     VkFence m_fence;
     VkDevice m_device;
 };
-
-#endif

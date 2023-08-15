@@ -1,5 +1,4 @@
-#ifndef __BACKGROUND_HPP__
-#define __BACKGROUND_HPP__
+#pragma once
 
 #include <glm/glm.hpp>
 #include <memory>
@@ -58,5 +57,3 @@ private:
     uint32_t m_screenWidth;
     uint32_t m_screenHeight;
 };
-
-#endif

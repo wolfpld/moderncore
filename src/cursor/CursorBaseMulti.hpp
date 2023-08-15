@@ -1,5 +1,4 @@
-#ifndef __CURSORBASEMULTI_HPP__
-#define __CURSORBASEMULTI_HPP__
+#pragma once
 
 #include <stdint.h>
 #include <vector>
@@ -17,5 +16,3 @@ protected:
 private:
     std::vector<uint32_t> m_sizes;
 };
-
-#endif

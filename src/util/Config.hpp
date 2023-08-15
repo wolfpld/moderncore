@@ -1,5 +1,4 @@
-#ifndef __CONFIG_HPP__
-#define __CONFIG_HPP__
+#pragma once
 
 #include "NoCopy.hpp"
 
@@ -30,5 +29,3 @@ inline const char* Config::Get( const char* s, const char* k, const char* v ) { 
 
 template<>
 inline int Config::Get( const char* s, const char* k, int v ) { return GetInt( s, k, v ); }
-
-#endif

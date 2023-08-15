@@ -1,5 +1,4 @@
-#ifndef __DBUSSESSION_HPP__
-#define __DBUSSESSION_HPP__
+#pragma once
 
 #include <functional>
 #include <memory>
@@ -29,5 +28,3 @@ private:
     sd_bus* m_bus;
     std::vector<std::unique_ptr<std::function<int(DbusMessage)>>> m_callbacks;
 };
-
-#endif

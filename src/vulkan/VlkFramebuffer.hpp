@@ -1,5 +1,4 @@
-#ifndef __VLKFRAMEBUFFER_HPP__
-#define __VLKFRAMEBUFFER_HPP__
+#pragma once
 
 #include <vulkan/vulkan.h>
 
@@ -19,5 +18,3 @@ private:
     VkFramebuffer m_framebuffer;
     VkDevice m_device;
 };
-
-#endif

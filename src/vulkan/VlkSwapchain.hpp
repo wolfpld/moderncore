@@ -1,5 +1,4 @@
-#ifndef __VLKSWAPCHAIN_HPP__
-#define __VLKSWAPCHAIN_HPP__
+#pragma once
 
 #include <stdint.h>
 #include <vector>
@@ -38,5 +37,3 @@ private:
     std::vector<VkImage> m_images;
     std::vector<VkImageView> m_imageViews;
 };
-
-#endif

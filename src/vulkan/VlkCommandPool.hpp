@@ -1,5 +1,4 @@
-#ifndef __VLKCOMMANDPOOL_HPP__
-#define __VLKCOMMANDPOOL_HPP__
+#pragma once
 
 #include <vulkan/vulkan.h>
 
@@ -24,5 +23,3 @@ private:
 
     const QueueType m_queueType;
 };
-
-#endif

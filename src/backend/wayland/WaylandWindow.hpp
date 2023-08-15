@@ -1,5 +1,4 @@
-#ifndef __WAYLANDWINDOW_HPP__
-#define __WAYLANDWINDOW_HPP__
+#pragma once
 
 #include <functional>
 #include <memory>
@@ -52,5 +51,3 @@ private:
 
     std::unique_ptr<SoftwareCursor> m_cursor;
 };
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef __VLKSHADER_HPP__
-#define __VLKSHADER_HPP__
+#pragma once
 
 #include <memory>
 #include <vector>
@@ -33,5 +32,3 @@ private:
     std::vector<VkPipelineShaderStageCreateInfo> m_stages;
     std::vector<std::shared_ptr<VlkShaderModule>> m_modules;
 };
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef __GPUDEVICES_HPP__
-#define __GPUDEVICES_HPP__
+#pragma once
 
 #include <memory>
 #include <vector>
@@ -28,5 +27,3 @@ private:
 
     std::vector<Gpu> m_gpus;
 };
-
-#endif

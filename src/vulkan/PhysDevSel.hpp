@@ -1,5 +1,4 @@
-#ifndef __PHYSDEVSEL_HPP__
-#define __PHYSDEVSEL_HPP__
+#pragma once
 
 #include <vector>
 #include <vulkan/vulkan.h>
@@ -17,5 +16,3 @@ enum Flag
 [[nodiscard]] VkPhysicalDevice PickBest( const std::vector<VkPhysicalDevice>& list, VkSurfaceKHR presentSurface = VK_NULL_HANDLE, int flags = 0 );
 
 }
-
-#endif

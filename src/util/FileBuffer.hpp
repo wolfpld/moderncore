@@ -1,5 +1,4 @@
-#ifndef __FILEBUFFER_HPP__
-#define __FILEBUFFER_HPP__
+#pragma once
 
 #include <stddef.h>
 #include <stdexcept>
@@ -24,5 +23,3 @@ private:
     char* m_buffer;
     size_t m_size;
 };
-
-#endif

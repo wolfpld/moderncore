@@ -1,5 +1,4 @@
-#ifndef __VLKRENDERPASS_HPP__
-#define __VLKRENDERPASS_HPP__
+#pragma once
 
 #include <vulkan/vulkan.h>
 
@@ -19,5 +18,3 @@ private:
     VkRenderPass m_renderPass;
     VkDevice m_device;
 };
-
-#endif

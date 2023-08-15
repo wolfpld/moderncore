@@ -1,5 +1,4 @@
-#ifndef __SERVER_HPP__
-#define __SERVER_HPP__
+#pragma once
 
 #include <memory>
 
@@ -36,5 +35,3 @@ private:
     std::unique_ptr<CursorLogic> m_cursorLogic;
     std::unique_ptr<Background> m_background;
 };
-
-#endif

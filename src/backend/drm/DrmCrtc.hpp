@@ -1,5 +1,4 @@
-#ifndef __DRMCRTC_HPP__
-#define __DRMCRTC_HPP__
+#pragma once
 
 #include <stdexcept>
 #include <stdint.h>
@@ -25,5 +24,3 @@ private:
     bool m_inUse;
     bool m_isAttached;
 };
-
-#endif

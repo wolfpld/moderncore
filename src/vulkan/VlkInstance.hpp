@@ -1,5 +1,4 @@
-#ifndef __VLKINSTANCE_HPP__
-#define __VLKINSTANCE_HPP__
+#pragma once
 
 #include <memory>
 #include <vector>
@@ -29,5 +28,3 @@ private:
     VkInstance m_instance;
     VkDebugUtilsMessengerEXT m_debugMessenger;
 };
-
-#endif

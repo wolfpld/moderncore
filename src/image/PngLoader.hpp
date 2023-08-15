@@ -1,5 +1,4 @@
-#ifndef __PNGLOADER_HPP__
-#define __PNGLOADER_HPP__
+#pragma once
 
 #include "../util/NoCopy.hpp"
 #include "../util/FileWrapper.hpp"
@@ -20,5 +19,3 @@ private:
     FileWrapper& m_file;
     bool m_valid;
 };
-
-#endif

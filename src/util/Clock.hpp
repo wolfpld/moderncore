@@ -1,5 +1,4 @@
-#ifndef __CLOCK_HPP__
-#define __CLOCK_HPP__
+#pragma once
 
 #include <chrono>
 
@@ -7,5 +6,3 @@
 {
     return std::chrono::duration_cast<std::chrono::microseconds>( std::chrono::steady_clock::now().time_since_epoch() ).count();
 }
-
-#endif

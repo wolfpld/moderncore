@@ -1,5 +1,4 @@
-#ifndef __VLKSHADERMODULE_HPP__
-#define __VLKSHADERMODULE_HPP__
+#pragma once
 
 #include <vulkan/vulkan.h>
 
@@ -23,5 +22,3 @@ private:
     VkShaderModule m_module;
     VkDevice m_device;
 };
-
-#endif

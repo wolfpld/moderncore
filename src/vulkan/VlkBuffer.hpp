@@ -1,5 +1,4 @@
-#ifndef __VLKBUFFER_HPP__
-#define __VLKBUFFER_HPP__
+#pragma once
 
 #include <vulkan/vulkan.h>
 
@@ -40,5 +39,3 @@ private:
     void* m_map;
     VkDeviceSize m_size;
 };
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef __WAYLANDKEYBOARD_HPP__
-#define __WAYLANDKEYBOARD_HPP__
+#pragma once
 
 #include <wayland-client.h>
 
@@ -23,5 +22,3 @@ private:
     void KeyboardModifiers( wl_keyboard* kbd, uint32_t serial, uint32_t mods_depressed, uint32_t mods_latched, uint32_t mods_locked, uint32_t group );
     void KeyboardRepeatInfo( wl_keyboard* kbd, int32_t rate, int32_t delay );
 };
-
-#endif

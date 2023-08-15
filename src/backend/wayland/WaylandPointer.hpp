@@ -1,5 +1,4 @@
-#ifndef __WAYLANDPOINTER_HPP__
-#define __WAYLANDPOINTER_HPP__
+#pragma once
 
 #include <wayland-client.h>
 
@@ -31,5 +30,3 @@ private:
     wl_pointer* m_pointer;
     WaylandSeat& m_seat;
 };
-
-#endif

@@ -8,9 +8,10 @@
 #include "WaylandSeat.hpp"
 #include "WaylandWindow.hpp"
 #include "../../util/Panic.hpp"
+#include "../../vulkan/VlkInstance.hpp"
 #include "../../vulkan/VlkSwapchain.hpp"
 
-BackendWayland::BackendWayland( VkInstance vkInstance )
+BackendWayland::BackendWayland( VlkInstance& vkInstance, GpuDevices& gpus )
     : m_dpy( wl_display_connect( nullptr ) )
 {
     CheckPanic( m_dpy, "Failed to connect to Wayland display" );
@@ -27,7 +28,7 @@ BackendWayland::BackendWayland( VkInstance vkInstance )
     CheckPanic( m_xdgWmBase, "Failed to create Wayland xdg_wm_base" );
     CheckPanic( m_seat, "Failed to create Wayland seat" );
 
-    m_window = std::make_unique<WaylandWindow>( m_compositor, m_xdgWmBase, m_decorationManager, m_dpy, vkInstance, [this]{ Stop(); } );
+    m_window = std::make_unique<WaylandWindow>( m_compositor, m_xdgWmBase, m_decorationManager, m_dpy, vkInstance, gpus, [this]{ Stop(); } );
 }
 
 BackendWayland::~BackendWayland()

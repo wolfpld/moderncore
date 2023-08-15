@@ -5,10 +5,15 @@
 #include "WaylandMethod.hpp"
 #include "WaylandWindow.hpp"
 #include "../../render/SoftwareCursor.hpp"
+#include "../../server/GpuDevices.hpp"
 #include "../../util/Panic.hpp"
+#include "../../vulkan/PhysDevSel.hpp"
+#include "../../vulkan/VlkDevice.hpp"
 #include "../../vulkan/VlkError.hpp"
+#include "../../vulkan/VlkInfo.hpp"
+#include "../../vulkan/VlkInstance.hpp"
 
-WaylandWindow::WaylandWindow( wl_compositor* compositor, xdg_wm_base* xdgWmBase, zxdg_decoration_manager_v1* decorationManager, wl_display* dpy, VkInstance vkInstance, std::function<void()> onClose )
+WaylandWindow::WaylandWindow( wl_compositor* compositor, xdg_wm_base* xdgWmBase, zxdg_decoration_manager_v1* decorationManager, wl_display* dpy, VlkInstance& vkInstance, GpuDevices& gpus, std::function<void()> onClose )
     : m_surface( wl_compositor_create_surface( compositor ) )
     , m_onClose( std::move( onClose ) )
     , m_vkInstance( vkInstance )
@@ -51,10 +56,18 @@ WaylandWindow::WaylandWindow( wl_compositor* compositor, xdg_wm_base* xdgWmBase,
     createInfo.surface = m_surface;
 
     VkVerify( vkCreateWaylandSurfaceKHR( vkInstance, &createInfo, nullptr, &m_vkSurface ) );
+
+    auto device = PhysDevSel::PickBest( vkInstance.QueryPhysicalDevices(), m_vkSurface );
+    CheckPanic( device != VK_NULL_HANDLE, "Failed to find suitable physical device" );
+
+    m_vkDevice = gpus.Get( device );
+    if( !m_vkDevice ) m_vkDevice = gpus.Add( device, m_vkSurface );
+    assert( m_vkDevice );
 }
 
 WaylandWindow::~WaylandWindow()
 {
+    m_vkDevice.reset();
     vkDestroySurfaceKHR( m_vkInstance, m_vkSurface, nullptr );
     xdg_toplevel_destroy( m_xdgToplevel );
     xdg_surface_destroy( m_xdgSurface );

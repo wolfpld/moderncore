@@ -12,13 +12,15 @@
 #include "../../util/NoCopy.hpp"
 
 class CursorLogic;
+class GpuDevices;
 class SoftwareCursor;
 class VlkDevice;
+class VlkInstance;
 
 class WaylandWindow
 {
 public:
-    WaylandWindow( wl_compositor* compositor, xdg_wm_base* xdgWmBase, zxdg_decoration_manager_v1* decorationManager, wl_display* dpy, VkInstance vkInstance, std::function<void()> onClose );
+    WaylandWindow( wl_compositor* compositor, xdg_wm_base* xdgWmBase, zxdg_decoration_manager_v1* decorationManager, wl_display* dpy, VlkInstance& vkInstance, GpuDevices& gpus, std::function<void()> onClose );
     ~WaylandWindow();
 
     NoCopy( WaylandWindow );
@@ -45,7 +47,8 @@ private:
     std::function<void()> m_onClose;
     std::function<void()> m_onRender;
 
-    VkInstance m_vkInstance;
+    VlkInstance& m_vkInstance;
+    std::shared_ptr<VlkDevice> m_vkDevice;
 
     std::unique_ptr<SoftwareCursor> m_cursor;
 };

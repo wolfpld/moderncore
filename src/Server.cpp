@@ -22,7 +22,7 @@ Server::Server()
 
         m_vkInstance = std::make_unique<VlkInstance>( VlkInstanceType::Wayland );
         m_gpus = std::make_unique<GpuDevices>( *m_vkInstance );
-        m_backend = std::make_unique<BackendWayland>( *m_vkInstance );
+        m_backend = std::make_unique<BackendWayland>( *m_vkInstance, *m_gpus );
     }
     else
     {

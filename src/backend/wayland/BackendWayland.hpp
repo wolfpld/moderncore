@@ -11,14 +11,16 @@
 #include "xdg-decoration-unstable-v1-client-protocol.h"
 #include "xdg-shell-client-protocol.h"
 
+class GpuDevices;
 class WaylandOutput;
 class WaylandSeat;
 class WaylandWindow;
+class VlkInstance;
 
 class BackendWayland : public Backend
 {
 public:
-    explicit BackendWayland( VkInstance vkInstance );
+    BackendWayland( VlkInstance& vkInstance, GpuDevices& gpus );
     ~BackendWayland() override;
 
     void Run( const std::function<void()>& render ) override;

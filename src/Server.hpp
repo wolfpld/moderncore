@@ -10,6 +10,7 @@ class Background;
 class CursorLogic;
 class DbusSession;
 class Display;
+class GpuDevices;
 class VlkInstance;
 
 class Server
@@ -27,6 +28,7 @@ private:
 
     std::unique_ptr<DbusSession> m_dbusSession;
     std::unique_ptr<VlkInstance> m_vkInstance;
+    std::unique_ptr<GpuDevices> m_gpus;
 
     std::unique_ptr<Backend> m_backend;
     std::unique_ptr<Display> m_dpy;

@@ -17,14 +17,8 @@ public:
     explicit BackendDrm( VkInstance vkInstance, DbusSession& bus );
     ~BackendDrm() override;
 
-    void VulkanInit( VlkDevice& device, VkRenderPass renderPass, const VlkSwapchain& swapchain ) override;
-
     void Run( const std::function<void()>& render ) override;
     void Stop() override;
-
-    void RenderCursor( VkCommandBuffer cmdBuf, CursorLogic& cursorLogic ) override;
-
-    operator VkSurfaceKHR() const override;
 
 private:
     int PauseDevice( DbusMessage msg );

@@ -21,16 +21,10 @@ public:
     explicit BackendWayland( VkInstance vkInstance );
     ~BackendWayland() override;
 
-    void VulkanInit( VlkDevice& device, VkRenderPass renderPass, const VlkSwapchain& swapchain ) override;
-
     void Run( const std::function<void()>& render ) override;
     void Stop() override;
 
-    void RenderCursor( VkCommandBuffer cmdBuf, CursorLogic& cursorLogic ) override;
-
     void PointerMotion( double x, double y );
-
-    operator VkSurfaceKHR() const override;
 
 private:
     void RegistryGlobal( wl_registry* reg, uint32_t name, const char* interface, uint32_t version );

@@ -6,7 +6,6 @@
 
 #include "../util/NoCopy.hpp"
 
-class CursorLogic;
 class VlkDevice;
 class VlkSwapchain;
 
@@ -17,14 +16,8 @@ public:
 
     NoCopy( Backend );
 
-    virtual void VulkanInit( VlkDevice& device, VkRenderPass renderPass, const VlkSwapchain& swapchain ) = 0;
-
     virtual void Run( const std::function<void()>& render ) = 0;
     virtual void Stop() = 0;
-
-    virtual void RenderCursor( VkCommandBuffer cmdBuf, CursorLogic& cursorLogic ) = 0;
-
-    virtual operator VkSurfaceKHR() const = 0;
 
 protected:
     Backend() = default;

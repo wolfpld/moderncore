@@ -23,15 +23,11 @@ public:
 
     NoCopy( WaylandWindow );
 
-    void VulkanInit( VlkDevice& device, VkRenderPass renderPass, uint32_t width, uint32_t height );
-
     void Show( const std::function<void()>& render );
     void SetScale( int32_t scale );
     void RenderCursor( VkCommandBuffer cmdBuf, CursorLogic& cursorLogic );
 
     void PointerMotion( double x, double y );
-
-    operator VkSurfaceKHR() const { return m_vkSurface; }
 
 private:
     void XdgSurfaceConfigure( struct xdg_surface *xdg_surface, uint32_t serial );

@@ -42,11 +42,6 @@ BackendWayland::~BackendWayland()
     wl_display_disconnect( m_dpy );
 }
 
-void BackendWayland::VulkanInit( VlkDevice& device, VkRenderPass renderPass, const VlkSwapchain& swapchain )
-{
-    m_window->VulkanInit( device, renderPass, swapchain.GetWidth(), swapchain.GetHeight() );
-}
-
 void BackendWayland::Run( const std::function<void()>& render )
 {
     if( m_scale != 1 ) m_window->SetScale( m_scale );
@@ -57,16 +52,6 @@ void BackendWayland::Run( const std::function<void()>& render )
 void BackendWayland::Stop()
 {
     m_keepRunning = false;
-}
-
-void BackendWayland::RenderCursor( VkCommandBuffer cmdBuf, CursorLogic& cursorLogic )
-{
-    m_window->RenderCursor( cmdBuf, cursorLogic );
-}
-
-BackendWayland::operator VkSurfaceKHR() const
-{
-    return *m_window;
 }
 
 void BackendWayland::RegistryGlobal( wl_registry* reg, uint32_t name, const char* interface, uint32_t version )

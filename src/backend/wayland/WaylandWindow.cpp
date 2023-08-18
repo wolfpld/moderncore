@@ -2,9 +2,11 @@
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_wayland.h>
 
+#include "WaylandConnector.hpp"
 #include "WaylandMethod.hpp"
 #include "WaylandWindow.hpp"
 #include "../../render/SoftwareCursor.hpp"
+#include "../../server/GpuConnectors.hpp"
 #include "../../server/GpuDevices.hpp"
 #include "../../util/Panic.hpp"
 #include "../../vulkan/PhysDevSel.hpp"
@@ -62,6 +64,8 @@ WaylandWindow::WaylandWindow( Params&& p )
     m_vkDevice = p.gpus.Get( device );
     if( !m_vkDevice ) m_vkDevice = p.gpus.Add( device, m_vkSurface );
     assert( m_vkDevice );
+
+    p.connectors.Add( std::make_shared<WaylandConnector>( *m_vkDevice, m_vkSurface ) );
 }
 
 WaylandWindow::~WaylandWindow()

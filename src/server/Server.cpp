@@ -31,7 +31,7 @@ Server::Server()
 
     if( waylandDpy )
     {
-        m_backend = std::make_unique<BackendWayland>( *m_vkInstance, *m_gpus );
+        m_backend = std::make_unique<BackendWayland>( *m_vkInstance, *m_gpus, *m_connectors );
     }
     else
     {

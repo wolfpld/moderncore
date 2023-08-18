@@ -10,7 +10,7 @@
 #include "../../util/Panic.hpp"
 #include "../../vulkan/VlkInstance.hpp"
 
-BackendWayland::BackendWayland( VlkInstance& vkInstance, GpuDevices& gpus )
+BackendWayland::BackendWayland( VlkInstance& vkInstance, GpuDevices& gpus, GpuConnectors& connectors )
     : m_dpy( wl_display_connect( nullptr ) )
 {
     CheckPanic( m_dpy, "Failed to connect to Wayland display" );
@@ -34,6 +34,7 @@ BackendWayland::BackendWayland( VlkInstance& vkInstance, GpuDevices& gpus )
         .dpy = m_dpy,
         .vkInstance = vkInstance,
         .gpus = gpus,
+        .connectors = connectors,
         .onClose = [this]{ Stop(); }
     } );
 }

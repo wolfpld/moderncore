@@ -11,6 +11,7 @@
 #include "../../util/NoCopy.hpp"
 
 class CursorLogic;
+class GpuConnectors;
 class GpuDevices;
 class SoftwareCursor;
 class VlkDevice;
@@ -27,6 +28,7 @@ public:
         wl_display* dpy;
         VlkInstance& vkInstance;
         GpuDevices& gpus;
+        GpuConnectors& connectors;
         std::function<void()> onClose;
     };
 

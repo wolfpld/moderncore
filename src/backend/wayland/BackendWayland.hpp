@@ -11,6 +11,7 @@
 #include "xdg-shell-client-protocol.h"
 
 class GpuDevices;
+class GpuConnectors;
 class WaylandOutput;
 class WaylandSeat;
 class WaylandWindow;
@@ -19,7 +20,7 @@ class VlkInstance;
 class BackendWayland : public Backend
 {
 public:
-    BackendWayland( VlkInstance& vkInstance, GpuDevices& gpus );
+    BackendWayland( VlkInstance& vkInstance, GpuDevices& gpus, GpuConnectors& connectors );
     ~BackendWayland() override;
 
     void Run( const std::function<void()>& render ) override;

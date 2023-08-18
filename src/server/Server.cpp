@@ -1,6 +1,7 @@
 #include <stdlib.h>
 
 #include "GpuDevices.hpp"
+#include "GpuConnectors.hpp"
 #include "Server.hpp"
 #include "../backend/drm/BackendDrm.hpp"
 #include "../backend/wayland/BackendWayland.hpp"
@@ -27,10 +28,11 @@ Server::Server()
     }
 
     m_gpus = std::make_unique<GpuDevices>( *m_vkInstance );
+    m_connectors = std::make_unique<GpuConnectors>();
 
     if( waylandDpy )
     {
-        m_backend = std::make_unique<BackendWayland>( *m_vkInstance, *m_gpus, *m_outputs );
+        m_backend = std::make_unique<BackendWayland>( *m_vkInstance, *m_gpus );
     }
     else
     {

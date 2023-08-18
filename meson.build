@@ -31,6 +31,7 @@ files = [
     'src/render/Background.cpp',
     'src/render/SoftwareCursor.cpp',
     'src/render/Texture.cpp',
+    'src/server/GpuConnectors.cpp',
     'src/server/GpuDevices.cpp',
     'src/server/Server.cpp',
     'src/util/Bitmap.cpp',

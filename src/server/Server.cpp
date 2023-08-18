@@ -19,15 +19,21 @@ Server::Server()
     if( waylandDpy )
     {
         mclog( LogLevel::Info, "Running on Wayland display: %s", waylandDpy );
-
         m_vkInstance = std::make_unique<VlkInstance>( VlkInstanceType::Wayland );
-        m_gpus = std::make_unique<GpuDevices>( *m_vkInstance );
-        m_backend = std::make_unique<BackendWayland>( *m_vkInstance, *m_gpus );
     }
     else
     {
         m_vkInstance = std::make_unique<VlkInstance>( VlkInstanceType::Drm );
-        m_gpus = std::make_unique<GpuDevices>( *m_vkInstance );
+    }
+
+    m_gpus = std::make_unique<GpuDevices>( *m_vkInstance );
+
+    if( waylandDpy )
+    {
+        m_backend = std::make_unique<BackendWayland>( *m_vkInstance, *m_gpus, *m_outputs );
+    }
+    else
+    {
         m_backend = std::make_unique<BackendDrm>( *m_vkInstance, *m_dbusSession );
     }
 

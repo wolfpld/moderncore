@@ -3,9 +3,7 @@
 #include "CursorTheme.hpp"
 #include "WinCursor.hpp"
 #include "XCursor.hpp"
-#include "../util/Bitmap.hpp"
 #include "../util/Config.hpp"
-#include "../util/Panic.hpp"
 
 CursorTheme::CursorTheme()
 {

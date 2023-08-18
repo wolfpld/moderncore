@@ -10,7 +10,6 @@
 #include "../plumbing/Display.hpp"
 #include "../render/Background.hpp"
 #include "../util/Logs.hpp"
-#include "../util/Panic.hpp"
 #include "../vulkan/VlkInstance.hpp"
 
 Server::Server()

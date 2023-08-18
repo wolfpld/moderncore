@@ -9,7 +9,6 @@
 #include "WaylandWindow.hpp"
 #include "../../util/Panic.hpp"
 #include "../../vulkan/VlkInstance.hpp"
-#include "../../vulkan/VlkSwapchain.hpp"
 
 BackendWayland::BackendWayland( VlkInstance& vkInstance, GpuDevices& gpus )
     : m_dpy( wl_display_connect( nullptr ) )

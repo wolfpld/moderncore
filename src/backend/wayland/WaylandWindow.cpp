@@ -10,7 +10,6 @@
 #include "../../vulkan/PhysDevSel.hpp"
 #include "../../vulkan/VlkDevice.hpp"
 #include "../../vulkan/VlkError.hpp"
-#include "../../vulkan/VlkInfo.hpp"
 #include "../../vulkan/VlkInstance.hpp"
 
 WaylandWindow::WaylandWindow( Params&& p )

@@ -50,7 +50,6 @@ files = [
     'src/vulkan/VlkFramebuffer.cpp',
     'src/vulkan/VlkImage.cpp',
     'src/vulkan/VlkImageView.cpp',
-    'src/vulkan/VlkInfo.cpp',
     'src/vulkan/VlkInstance.cpp',
     'src/vulkan/VlkPhysicalDevice.cpp',
     'src/vulkan/VlkPipelineLayout.cpp',

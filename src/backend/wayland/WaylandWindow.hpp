@@ -19,7 +19,18 @@ class VlkInstance;
 class WaylandWindow
 {
 public:
-    WaylandWindow( wl_compositor* compositor, xdg_wm_base* xdgWmBase, zxdg_decoration_manager_v1* decorationManager, wl_display* dpy, VlkInstance& vkInstance, GpuDevices& gpus, std::function<void()> onClose );
+    struct Params
+    {
+        wl_compositor* compositor;
+        xdg_wm_base* xdgWmBase;
+        zxdg_decoration_manager_v1* decorationManager;
+        wl_display* dpy;
+        VlkInstance& vkInstance;
+        GpuDevices& gpus;
+        std::function<void()> onClose;
+    };
+
+    explicit WaylandWindow( Params&& p );
     ~WaylandWindow();
 
     NoCopy( WaylandWindow );

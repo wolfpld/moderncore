@@ -13,10 +13,10 @@
 #include "../../vulkan/VlkInfo.hpp"
 #include "../../vulkan/VlkInstance.hpp"
 
-WaylandWindow::WaylandWindow( wl_compositor* compositor, xdg_wm_base* xdgWmBase, zxdg_decoration_manager_v1* decorationManager, wl_display* dpy, VlkInstance& vkInstance, GpuDevices& gpus, std::function<void()> onClose )
-    : m_surface( wl_compositor_create_surface( compositor ) )
-    , m_onClose( std::move( onClose ) )
-    , m_vkInstance( vkInstance )
+WaylandWindow::WaylandWindow( Params&& p )
+    : m_surface( wl_compositor_create_surface( p.compositor ) )
+    , m_onClose( std::move( p.onClose ) )
+    , m_vkInstance( p.vkInstance )
 {
     CheckPanic( m_surface, "Failed to create Wayland surface" );
 
@@ -24,7 +24,7 @@ WaylandWindow::WaylandWindow( wl_compositor* compositor, xdg_wm_base* xdgWmBase,
         .configure = Method( WaylandWindow, XdgSurfaceConfigure )
     };
 
-    m_xdgSurface = xdg_wm_base_get_xdg_surface( xdgWmBase, m_surface );
+    m_xdgSurface = xdg_wm_base_get_xdg_surface( p.xdgWmBase, m_surface );
     CheckPanic( m_xdgSurface, "Failed to create Wayland xdg_surface" );
     xdg_surface_add_listener( m_xdgSurface, &xdgSurfaceListener, this );
 
@@ -39,10 +39,10 @@ WaylandWindow::WaylandWindow( wl_compositor* compositor, xdg_wm_base* xdgWmBase,
     xdg_toplevel_set_title( m_xdgToplevel, "ModernCore" );
     xdg_toplevel_set_app_id( m_xdgToplevel, "moderncore" );
 
-    if( decorationManager ) zxdg_decoration_manager_v1_get_toplevel_decoration( decorationManager, m_xdgToplevel );
+    if( p.decorationManager ) zxdg_decoration_manager_v1_get_toplevel_decoration( p.decorationManager, m_xdgToplevel );
 
     wl_surface_commit( m_surface );
-    wl_display_roundtrip( dpy );
+    wl_display_roundtrip( p.dpy );
 
     static constexpr wl_callback_listener frameListener = {
         .done = Method( WaylandWindow, FrameDone )
@@ -52,16 +52,16 @@ WaylandWindow::WaylandWindow( wl_compositor* compositor, xdg_wm_base* xdgWmBase,
     wl_callback_add_listener( cb, &frameListener, this );
 
     VkWaylandSurfaceCreateInfoKHR createInfo = { VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR };
-    createInfo.display = dpy;
+    createInfo.display = p.dpy;
     createInfo.surface = m_surface;
 
-    VkVerify( vkCreateWaylandSurfaceKHR( vkInstance, &createInfo, nullptr, &m_vkSurface ) );
+    VkVerify( vkCreateWaylandSurfaceKHR( m_vkInstance, &createInfo, nullptr, &m_vkSurface ) );
 
-    auto device = PhysDevSel::PickBest( vkInstance.QueryPhysicalDevices(), m_vkSurface );
+    auto device = PhysDevSel::PickBest( m_vkInstance.QueryPhysicalDevices(), m_vkSurface );
     CheckPanic( device != VK_NULL_HANDLE, "Failed to find suitable physical device" );
 
-    m_vkDevice = gpus.Get( device );
-    if( !m_vkDevice ) m_vkDevice = gpus.Add( device, m_vkSurface );
+    m_vkDevice = p.gpus.Get( device );
+    if( !m_vkDevice ) m_vkDevice = p.gpus.Add( device, m_vkSurface );
     assert( m_vkDevice );
 }
 

@@ -11,7 +11,8 @@
 #include "../util/Panic.hpp"
 
 VlkDevice::VlkDevice( VkInstance instance, VkPhysicalDevice physDev, int flags, VkSurfaceKHR presentSurface )
-    : m_queueInfo {}
+    : m_physDev( physDev )
+    , m_queueInfo {}
     , m_queue {}
 {
     CheckPanic( flags & ( RequireGraphic | RequireCompute ), "Requested Device without graphic and compute queues." );

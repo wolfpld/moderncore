@@ -43,10 +43,13 @@ public:
     [[nodiscard]] const std::shared_ptr<VlkCommandPool>& GetCommandPool( QueueType type ) const { return m_commandPool[(int)type]; }
 
     operator VkDevice() const { return m_device; }
+    operator VkPhysicalDevice() const { return m_physDev; }
     operator VmaAllocator() const { return m_allocator; }
 
 private:
     VkDevice m_device;
+    VkPhysicalDevice m_physDev;
+
     std::array<QueueInfo, 4> m_queueInfo;
     std::array<VkQueue, 4> m_queue;
 

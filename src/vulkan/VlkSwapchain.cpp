@@ -12,8 +12,8 @@
 #include "VlkSwapchainFormats.hpp"
 #include "../util/Logs.hpp"
 
-VlkSwapchain::VlkSwapchain( VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, const VlkDevice& device )
-    : m_properties( physicalDevice, surface )
+VlkSwapchain::VlkSwapchain( const VlkDevice& device, VkSurfaceKHR surface )
+    : m_properties( device, surface )
     , m_format { VK_FORMAT_UNDEFINED }
     , m_presentMode( VK_PRESENT_MODE_FIFO_KHR )
     , m_device( device )

@@ -38,74 +38,10 @@ Server::Server()
         m_backend = std::make_unique<BackendDrm>( *m_vkInstance, *m_dbusSession );
     }
 
-    /*
-    m_swapchain = std::make_unique<VlkSwapchain>( physDev, *m_backend, *m_vkDevice );
-
-    VkAttachmentDescription colorAttachment = {};
-    colorAttachment.format = m_swapchain->GetFormat();
-    colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-    VkAttachmentReference colorAttachmentRef = {};
-    colorAttachmentRef.attachment = 0;
-    colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-    VkSubpassDescription subpassDesc = {};
-    subpassDesc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpassDesc.colorAttachmentCount = 1;
-    subpassDesc.pColorAttachments = &colorAttachmentRef;
-
-    VkSubpassDependency dependency = {};
-    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-    dependency.dstSubpass = 0;
-    dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependency.srcAccessMask = 0;
-    dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-    VkRenderPassCreateInfo renderPassInfo = { VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO };
-    renderPassInfo.attachmentCount = 1;
-    renderPassInfo.pAttachments = &colorAttachment;
-    renderPassInfo.subpassCount = 1;
-    renderPassInfo.pSubpasses = &subpassDesc;
-    renderPassInfo.dependencyCount = 1;
-    renderPassInfo.pDependencies = &dependency;
-
-    m_renderPass = std::make_unique<VlkRenderPass>( *m_vkDevice, renderPassInfo );
-
-    const auto& imageViews = m_swapchain->GetImageViews();
-    VkFramebufferCreateInfo framebufferInfo = { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
-    framebufferInfo.renderPass = *m_renderPass;
-    framebufferInfo.attachmentCount = 1;
-    framebufferInfo.width = m_swapchain->GetWidth();
-    framebufferInfo.height = m_swapchain->GetHeight();
-    framebufferInfo.layers = 1;
-
-    const auto numImages = imageViews.size();
-    m_framebuffers.resize( numImages );
-    m_cmdBufs.resize( numImages );
-    m_imgAvailSema.resize( numImages );
-    m_renderDoneSema.resize( numImages );
-    m_inFlightFences.resize( numImages );
-
-    for( size_t i=0; i<numImages; i++ )
-    {
-        framebufferInfo.pAttachments = &imageViews[i];
-        m_framebuffers[i] = std::make_unique<VlkFramebuffer>( *m_vkDevice, framebufferInfo );
-        m_cmdBufs[i] = std::make_unique<VlkCommandBuffer>( *m_vkDevice->GetCommandPool( QueueType::Graphic ), true );
-        m_imgAvailSema[i] = std::make_unique<VlkSemaphore>( *m_vkDevice );
-        m_renderDoneSema[i] = std::make_unique<VlkSemaphore>( *m_vkDevice );
-        m_inFlightFences[i] = std::make_unique<VlkFence>( *m_vkDevice, VK_FENCE_CREATE_SIGNALED_BIT );
-    }
-
     m_dpy = std::make_unique<Display>();
     setenv( "WAYLAND_DISPLAY", m_dpy->Socket(), 1 );
 
+    /*
     m_backend->VulkanInit( *m_vkDevice, *m_renderPass, *m_swapchain );
 
     m_background = std::make_unique<Background>( *m_vkDevice, *m_renderPass, m_swapchain->GetWidth(), m_swapchain->GetHeight() );

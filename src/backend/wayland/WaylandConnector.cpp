@@ -1,6 +1,12 @@
+#include <array>
+#include <inttypes.h>
+#include <vulkan/vk_enum_string_helper.h>
+
 #include "WaylandConnector.hpp"
+#include "../../util/Logs.hpp"
 #include "../../vulkan/VlkCommandBuffer.hpp"
 #include "../../vulkan/VlkDevice.hpp"
+#include "../../vulkan/VlkError.hpp"
 #include "../../vulkan/VlkFence.hpp"
 #include "../../vulkan/VlkFramebuffer.hpp"
 #include "../../vulkan/VlkRenderPass.hpp"
@@ -9,6 +15,7 @@
 
 WaylandConnector::WaylandConnector( const VlkDevice& device, VkSurfaceKHR surface )
     : m_swapchain( std::make_unique<VlkSwapchain>( device, surface ) )
+    , m_device( device )
 {
     VkAttachmentDescription colorAttachment = {};
     colorAttachment.format = m_swapchain->GetFormat();
@@ -70,4 +77,67 @@ WaylandConnector::WaylandConnector( const VlkDevice& device, VkSurfaceKHR surfac
 
 WaylandConnector::~WaylandConnector()
 {
+}
+
+void WaylandConnector::Render()
+{
+    const auto frameIdx = m_frameIndex;
+    m_frameIndex = ( m_frameIndex + 1 ) % m_frame.size();
+
+    auto& frame = m_frame[frameIdx];
+
+    frame.fence->Wait();
+    frame.fence->Reset();
+
+    uint32_t imgIndex;
+    auto res = vkAcquireNextImageKHR( m_device, *m_swapchain, UINT64_MAX, *frame.imageAvailable, VK_NULL_HANDLE, &imgIndex );
+
+    mclog( LogLevel::Warning, "Render frame [%" PRIu32 "], res: %s, image index: %" PRIu32, frameIdx, string_VkResult( res ), imgIndex );
+
+    frame.commandBuffer->Reset();
+    frame.commandBuffer->Begin( VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT );
+
+    VkRenderPassBeginInfo renderPassInfo = { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
+    renderPassInfo.renderPass = *m_renderPass;
+    renderPassInfo.framebuffer = *frame.framebuffer;
+    renderPassInfo.renderArea.offset = { 0, 0 };
+    renderPassInfo.renderArea.extent = { m_swapchain->GetWidth(), m_swapchain->GetHeight() };
+    renderPassInfo.clearValueCount = 1;
+    VkClearValue clearValue = {{{ 0.25f, 0.25f, 0.25f, 1.0f }}};
+    renderPassInfo.pClearValues = &clearValue;
+
+    vkCmdBeginRenderPass( *frame.commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
+
+    //m_background->Render( *m_cmdBufs[frameIdx] );
+    //m_backend->RenderCursor( *m_cmdBufs[frameIdx], *m_cursorLogic );
+
+    vkCmdEndRenderPass( *frame.commandBuffer );
+    frame.commandBuffer->End();
+
+    const std::array<VkSemaphore, 1> waitSemaphores = { *frame.imageAvailable };
+    const std::array<VkSemaphore, 1> signalSemaphores = { *frame.renderFinished };
+    constexpr std::array<VkPipelineStageFlags, 1> waitStages = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+    const std::array<VkCommandBuffer, 1> commandBuffers = { *frame.commandBuffer };
+
+    VkSubmitInfo submitInfo = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
+    submitInfo.waitSemaphoreCount = waitSemaphores.size();
+    submitInfo.pWaitSemaphores = waitSemaphores.data();
+    submitInfo.pWaitDstStageMask = waitStages.data();
+    submitInfo.commandBufferCount = commandBuffers.size();
+    submitInfo.pCommandBuffers = commandBuffers.data();
+    submitInfo.signalSemaphoreCount = signalSemaphores.size();
+    submitInfo.pSignalSemaphores = signalSemaphores.data();
+
+    VkVerify( vkQueueSubmit( m_device.GetQueue( QueueType::Graphic ), 1, &submitInfo, *frame.fence ) );
+
+    const std::array<VkSwapchainKHR, 1> swapchains = { *m_swapchain };
+
+    VkPresentInfoKHR presentInfo = { VK_STRUCTURE_TYPE_PRESENT_INFO_KHR };
+    presentInfo.waitSemaphoreCount = signalSemaphores.size();
+    presentInfo.pWaitSemaphores = signalSemaphores.data();
+    presentInfo.swapchainCount = swapchains.size();
+    presentInfo.pSwapchains = swapchains.data();
+    presentInfo.pImageIndices = &imgIndex;
+
+    VkVerify( vkQueuePresentKHR( m_device.GetQueue( QueueType::Present ), &presentInfo ) );
 }

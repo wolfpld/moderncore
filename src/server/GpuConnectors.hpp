@@ -15,6 +15,8 @@ public:
 
     void Add( std::shared_ptr<Connector> connector );
 
+    void Render();
+
 private:
     std::vector<std::shared_ptr<Connector>> m_connectors;
 };

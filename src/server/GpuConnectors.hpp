@@ -1,9 +1,10 @@
 #pragma once
 
+#include <atomic>
 #include <memory>
-#include <vector>
 
 #include "../util/NoCopy.hpp"
+#include "../util/RobinHood.hpp"
 
 class Connector;
 
@@ -13,10 +14,12 @@ public:
     GpuConnectors() = default;
     NoCopy( GpuConnectors );
 
-    void Add( std::shared_ptr<Connector> connector );
+    uint32_t Add( std::shared_ptr<Connector> connector );
 
     void Render();
 
 private:
-    std::vector<std::shared_ptr<Connector>> m_connectors;
+    unordered_flat_map<uint32_t, std::shared_ptr<Connector>> m_connectors;
+
+    std::atomic<uint32_t> m_id = 0;
 };

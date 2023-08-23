@@ -63,4 +63,7 @@ private:
     std::shared_ptr<VlkDevice> m_vkDevice;
 
     std::unique_ptr<SoftwareCursor> m_cursor;
+
+    GpuConnectors& m_connectors;
+    uint32_t m_connectorId;
 };

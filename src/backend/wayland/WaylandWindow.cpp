@@ -18,6 +18,7 @@ WaylandWindow::WaylandWindow( Params&& p )
     : m_surface( wl_compositor_create_surface( p.compositor ) )
     , m_onClose( std::move( p.onClose ) )
     , m_vkInstance( p.vkInstance )
+    , m_connectors( p.connectors )
 {
     CheckPanic( m_surface, "Failed to create Wayland surface" );
 
@@ -65,11 +66,12 @@ WaylandWindow::WaylandWindow( Params&& p )
     if( !m_vkDevice ) m_vkDevice = p.gpus.Add( device, m_vkSurface );
     assert( m_vkDevice );
 
-    p.connectors.Add( std::make_shared<WaylandConnector>( *m_vkDevice, m_vkSurface ) );
+    m_connectorId = p.connectors.Add( std::make_shared<WaylandConnector>( *m_vkDevice, m_vkSurface ) );
 }
 
 WaylandWindow::~WaylandWindow()
 {
+    m_connectors.Remove( m_connectorId );
     m_vkDevice.reset();
     vkDestroySurfaceKHR( m_vkInstance, m_vkSurface, nullptr );
     xdg_toplevel_destroy( m_xdgToplevel );

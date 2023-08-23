@@ -15,6 +15,7 @@ public:
     NoCopy( GpuConnectors );
 
     uint32_t Add( std::shared_ptr<Connector> connector );
+    void Remove( uint32_t id );
 
     void Render();
 

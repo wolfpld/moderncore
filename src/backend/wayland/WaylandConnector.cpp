@@ -77,6 +77,7 @@ WaylandConnector::WaylandConnector( const VlkDevice& device, VkSurfaceKHR surfac
 
 WaylandConnector::~WaylandConnector()
 {
+    for( auto& frame : m_frame ) frame.fence->Wait();
 }
 
 void WaylandConnector::Render()

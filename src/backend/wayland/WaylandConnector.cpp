@@ -13,10 +13,13 @@
 #include "../../vulkan/VlkSemaphore.hpp"
 #include "../../vulkan/VlkSwapchain.hpp"
 
-WaylandConnector::WaylandConnector( const VlkDevice& device, VkSurfaceKHR surface )
-    : m_swapchain( std::make_unique<VlkSwapchain>( device, surface ) )
-    , m_device( device )
+WaylandConnector::WaylandConnector( VlkDevice& device, VkSurfaceKHR surface )
+    : Connector( device )
+    , m_swapchain( std::make_unique<VlkSwapchain>( device, surface ) )
 {
+    m_width = m_swapchain->GetWidth();
+    m_height = m_swapchain->GetHeight();
+
     VkAttachmentDescription colorAttachment = {};
     colorAttachment.format = m_swapchain->GetFormat();
     colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -58,8 +61,8 @@ WaylandConnector::WaylandConnector( const VlkDevice& device, VkSurfaceKHR surfac
     VkFramebufferCreateInfo framebufferInfo = { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
     framebufferInfo.renderPass = *m_renderPass;
     framebufferInfo.attachmentCount = 1;
-    framebufferInfo.width = m_swapchain->GetWidth();
-    framebufferInfo.height = m_swapchain->GetHeight();
+    framebufferInfo.width = m_width;
+    framebufferInfo.height = m_height;
     framebufferInfo.layers = 1;
 
     const auto numImages = imageViews.size();

@@ -7,7 +7,6 @@
 #include "../../server/Connector.hpp"
 
 class VlkCommandBuffer;
-class VlkDevice;
 class VlkFence;
 class VlkFramebuffer;
 class VlkRenderPass;
@@ -26,16 +25,13 @@ class WaylandConnector : public Connector
     };
 
 public:
-    WaylandConnector( const VlkDevice& device, VkSurfaceKHR surface );
+    WaylandConnector( VlkDevice& device, VkSurfaceKHR surface );
     ~WaylandConnector() override;
 
     void Render() override;
 
 private:
     std::unique_ptr<VlkSwapchain> m_swapchain;
-    std::unique_ptr<VlkRenderPass> m_renderPass;
-
-    const VlkDevice& m_device;
 
     std::vector<FrameData> m_frame;
     uint32_t m_frameIndex = 0;

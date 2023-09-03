@@ -214,9 +214,6 @@ void Background::UpdateVertexBuffer( uint32_t imageWidth, uint32_t imageHeight )
             Vertex { {  1.0f,  1.0f }, { 1.0f, ( height - offset ) / height } },
             Vertex { { -1.0f,  1.0f }, { 0.0f, ( height - offset ) / height } }
         };
-
-        memcpy( m_vertexBuffer->Ptr(), vertices.data(), sizeof( vertices ) );
-        m_vertexBuffer->Flush();
     }
     else
     {

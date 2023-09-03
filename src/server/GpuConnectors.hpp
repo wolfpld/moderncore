@@ -19,6 +19,8 @@ public:
 
     void Render();
 
+    [[nodiscard]] const unordered_flat_map<uint32_t, std::shared_ptr<Connector>>& List() const { return m_connectors; }
+
 private:
     unordered_flat_map<uint32_t, std::shared_ptr<Connector>> m_connectors;
 

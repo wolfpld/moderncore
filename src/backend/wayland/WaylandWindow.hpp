@@ -11,8 +11,7 @@
 #include "../../util/NoCopy.hpp"
 
 class CursorLogic;
-class GpuConnectors;
-class GpuDevices;
+class GpuState;
 class SoftwareCursor;
 class VlkDevice;
 class VlkInstance;
@@ -27,8 +26,7 @@ public:
         zxdg_decoration_manager_v1* decorationManager;
         wl_display* dpy;
         VlkInstance& vkInstance;
-        GpuDevices& gpus;
-        GpuConnectors& connectors;
+        GpuState& gpuState;
         std::function<void()> onClose;
     };
 
@@ -64,6 +62,6 @@ private:
 
     std::unique_ptr<SoftwareCursor> m_cursor;
 
-    GpuConnectors& m_connectors;
+    GpuState& m_gpuState;
     uint32_t m_connectorId;
 };

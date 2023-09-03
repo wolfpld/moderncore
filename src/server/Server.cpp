@@ -1,7 +1,6 @@
 #include <stdlib.h>
 
-#include "GpuDevices.hpp"
-#include "GpuConnectors.hpp"
+#include "GpuState.hpp"
 #include "Server.hpp"
 #include "../backend/drm/BackendDrm.hpp"
 #include "../backend/wayland/BackendWayland.hpp"
@@ -26,12 +25,11 @@ Server::Server()
         m_vkInstance = std::make_unique<VlkInstance>( VlkInstanceType::Drm );
     }
 
-    m_gpus = std::make_unique<GpuDevices>( *m_vkInstance );
-    m_connectors = std::make_unique<GpuConnectors>();
+    m_gpuState = std::make_unique<GpuState>( *m_vkInstance );
 
     if( waylandDpy )
     {
-        m_backend = std::make_unique<BackendWayland>( *m_vkInstance, *m_gpus, *m_connectors );
+        m_backend = std::make_unique<BackendWayland>( *m_vkInstance, *m_gpuState );
     }
     else
     {
@@ -60,5 +58,5 @@ void Server::Run()
 
 void Server::Render()
 {
-    m_connectors->Render();
+    m_gpuState->Connectors().Render();
 }

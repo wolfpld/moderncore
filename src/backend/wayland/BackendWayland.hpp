@@ -10,8 +10,7 @@
 #include "xdg-decoration-unstable-v1-client-protocol.h"
 #include "xdg-shell-client-protocol.h"
 
-class GpuDevices;
-class GpuConnectors;
+class GpuState;
 class WaylandOutput;
 class WaylandSeat;
 class WaylandWindow;
@@ -20,7 +19,7 @@ class VlkInstance;
 class BackendWayland : public Backend
 {
 public:
-    BackendWayland( VlkInstance& vkInstance, GpuDevices& gpus, GpuConnectors& connectors );
+    BackendWayland( VlkInstance& vkInstance, GpuState& gpuState );
     ~BackendWayland() override;
 
     void Run( const std::function<void()>& render ) override;

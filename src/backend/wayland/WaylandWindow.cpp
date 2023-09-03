@@ -6,8 +6,7 @@
 #include "WaylandMethod.hpp"
 #include "WaylandWindow.hpp"
 #include "../../render/SoftwareCursor.hpp"
-#include "../../server/GpuConnectors.hpp"
-#include "../../server/GpuDevices.hpp"
+#include "../../server/GpuState.hpp"
 #include "../../util/Panic.hpp"
 #include "../../vulkan/PhysDevSel.hpp"
 #include "../../vulkan/VlkDevice.hpp"
@@ -18,7 +17,7 @@ WaylandWindow::WaylandWindow( Params&& p )
     : m_surface( wl_compositor_create_surface( p.compositor ) )
     , m_onClose( std::move( p.onClose ) )
     , m_vkInstance( p.vkInstance )
-    , m_connectors( p.connectors )
+    , m_gpuState( p.gpuState )
 {
     CheckPanic( m_surface, "Failed to create Wayland surface" );
 
@@ -62,16 +61,16 @@ WaylandWindow::WaylandWindow( Params&& p )
     auto device = PhysDevSel::PickBest( m_vkInstance.QueryPhysicalDevices(), m_vkSurface );
     CheckPanic( device != VK_NULL_HANDLE, "Failed to find suitable physical device" );
 
-    m_vkDevice = p.gpus.Get( device );
-    if( !m_vkDevice ) m_vkDevice = p.gpus.Add( device, m_vkSurface );
+    m_vkDevice = p.gpuState.Devices().Get( device );
+    if( !m_vkDevice ) m_vkDevice = p.gpuState.Devices().Add( device, m_vkSurface );
     assert( m_vkDevice );
 
-    m_connectorId = p.connectors.Add( std::make_shared<WaylandConnector>( *m_vkDevice, m_vkSurface ) );
+    m_connectorId = p.gpuState.Connectors().Add( std::make_shared<WaylandConnector>( *m_vkDevice, m_vkSurface ) );
 }
 
 WaylandWindow::~WaylandWindow()
 {
-    m_connectors.Remove( m_connectorId );
+    m_gpuState.Connectors().Remove( m_connectorId );
     m_vkDevice.reset();
     vkDestroySurfaceKHR( m_vkInstance, m_vkSurface, nullptr );
     xdg_toplevel_destroy( m_xdgToplevel );

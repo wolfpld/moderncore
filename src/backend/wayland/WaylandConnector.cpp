@@ -3,6 +3,7 @@
 #include <vulkan/vk_enum_string_helper.h>
 
 #include "WaylandConnector.hpp"
+#include "../../server/Renderable.hpp"
 #include "../../util/Logs.hpp"
 #include "../../vulkan/VlkCommandBuffer.hpp"
 #include "../../vulkan/VlkDevice.hpp"
@@ -83,7 +84,7 @@ WaylandConnector::~WaylandConnector()
     for( auto& frame : m_frame ) frame.fence->Wait();
 }
 
-void WaylandConnector::Render()
+void WaylandConnector::Render( const std::vector<std::shared_ptr<Renderable>>& renderables )
 {
     const auto frameIdx = m_frameIndex;
     m_frameIndex = ( m_frameIndex + 1 ) % m_frame.size();
@@ -112,8 +113,7 @@ void WaylandConnector::Render()
 
     vkCmdBeginRenderPass( *frame.commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
 
-    //m_background->Render( *m_cmdBufs[frameIdx] );
-    //m_backend->RenderCursor( *m_cmdBufs[frameIdx], *m_cursorLogic );
+    for( auto& renderable : renderables ) renderable->Render( *this, *frame.commandBuffer );
 
     vkCmdEndRenderPass( *frame.commandBuffer );
     frame.commandBuffer->End();

@@ -6,11 +6,10 @@
 #include "../util/NoCopy.hpp"
 
 class Backend;
-class Background;
-class CursorLogic;
 class DbusSession;
 class Display;
 class GpuState;
+class Renderable;
 class VlkInstance;
 
 class Server
@@ -33,6 +32,5 @@ private:
     std::unique_ptr<Backend> m_backend;
     std::unique_ptr<Display> m_dpy;
 
-    std::unique_ptr<CursorLogic> m_cursorLogic;
-    std::unique_ptr<Background> m_background;
+    std::vector<std::shared_ptr<Renderable>> m_renderables;
 };

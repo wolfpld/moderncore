@@ -16,10 +16,10 @@ void GpuConnectors::Remove( uint32_t id )
     m_connectors.erase( id );
 }
 
-void GpuConnectors::Render()
+void GpuConnectors::Render( const std::vector<std::shared_ptr<Renderable>>& renderables )
 {
     for ( auto& connector : m_connectors )
     {
-        connector.second->Render();
+        connector.second->Render( renderables );
     }
 }

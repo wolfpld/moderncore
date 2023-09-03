@@ -27,7 +27,7 @@ BackendWayland::BackendWayland( VlkInstance& vkInstance, GpuState& gpuState )
     CheckPanic( m_xdgWmBase, "Failed to create Wayland xdg_wm_base" );
     CheckPanic( m_seat, "Failed to create Wayland seat" );
 
-    m_window = std::make_unique<WaylandWindow>( WaylandWindow::Params {
+    m_windows.emplace_back( std::make_unique<WaylandWindow>( WaylandWindow::Params {
         .compositor = m_compositor,
         .xdgWmBase = m_xdgWmBase,
         .decorationManager = m_decorationManager,
@@ -35,12 +35,22 @@ BackendWayland::BackendWayland( VlkInstance& vkInstance, GpuState& gpuState )
         .vkInstance = vkInstance,
         .gpuState = gpuState,
         .onClose = [this]{ Stop(); }
-    } );
+    } ) );
+
+    m_windows.emplace_back( std::make_unique<WaylandWindow>( WaylandWindow::Params {
+        .compositor = m_compositor,
+        .xdgWmBase = m_xdgWmBase,
+        .decorationManager = m_decorationManager,
+        .dpy = m_dpy,
+        .vkInstance = vkInstance,
+        .gpuState = gpuState,
+        .onClose = [this]{ Stop(); }
+    } ) );
 }
 
 BackendWayland::~BackendWayland()
 {
-    m_window.reset();
+    m_windows.clear();
     if( m_toplevelDecoration ) zxdg_toplevel_decoration_v1_destroy( m_toplevelDecoration );
     if( m_decorationManager ) zxdg_decoration_manager_v1_destroy( m_decorationManager );
     m_outputMap.clear();
@@ -52,8 +62,11 @@ BackendWayland::~BackendWayland()
 
 void BackendWayland::Run( const std::function<void()>& render )
 {
-    if( m_scale != 1 ) m_window->SetScale( m_scale );
-    m_window->Show( render );
+    for( auto& window : m_windows )
+    {
+        if( m_scale != 1 ) window->SetScale( m_scale );
+        window->Show( render );
+    }
     while( m_keepRunning && wl_display_dispatch( m_dpy ) != -1 ) {}
 }
 
@@ -128,12 +141,12 @@ void BackendWayland::OnOutput()
     }
     if( scale != m_scale )
     {
-        if( m_window ) m_window->SetScale( scale );
+        //if( m_window ) m_window->SetScale( scale );
         m_scale = scale;
     }
 }
 
 void BackendWayland::PointerMotion( double x, double y )
 {
-    m_window->PointerMotion( x * m_scale, y * m_scale );
+    //m_window->PointerMotion( x * m_scale, y * m_scale );
 }

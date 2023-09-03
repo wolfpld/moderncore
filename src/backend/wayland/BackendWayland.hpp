@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <stdint.h>
+#include <vector>
 #include <wayland-client.h>
 
 #include "../Backend.hpp"
@@ -44,7 +45,7 @@ private:
     zxdg_toplevel_decoration_v1* m_toplevelDecoration = nullptr;
 
     std::unique_ptr<WaylandSeat> m_seat;
-    std::unique_ptr<WaylandWindow> m_window;
+    std::vector<std::unique_ptr<WaylandWindow>> m_windows;
 
     unordered_flat_map<uint32_t, std::unique_ptr<WaylandOutput>> m_outputMap;
 

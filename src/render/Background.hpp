@@ -5,9 +5,14 @@
 #include <stdint.h>
 #include <vulkan/vulkan.h>
 
+#include "../server/Renderable.hpp"
+#include "../util/FileBuffer.hpp"
 #include "../util/NoCopy.hpp"
+#include "../util/RobinHood.hpp"
 
 class Bitmap;
+class Connector;
+class GpuState;
 class Texture;
 class VlkBuffer;
 class VlkDescriptorSetLayout;
@@ -17,7 +22,7 @@ class VlkPipelineLayout;
 class VlkSampler;
 class VlkShader;
 
-class Background
+class Background : public Renderable
 {
     struct Vertex
     {
@@ -25,35 +30,39 @@ class Background
         glm::vec2 uv;
     };
 
+    struct DrawData
+    {
+        std::unique_ptr<Texture> texture;
+        std::unique_ptr<VlkShader> shader;
+        std::unique_ptr<VlkDescriptorSetLayout> descriptorSetLayout;
+        std::unique_ptr<VlkPipelineLayout> pipelineLayout;
+        std::unique_ptr<VlkPipeline> pipeline;
+        std::unique_ptr<VlkBuffer> vertexBuffer;
+        std::unique_ptr<VlkBuffer> indexBuffer;
+        std::unique_ptr<VlkSampler> sampler;
+
+        VkDescriptorImageInfo imageInfo;
+        VkWriteDescriptorSet descriptorWrite;
+    };
+
 public:
-    Background( VlkDevice& device, VkRenderPass renderPass, uint32_t screenWidth, uint32_t screenHeight );
-    ~Background();
+    explicit Background( const GpuState& gpuState );
+    ~Background() override;
 
     NoCopy( Background );
 
-    void Render( VkCommandBuffer cmdBuf );
+    void Render( Connector& connector, VkCommandBuffer cmdBuf ) override;
 
     [[nodiscard]] const VkClearValue& GetColor() const { return m_color; }
 
 private:
-    void UpdateVertexBuffer( uint32_t imageWidth, uint32_t imageHeight );
+    void AddConnector( Connector& connector );
+    static void UpdateVertexBuffer( VlkBuffer& buffer ,uint32_t imageWidth, uint32_t imageHeight, uint32_t displayWidth, uint32_t displayHeight );
 
     VkClearValue m_color;
 
+    FileBuffer m_vert, m_frag;
     std::unique_ptr<Bitmap> m_bitmap;
-    std::unique_ptr<Texture> m_texture;
 
-    std::unique_ptr<VlkShader> m_shader;
-    std::unique_ptr<VlkDescriptorSetLayout> m_descriptorSetLayout;
-    std::unique_ptr<VlkPipelineLayout> m_pipelineLayout;
-    std::unique_ptr<VlkPipeline> m_pipeline;
-    std::unique_ptr<VlkBuffer> m_vertexBuffer;
-    std::unique_ptr<VlkBuffer> m_indexBuffer;
-    std::unique_ptr<VlkSampler> m_sampler;
-
-    VkDescriptorImageInfo m_imageInfo;
-    VkWriteDescriptorSet m_descriptorWrite;
-
-    uint32_t m_screenWidth;
-    uint32_t m_screenHeight;
+    unordered_flat_map<Connector*, std::unique_ptr<DrawData>> m_drawData;
 };

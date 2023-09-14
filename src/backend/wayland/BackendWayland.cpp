@@ -12,6 +12,8 @@
 
 BackendWayland::BackendWayland( VlkInstance& vkInstance, GpuState& gpuState )
     : m_dpy( wl_display_connect( nullptr ) )
+    , m_vkInstance( vkInstance )
+    , m_gpuState( gpuState )
 {
     CheckPanic( m_dpy, "Failed to connect to Wayland display" );
 

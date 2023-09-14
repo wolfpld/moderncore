@@ -49,6 +49,9 @@ private:
 
     unordered_flat_map<uint32_t, std::unique_ptr<WaylandOutput>> m_outputMap;
 
+    VlkInstance& m_vkInstance;
+    GpuState& m_gpuState;
+
     int32_t m_scale = 1;
     bool m_keepRunning = true;
 };

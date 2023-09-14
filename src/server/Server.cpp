@@ -40,13 +40,6 @@ Server::Server()
     setenv( "WAYLAND_DISPLAY", m_dpy->Socket(), 1 );
 
     m_renderables.emplace_back( std::make_shared<Background>( *m_gpuState ) );
-
-    /*
-    m_backend->VulkanInit( *m_vkDevice, *m_renderPass, *m_swapchain );
-
-    m_background = std::make_unique<Background>( *m_vkDevice, *m_renderPass, m_swapchain->GetWidth(), m_swapchain->GetHeight() );
-    m_cursorLogic = std::make_unique<CursorLogic>();
-    */
 }
 
 Server::~Server()

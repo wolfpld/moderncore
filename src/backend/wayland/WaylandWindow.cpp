@@ -78,13 +78,6 @@ WaylandWindow::~WaylandWindow()
     wl_surface_destroy( m_surface );
 }
 
-/*
-void WaylandWindow::VulkanInit( VlkDevice& device, VkRenderPass renderPass, uint32_t width, uint32_t height )
-{
-    m_cursor = std::make_unique<SoftwareCursor>( device, renderPass, width, height );
-}
-*/
-
 void WaylandWindow::Show( const std::function<void()>& render )
 {
     assert( !m_onRender );

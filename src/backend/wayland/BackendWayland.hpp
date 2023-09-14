@@ -38,6 +38,8 @@ private:
 
     void OnOutput();
 
+    void OpenWindow();
+
     wl_display* m_dpy;
     wl_compositor* m_compositor = nullptr;
     xdg_wm_base* m_xdgWmBase = nullptr;

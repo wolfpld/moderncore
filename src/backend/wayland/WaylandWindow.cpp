@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <format>
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_wayland.h>
 
@@ -34,10 +35,12 @@ WaylandWindow::WaylandWindow( Params&& p )
         .close = Method( WaylandWindow, XdgToplevelClose )
     };
 
+    static int windowCount = 0;
+
     m_xdgToplevel = xdg_surface_get_toplevel( m_xdgSurface );
     CheckPanic( m_xdgToplevel, "Failed to create Wayland xdg_toplevel" );
     xdg_toplevel_add_listener( m_xdgToplevel, &toplevelListener, this );
-    xdg_toplevel_set_title( m_xdgToplevel, "ModernCore" );
+    xdg_toplevel_set_title( m_xdgToplevel, std::format( "ModernCore #{}", ++windowCount ).c_str() );
     xdg_toplevel_set_app_id( m_xdgToplevel, "moderncore" );
 
     if( p.decorationManager ) zxdg_decoration_manager_v1_get_toplevel_decoration( p.decorationManager, m_xdgToplevel );

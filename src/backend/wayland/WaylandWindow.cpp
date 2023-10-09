@@ -43,7 +43,16 @@ WaylandWindow::WaylandWindow( Params&& p )
     xdg_toplevel_set_title( m_xdgToplevel, std::format( "ModernCore #{}", ++windowCount ).c_str() );
     xdg_toplevel_set_app_id( m_xdgToplevel, "moderncore" );
 
-    if( p.decorationManager ) zxdg_decoration_manager_v1_get_toplevel_decoration( p.decorationManager, m_xdgToplevel );
+    if( p.decorationManager )
+    {
+        static constexpr zxdg_toplevel_decoration_v1_listener decorationListener = {
+            .configure = Method( WaylandWindow, DecorationConfigure )
+        };
+
+        m_xdgToplevelDecoration = zxdg_decoration_manager_v1_get_toplevel_decoration( p.decorationManager, m_xdgToplevel );
+        zxdg_toplevel_decoration_v1_add_listener( m_xdgToplevelDecoration, &decorationListener, this );
+        zxdg_toplevel_decoration_v1_set_mode( m_xdgToplevelDecoration, ZXDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE );
+    }
 
     wl_surface_commit( m_surface );
     wl_display_roundtrip( p.dpy );
@@ -76,6 +85,7 @@ WaylandWindow::~WaylandWindow()
     m_gpuState.Connectors().Remove( m_connectorId );
     m_vkDevice.reset();
     vkDestroySurfaceKHR( m_vkInstance, m_vkSurface, nullptr );
+    if( m_xdgToplevelDecoration ) zxdg_toplevel_decoration_v1_destroy( m_xdgToplevelDecoration );
     xdg_toplevel_destroy( m_xdgToplevel );
     xdg_surface_destroy( m_xdgSurface );
     wl_surface_destroy( m_surface );
@@ -133,4 +143,8 @@ void WaylandWindow::FrameDone( struct wl_callback* cb, uint32_t time )
     wl_callback_add_listener( cb, &frameListener, this );
 
     m_onRender();
+}
+
+void WaylandWindow::DecorationConfigure( zxdg_toplevel_decoration_v1* tldec, uint32_t mode )
+{
 }

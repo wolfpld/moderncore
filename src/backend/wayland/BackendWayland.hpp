@@ -34,8 +34,6 @@ private:
 
     void XdgWmPing( xdg_wm_base* shell, uint32_t serial );
 
-    void DecorationConfigure( zxdg_toplevel_decoration_v1* tldec, uint32_t mode );
-
     void OnOutput();
 
     void OpenWindow();
@@ -44,7 +42,6 @@ private:
     wl_compositor* m_compositor = nullptr;
     xdg_wm_base* m_xdgWmBase = nullptr;
     zxdg_decoration_manager_v1* m_decorationManager = nullptr;
-    zxdg_toplevel_decoration_v1* m_toplevelDecoration = nullptr;
 
     std::unique_ptr<WaylandSeat> m_seat;
     std::vector<std::unique_ptr<WaylandWindow>> m_windows;

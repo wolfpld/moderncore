@@ -49,9 +49,12 @@ private:
 
     void FrameDone( struct wl_callback* cb, uint32_t time );
 
+    void DecorationConfigure( zxdg_toplevel_decoration_v1* tldec, uint32_t mode );
+
     wl_surface* m_surface;
     xdg_surface* m_xdgSurface;
     xdg_toplevel* m_xdgToplevel;
+    zxdg_toplevel_decoration_v1* m_xdgToplevelDecoration = nullptr;
     VkSurfaceKHR m_vkSurface;
 
     std::function<void()> m_onClose;

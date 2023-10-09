@@ -36,7 +36,6 @@ BackendWayland::BackendWayland( VlkInstance& vkInstance, GpuState& gpuState )
 BackendWayland::~BackendWayland()
 {
     m_windows.clear();
-    if( m_toplevelDecoration ) zxdg_toplevel_decoration_v1_destroy( m_toplevelDecoration );
     if( m_decorationManager ) zxdg_decoration_manager_v1_destroy( m_decorationManager );
     m_outputMap.clear();
     m_seat.reset();
@@ -89,16 +88,6 @@ void BackendWayland::RegistryGlobal( wl_registry* reg, uint32_t name, const char
     {
         m_decorationManager = RegistryBind( zxdg_decoration_manager_v1 );
     }
-    else if( strcmp( interface, zxdg_toplevel_decoration_v1_interface.name ) == 0 )
-    {
-        static constexpr zxdg_toplevel_decoration_v1_listener decorationListener = {
-            .configure = Method( BackendWayland, DecorationConfigure ),
-        };
-
-        m_toplevelDecoration = RegistryBind( zxdg_toplevel_decoration_v1 );
-        zxdg_toplevel_decoration_v1_add_listener( m_toplevelDecoration, &decorationListener, this );
-        zxdg_toplevel_decoration_v1_set_mode( m_toplevelDecoration, ZXDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE );
-    }
 }
 
 void BackendWayland::RegistryGlobalRemove( wl_registry* reg, uint32_t name )
@@ -110,10 +99,6 @@ void BackendWayland::RegistryGlobalRemove( wl_registry* reg, uint32_t name )
 void BackendWayland::XdgWmPing( xdg_wm_base* shell, uint32_t serial )
 {
     xdg_wm_base_pong( shell, serial );
-}
-
-void BackendWayland::DecorationConfigure( zxdg_toplevel_decoration_v1* tldec, uint32_t mode )
-{
 }
 
 void BackendWayland::OnOutput()

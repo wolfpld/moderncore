@@ -136,7 +136,9 @@ foreach shader : shaders
             '-O',
             '-o', '@OUTPUT@',
             '@INPUT@',
-        ]
+        ],
+        install: true,
+        install_dir: '/'
     )
     files += spirv
 endforeach
@@ -167,5 +169,7 @@ executable('mcore',
         libdrm,
         libdisplayinfo,
         libgbm,
-    ]
+    ],
+    install: true,
+    install_dir: '/'
 )

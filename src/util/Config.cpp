@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string>
+#include <string.h>
 
 #include "Config.hpp"
 #include "../util/Home.hpp"
@@ -12,18 +13,26 @@ Config::Config( const char* name )
     : m_config( nullptr )
 {
     std::string path;
-    const auto xdgConfig = getenv( "XDG_CONFIG_HOME" );
-    if( xdgConfig )
+
+    if( strncmp( name, "./", 2 ) != 0 )
     {
-        path = xdgConfig;
-        path += "/ModernCore/";
+        const auto xdgConfig = getenv( "XDG_CONFIG_HOME" );
+        if( xdgConfig )
+        {
+            path = xdgConfig;
+            path += "/ModernCore/";
+        }
+        else
+        {
+            path = GetHome();
+            path += "/.config/ModernCore/";
+        }
+        path += name;
     }
     else
     {
-        path = GetHome();
-        path += "/.config/ModernCore/";
+        path = name;
     }
-    path += name;
 
     m_config = ini_load( path.c_str() );
 }

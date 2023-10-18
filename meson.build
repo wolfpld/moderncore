@@ -74,13 +74,13 @@ shaders = [
 ]
 
 tests = [
-    'Config',
-    'Bitmap',
-    'FileBuffer',
-    'FileWrapper',
-    'Home',
-    'Logs',
-    'Panic',
+    'util/Config',
+    'util/Bitmap',
+    'util/FileBuffer',
+    'util/FileWrapper',
+    'util/Home',
+    'util/Logs',
+    'util/Panic',
 ]
 
 compiler = meson.get_compiler('cpp')
@@ -194,7 +194,7 @@ executable('mcore',
 )
 
 foreach test : tests
-    testexe = executable('test_' + test,
+    testexe = executable('test_' + test.underscorify(),
         'tests/TestEntry.cpp',
         'tests/' + test + 'Test.cpp',
         link_with: mcorelib,

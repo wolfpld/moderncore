@@ -74,6 +74,7 @@ shaders = [
 ]
 
 tests = [
+    'Config',
     'Bitmap',
     'FileBuffer',
 ]

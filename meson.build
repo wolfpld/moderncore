@@ -1,8 +1,9 @@
 project('ModernCore', 'c', 'cpp', default_options: ['cpp_std=c++20'])
 
+entry_point = 'src/MCore.cpp'
+
 files = [
     'contrib/ini/ini.c',
-    'src/MCore.cpp',
     'src/cursor/CursorBase.cpp',
     'src/cursor/CursorBaseMulti.cpp',
     'src/cursor/CursorLogic.cpp',
@@ -70,6 +71,10 @@ shaders = [
     'shader/Background.vert',
     'shader/SoftwareCursor.frag',
     'shader/SoftwareCursor.vert',
+]
+
+tests = [
+    'Bitmap'
 ]
 
 compiler = meson.get_compiler('cpp')
@@ -152,24 +157,37 @@ compile_args = compiler.get_supported_arguments([
 ])
 add_project_arguments(compile_args, language: ['c', 'cpp'])
 
+deps = [
+    vulkan,
+    wayland_server,
+    wayland_client,
+    xkbcommon,
+    glm,
+    libpng,
+    libjpeg,
+    libjxl,
+    libwebp,
+    libheif,
+    libsystemd,
+    libdrm,
+    libdisplayinfo,
+    libgbm,
+]
+
 executable('mcore',
     files,
-    dependencies: [
-        vulkan,
-        wayland_server,
-        wayland_client,
-        xkbcommon,
-        glm,
-        libpng,
-        libjpeg,
-        libjxl,
-        libwebp,
-        libheif,
-        libsystemd,
-        libdrm,
-        libdisplayinfo,
-        libgbm,
-    ],
+    entry_point,
+    dependencies: deps,
     install: true,
     install_dir: '/'
 )
+
+foreach test : tests
+    testexe = executable('test_' + test,
+        files,
+        'tests/TestEntry.cpp',
+        'tests/' + test + 'Test.cpp',
+        dependencies: [deps, dependency('gtest')],
+    )
+    test( test, testexe )
+endforeach

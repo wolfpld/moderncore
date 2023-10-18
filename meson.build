@@ -74,7 +74,8 @@ shaders = [
 ]
 
 tests = [
-    'Bitmap'
+    'Bitmap',
+    'FileBuffer',
 ]
 
 compiler = meson.get_compiler('cpp')

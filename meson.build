@@ -79,6 +79,7 @@ tests = [
     'FileBuffer',
     'FileWrapper',
     'Home',
+    'Logs',
 ]
 
 compiler = meson.get_compiler('cpp')

@@ -80,6 +80,7 @@ tests = [
     'FileWrapper',
     'Home',
     'Logs',
+    'Panic',
 ]
 
 compiler = meson.get_compiler('cpp')

@@ -175,9 +175,14 @@ deps = [
     libgbm,
 ]
 
-executable('mcore',
+mcorelib = static_library('mcorelib',
     files,
+    dependencies: deps,
+)
+
+executable('mcore',
     entry_point,
+    link_with: mcorelib,
     dependencies: deps,
     install: true,
     install_dir: '/'
@@ -185,9 +190,9 @@ executable('mcore',
 
 foreach test : tests
     testexe = executable('test_' + test,
-        files,
         'tests/TestEntry.cpp',
         'tests/' + test + 'Test.cpp',
+        link_with: mcorelib,
         dependencies: [deps, dependency('gtest')],
     )
     test( test, testexe )

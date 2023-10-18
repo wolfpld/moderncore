@@ -102,6 +102,7 @@ libsystemd = dependency('libsystemd')
 libdrm = dependency('libdrm')
 libdisplayinfo = dependency('libdisplay-info')
 libgbm = dependency('gbm')
+gtest = dependency('gtest')
 
 wl_proto_dir = wl_proto.get_variable('pkgdatadir')
 wl_scanner_bin = find_program(wl_scanner.get_variable('wayland_scanner'))
@@ -198,7 +199,7 @@ foreach test : tests
         'tests/TestEntry.cpp',
         'tests/' + test + 'Test.cpp',
         link_with: mcorelib,
-        dependencies: [deps, dependency('gtest')],
+        dependencies: [deps, gtest],
     )
     test( test, testexe )
 endforeach

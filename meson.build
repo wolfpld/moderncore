@@ -77,6 +77,7 @@ tests = [
     'Config',
     'Bitmap',
     'FileBuffer',
+    'FileWrapper',
 ]
 
 compiler = meson.get_compiler('cpp')

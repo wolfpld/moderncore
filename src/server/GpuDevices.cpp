@@ -1,7 +1,6 @@
 #include <algorithm>
 #include <assert.h>
 #include <inttypes.h>
-#include <vulkan/vk_enum_string_helper.h>
 
 #include "GpuDevices.hpp"
 #include "../util/Logs.hpp"

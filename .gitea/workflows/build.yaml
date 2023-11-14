@@ -7,7 +7,7 @@ jobs:
     runs-on: arch-latest
     steps:
     - name: Install dependencies
-      run: pacman -Syu --noconfirm && pacman -S --noconfirm --needed nodejs git clang meson shaderc vulkan-validation-layers vulkan-utility-libraries wayland wayland-protocols libxkbcommon glm libpng libjpeg-turbo libjxl libwebp libheif systemd-libs libdrm libdisplay-info mesa zip gtest
+      run: pacman -Syu --noconfirm && pacman -S --noconfirm --needed nodejs git clang meson shaderc vulkan-validation-layers vulkan-utility-libraries wayland wayland-protocols libxkbcommon glm libpng libjpeg-turbo libjxl libwebp libheif systemd-libs libdrm libdisplay-info mesa gtest
     - uses: actions/checkout@v3
     - run: meson setup --buildtype release build
       env:
@@ -17,10 +17,9 @@ jobs:
     - run: ninja -C build install
       env:
         DESTDIR: ${{ github.workspace }}/dist
-    - run: zip -r dist.zip dist
     - uses: actions/upload-artifact@v3
       with:
-        name: dist.zip
-        path: dist.zip
+        name: dist
+        path: dist
     - name: Run test
       run: ninja -C build test

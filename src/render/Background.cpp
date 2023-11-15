@@ -62,6 +62,8 @@ Background::~Background()
 
 void Background::AddConnector( Connector& connector )
 {
+    if( !m_bitmap ) return;
+
     auto& device = connector.Device();
     const auto width = connector.Width();
     const auto height = connector.Height();

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <functional>
 #include <stdint.h>
 #include <wayland-client.h>
 
@@ -9,7 +8,7 @@
 class WaylandOutput
 {
 public:
-    WaylandOutput( wl_output* output, std::function<void()> onOutput );
+    explicit WaylandOutput( wl_output* output );
     ~WaylandOutput();
 
     NoCopy( WaylandOutput );
@@ -24,7 +23,6 @@ private:
     void OutputName( wl_output* output, const char* name );
     void OutputDescription( wl_output* output, const char* description );
 
-    std::function<void()> m_onOutput;
     wl_output* m_output;
     int32_t m_scale;
 };

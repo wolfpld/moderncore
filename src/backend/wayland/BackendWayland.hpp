@@ -34,8 +34,6 @@ private:
 
     void XdgWmPing( xdg_wm_base* shell, uint32_t serial );
 
-    void OnOutput();
-
     void OpenWindow();
 
     wl_display* m_dpy;
@@ -51,6 +49,5 @@ private:
     VlkInstance& m_vkInstance;
     GpuState& m_gpuState;
 
-    int32_t m_scale = 1;
     bool m_keepRunning = true;
 };

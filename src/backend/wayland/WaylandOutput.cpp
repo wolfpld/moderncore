@@ -3,9 +3,8 @@
 #include "WaylandMethod.hpp"
 #include "WaylandOutput.hpp"
 
-WaylandOutput::WaylandOutput( wl_output *output, std::function<void()> onOutput )
-    : m_onOutput( std::move( onOutput ) )
-    , m_output( output )
+WaylandOutput::WaylandOutput( wl_output *output )
+    : m_output( output )
     , m_scale( 1 )
 {
     static constexpr struct wl_output_listener outputListener = {
@@ -35,7 +34,6 @@ void WaylandOutput::OutputMode( wl_output* output, uint32_t flags, int32_t width
 
 void WaylandOutput::OutputDone( wl_output* output )
 {
-    m_onOutput();
 }
 
 void WaylandOutput::OutputScale( wl_output* output, int32_t scale )

@@ -50,11 +50,7 @@ BackendWayland::~BackendWayland()
 
 void BackendWayland::Run( const std::function<void()>& render )
 {
-    for( auto& window : m_windows )
-    {
-        if( m_scale != 1 ) window->SetScale( m_scale );
-        window->Show( render );
-    }
+    for( auto& window : m_windows ) window->Show( render );
     while( m_keepRunning && wl_display_dispatch( m_dpy ) != -1 ) {}
 }
 
@@ -86,7 +82,7 @@ void BackendWayland::RegistryGlobal( wl_registry* reg, uint32_t name, const char
     else if( strcmp( interface, wl_output_interface.name ) == 0 )
     {
         auto output = RegistryBind( wl_output, 3, 4 );
-        m_outputMap.emplace( name, std::make_unique<WaylandOutput>( output, [this]{ OnOutput(); } ) );
+        m_outputMap.emplace( name, std::make_unique<WaylandOutput>( output ) );
     }
     else if( strcmp( interface, zxdg_decoration_manager_v1_interface.name ) == 0 )
     {
@@ -103,21 +99,6 @@ void BackendWayland::RegistryGlobalRemove( wl_registry* reg, uint32_t name )
 void BackendWayland::XdgWmPing( xdg_wm_base* shell, uint32_t serial )
 {
     xdg_wm_base_pong( shell, serial );
-}
-
-void BackendWayland::OnOutput()
-{
-    int32_t scale = 1;
-    for( auto& it : m_outputMap )
-    {
-        const auto outputScale = it.second->GetScale();
-        if( outputScale > scale ) scale = outputScale;
-    }
-    if( scale != m_scale )
-    {
-        //if( m_window ) m_window->SetScale( scale );
-        m_scale = scale;
-    }
 }
 
 void BackendWayland::PointerMotion( double x, double y )

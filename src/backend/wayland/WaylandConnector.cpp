@@ -97,7 +97,7 @@ void WaylandConnector::Render( const std::vector<std::shared_ptr<Renderable>>& r
     uint32_t imgIndex;
     auto res = vkAcquireNextImageKHR( m_device, *m_swapchain, UINT64_MAX, *frame.imageAvailable, VK_NULL_HANDLE, &imgIndex );
 
-    mclog( LogLevel::Warning, "Render frame [%" PRIu32 "], res: %s, image index: %" PRIu32, frameIdx, string_VkResult( res ), imgIndex );
+    //mclog( LogLevel::Warning, "Render frame [%" PRIu32 "], res: %s, image index: %" PRIu32, frameIdx, string_VkResult( res ), imgIndex );
 
     frame.commandBuffer->Reset();
     frame.commandBuffer->Begin( VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT );

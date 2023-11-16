@@ -7,6 +7,7 @@
 #include "WaylandRegistry.hpp"
 #include "WaylandSeat.hpp"
 #include "WaylandWindow.hpp"
+#include "../../util/Config.hpp"
 #include "../../util/Panic.hpp"
 #include "../../vulkan/VlkInstance.hpp"
 
@@ -29,8 +30,11 @@ BackendWayland::BackendWayland( VlkInstance& vkInstance, GpuState& gpuState )
     CheckPanic( m_xdgWmBase, "Failed to create Wayland xdg_wm_base" );
     CheckPanic( m_seat, "Failed to create Wayland seat" );
 
-    OpenWindow();
-    OpenWindow();
+    Config config( "backend-wayland.ini" );
+    const auto numWindows = config.Get( "Backend", "NumberOfWindows", 2 );
+    CheckPanic( numWindows > 0, "Invalid number of windows set in backend-wayland.ini." );
+
+    for( int i = 0; i < numWindows; i++ ) OpenWindow();
 }
 
 BackendWayland::~BackendWayland()

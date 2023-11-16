@@ -82,7 +82,7 @@ void BackendWayland::RegistryGlobal( wl_registry* reg, uint32_t name, const char
     else if( strcmp( interface, wl_output_interface.name ) == 0 )
     {
         auto output = RegistryBind( wl_output, 3, 4 );
-        m_outputMap.emplace( name, std::make_unique<WaylandOutput>( output ) );
+        m_outputMap.emplace( name, std::make_unique<WaylandOutput>( output, name ) );
     }
     else if( strcmp( interface, zxdg_decoration_manager_v1_interface.name ) == 0 )
     {

@@ -2,9 +2,11 @@
 
 #include "WaylandMethod.hpp"
 #include "WaylandOutput.hpp"
+#include "../../util/Logs.hpp"
 
-WaylandOutput::WaylandOutput( wl_output *output )
+WaylandOutput::WaylandOutput( wl_output *output, uint32_t name )
     : m_output( output )
+    , m_waylandName( name )
     , m_scale( 1 )
 {
     static constexpr struct wl_output_listener outputListener = {
@@ -34,6 +36,7 @@ void WaylandOutput::OutputMode( wl_output* output, uint32_t flags, int32_t width
 
 void WaylandOutput::OutputDone( wl_output* output )
 {
+    mclog( LogLevel::Info, "Output %i: %s (%s), scale %i", m_waylandName, m_name.c_str(), m_description.c_str(), m_scale );
 }
 
 void WaylandOutput::OutputScale( wl_output* output, int32_t scale )
@@ -43,8 +46,10 @@ void WaylandOutput::OutputScale( wl_output* output, int32_t scale )
 
 void WaylandOutput::OutputName( wl_output* output, const char* name )
 {
+    m_name = name;
 }
 
 void WaylandOutput::OutputDescription( wl_output* output, const char* description )
 {
+    m_description = description;
 }

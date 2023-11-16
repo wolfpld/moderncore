@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <string>
 #include <wayland-client.h>
 
 #include "../../util/NoCopy.hpp"
@@ -8,7 +9,7 @@
 class WaylandOutput
 {
 public:
-    explicit WaylandOutput( wl_output* output );
+    explicit WaylandOutput( wl_output* output, uint32_t name );
     ~WaylandOutput();
 
     NoCopy( WaylandOutput );
@@ -24,5 +25,9 @@ private:
     void OutputDescription( wl_output* output, const char* description );
 
     wl_output* m_output;
+    uint32_t m_waylandName;
     int32_t m_scale;
+
+    std::string m_name;
+    std::string m_description;
 };

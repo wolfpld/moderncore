@@ -28,6 +28,8 @@ public:
 
     void PointerMotion( double x, double y );
 
+    [[nodiscard]] const auto& OutputMap() const { return m_outputMap; }
+
 private:
     void RegistryGlobal( wl_registry* reg, uint32_t name, const char* interface, uint32_t version );
     void RegistryGlobalRemove( wl_registry* reg, uint32_t name );

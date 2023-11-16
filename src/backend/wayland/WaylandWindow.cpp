@@ -8,6 +8,7 @@
 #include "WaylandWindow.hpp"
 #include "../../render/SoftwareCursor.hpp"
 #include "../../server/GpuState.hpp"
+#include "../../util/Config.hpp"
 #include "../../util/Panic.hpp"
 #include "../../vulkan/PhysDevSel.hpp"
 #include "../../vulkan/VlkDevice.hpp"
@@ -70,8 +71,21 @@ WaylandWindow::WaylandWindow( Params&& p )
 
     VkVerify( vkCreateWaylandSurfaceKHR( m_vkInstance, &createInfo, nullptr, &m_vkSurface ) );
 
-    auto device = PhysDevSel::PickBest( m_vkInstance.QueryPhysicalDevices(), m_vkSurface );
-    CheckPanic( device != VK_NULL_HANDLE, "Failed to find suitable physical device" );
+    Config config( "backend-wayland.ini" );
+    const auto configPhysDev = config.Get( "Vulkan", "PhysicalDevice", -1 );
+
+    VkPhysicalDevice device;
+    const auto physicalDevices = m_vkInstance.QueryPhysicalDevices();
+    if( configPhysDev < 0 )
+    {
+        device = PhysDevSel::PickBest( physicalDevices, m_vkSurface );
+        CheckPanic( device != VK_NULL_HANDLE, "Failed to find suitable physical device" );
+    }
+    else
+    {
+        CheckPanic( configPhysDev < physicalDevices.size(), "Invalid physical device index set in backend-wayland.ini. Value: %i, max: %zu.", configPhysDev, physicalDevices.size() - 1 );
+        device = physicalDevices[configPhysDev];
+    }
 
     m_vkDevice = p.gpuState.Devices().Get( device );
     if( !m_vkDevice ) m_vkDevice = p.gpuState.Devices().Add( device, m_vkSurface );

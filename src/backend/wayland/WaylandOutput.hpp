@@ -15,6 +15,7 @@ public:
     NoCopy( WaylandOutput );
 
     [[nodiscard]] int32_t GetScale() const { return m_scale; }
+    [[nodiscard]] wl_output* GetOutput() const { return m_output; }
 
 private:
     void OutputGeometry( wl_output* output, int32_t x, int32_t y, int32_t phys_w, int32_t phys_h, int32_t subpixel, const char* make, const char* model, int32_t transform );

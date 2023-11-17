@@ -9,6 +9,7 @@
 #include "xdg-shell-client-protocol.h"
 
 #include "../../util/NoCopy.hpp"
+#include "../../util/RobinHood.hpp"
 
 class BackendWayland;
 class CursorLogic;
@@ -38,12 +39,14 @@ public:
     NoCopy( WaylandWindow );
 
     void Show( const std::function<void()>& render );
-    void SetScale( int32_t scale );
     void RenderCursor( VkCommandBuffer cmdBuf, CursorLogic& cursorLogic );
 
     void PointerMotion( double x, double y );
 
 private:
+    void Enter( struct wl_surface* surface, struct wl_output* output );
+    void Leave( struct wl_surface* surface, struct wl_output* output );
+
     void XdgSurfaceConfigure( struct xdg_surface *xdg_surface, uint32_t serial );
 
     void XdgToplevelConfigure( struct xdg_toplevel* toplevel, int32_t width, int32_t height, struct wl_array* states );
@@ -70,4 +73,7 @@ private:
 
     GpuState& m_gpuState;
     uint32_t m_connectorId;
+
+    unordered_flat_set<uint32_t> m_outputs;
+    int m_scale = 0;
 };

@@ -6,6 +6,7 @@
 #include "BackendWayland.hpp"
 #include "WaylandConnector.hpp"
 #include "WaylandMethod.hpp"
+#include "WaylandOutput.hpp"
 #include "WaylandWindow.hpp"
 #include "../../render/SoftwareCursor.hpp"
 #include "../../server/GpuState.hpp"
@@ -24,6 +25,13 @@ WaylandWindow::WaylandWindow( Params&& p )
     , m_gpuState( p.gpuState )
 {
     CheckPanic( m_surface, "Failed to create Wayland surface" );
+
+    static constexpr wl_surface_listener surfaceListener = {
+        .enter = Method( WaylandWindow, Enter ),
+        .leave = Method( WaylandWindow, Leave )
+    };
+
+    wl_surface_add_listener( m_surface, &surfaceListener, this );
 
     static constexpr xdg_surface_listener xdgSurfaceListener = {
         .configure = Method( WaylandWindow, XdgSurfaceConfigure )
@@ -115,11 +123,6 @@ void WaylandWindow::Show( const std::function<void()>& render )
     wl_surface_commit( m_surface );
 }
 
-void WaylandWindow::SetScale( int32_t scale )
-{
-    wl_surface_set_buffer_scale( m_surface, scale );
-}
-
 void WaylandWindow::RenderCursor( VkCommandBuffer cmdBuf, CursorLogic& cursorLogic )
 {
     m_cursor->Render( cmdBuf, cursorLogic );
@@ -128,6 +131,48 @@ void WaylandWindow::RenderCursor( VkCommandBuffer cmdBuf, CursorLogic& cursorLog
 void WaylandWindow::PointerMotion( double x, double y )
 {
     m_cursor->SetPosition( x, y );
+}
+
+void WaylandWindow::Enter( struct wl_surface* surface, struct wl_output* output )
+{
+    auto& outputMap = m_backend.OutputMap();
+    auto it = std::find_if( outputMap.begin(), outputMap.end(), [output]( const auto& pair ) { return pair.second->GetOutput() == output; } );
+    assert( it != outputMap.end() );
+    m_outputs.insert( it->first );
+
+    const auto outputScale = it->second->GetScale();
+    if( outputScale > m_scale )
+    {
+        mclog( LogLevel::Info, "Window %i: Enter output %i, setting scale to %i", m_connectorId, it->first, outputScale );
+        m_scale = outputScale;
+        wl_surface_set_buffer_scale( m_surface, m_scale );
+    }
+}
+
+void WaylandWindow::Leave( struct wl_surface* surface, struct wl_output* output )
+{
+    auto& outputMap = m_backend.OutputMap();
+    auto it = std::find_if( outputMap.begin(), outputMap.end(), [output]( const auto& pair ) { return pair.second->GetOutput() == output; } );
+    assert( it != outputMap.end() );
+    m_outputs.erase( it->first );
+
+    if( it->second->GetScale() == m_scale )
+    {
+        int scale = 1;
+        for( const auto& outputId : m_outputs )
+        {
+            const auto oit = outputMap.find( outputId );
+            assert( oit != outputMap.end() );
+            const auto outputScale = oit->second->GetScale();
+            if( outputScale > scale ) scale = outputScale;
+        }
+        if( scale != m_scale )
+        {
+            mclog( LogLevel::Info, "Window %i: Leave output %i, setting scale to %i", m_connectorId, it->first, scale );
+            m_scale = scale;
+            wl_surface_set_buffer_scale( m_surface, m_scale );
+        }
+    }
 }
 
 void WaylandWindow::XdgSurfaceConfigure( struct xdg_surface *xdg_surface, uint32_t serial )

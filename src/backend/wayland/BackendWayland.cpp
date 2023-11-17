@@ -115,6 +115,7 @@ void BackendWayland::OpenWindow()
         .dpy = m_dpy,
         .vkInstance = m_vkInstance,
         .gpuState = m_gpuState,
-        .onClose = [this]{ Stop(); }
+        .onClose = [this]{ Stop(); },
+        .backend = *this
     } ) );
 }

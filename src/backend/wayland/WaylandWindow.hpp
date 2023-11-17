@@ -10,6 +10,7 @@
 
 #include "../../util/NoCopy.hpp"
 
+class BackendWayland;
 class CursorLogic;
 class GpuState;
 class SoftwareCursor;
@@ -28,6 +29,7 @@ public:
         VlkInstance& vkInstance;
         GpuState& gpuState;
         std::function<void()> onClose;
+        BackendWayland& backend;
     };
 
     explicit WaylandWindow( Params&& p );
@@ -60,6 +62,7 @@ private:
     std::function<void()> m_onClose;
     std::function<void()> m_onRender;
 
+    BackendWayland& m_backend;
     VlkInstance& m_vkInstance;
     std::shared_ptr<VlkDevice> m_vkDevice;
 

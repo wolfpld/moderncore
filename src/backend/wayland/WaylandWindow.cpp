@@ -3,6 +3,7 @@
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_wayland.h>
 
+#include "BackendWayland.hpp"
 #include "WaylandConnector.hpp"
 #include "WaylandMethod.hpp"
 #include "WaylandWindow.hpp"
@@ -18,6 +19,7 @@
 WaylandWindow::WaylandWindow( Params&& p )
     : m_surface( wl_compositor_create_surface( p.compositor ) )
     , m_onClose( std::move( p.onClose ) )
+    , m_backend( p.backend )
     , m_vkInstance( p.vkInstance )
     , m_gpuState( p.gpuState )
 {

@@ -145,6 +145,7 @@ void WaylandWindow::Enter( struct wl_surface* surface, struct wl_output* output 
         mclog( LogLevel::Info, "Window %i: Enter output %i, setting scale to %i", m_connectorId, it->first, outputScale );
         m_scale = outputScale;
         wl_surface_set_buffer_scale( m_surface, m_scale );
+        wl_surface_commit( m_surface );
     }
 }
 
@@ -170,6 +171,7 @@ void WaylandWindow::Leave( struct wl_surface* surface, struct wl_output* output 
             mclog( LogLevel::Info, "Window %i: Leave output %i, setting scale to %i", m_connectorId, it->first, scale );
             m_scale = scale;
             wl_surface_set_buffer_scale( m_surface, m_scale );
+            wl_surface_commit( m_surface );
         }
     }
 }
@@ -182,8 +184,6 @@ void WaylandWindow::XdgSurfaceConfigure( struct xdg_surface *xdg_surface, uint32
 void WaylandWindow::XdgToplevelConfigure( struct xdg_toplevel* toplevel, int32_t width, int32_t height, struct wl_array* states )
 {
     if( width == 0 || height == 0 ) return;
-
-    wl_surface_commit( m_surface );
 }
 
 void WaylandWindow::XdgToplevelClose( struct xdg_toplevel* toplevel )

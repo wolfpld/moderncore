@@ -120,7 +120,6 @@ void WaylandWindow::Show( const std::function<void()>& render )
     assert( !m_onRender );
     m_onRender = render;
     render();
-    wl_surface_commit( m_surface );
 }
 
 void WaylandWindow::RenderCursor( VkCommandBuffer cmdBuf, CursorLogic& cursorLogic )

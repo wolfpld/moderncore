@@ -15,6 +15,62 @@ constexpr const char* TypesList[] = {
     "uint32_t ", "uint64_t ", "ptrdiff_t ", nullptr
 };
 
+static char* NormalizePath( const char* path )
+{
+    if( path[0] != '/' ) return nullptr;
+
+    const char* ptr = path;
+    const char* end = path;
+    while( *end ) end++;
+
+    char* res = (char*)malloc( end - ptr + 1 );
+    size_t rsz = 0;
+
+    while( ptr < end )
+    {
+        const char* next = ptr;
+        while( next < end && *next != '/' ) next++;
+        size_t lsz = next - ptr;
+        switch( lsz )
+        {
+        case 2:
+            if( memcmp( ptr, "..", 2 ) == 0 )
+            {
+                const char* back = res + rsz - 1;
+                while( back > res && *back != '/' ) back--;
+                rsz = back - res;
+                ptr = next + 1;
+                continue;
+            }
+            break;
+        case 1:
+            if( *ptr == '.' )
+            {
+                ptr = next + 1;
+                continue;
+            }
+            break;
+        case 0:
+            ptr = next + 1;
+            continue;
+        }
+        if( rsz != 1 ) res[rsz++] = '/';
+        memcpy( res+rsz, ptr, lsz );
+        rsz += lsz;
+        ptr = next + 1;
+    }
+
+    if( rsz == 0 )
+    {
+        memcpy( res, "/", 2 );
+    }
+    else
+    {
+        res[rsz] = '\0';
+    }
+    return res;
+}
+
 static int CallstackCallback( void*, uintptr_t pc, const char* filename, int lineno, const char* function )
 {
     if( function )
@@ -111,7 +167,9 @@ static int CallstackCallback( void*, uintptr_t pc, const char* filename, int lin
 
         if( filename )
         {
-            mclog( LogLevel::Debug, "%i. %s [%s:%i]", callstackIdx++, func, filename, lineno );
+            auto path = NormalizePath( filename );
+            mclog( LogLevel::Debug, "%i. %s [%s:%i]", callstackIdx++, func, path ? path : filename, lineno );
+            free( path );
         }
         else
         {
@@ -123,7 +181,9 @@ static int CallstackCallback( void*, uintptr_t pc, const char* filename, int lin
     }
     else if( filename )
     {
-        mclog( LogLevel::Debug, "%i. <unknown> [%s:%i]", callstackIdx++, filename, lineno );
+        auto path = NormalizePath( filename );
+        mclog( LogLevel::Debug, "%i. <unknown> [%s:%i]", callstackIdx++, path ? path : filename, lineno );
+        free( path );
     }
     else
     {

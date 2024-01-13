@@ -4,6 +4,15 @@ entry_point = 'src/MCore.cpp'
 
 files = [
     'contrib/ini/ini.c',
+    'contrib/libbacktrace/alloc.c',
+    'contrib/libbacktrace/dwarf.c',
+    'contrib/libbacktrace/elf.c',
+    'contrib/libbacktrace/fileline.c',
+    'contrib/libbacktrace/macho.c',
+    'contrib/libbacktrace/mmapio.c',
+    'contrib/libbacktrace/posix.c',
+    'contrib/libbacktrace/sort.c',
+    'contrib/libbacktrace/state.c',
     'src/cursor/CursorBase.cpp',
     'src/cursor/CursorBaseMulti.cpp',
     'src/cursor/CursorLogic.cpp',

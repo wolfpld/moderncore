@@ -46,6 +46,7 @@ files = [
     'src/server/GpuDevices.cpp',
     'src/server/Server.cpp',
     'src/util/Bitmap.cpp',
+    'src/util/Callstack.cpp',
     'src/util/Config.cpp',
     'src/util/FileBuffer.cpp',
     'src/util/Home.cpp',

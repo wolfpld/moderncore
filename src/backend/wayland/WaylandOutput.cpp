@@ -10,12 +10,12 @@ WaylandOutput::WaylandOutput( wl_output *output, uint32_t name )
     , m_scale( 1 )
 {
     static constexpr struct wl_output_listener outputListener = {
-        .geometry = Method( WaylandOutput, OutputGeometry ),
-        .mode = Method( WaylandOutput, OutputMode ),
-        .done = Method( WaylandOutput, OutputDone ),
-        .scale = Method( WaylandOutput, OutputScale ),
-        .name = Method( WaylandOutput, OutputName ),
-        .description = Method( WaylandOutput, OutputDescription )
+        .geometry = Method( OutputGeometry ),
+        .mode = Method( OutputMode ),
+        .done = Method( OutputDone ),
+        .scale = Method( OutputScale ),
+        .name = Method( OutputName ),
+        .description = Method( OutputDescription )
     };
 
     wl_output_add_listener( m_output, &outputListener, this );

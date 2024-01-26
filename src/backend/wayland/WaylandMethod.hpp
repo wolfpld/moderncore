@@ -2,4 +2,4 @@
 
 #include <assert.h>
 
-#define Method( cls, func ) [](void* ptr, auto... args) { assert( ptr ); ((cls*)ptr)->func( args... ); }
+#define Method( func ) [](void* ptr, auto... args) { assert( ptr ); ((decltype(this))ptr)->func( args... ); }

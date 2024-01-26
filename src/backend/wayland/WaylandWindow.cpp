@@ -27,14 +27,14 @@ WaylandWindow::WaylandWindow( Params&& p )
     CheckPanic( m_surface, "Failed to create Wayland surface" );
 
     static constexpr wl_surface_listener surfaceListener = {
-        .enter = Method( WaylandWindow, Enter ),
-        .leave = Method( WaylandWindow, Leave )
+        .enter = Method( Enter ),
+        .leave = Method( Leave )
     };
 
     wl_surface_add_listener( m_surface, &surfaceListener, this );
 
     static constexpr xdg_surface_listener xdgSurfaceListener = {
-        .configure = Method( WaylandWindow, XdgSurfaceConfigure )
+        .configure = Method( XdgSurfaceConfigure )
     };
 
     m_xdgSurface = xdg_wm_base_get_xdg_surface( p.xdgWmBase, m_surface );
@@ -42,8 +42,8 @@ WaylandWindow::WaylandWindow( Params&& p )
     xdg_surface_add_listener( m_xdgSurface, &xdgSurfaceListener, this );
 
     static constexpr xdg_toplevel_listener toplevelListener = {
-        .configure = Method( WaylandWindow, XdgToplevelConfigure ),
-        .close = Method( WaylandWindow, XdgToplevelClose )
+        .configure = Method( XdgToplevelConfigure ),
+        .close = Method( XdgToplevelClose )
     };
 
     static int windowCount = 0;
@@ -57,7 +57,7 @@ WaylandWindow::WaylandWindow( Params&& p )
     if( p.decorationManager )
     {
         static constexpr zxdg_toplevel_decoration_v1_listener decorationListener = {
-            .configure = Method( WaylandWindow, DecorationConfigure )
+            .configure = Method( DecorationConfigure )
         };
 
         m_xdgToplevelDecoration = zxdg_decoration_manager_v1_get_toplevel_decoration( p.decorationManager, m_xdgToplevel );
@@ -69,7 +69,7 @@ WaylandWindow::WaylandWindow( Params&& p )
     wl_display_roundtrip( p.dpy );
 
     static constexpr wl_callback_listener frameListener = {
-        .done = Method( WaylandWindow, FrameDone )
+        .done = Method( FrameDone )
     };
 
     auto cb = wl_surface_frame( m_surface );
@@ -196,7 +196,7 @@ void WaylandWindow::FrameDone( struct wl_callback* cb, uint32_t time )
     wl_callback_destroy( cb );
 
     static constexpr wl_callback_listener frameListener = {
-        .done = Method( WaylandWindow, FrameDone )
+        .done = Method( FrameDone )
     };
 
     cb = wl_surface_frame( m_surface );

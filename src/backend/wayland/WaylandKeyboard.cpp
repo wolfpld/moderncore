@@ -5,12 +5,12 @@ WaylandKeyboard::WaylandKeyboard( wl_keyboard *keyboard )
     : m_keyboard( keyboard )
 {
     static constexpr struct wl_keyboard_listener keyboardListener = {
-        .keymap = Method( WaylandKeyboard, KeyboardKeymap ),
-        .enter = Method( WaylandKeyboard, KeyboardEnter ),
-        .leave = Method( WaylandKeyboard, KeyboardLeave ),
-        .key = Method( WaylandKeyboard, KeyboardKey ),
-        .modifiers = Method( WaylandKeyboard, KeyboardModifiers ),
-        .repeat_info = Method( WaylandKeyboard, KeyboardRepeatInfo )
+        .keymap = Method( KeyboardKeymap ),
+        .enter = Method( KeyboardEnter ),
+        .leave = Method( KeyboardLeave ),
+        .key = Method( KeyboardKey ),
+        .modifiers = Method( KeyboardModifiers ),
+        .repeat_info = Method( KeyboardRepeatInfo )
     };
 
     wl_keyboard_add_listener( m_keyboard, &keyboardListener, this );

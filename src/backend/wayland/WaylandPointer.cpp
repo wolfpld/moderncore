@@ -7,17 +7,17 @@ WaylandPointer::WaylandPointer( wl_pointer* pointer, WaylandSeat& seat )
     , m_seat( seat )
 {
     static constexpr wl_pointer_listener pointerListener = {
-        .enter = Method( WaylandPointer, PointerEnter ),
-        .leave = Method( WaylandPointer, PointerLeave ),
-        .motion = Method( WaylandPointer, PointerMotion ),
-        .button = Method( WaylandPointer, PointerButton ),
-        .axis = Method( WaylandPointer, PointerAxis ),
-        .frame = Method( WaylandPointer, PointerFrame ),
-        .axis_source = Method( WaylandPointer, PointerAxisSource ),
-        .axis_stop = Method( WaylandPointer, PointerAxisStop ),
-        .axis_discrete = Method( WaylandPointer, PointerAxisDiscrete ),
-        .axis_value120 = Method( WaylandPointer, PointerAxisValue120 ),
-        .axis_relative_direction = Method( WaylandPointer, PointerAxisRelativeDirection )
+        .enter = Method( PointerEnter ),
+        .leave = Method( PointerLeave ),
+        .motion = Method( PointerMotion ),
+        .button = Method( PointerButton ),
+        .axis = Method( PointerAxis ),
+        .frame = Method( PointerFrame ),
+        .axis_source = Method( PointerAxisSource ),
+        .axis_stop = Method( PointerAxisStop ),
+        .axis_discrete = Method( PointerAxisDiscrete ),
+        .axis_value120 = Method( PointerAxisValue120 ),
+        .axis_relative_direction = Method( PointerAxisRelativeDirection )
     };
 
     wl_pointer_add_listener( m_pointer, &pointerListener, this );

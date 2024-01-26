@@ -19,8 +19,8 @@ BackendWayland::BackendWayland( VlkInstance& vkInstance, GpuState& gpuState )
     CheckPanic( m_dpy, "Failed to connect to Wayland display" );
 
     static constexpr wl_registry_listener registryListener = {
-        .global = Method( BackendWayland, RegistryGlobal ),
-        .global_remove = Method( BackendWayland, RegistryGlobalRemove )
+        .global = Method( RegistryGlobal ),
+        .global_remove = Method( RegistryGlobalRemove )
     };
 
     wl_registry_add_listener( wl_display_get_registry( m_dpy ), &registryListener, this );
@@ -68,7 +68,7 @@ void BackendWayland::RegistryGlobal( wl_registry* reg, uint32_t name, const char
     else if( strcmp( interface, xdg_wm_base_interface.name ) == 0 )
     {
         static constexpr xdg_wm_base_listener wmBaseListener = {
-            .ping = Method( BackendWayland, XdgWmPing )
+            .ping = Method( XdgWmPing )
         };
 
         m_xdgWmBase = RegistryBind( xdg_wm_base );

@@ -15,17 +15,17 @@ public:
     NoCopy( WaylandPointer );
 
 private:
-    void PointerEnter( wl_pointer* pointer, uint32_t serial, wl_surface* surf, wl_fixed_t sx, wl_fixed_t sy );
-    void PointerLeave( wl_pointer* pointer, uint32_t serial, wl_surface* surf );
-    void PointerMotion( wl_pointer* pointer, uint32_t time, wl_fixed_t sx, wl_fixed_t sy );
-    void PointerButton( wl_pointer* pointer, uint32_t serial, uint32_t time, uint32_t button, uint32_t state );
-    void PointerAxis( wl_pointer* pointer, uint32_t time, uint32_t axis, wl_fixed_t value );
-    void PointerFrame( wl_pointer* pointer );
-    void PointerAxisSource( wl_pointer* pointer, uint32_t source );
-    void PointerAxisStop( wl_pointer* pointer, uint32_t time, uint32_t axis );
-    void PointerAxisDiscrete( wl_pointer* pointer, uint32_t axis, int32_t discrete );
-    void PointerAxisValue120( wl_pointer* pointer, uint32_t axis, int32_t value120 );
-    void PointerAxisRelativeDirection( wl_pointer* pointer, uint32_t axis, uint32_t direction );
+    void Enter( wl_pointer* pointer, uint32_t serial, wl_surface* surf, wl_fixed_t sx, wl_fixed_t sy );
+    void Leave( wl_pointer* pointer, uint32_t serial, wl_surface* surf );
+    void Motion( wl_pointer* pointer, uint32_t time, wl_fixed_t sx, wl_fixed_t sy );
+    void Button( wl_pointer* pointer, uint32_t serial, uint32_t time, uint32_t button, uint32_t state );
+    void Axis( wl_pointer* pointer, uint32_t time, uint32_t axis, wl_fixed_t value );
+    void Frame( wl_pointer* pointer );
+    void AxisSource( wl_pointer* pointer, uint32_t source );
+    void AxisStop( wl_pointer* pointer, uint32_t time, uint32_t axis );
+    void AxisDiscrete( wl_pointer* pointer, uint32_t axis, int32_t discrete );
+    void AxisValue120( wl_pointer* pointer, uint32_t axis, int32_t value120 );
+    void AxisRelativeDirection( wl_pointer* pointer, uint32_t axis, uint32_t direction );
 
     wl_pointer* m_pointer;
     WaylandSeat& m_seat;

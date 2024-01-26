@@ -18,12 +18,12 @@ BackendWayland::BackendWayland( VlkInstance& vkInstance, GpuState& gpuState )
 {
     CheckPanic( m_dpy, "Failed to connect to Wayland display" );
 
-    static constexpr wl_registry_listener registryListener = {
+    static constexpr wl_registry_listener listener = {
         .global = Method( RegistryGlobal ),
         .global_remove = Method( RegistryGlobalRemove )
     };
 
-    wl_registry_add_listener( wl_display_get_registry( m_dpy ), &registryListener, this );
+    wl_registry_add_listener( wl_display_get_registry( m_dpy ), &listener, this );
     wl_display_roundtrip( m_dpy );
 
     CheckPanic( m_compositor, "Failed to create Wayland compositor" );
@@ -67,12 +67,12 @@ void BackendWayland::RegistryGlobal( wl_registry* reg, uint32_t name, const char
     }
     else if( strcmp( interface, xdg_wm_base_interface.name ) == 0 )
     {
-        static constexpr xdg_wm_base_listener wmBaseListener = {
+        static constexpr xdg_wm_base_listener listener = {
             .ping = Method( XdgWmPing )
         };
 
         m_xdgWmBase = RegistryBind( xdg_wm_base );
-        xdg_wm_base_add_listener( m_xdgWmBase, &wmBaseListener, this );
+        xdg_wm_base_add_listener( m_xdgWmBase, &listener, this );
     }
     else if( strcmp( interface, wl_seat_interface.name ) == 0 )
     {

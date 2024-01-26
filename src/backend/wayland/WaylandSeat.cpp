@@ -8,12 +8,12 @@ WaylandSeat::WaylandSeat( wl_seat* seat, BackendWayland& backend )
     : m_seat( seat )
     , m_backend( backend )
 {
-    static constexpr wl_seat_listener seatListener = {
+    static constexpr wl_seat_listener listener = {
         .capabilities = Method( SeatCapabilities ),
         .name = Method( SeatName )
     };
 
-    wl_seat_add_listener( m_seat, &seatListener, this );
+    wl_seat_add_listener( m_seat, &listener, this );
 }
 
 WaylandSeat::~WaylandSeat()

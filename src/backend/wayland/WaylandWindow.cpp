@@ -195,12 +195,12 @@ void WaylandWindow::FrameDone( struct wl_callback* cb, uint32_t time )
 {
     wl_callback_destroy( cb );
 
-    static constexpr wl_callback_listener frameListener = {
+    static constexpr wl_callback_listener listener = {
         .done = Method( FrameDone )
     };
 
     cb = wl_surface_frame( m_surface );
-    wl_callback_add_listener( cb, &frameListener, this );
+    wl_callback_add_listener( cb, &listener, this );
 
     m_onRender();
 }

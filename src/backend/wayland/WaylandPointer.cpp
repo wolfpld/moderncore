@@ -6,7 +6,7 @@ WaylandPointer::WaylandPointer( wl_pointer* pointer, WaylandSeat& seat )
     : m_pointer( pointer )
     , m_seat( seat )
 {
-    static constexpr wl_pointer_listener pointerListener = {
+    static constexpr wl_pointer_listener listener = {
         .enter = Method( PointerEnter ),
         .leave = Method( PointerLeave ),
         .motion = Method( PointerMotion ),
@@ -20,7 +20,7 @@ WaylandPointer::WaylandPointer( wl_pointer* pointer, WaylandSeat& seat )
         .axis_relative_direction = Method( PointerAxisRelativeDirection )
     };
 
-    wl_pointer_add_listener( m_pointer, &pointerListener, this );
+    wl_pointer_add_listener( m_pointer, &listener, this );
 }
 
 WaylandPointer::~WaylandPointer()

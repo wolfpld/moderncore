@@ -4,7 +4,7 @@
 WaylandKeyboard::WaylandKeyboard( wl_keyboard *keyboard )
     : m_keyboard( keyboard )
 {
-    static constexpr struct wl_keyboard_listener keyboardListener = {
+    static constexpr wl_keyboard_listener listener = {
         .keymap = Method( KeyboardKeymap ),
         .enter = Method( KeyboardEnter ),
         .leave = Method( KeyboardLeave ),
@@ -13,7 +13,7 @@ WaylandKeyboard::WaylandKeyboard( wl_keyboard *keyboard )
         .repeat_info = Method( KeyboardRepeatInfo )
     };
 
-    wl_keyboard_add_listener( m_keyboard, &keyboardListener, this );
+    wl_keyboard_add_listener( m_keyboard, &listener, this );
 }
 
 WaylandKeyboard::~WaylandKeyboard()

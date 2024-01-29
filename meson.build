@@ -44,6 +44,7 @@ files = [
     'src/render/Texture.cpp',
     'src/server/GpuConnectors.cpp',
     'src/server/GpuDevices.cpp',
+    'src/server/GpuState.cpp',
     'src/server/Server.cpp',
     'src/util/Bitmap.cpp',
     'src/util/Callstack.cpp',

@@ -11,7 +11,7 @@ class VlkInstance;
 class GpuState
 {
 public:
-    explicit GpuState( VlkInstance& instance ) : m_devices( instance ) {}
+    explicit GpuState( VlkInstance& instance );
     NoCopy( GpuState );
 
     [[nodiscard]] GpuDevices& Devices() { return m_devices; }

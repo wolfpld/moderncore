@@ -1,5 +1,3 @@
-#include <stdio.h>
-
 #include "WaylandMethod.hpp"
 #include "WaylandOutput.hpp"
 #include "../../util/Logs.hpp"

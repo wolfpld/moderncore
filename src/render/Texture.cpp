@@ -4,7 +4,6 @@
 #include "../util/Bitmap.hpp"
 #include "../vulkan/VlkBuffer.hpp"
 #include "../vulkan/VlkCommandBuffer.hpp"
-#include "../vulkan/VlkCommandPool.hpp"
 #include "../vulkan/VlkDevice.hpp"
 #include "../vulkan/VlkFence.hpp"
 

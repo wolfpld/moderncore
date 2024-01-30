@@ -1,7 +1,5 @@
 #pragma once
 
-#include <memory>
-
 #include "GpuDevices.hpp"
 #include "GpuConnectors.hpp"
 #include "../util/NoCopy.hpp"

@@ -13,7 +13,6 @@
 #include "../../util/Config.hpp"
 #include "../../util/Panic.hpp"
 #include "../../vulkan/PhysDevSel.hpp"
-#include "../../vulkan/VlkDevice.hpp"
 #include "../../vulkan/VlkError.hpp"
 #include "../../vulkan/VlkInstance.hpp"
 

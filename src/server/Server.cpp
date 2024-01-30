@@ -4,7 +4,6 @@
 #include "Server.hpp"
 #include "../backend/drm/BackendDrm.hpp"
 #include "../backend/wayland/BackendWayland.hpp"
-#include "../cursor/CursorLogic.hpp"
 #include "../dbus/DbusSession.hpp"
 #include "../plumbing/Display.hpp"
 #include "../render/Background.hpp"

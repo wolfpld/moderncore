@@ -1,10 +1,8 @@
 #include <array>
-#include <inttypes.h>
 #include <vulkan/vk_enum_string_helper.h>
 
 #include "WaylandConnector.hpp"
 #include "../../server/Renderable.hpp"
-#include "../../util/Logs.hpp"
 #include "../../vulkan/VlkCommandBuffer.hpp"
 #include "../../vulkan/VlkDevice.hpp"
 #include "../../vulkan/VlkError.hpp"

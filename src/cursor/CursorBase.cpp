@@ -1,5 +1,3 @@
-#include <algorithm>
-
 #include "CursorBase.hpp"
 
 const CursorData* CursorBase::Get( uint32_t size, CursorType type ) const

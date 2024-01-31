@@ -4,7 +4,7 @@
 #include <string>
 #include <wayland-client.h>
 
-#include "../../util/NoCopy.hpp"
+#include "util/NoCopy.hpp"
 
 class WaylandOutput
 {

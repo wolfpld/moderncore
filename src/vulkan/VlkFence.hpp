@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <vulkan/vulkan.h>
 
-#include "../util/NoCopy.hpp"
+#include "util/NoCopy.hpp"
 
 class VlkFence
 {

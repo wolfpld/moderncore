@@ -8,8 +8,8 @@
 #include "xdg-decoration-unstable-v1-client-protocol.h"
 #include "xdg-shell-client-protocol.h"
 
-#include "../../util/NoCopy.hpp"
-#include "../../util/RobinHood.hpp"
+#include "util/NoCopy.hpp"
+#include "util/RobinHood.hpp"
 
 class BackendWayland;
 class CursorLogic;

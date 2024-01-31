@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 #include "Logs.hpp"
-#include "../util/Ansi.hpp"
+#include "util/Ansi.hpp"
 
 static void PrintLevel( LogLevel level )
 {

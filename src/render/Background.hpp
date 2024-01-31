@@ -5,10 +5,10 @@
 #include <stdint.h>
 #include <vulkan/vulkan.h>
 
-#include "../server/Renderable.hpp"
-#include "../util/FileBuffer.hpp"
-#include "../util/NoCopy.hpp"
-#include "../util/RobinHood.hpp"
+#include "server/Renderable.hpp"
+#include "util/FileBuffer.hpp"
+#include "util/NoCopy.hpp"
+#include "util/RobinHood.hpp"
 
 class Bitmap;
 class Connector;

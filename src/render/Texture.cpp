@@ -1,11 +1,11 @@
 #include <string.h>
 
 #include "Texture.hpp"
-#include "../util/Bitmap.hpp"
-#include "../vulkan/VlkBuffer.hpp"
-#include "../vulkan/VlkCommandBuffer.hpp"
-#include "../vulkan/VlkDevice.hpp"
-#include "../vulkan/VlkFence.hpp"
+#include "util/Bitmap.hpp"
+#include "vulkan/VlkBuffer.hpp"
+#include "vulkan/VlkCommandBuffer.hpp"
+#include "vulkan/VlkDevice.hpp"
+#include "vulkan/VlkFence.hpp"
 
 Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format )
 {

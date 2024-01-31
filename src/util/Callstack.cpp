@@ -4,7 +4,7 @@
 
 #include "Callstack.hpp"
 #include "Logs.hpp"
-#include "../../contrib/libbacktrace/backtrace.h"
+#include "contrib/libbacktrace/backtrace.h"
 
 static int callstackIdx;
 

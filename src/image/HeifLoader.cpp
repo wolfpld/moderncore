@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "HeifLoader.hpp"
-#include "../util/Bitmap.hpp"
+#include "util/Bitmap.hpp"
 
 HeifLoader::HeifLoader( FileWrapper& file )
     : m_file( file )

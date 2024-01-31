@@ -8,13 +8,13 @@
 #include "WaylandMethod.hpp"
 #include "WaylandOutput.hpp"
 #include "WaylandWindow.hpp"
-#include "../../render/SoftwareCursor.hpp"
-#include "../../server/GpuState.hpp"
-#include "../../util/Config.hpp"
-#include "../../util/Panic.hpp"
-#include "../../vulkan/PhysDevSel.hpp"
-#include "../../vulkan/VlkError.hpp"
-#include "../../vulkan/VlkInstance.hpp"
+#include "render/SoftwareCursor.hpp"
+#include "server/GpuState.hpp"
+#include "util/Config.hpp"
+#include "util/Panic.hpp"
+#include "vulkan/PhysDevSel.hpp"
+#include "vulkan/VlkError.hpp"
+#include "vulkan/VlkInstance.hpp"
 
 WaylandWindow::WaylandWindow( Params&& p )
     : m_surface( wl_compositor_create_surface( p.compositor ) )

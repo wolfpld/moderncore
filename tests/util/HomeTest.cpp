@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
-#include "../src/util/Home.hpp"
+
+#include "util/Home.hpp"
 
 TEST(HomeTest, GetHome) {
     // Check that GetHome returns the correct home directory

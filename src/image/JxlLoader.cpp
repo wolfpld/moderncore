@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "JxlLoader.hpp"
-#include "../util/Bitmap.hpp"
+#include "util/Bitmap.hpp"
 
 JxlLoader::JxlLoader( FileWrapper& file )
     : m_file( file )

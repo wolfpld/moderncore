@@ -13,7 +13,7 @@ extern "C" {
 #include "DrmDevice.hpp"
 #include "DrmConnector.hpp"
 #include "DrmCrtc.hpp"
-#include "../../util/Logs.hpp"
+#include "util/Logs.hpp"
 
 static uint32_t GetRefreshRate( const drmModeModeInfo& mode )
 {

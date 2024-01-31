@@ -1,6 +1,6 @@
 #include "GpuState.hpp"
-#include "../util/Logs.hpp"
-#include "../vulkan/VlkInstance.hpp"
+#include "util/Logs.hpp"
+#include "vulkan/VlkInstance.hpp"
 
 GpuState::GpuState( VlkInstance& instance )
     : m_devices( instance )

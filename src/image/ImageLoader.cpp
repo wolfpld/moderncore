@@ -6,10 +6,10 @@
 #include "JxlLoader.hpp"
 #include "PngLoader.hpp"
 #include "WebpLoader.hpp"
-#include "../util/Bitmap.hpp"
-#include "../util/FileWrapper.hpp"
-#include "../util/Home.hpp"
-#include "../util/Logs.hpp"
+#include "util/Bitmap.hpp"
+#include "util/FileWrapper.hpp"
+#include "util/Home.hpp"
+#include "util/Logs.hpp"
 
 template<typename T>
 concept ImageLoader = requires( T loader, FileWrapper& file )

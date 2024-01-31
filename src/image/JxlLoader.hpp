@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../util/NoCopy.hpp"
-#include "../util/FileWrapper.hpp"
+#include "util/FileWrapper.hpp"
+#include "util/NoCopy.hpp"
 
 class Bitmap;
 

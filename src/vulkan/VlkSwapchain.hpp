@@ -5,7 +5,7 @@
 #include <vulkan/vulkan.h>
 
 #include "VlkSwapchainProperties.hpp"
-#include "../util/NoCopy.hpp"
+#include "util/NoCopy.hpp"
 
 class VlkDevice;
 

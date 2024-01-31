@@ -9,7 +9,7 @@
 #include "VlkError.hpp"
 #include "VlkSwapchain.hpp"
 #include "VlkSwapchainFormats.hpp"
-#include "../util/Logs.hpp"
+#include "util/Logs.hpp"
 
 static void PrintSwapchainProperties( const VlkSwapchainProperties &properties )
 {

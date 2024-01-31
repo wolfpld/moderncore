@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "WebpLoader.hpp"
-#include "../util/Bitmap.hpp"
+#include "util/Bitmap.hpp"
 
 WebpLoader::WebpLoader( FileWrapper& file )
     : m_file( file )

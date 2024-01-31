@@ -5,8 +5,8 @@
 #include <vector>
 #include <wayland-client.h>
 
-#include "../Backend.hpp"
-#include "../../util/RobinHood.hpp"
+#include "backend/Backend.hpp"
+#include "util/RobinHood.hpp"
 
 #include "xdg-decoration-unstable-v1-client-protocol.h"
 #include "xdg-shell-client-protocol.h"

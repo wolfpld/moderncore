@@ -175,6 +175,8 @@ compile_args = compiler.get_supported_arguments([
 ])
 add_project_arguments(compile_args, language: ['c', 'cpp'])
 
+incdir = include_directories('src')
+
 deps = [
     vulkan,
     wayland_server,
@@ -195,12 +197,14 @@ deps = [
 mcorelib = static_library('mcorelib',
     files,
     dependencies: deps,
+    include_directories: incdir,
 )
 
 executable('mcore',
     entry_point,
     link_with: mcorelib,
     dependencies: deps,
+    include_directories: incdir,
     install: true,
     install_dir: '/'
 )
@@ -211,6 +215,7 @@ foreach test : tests
         'tests/' + test + 'Test.cpp',
         link_with: mcorelib,
         dependencies: [deps, gtest],
+        include_directories: incdir
     )
     test( test, testexe )
 endforeach

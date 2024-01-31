@@ -8,13 +8,13 @@
 
 #include "CursorType.hpp"
 #include "WinCursor.hpp"
-#include "../util/Bitmap.hpp"
-#include "../util/FileWrapper.hpp"
-#include "../util/Home.hpp"
-#include "../util/Logs.hpp"
+#include "util/Bitmap.hpp"
+#include "util/FileWrapper.hpp"
+#include "util/Home.hpp"
+#include "util/Logs.hpp"
 
 extern "C" {
-#include "../../contrib/ini/ini.h"
+#include "contrib/ini/ini.h"
 }
 
 constexpr const char* CursorNames[] = {

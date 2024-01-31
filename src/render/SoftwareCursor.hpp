@@ -4,7 +4,7 @@
 #include <memory>
 #include <vulkan/vulkan.h>
 
-#include "../util/NoCopy.hpp"
+#include "util/NoCopy.hpp"
 
 class Bitmap;
 struct CursorBitmap;

@@ -3,7 +3,7 @@
 #include <vulkan/vulkan.h>
 
 #include "VlkCommandPool.hpp"
-#include "../util/NoCopy.hpp"
+#include "util/NoCopy.hpp"
 
 class VlkCommandBuffer
 {

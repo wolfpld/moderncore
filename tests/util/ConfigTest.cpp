@@ -1,7 +1,8 @@
 #include <filesystem>
 #include <fstream>
 #include <gtest/gtest.h>
-#include "../src/util/Config.hpp"
+
+#include "util/Config.hpp"
 
 class ConfigTest : public ::testing::Test {
 protected:

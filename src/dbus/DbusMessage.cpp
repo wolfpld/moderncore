@@ -2,7 +2,7 @@
 #include <systemd/sd-bus.h>
 
 #include "DbusMessage.hpp"
-#include "../util/Logs.hpp"
+#include "util/Logs.hpp"
 
 DbusMessage::DbusMessage()
     : m_msg( nullptr )

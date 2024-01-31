@@ -2,7 +2,7 @@
 #include "VlkPhysicalDevice.hpp"
 #include "VlkSwapchainFormats.hpp"
 #include "VlkSwapchainProperties.hpp"
-#include "../util/Logs.hpp"
+#include "util/Logs.hpp"
 
 namespace PhysDevSel
 {

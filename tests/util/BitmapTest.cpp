@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
-#include "../src/util/Bitmap.hpp"
+
+#include "util/Bitmap.hpp"
 
 // Test case for flipping a bitmap vertically
 TEST(BitmapTest, FlipVertical) {

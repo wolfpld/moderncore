@@ -2,8 +2,8 @@
 
 #include <vulkan/vulkan.h>
 
-#include "../../contrib/vk_mem_alloc.h"
-#include "../util/NoCopy.hpp"
+#include "contrib/vk_mem_alloc.h"
+#include "util/NoCopy.hpp"
 
 class VlkImage
 {

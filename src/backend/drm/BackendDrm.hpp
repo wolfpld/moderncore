@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "../Backend.hpp"
+#include "backend/Backend.hpp"
 
 class DbusSession;
 class DbusMessage;

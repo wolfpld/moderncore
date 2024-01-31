@@ -3,10 +3,10 @@
 #include <string.h>
 
 #include "Config.hpp"
-#include "../util/Home.hpp"
+#include "util/Home.hpp"
 
 extern "C" {
-#include "../../contrib/ini/ini.h"
+#include "contrib/ini/ini.h"
 }
 
 Config::Config( const char* name )

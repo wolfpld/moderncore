@@ -4,7 +4,7 @@
 #include <vector>
 #include <vulkan/vulkan.h>
 
-#include "../../server/Connector.hpp"
+#include "server/Connector.hpp"
 
 class VlkCommandBuffer;
 class VlkFence;

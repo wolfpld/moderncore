@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 #include "JpgLoader.hpp"
-#include "../util/Bitmap.hpp"
+#include "util/Bitmap.hpp"
 
 JpgLoader::JpgLoader( FileWrapper& file )
     : m_file( file )

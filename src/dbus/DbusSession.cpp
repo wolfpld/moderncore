@@ -2,7 +2,7 @@
 
 #include "DbusMessage.hpp"
 #include "DbusSession.hpp"
-#include "../util/Logs.hpp"
+#include "util/Logs.hpp"
 
 DbusSession::DbusSession()
     : m_bus( nullptr )

@@ -2,7 +2,7 @@
 
 #include "CursorLogic.hpp"
 #include "CursorTheme.hpp"
-#include "../util/Clock.hpp"
+#include "util/Clock.hpp"
 
 CursorLogic::CursorLogic()
     : m_theme( std::make_unique<CursorTheme>() )

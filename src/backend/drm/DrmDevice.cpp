@@ -12,9 +12,9 @@
 #include "DrmCrtc.hpp"
 #include "DrmConnector.hpp"
 #include "DrmDevice.hpp"
-#include "../../dbus/DbusSession.hpp"
-#include "../../util/Logs.hpp"
-#include "../../util/Panic.hpp"
+#include "dbus/DbusSession.hpp"
+#include "util/Logs.hpp"
+#include "util/Panic.hpp"
 
 constexpr int DriMajor = 226;
 

@@ -9,14 +9,14 @@
 
 #include "CursorType.hpp"
 #include "XCursor.hpp"
-#include "../util/Bitmap.hpp"
-#include "../util/FileWrapper.hpp"
-#include "../util/Home.hpp"
-#include "../util/Logs.hpp"
-#include "../util/RobinHood.hpp"
+#include "util/Bitmap.hpp"
+#include "util/FileWrapper.hpp"
+#include "util/Home.hpp"
+#include "util/Logs.hpp"
+#include "util/RobinHood.hpp"
 
 extern "C" {
-#include "../../contrib/ini/ini.h"
+#include "contrib/ini/ini.h"
 }
 
 // Based on https://www.freedesktop.org/wiki/Specifications/cursor-spec/

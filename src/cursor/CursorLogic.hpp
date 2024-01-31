@@ -4,7 +4,7 @@
 
 #include "CursorBase.hpp"
 #include "CursorType.hpp"
-#include "../util/NoCopy.hpp"
+#include "util/NoCopy.hpp"
 
 class CursorTheme;
 

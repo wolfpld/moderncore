@@ -9,8 +9,8 @@
 #include "VlkError.hpp"
 #include "VlkInstance.hpp"
 #include "VlkProxy.hpp"
-#include "../util/Callstack.hpp"
-#include "../util/Logs.hpp"
+#include "util/Callstack.hpp"
+#include "util/Logs.hpp"
 
 constexpr std::array validationLayers = { "VK_LAYER_KHRONOS_validation" };
 

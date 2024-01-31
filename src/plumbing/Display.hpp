@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../util/NoCopy.hpp"
+#include "util/NoCopy.hpp"
 
 extern "C" {
     struct wl_display;

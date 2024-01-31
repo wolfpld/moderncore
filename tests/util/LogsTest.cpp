@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
-#include "../src/util/Logs.hpp"
+
+#include "util/Logs.hpp"
 
 TEST(LogsTest, MCoreLogMessage) {
     testing::internal::CaptureStdout();

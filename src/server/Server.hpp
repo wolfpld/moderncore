@@ -3,7 +3,7 @@
 #include <memory>
 #include <vector>
 
-#include "../util/NoCopy.hpp"
+#include "util/NoCopy.hpp"
 
 class Backend;
 class DbusSession;

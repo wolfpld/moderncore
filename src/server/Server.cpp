@@ -2,13 +2,13 @@
 
 #include "GpuState.hpp"
 #include "Server.hpp"
-#include "../backend/drm/BackendDrm.hpp"
-#include "../backend/wayland/BackendWayland.hpp"
-#include "../dbus/DbusSession.hpp"
-#include "../plumbing/Display.hpp"
-#include "../render/Background.hpp"
-#include "../util/Logs.hpp"
-#include "../vulkan/VlkInstance.hpp"
+#include "backend/drm/BackendDrm.hpp"
+#include "backend/wayland/BackendWayland.hpp"
+#include "dbus/DbusSession.hpp"
+#include "plumbing/Display.hpp"
+#include "render/Background.hpp"
+#include "util/Logs.hpp"
+#include "vulkan/VlkInstance.hpp"
 
 Server::Server()
     : m_dbusSession( std::make_unique<DbusSession>() )

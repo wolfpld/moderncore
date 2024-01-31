@@ -2,7 +2,7 @@
 #include <xf86drmMode.h>
 
 #include "DrmCrtc.hpp"
-#include "../../util/Logs.hpp"
+#include "util/Logs.hpp"
 
 DrmCrtc::DrmCrtc( int fd, uint32_t id )
     : m_fd( fd )

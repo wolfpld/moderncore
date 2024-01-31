@@ -4,8 +4,8 @@
 #include <vector>
 #include <vulkan/vulkan.h>
 
-#include "../util/DataContainer.hpp"
-#include "../util/NoCopy.hpp"
+#include "util/DataContainer.hpp"
+#include "util/NoCopy.hpp"
 
 class VlkShaderModule;
 

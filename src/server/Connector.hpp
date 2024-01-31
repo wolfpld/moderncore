@@ -4,8 +4,8 @@
 #include <stdint.h>
 #include <vector>
 
-#include "../util/NoCopy.hpp"
-#include "../vulkan/VlkRenderPass.hpp"
+#include "util/NoCopy.hpp"
+#include "vulkan/VlkRenderPass.hpp"
 
 class Renderable;
 class VlkDevice;

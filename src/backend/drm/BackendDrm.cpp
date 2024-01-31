@@ -7,8 +7,8 @@
 #include "BackendDrm.hpp"
 #include "DbusLoginPaths.hpp"
 #include "DrmDevice.hpp"
-#include "../../dbus/DbusSession.hpp"
-#include "../../util/Panic.hpp"
+#include "dbus/DbusSession.hpp"
+#include "util/Panic.hpp"
 
 #define DbusCallback( func ) [this] ( DbusMessage msg ) { return func( std::move( msg ) ); }
 

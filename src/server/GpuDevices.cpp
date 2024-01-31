@@ -3,10 +3,10 @@
 #include <inttypes.h>
 
 #include "GpuDevices.hpp"
-#include "../util/Logs.hpp"
-#include "../vulkan/VlkDevice.hpp"
-#include "../vulkan/VlkInstance.hpp"
-#include "../vulkan/VlkPhysicalDevice.hpp"
+#include "util/Logs.hpp"
+#include "vulkan/VlkDevice.hpp"
+#include "vulkan/VlkInstance.hpp"
+#include "vulkan/VlkPhysicalDevice.hpp"
 
 GpuDevices::GpuDevices( VlkInstance& instance )
     : m_instance( instance )

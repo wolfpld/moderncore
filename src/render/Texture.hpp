@@ -3,9 +3,9 @@
 #include <memory>
 #include <vulkan/vulkan.h>
 
-#include "../util/NoCopy.hpp"
-#include "../vulkan/VlkImage.hpp"
-#include "../vulkan/VlkImageView.hpp"
+#include "util/NoCopy.hpp"
+#include "vulkan/VlkImage.hpp"
+#include "vulkan/VlkImageView.hpp"
 
 class Bitmap;
 class VlkDevice;

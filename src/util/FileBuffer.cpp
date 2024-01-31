@@ -2,7 +2,7 @@
 
 #include "FileBuffer.hpp"
 #include "FileWrapper.hpp"
-#include "../util/Logs.hpp"
+#include "util/Logs.hpp"
 
 FileBuffer::FileBuffer( const char* fn )
     : m_buffer( nullptr )

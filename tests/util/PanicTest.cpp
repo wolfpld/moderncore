@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
-#include "../src/util/Panic.hpp"
+
+#include "util/Panic.hpp"
 
 TEST(PanicTest, CheckPanic) {
     // Call CheckPanic with a true condition

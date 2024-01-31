@@ -1,8 +1,8 @@
 #include <wayland-server-core.h>
 
 #include "Display.hpp"
-#include "../util/Logs.hpp"
-#include "../util/Panic.hpp"
+#include "util/Logs.hpp"
+#include "util/Panic.hpp"
 
 
 Display::Display()

@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 #include "PngLoader.hpp"
-#include "../util/Bitmap.hpp"
+#include "util/Bitmap.hpp"
 
 PngLoader::PngLoader( FileWrapper& file )
     : m_file( file )

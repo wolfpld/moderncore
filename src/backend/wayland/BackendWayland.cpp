@@ -6,9 +6,9 @@
 #include "WaylandRegistry.hpp"
 #include "WaylandSeat.hpp"
 #include "WaylandWindow.hpp"
-#include "../../util/Config.hpp"
-#include "../../util/Panic.hpp"
-#include "../../vulkan/VlkInstance.hpp"
+#include "util/Config.hpp"
+#include "util/Panic.hpp"
+#include "vulkan/VlkInstance.hpp"
 
 BackendWayland::BackendWayland( VlkInstance& vkInstance, GpuState& gpuState )
     : m_dpy( wl_display_connect( nullptr ) )

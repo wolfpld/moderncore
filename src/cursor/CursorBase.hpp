@@ -5,8 +5,8 @@
 #include <vector>
 
 #include "CursorType.hpp"
-#include "../util/NoCopy.hpp"
-#include "../util/RobinHood.hpp"
+#include "util/NoCopy.hpp"
+#include "util/RobinHood.hpp"
 
 class Bitmap;
 

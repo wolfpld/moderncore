@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <string>
 
-#include "../util/NoCopy.hpp"
+#include "util/NoCopy.hpp"
 
 class CursorBase;
 

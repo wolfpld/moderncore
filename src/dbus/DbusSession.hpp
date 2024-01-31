@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "DbusMessage.hpp"
-#include "../util/NoCopy.hpp"
+#include "util/NoCopy.hpp"
 
 struct sd_bus;
 

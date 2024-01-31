@@ -7,7 +7,7 @@
 #include "VlkDevice.hpp"
 #include "VlkError.hpp"
 #include "VlkPhysicalDevice.hpp"
-#include "../util/Panic.hpp"
+#include "util/Panic.hpp"
 
 VlkDevice::VlkDevice( VkInstance instance, VkPhysicalDevice physDev, int flags, VkSurfaceKHR presentSurface )
     : m_physDev( physDev )

@@ -3,7 +3,7 @@
 #include "CursorTheme.hpp"
 #include "WinCursor.hpp"
 #include "XCursor.hpp"
-#include "../util/Config.hpp"
+#include "util/Config.hpp"
 
 CursorTheme::CursorTheme()
 {

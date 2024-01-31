@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
-#include "../src/util/FileBuffer.hpp"
+
+#include "util/FileBuffer.hpp"
 
 TEST(FileBufferTest, LoadFile) {
     // Create a test file with some data

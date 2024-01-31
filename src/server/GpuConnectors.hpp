@@ -4,8 +4,8 @@
 #include <memory>
 #include <vector>
 
-#include "../util/NoCopy.hpp"
-#include "../util/RobinHood.hpp"
+#include "util/NoCopy.hpp"
+#include "util/RobinHood.hpp"
 
 class Connector;
 class Renderable;

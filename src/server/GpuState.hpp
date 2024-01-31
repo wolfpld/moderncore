@@ -2,7 +2,7 @@
 
 #include "GpuDevices.hpp"
 #include "GpuConnectors.hpp"
-#include "../util/NoCopy.hpp"
+#include "util/NoCopy.hpp"
 
 class VlkInstance;
 

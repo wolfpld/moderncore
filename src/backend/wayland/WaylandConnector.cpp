@@ -2,15 +2,15 @@
 #include <vulkan/vk_enum_string_helper.h>
 
 #include "WaylandConnector.hpp"
-#include "../../server/Renderable.hpp"
-#include "../../vulkan/VlkCommandBuffer.hpp"
-#include "../../vulkan/VlkDevice.hpp"
-#include "../../vulkan/VlkError.hpp"
-#include "../../vulkan/VlkFence.hpp"
-#include "../../vulkan/VlkFramebuffer.hpp"
-#include "../../vulkan/VlkRenderPass.hpp"
-#include "../../vulkan/VlkSemaphore.hpp"
-#include "../../vulkan/VlkSwapchain.hpp"
+#include "server/Renderable.hpp"
+#include "vulkan/VlkCommandBuffer.hpp"
+#include "vulkan/VlkDevice.hpp"
+#include "vulkan/VlkError.hpp"
+#include "vulkan/VlkFence.hpp"
+#include "vulkan/VlkFramebuffer.hpp"
+#include "vulkan/VlkRenderPass.hpp"
+#include "vulkan/VlkSemaphore.hpp"
+#include "vulkan/VlkSwapchain.hpp"
 
 WaylandConnector::WaylandConnector( VlkDevice& device, VkSurfaceKHR surface )
     : Connector( device )

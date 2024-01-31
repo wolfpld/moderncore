@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
-#include "../src/util/FileWrapper.hpp"
+
+#include "util/FileWrapper.hpp"
 
 TEST(FileWrapperTest, ReadFile) {
     // Create a test file with some data

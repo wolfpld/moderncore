@@ -12,6 +12,8 @@ enum class LogLevel
     Fatal
 };
 
+void SetLogLevel( LogLevel level );
+
 void MCoreLogMessage( LogLevel level, const char* fileName, size_t line, const char* fmt, ... );
 void MCoreLogMessage( LogLevel level, const char* fileName, size_t line, const std::string& str );
 

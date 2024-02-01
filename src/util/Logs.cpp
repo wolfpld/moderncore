@@ -6,6 +6,13 @@
 #include "Logs.hpp"
 #include "util/Ansi.hpp"
 
+static LogLevel s_logLevel = LogLevel::Info;
+
+void SetLogLevel( LogLevel level )
+{
+    s_logLevel = level;
+}
+
 static void PrintLevel( LogLevel level )
 {
     switch( level )
@@ -21,6 +28,8 @@ static void PrintLevel( LogLevel level )
 
 void MCoreLogMessage( LogLevel level, const char* fileName, size_t line, const char *fmt, ... )
 {
+    if( level < s_logLevel ) return;
+
     va_list args;
     va_start( args, fmt );
 
@@ -45,6 +54,8 @@ void MCoreLogMessage( LogLevel level, const char* fileName, size_t line, const c
 
 void MCoreLogMessage( LogLevel level, const char* fileName, size_t line, const std::string& str )
 {
+    if( level < s_logLevel ) return;
+
     PrintLevel( level );
     printf( "[%s:%zu] %s" ANSI_RESET "\n", fileName, line, str.c_str() );
     fflush( stdout );

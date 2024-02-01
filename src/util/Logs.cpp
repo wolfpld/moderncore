@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "Logs.hpp"
 #include "util/Ansi.hpp"
@@ -10,8 +11,8 @@ static void PrintLevel( LogLevel level )
     switch( level )
     {
     case LogLevel::Debug: printf( ANSI_BOLD ANSI_BLACK "[DEBUG] " ); break;
-    case LogLevel::Info: printf( "[INFO] " ); break;
-    case LogLevel::Warning: printf( ANSI_BOLD ANSI_YELLOW "[WARNING] " ); break;
+    case LogLevel::Info: printf( " [INFO] " ); break;
+    case LogLevel::Warning: printf( ANSI_BOLD ANSI_YELLOW " [WARN] " ); break;
     case LogLevel::Error: printf( ANSI_BOLD ANSI_RED "[ERROR] " ); break;
     case LogLevel::Fatal: printf( ANSI_BOLD ANSI_MAGENTA "[FATAL] " ); break;
     default: assert( false ); break;
@@ -23,8 +24,18 @@ void MCoreLogMessage( LogLevel level, const char* fileName, size_t line, const c
     va_list args;
     va_start( args, fmt );
 
+    constexpr int FnLen = 20;
+
     PrintLevel( level );
-    printf( "[%s:%zu] ", fileName, line );
+    const auto len = strlen( fileName );
+    if( len > FnLen )
+    {
+        printf( "…%s:%-4zu| ", fileName + len - FnLen - 1, line );
+    }
+    else
+    {
+        printf( "%*s:%-4zu| ", FnLen, fileName, line );
+    }
     vprintf( fmt, args );
     printf( ANSI_RESET "\n" );
     fflush( stdout );

@@ -15,6 +15,5 @@ enum class LogLevel
 void SetLogLevel( LogLevel level );
 
 void MCoreLogMessage( LogLevel level, const char* fileName, size_t line, const char* fmt, ... );
-void MCoreLogMessage( LogLevel level, const char* fileName, size_t line, const std::string& str );
 
 #define mclog(level, fmt, ...) MCoreLogMessage( level, __FILE__, __LINE__, fmt, ##__VA_ARGS__ )

@@ -51,12 +51,3 @@ void MCoreLogMessage( LogLevel level, const char* fileName, size_t line, const c
 
     va_end( args );
 }
-
-void MCoreLogMessage( LogLevel level, const char* fileName, size_t line, const std::string& str )
-{
-    if( level < s_logLevel ) return;
-
-    PrintLevel( level );
-    printf( "[%s:%zu] %s" ANSI_RESET "\n", fileName, line, str.c_str() );
-    fflush( stdout );
-}

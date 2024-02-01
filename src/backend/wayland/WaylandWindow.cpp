@@ -11,7 +11,7 @@
 #include "render/SoftwareCursor.hpp"
 #include "util/Config.hpp"
 #include "util/Panic.hpp"
-#include "vulkan/PhysDevSel.hpp"
+#include "vulkan/ext/PhysDevSel.hpp"
 #include "vulkan/VlkError.hpp"
 #include "vulkan/VlkInstance.hpp"
 

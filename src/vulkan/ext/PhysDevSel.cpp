@@ -1,7 +1,7 @@
 #include "PhysDevSel.hpp"
-#include "VlkPhysicalDevice.hpp"
-#include "VlkSwapchainFormats.hpp"
-#include "VlkSwapchainProperties.hpp"
+#include "vulkan/VlkPhysicalDevice.hpp"
+#include "vulkan/VlkSwapchainFormats.hpp"
+#include "vulkan/VlkSwapchainProperties.hpp"
 #include "util/Logs.hpp"
 
 namespace PhysDevSel

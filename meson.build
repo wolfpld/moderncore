@@ -51,7 +51,7 @@ files = [
     'src/util/FileBuffer.cpp',
     'src/util/Home.cpp',
     'src/util/Logs.cpp',
-    'src/vulkan/PhysDevSel.cpp',
+    'src/vulkan/ext/PhysDevSel.cpp',
     'src/vulkan/VlkAllocator.cpp',
     'src/vulkan/VlkBuffer.cpp',
     'src/vulkan/VlkCommandBuffer.cpp',

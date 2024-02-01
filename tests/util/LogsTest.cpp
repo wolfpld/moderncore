@@ -5,6 +5,9 @@
 TEST(LogsTest, MCoreLogMessage) {
     testing::internal::CaptureStdout();
 
+    // Set the log level to LogLevel::Debug
+    SetLogLevel(LogLevel::Debug);
+
     // Call MCoreLogMessage with various log levels and messages
     MCoreLogMessage(LogLevel::Debug, "test.cpp", 42, "Debug message");
     MCoreLogMessage(LogLevel::Info, "test.cpp", 42, "Info message");

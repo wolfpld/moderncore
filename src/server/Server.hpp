@@ -8,7 +8,7 @@
 class Backend;
 class DbusSession;
 class Display;
-class GpuState;
+class GpuDevice;
 class Renderable;
 class VlkInstance;
 
@@ -25,9 +25,12 @@ public:
 private:
     void Render();
 
+    void SetupGpus();
+
     std::unique_ptr<DbusSession> m_dbusSession;
     std::unique_ptr<VlkInstance> m_vkInstance;
-    std::unique_ptr<GpuState> m_gpuState;
+
+    std::vector<std::shared_ptr<GpuDevice>> m_gpus;
 
     std::unique_ptr<Backend> m_backend;
     std::unique_ptr<Display> m_dpy;

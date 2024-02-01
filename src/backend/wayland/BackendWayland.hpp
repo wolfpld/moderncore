@@ -11,7 +11,6 @@
 #include "xdg-decoration-unstable-v1-client-protocol.h"
 #include "xdg-shell-client-protocol.h"
 
-class GpuState;
 class WaylandOutput;
 class WaylandSeat;
 class WaylandWindow;
@@ -20,7 +19,7 @@ class VlkInstance;
 class BackendWayland : public Backend
 {
 public:
-    BackendWayland( VlkInstance& vkInstance, GpuState& gpuState );
+    BackendWayland( VlkInstance& vkInstance );
     ~BackendWayland() override;
 
     void Run( const std::function<void()>& render ) override;
@@ -49,7 +48,6 @@ private:
     unordered_flat_map<uint32_t, std::unique_ptr<WaylandOutput>> m_outputMap;
 
     VlkInstance& m_vkInstance;
-    GpuState& m_gpuState;
 
     bool m_keepRunning = true;
 };

@@ -8,7 +8,6 @@
 #include "Texture.hpp"
 #include "image/ImageLoader.hpp"
 #include "server/Connector.hpp"
-#include "server/GpuState.hpp"
 #include "util/Bitmap.hpp"
 #include "util/Config.hpp"
 #include "vulkan/VlkBuffer.hpp"
@@ -50,10 +49,12 @@ Background::Background( const GpuState& gpuState )
         }
     }
 
+/*
     for( auto& c : gpuState.Connectors().List() )
     {
         AddConnector( *c.second );
     }
+*/
 }
 
 Background::~Background()

@@ -1,6 +1,6 @@
 #include <stdlib.h>
 
-#include "GpuState.hpp"
+#include "GpuDevice.hpp"
 #include "Server.hpp"
 #include "backend/drm/BackendDrm.hpp"
 #include "backend/wayland/BackendWayland.hpp"
@@ -24,11 +24,11 @@ Server::Server()
         m_vkInstance = std::make_unique<VlkInstance>( VlkInstanceType::Drm );
     }
 
-    m_gpuState = std::make_unique<GpuState>( *m_vkInstance );
+    SetupGpus();
 
     if( waylandDpy )
     {
-        m_backend = std::make_unique<BackendWayland>( *m_vkInstance, *m_gpuState );
+        m_backend = std::make_unique<BackendWayland>( *m_vkInstance );
     }
     else
     {
@@ -38,7 +38,7 @@ Server::Server()
     m_dpy = std::make_unique<Display>();
     setenv( "WAYLAND_DISPLAY", m_dpy->Socket(), 1 );
 
-    m_renderables.emplace_back( std::make_shared<Background>( *m_gpuState ) );
+    //m_renderables.emplace_back( std::make_shared<Background>( *m_gpuState ) );
 }
 
 Server::~Server()
@@ -52,5 +52,24 @@ void Server::Run()
 
 void Server::Render()
 {
-    m_gpuState->Connectors().Render( m_renderables );
+    //m_gpuState->Connectors().Render( m_renderables );
+}
+
+void Server::SetupGpus()
+{
+    const auto& devices = m_vkInstance->QueryPhysicalDevices();
+
+    mclog( LogLevel::Info, "Found %d physical devices", devices.size() );
+    int idx = 0;
+    for( const auto& device : devices )
+    {
+        VkPhysicalDeviceProperties properties;
+        vkGetPhysicalDeviceProperties( device, &properties );
+        mclog( LogLevel::Info, "  %d: %s", idx++, properties.deviceName );
+    }
+
+    for( const auto& dev : devices )
+    {
+        m_gpus.emplace_back( std::make_shared<GpuDevice>( *m_vkInstance, dev ) );
+    }
 }

@@ -10,10 +10,9 @@
 #include "util/Panic.hpp"
 #include "vulkan/VlkInstance.hpp"
 
-BackendWayland::BackendWayland( VlkInstance& vkInstance, GpuState& gpuState )
+BackendWayland::BackendWayland( VlkInstance& vkInstance )
     : m_dpy( wl_display_connect( nullptr ) )
     , m_vkInstance( vkInstance )
-    , m_gpuState( gpuState )
 {
     CheckPanic( m_dpy, "Failed to connect to Wayland display" );
 
@@ -113,7 +112,6 @@ void BackendWayland::OpenWindow()
         .decorationManager = m_decorationManager,
         .dpy = m_dpy,
         .vkInstance = m_vkInstance,
-        .gpuState = m_gpuState,
         .onClose = [this]{ Stop(); },
         .backend = *this
     } ) );

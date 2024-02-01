@@ -9,7 +9,6 @@
 #include "WaylandOutput.hpp"
 #include "WaylandWindow.hpp"
 #include "render/SoftwareCursor.hpp"
-#include "server/GpuState.hpp"
 #include "util/Config.hpp"
 #include "util/Panic.hpp"
 #include "vulkan/PhysDevSel.hpp"
@@ -21,7 +20,6 @@ WaylandWindow::WaylandWindow( Params&& p )
     , m_onClose( std::move( p.onClose ) )
     , m_backend( p.backend )
     , m_vkInstance( p.vkInstance )
-    , m_gpuState( p.gpuState )
 {
     CheckPanic( m_surface, "Failed to create Wayland surface" );
 
@@ -96,16 +94,18 @@ WaylandWindow::WaylandWindow( Params&& p )
         device = physicalDevices[configPhysDev];
     }
 
+/*
     m_vkDevice = p.gpuState.Devices().Get( device );
     if( !m_vkDevice ) m_vkDevice = p.gpuState.Devices().Add( device, m_vkSurface );
     assert( m_vkDevice );
 
     m_connectorId = p.gpuState.Connectors().Add( std::make_shared<WaylandConnector>( *m_vkDevice, m_vkSurface ) );
+*/
 }
 
 WaylandWindow::~WaylandWindow()
 {
-    m_gpuState.Connectors().Remove( m_connectorId );
+    //m_gpuState.Connectors().Remove( m_connectorId );
     m_vkDevice.reset();
     vkDestroySurfaceKHR( m_vkInstance, m_vkSurface, nullptr );
     if( m_xdgToplevelDecoration ) zxdg_toplevel_decoration_v1_destroy( m_xdgToplevelDecoration );

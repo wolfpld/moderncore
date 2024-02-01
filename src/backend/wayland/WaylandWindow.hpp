@@ -13,7 +13,6 @@
 
 class BackendWayland;
 class CursorLogic;
-class GpuState;
 class SoftwareCursor;
 class VlkDevice;
 class VlkInstance;
@@ -28,7 +27,6 @@ public:
         zxdg_decoration_manager_v1* decorationManager;
         wl_display* dpy;
         VlkInstance& vkInstance;
-        GpuState& gpuState;
         std::function<void()> onClose;
         BackendWayland& backend;
     };
@@ -71,7 +69,6 @@ private:
 
     std::unique_ptr<SoftwareCursor> m_cursor;
 
-    GpuState& m_gpuState;
     uint32_t m_connectorId;
 
     unordered_flat_set<uint32_t> m_outputs;

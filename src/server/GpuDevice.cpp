@@ -1,35 +1,14 @@
-#include <algorithm>
-#include <assert.h>
 #include <inttypes.h>
+#include <vector>
 
-#include "GpuDevices.hpp"
+#include "GpuDevice.hpp"
 #include "util/Logs.hpp"
-#include "vulkan/VlkDevice.hpp"
-#include "vulkan/VlkInstance.hpp"
 #include "vulkan/VlkPhysicalDevice.hpp"
 
-GpuDevices::GpuDevices( VlkInstance& instance )
-    : m_instance( instance )
+namespace
 {
-}
 
-GpuDevices::~GpuDevices()
-{
-    for( auto& gpu : m_gpus ) vkDeviceWaitIdle( *gpu.device );
-}
-
-const std::shared_ptr<VlkDevice>& GpuDevices::Get( VkPhysicalDevice physDev ) const
-{
-    for( auto& gpu : m_gpus )
-    {
-        if( gpu.physDev == physDev ) return gpu.device;
-    }
-
-    static std::shared_ptr<VlkDevice> nullDevice;
-    return nullDevice;
-}
-
-static void PrintPhysicalDeviceInfo( VkPhysicalDevice physDev )
+void PrintPhysicalDeviceInfo( VkPhysicalDevice physDev )
 {
     VkPhysicalDeviceProperties properties;
     vkGetPhysicalDeviceProperties( physDev, &properties );
@@ -76,7 +55,7 @@ static void PrintPhysicalDeviceInfo( VkPhysicalDevice physDev )
     }
 }
 
-static void PrintQueueConfig( const VlkDevice& device )
+void PrintQueueConfig( const VlkDevice& device )
 {
     mclog( LogLevel::Info, "  Queue configuration:" );
 
@@ -141,15 +120,16 @@ static void PrintQueueConfig( const VlkDevice& device )
     }
 }
 
-std::shared_ptr<VlkDevice> GpuDevices::Add( VkPhysicalDevice physDev, VkSurfaceKHR surface )
+}
+
+GpuDevice::GpuDevice( VkInstance instance, VkPhysicalDevice physDev )
+    : m_device( instance, physDev, VlkDevice::RequireGraphic )
 {
-    assert( std::none_of( m_gpus.begin(), m_gpus.end(), [physDev]( const Gpu& gpu ) { return gpu.physDev == physDev; } ) );
-
-    auto device = std::make_shared<VlkDevice>( m_instance, physDev, VlkDevice::RequireGraphic | VlkDevice::RequirePresent, surface );
-    m_gpus.push_back( { physDev, device } );
-
     PrintPhysicalDeviceInfo( physDev );
-    PrintQueueConfig( *device );
+    PrintQueueConfig( m_device );
+}
 
-    return device;
+GpuDevice::~GpuDevice()
+{
+    vkDeviceWaitIdle( m_device );
 }

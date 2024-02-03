@@ -114,6 +114,7 @@ libdrm = dependency('libdrm')
 libdisplayinfo = dependency('libdisplay-info')
 libgbm = dependency('gbm')
 gtest = dependency('gtest')
+tracy = dependency('tracy', static: true)
 
 wl_proto_dir = wl_proto.get_variable('pkgdatadir')
 wl_scanner_bin = find_program(wl_scanner.get_variable('wayland_scanner'))
@@ -192,7 +193,12 @@ deps = [
     libdrm,
     libdisplayinfo,
     libgbm,
+    tracy
 ]
+
+if get_option('tracy_enable')
+    add_project_arguments('-DTRACY_ENABLE', language: 'cpp')
+endif
 
 mcorelib = static_library('mcorelib',
     files,

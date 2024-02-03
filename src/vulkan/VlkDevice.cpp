@@ -1,5 +1,7 @@
 #include <array>
 #include <assert.h>
+#include <string.h>
+#include <tracy/Tracy.hpp>
 #include <vector>
 
 #include "VlkCommandBuffer.hpp"
@@ -14,6 +16,13 @@ VlkDevice::VlkDevice( VkInstance instance, VkPhysicalDevice physDev, int flags, 
     , m_queueInfo {}
     , m_queue {}
 {
+#ifdef TRACY_ENABLE
+    ZoneScoped;
+    VkPhysicalDeviceProperties properties;
+    vkGetPhysicalDeviceProperties( physDev, &properties );
+    ZoneText( properties.deviceName, strlen( properties.deviceName ) );
+#endif
+
     CheckPanic( flags & ( RequireGraphic | RequireCompute ), "Requested Device without graphic and compute queues." );
 
     VlkPhysicalDevice phys( physDev );

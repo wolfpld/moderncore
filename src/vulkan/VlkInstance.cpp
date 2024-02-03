@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <array>
 #include <string.h>
+#include <tracy/Tracy.hpp>
 
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_wayland.h>
@@ -86,6 +87,8 @@ static bool HasValidationLayers()
 VlkInstance::VlkInstance( VlkInstanceType instanceType )
     : m_debugMessenger( VK_NULL_HANDLE )
 {
+    ZoneScoped;
+
     VkApplicationInfo appInfo = { VK_STRUCTURE_TYPE_APPLICATION_INFO };
     appInfo.pApplicationName = "Modern Core";
     appInfo.applicationVersion = VK_MAKE_API_VERSION( 0, 1, 0, 0 );

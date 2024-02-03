@@ -1,3 +1,4 @@
+#include <tracy/Tracy.hpp>
 #include <stdlib.h>
 
 #include "GpuDevice.hpp"
@@ -13,6 +14,8 @@
 Server::Server()
     : m_dbusSession( std::make_unique<DbusSession>() )
 {
+    ZoneScoped;
+
     const auto waylandDpy = getenv( "WAYLAND_DISPLAY" );
     if( waylandDpy )
     {
@@ -57,6 +60,8 @@ void Server::Render()
 
 void Server::SetupGpus()
 {
+    ZoneScoped;
+
     const auto& devices = m_vkInstance->QueryPhysicalDevices();
 
     mclog( LogLevel::Info, "Found %d physical devices", devices.size() );

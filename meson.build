@@ -198,6 +198,9 @@ deps = [
 
 if get_option('tracy_enable')
     add_project_arguments('-DTRACY_ENABLE', language: 'cpp')
+    if get_option('buildtype') != 'debugoptimized'
+        message('Profiling builds should set --buildtype=debugoptimized')
+    endif
 endif
 
 mcorelib = static_library('mcorelib',

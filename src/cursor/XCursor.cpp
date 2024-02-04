@@ -10,6 +10,7 @@
 #include "CursorType.hpp"
 #include "XCursor.hpp"
 #include "util/Bitmap.hpp"
+#include "util/Config.hpp"
 #include "util/FileWrapper.hpp"
 #include "util/Home.hpp"
 #include "util/Logs.hpp"
@@ -128,15 +129,14 @@ static std::vector<std::string> GetThemeData( const char* theme )
             if( stat( path.c_str(), &st ) == 0 && ( st.st_mode & S_IFMT ) == S_IFDIR )
             {
                 const auto configPath = path + "/index.theme";
-                auto config = ini_load( configPath.c_str() );
-                if( config )
+                Config ini( configPath );
+                if( ini )
                 {
-                    auto inherit = ini_get( config, "Icon Theme", "Inherits" );
-                    if( inherit )
+                    const char* inherit;
+                    if( ini.GetOpt( "Icon Theme", "Inherits", inherit ) )
                     {
                         todo.emplace_back( inherit );
                     }
-                    ini_free( config );
                 }
 
                 path.append( "/cursors/" );

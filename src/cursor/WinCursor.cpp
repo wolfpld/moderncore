@@ -9,11 +9,10 @@
 #include "CursorType.hpp"
 #include "WinCursor.hpp"
 #include "util/Bitmap.hpp"
+#include "util/Config.hpp"
 #include "util/FileWrapper.hpp"
 #include "util/Home.hpp"
 #include "util/Logs.hpp"
-
-#include "contrib/ini/ini.h"
 
 constexpr const char* CursorNames[] = {
     "Default",
@@ -441,11 +440,11 @@ WinCursor::WinCursor( const char* theme )
     {
         const auto path = dir + theme + '/';
         const auto iniPath = path + "theme.ini";
-        auto ini = ini_load( iniPath.c_str() );
+        Config ini( iniPath );
         if( ini )
         {
-            auto defaultName = ini_get( ini, "Theme", "Default" );
-            if( defaultName )
+            const char* defaultName;
+            if( ini.GetOpt( "Theme", "Default", defaultName ) )
             {
                 assert( m_cursor.empty() );
                 if( LoadCursor( path + defaultName, CursorType::Default, m_cursor ) )
@@ -455,15 +454,14 @@ WinCursor::WinCursor( const char* theme )
 
                     for( int i=1; i<(int)CursorType::NUM; i++ )
                     {
-                        auto name = ini_get( ini, "Theme", CursorNames[i] );
-                        if( !(name && LoadCursor( path + name, (CursorType)i, m_cursor ) ) )
+                        const char* name;
+                        if( !ini.GetOpt( "Theme", CursorNames[i], name ) || !LoadCursor( path + name, (CursorType)i, m_cursor ) )
                         {
                             numCursors--;
                         }
                     }
                 }
             }
-            ini_free( ini );
         }
         if( !m_cursor.empty() ) break;
     }

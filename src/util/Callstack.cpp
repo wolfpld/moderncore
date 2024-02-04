@@ -11,6 +11,7 @@
 namespace {
 int callstackIdx;
 bool callstackExternal;
+bool callstackShowExternal = false;
 }
 
 constexpr const char* TypesList[] = {
@@ -227,7 +228,11 @@ static int CallstackCallback( void*, uintptr_t pc, const char* filename, int lin
         msg = std::format( "{}. <unknown> (0x{:x})", callstackIdx++, pc );
     }
 
-    if( !isExternal )
+    if( callstackShowExternal )
+    {
+        mclog( LogLevel::Debug, "%s", msg.c_str() );
+    }
+    else if( !isExternal )
     {
         if( callstackExternal )
         {
@@ -257,4 +262,9 @@ void PrintCallstack( const CallstackData& data )
     {
         backtrace_pcinfo( state, (uintptr_t)data.addr[i], CallstackCallback, CallstackError, nullptr );
     }
+}
+
+void ShowExternalCallstacks( bool show )
+{
+    callstackShowExternal = show;
 }

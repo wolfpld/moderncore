@@ -13,6 +13,8 @@ public:
 
     NoCopy( GpuDevice );
 
+    [[nodiscard]] bool IsPresentSupported( VkSurfaceKHR surface ) const;
+
     [[nodiscard]] auto& Device() const { return m_device; }
 
 private:

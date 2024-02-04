@@ -39,9 +39,9 @@ public:
 
     void Submit( const VlkCommandBuffer& cmdbuf, VkFence fence );
 
-    [[nodiscard]] const QueueInfo& GetQueueInfo( QueueType type ) const { return m_queueInfo[(int)type]; }
-    [[nodiscard]] VkQueue GetQueue( QueueType type ) const { assert( m_queue[(int)type] != VK_NULL_HANDLE ); return m_queue[(int)type]; }
-    [[nodiscard]] const std::shared_ptr<VlkCommandPool>& GetCommandPool( QueueType type ) const { assert( m_commandPool[(int)type] ); return m_commandPool[(int)type]; }
+    [[nodiscard]] auto& GetQueueInfo( QueueType type ) const { return m_queueInfo[(int)type]; }
+    [[nodiscard]] auto GetQueue( QueueType type ) const { assert( m_queue[(int)type] != VK_NULL_HANDLE ); return m_queue[(int)type]; }
+    [[nodiscard]] auto& GetCommandPool( QueueType type ) const { assert( m_commandPool[(int)type] ); return m_commandPool[(int)type]; }
 
     operator VkDevice() const { return m_device; }
     operator VkPhysicalDevice() const { return m_physDev; }

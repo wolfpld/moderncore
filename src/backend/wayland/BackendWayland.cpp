@@ -1,3 +1,4 @@
+#include <format>
 #include <string.h>
 
 #include "BackendWayland.hpp"
@@ -6,13 +7,12 @@
 #include "WaylandRegistry.hpp"
 #include "WaylandSeat.hpp"
 #include "WaylandWindow.hpp"
+#include "server/Server.hpp"
 #include "util/Config.hpp"
 #include "util/Panic.hpp"
-#include "vulkan/VlkInstance.hpp"
 
-BackendWayland::BackendWayland( VlkInstance& vkInstance )
+BackendWayland::BackendWayland()
     : m_dpy( wl_display_connect( nullptr ) )
-    , m_vkInstance( vkInstance )
 {
     CheckPanic( m_dpy, "Failed to connect to Wayland display" );
 
@@ -29,10 +29,25 @@ BackendWayland::BackendWayland( VlkInstance& vkInstance )
     CheckPanic( m_seat, "Failed to create Wayland seat" );
 
     Config config( "backend-wayland.ini" );
-    const auto numWindows = config.Get( "Backend", "NumberOfWindows", 2 );
-    CheckPanic( numWindows > 0, "Invalid number of windows set in backend-wayland.ini." );
-
-    for( int i = 0; i < numWindows; i++ ) OpenWindow();
+    if( config )
+    {
+        bool windowAdded = false;
+        int idx = 0;
+        while( true )
+        {
+            const auto section = std::format( "Window{}", idx );
+            int physDev;
+            if( !config.GetOpt( section.c_str(), "PhysicalDevice", physDev ) ) break;
+            OpenWindow( physDev );
+            windowAdded = true;
+            idx++;
+        }
+        CheckPanic( windowAdded, "No windows to open configured in backend-wayland.ini." );
+    }
+    else
+    {
+        OpenWindow();
+    }
 }
 
 BackendWayland::~BackendWayland()
@@ -104,14 +119,16 @@ void BackendWayland::PointerMotion( double x, double y )
     //m_window->PointerMotion( x * m_scale, y * m_scale );
 }
 
-void BackendWayland::OpenWindow()
+void BackendWayland::OpenWindow( int physDev )
 {
+    mclog( LogLevel::Info, "Opening window on physical device %i", physDev );
+
     m_windows.emplace_back( std::make_unique<WaylandWindow>( WaylandWindow::Params {
+        .physDev = physDev,
         .compositor = m_compositor,
         .xdgWmBase = m_xdgWmBase,
         .decorationManager = m_decorationManager,
         .dpy = m_dpy,
-        .vkInstance = m_vkInstance,
         .onClose = [this]{ Stop(); },
         .backend = *this
     } ) );

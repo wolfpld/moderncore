@@ -19,7 +19,7 @@ class VlkInstance;
 class BackendWayland : public Backend
 {
 public:
-    BackendWayland( VlkInstance& vkInstance );
+    BackendWayland();
     ~BackendWayland() override;
 
     void Run( const std::function<void()>& render ) override;
@@ -35,7 +35,7 @@ private:
 
     void XdgWmPing( xdg_wm_base* shell, uint32_t serial );
 
-    void OpenWindow();
+    void OpenWindow( int physDev = -1 );
 
     wl_display* m_dpy;
     wl_compositor* m_compositor = nullptr;
@@ -46,8 +46,6 @@ private:
     std::vector<std::unique_ptr<WaylandWindow>> m_windows;
 
     unordered_flat_map<uint32_t, std::unique_ptr<WaylandOutput>> m_outputMap;
-
-    VlkInstance& m_vkInstance;
 
     bool m_keepRunning = true;
 };

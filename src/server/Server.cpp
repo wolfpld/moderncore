@@ -41,7 +41,7 @@ Server::Server()
 
     if( waylandDpy )
     {
-        m_backend = std::make_unique<BackendWayland>( *this );
+        m_backend = std::make_unique<BackendWayland>();
     }
     else
     {

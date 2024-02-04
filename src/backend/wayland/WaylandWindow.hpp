@@ -13,8 +13,8 @@
 
 class BackendWayland;
 class CursorLogic;
+class GpuDevice;
 class SoftwareCursor;
-class VlkDevice;
 class VlkInstance;
 
 class WaylandWindow
@@ -22,11 +22,11 @@ class WaylandWindow
 public:
     struct Params
     {
+        int physDev;
         wl_compositor* compositor;
         xdg_wm_base* xdgWmBase;
         zxdg_decoration_manager_v1* decorationManager;
         wl_display* dpy;
-        VlkInstance& vkInstance;
         std::function<void()> onClose;
         BackendWayland& backend;
     };
@@ -64,8 +64,7 @@ private:
     std::function<void()> m_onRender;
 
     BackendWayland& m_backend;
-    VlkInstance& m_vkInstance;
-    std::shared_ptr<VlkDevice> m_vkDevice;
+    std::shared_ptr<GpuDevice> m_gpu;
 
     std::unique_ptr<SoftwareCursor> m_cursor;
 

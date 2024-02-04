@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <assert.h>
 #include <format>
 #include <vulkan/vulkan.h>
@@ -9,7 +10,8 @@
 #include "WaylandOutput.hpp"
 #include "WaylandWindow.hpp"
 #include "render/SoftwareCursor.hpp"
-#include "util/Config.hpp"
+#include "server/GpuDevice.hpp"
+#include "server/Server.hpp"
 #include "util/Panic.hpp"
 #include "vulkan/ext/PhysDevSel.hpp"
 #include "vulkan/VlkError.hpp"
@@ -19,7 +21,6 @@ WaylandWindow::WaylandWindow( Params&& p )
     : m_surface( wl_compositor_create_surface( p.compositor ) )
     , m_onClose( std::move( p.onClose ) )
     , m_backend( p.backend )
-    , m_vkInstance( p.vkInstance )
 {
     CheckPanic( m_surface, "Failed to create Wayland surface" );
 
@@ -72,42 +73,41 @@ WaylandWindow::WaylandWindow( Params&& p )
     auto cb = wl_surface_frame( m_surface );
     wl_callback_add_listener( cb, &frameListener, this );
 
+    auto& vkInstance = Server::Instance().VkInstance();
+
     VkWaylandSurfaceCreateInfoKHR createInfo = { VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR };
     createInfo.display = p.dpy;
     createInfo.surface = m_surface;
 
-    VkVerify( vkCreateWaylandSurfaceKHR( m_vkInstance, &createInfo, nullptr, &m_vkSurface ) );
+    VkVerify( vkCreateWaylandSurfaceKHR( vkInstance, &createInfo, nullptr, &m_vkSurface ) );
 
-    Config config( "backend-wayland.ini" );
-    const auto configPhysDev = config.Get( "Vulkan", "PhysicalDevice", -1 );
-
-    VkPhysicalDevice device;
-    const auto physicalDevices = m_vkInstance.QueryPhysicalDevices();
-    if( configPhysDev < 0 )
+    const auto& gpuList = Server::Instance().Gpus();
+    if( p.physDev < 0 )
     {
+        VkPhysicalDevice device;
+        const auto physicalDevices = vkInstance.QueryPhysicalDevices();
+
         device = PhysDevSel::PickBest( physicalDevices, m_vkSurface );
         CheckPanic( device != VK_NULL_HANDLE, "Failed to find suitable physical device" );
+
+        auto it = std::find_if( gpuList.begin(), gpuList.end(), [device]( const auto& v ) { return v->Device() == device; } );
+        CheckPanic( it != gpuList.end(), "Selected physical device has valid index, but not found in list of GPUs (?)" );
+
+        mclog( LogLevel::Info, "Selected physical device: %i", it - gpuList.begin() );
+        m_gpu = *it;
     }
     else
     {
-        CheckPanic( configPhysDev < physicalDevices.size(), "Invalid physical device index set in backend-wayland.ini. Value: %i, max: %zu.", configPhysDev, physicalDevices.size() - 1 );
-        device = physicalDevices[configPhysDev];
+        CheckPanic( p.physDev < gpuList.size(), "Invalid physical device index set in backend-wayland.ini. Value: %i, max: %zu.", p.physDev, gpuList.size() - 1 );
+        m_gpu = gpuList[p.physDev];
+        CheckPanic( m_gpu->IsPresentSupported( m_vkSurface ), "Selected physical device does not support presentation to Wayland surface" );
     }
-
-/*
-    m_vkDevice = p.gpuState.Devices().Get( device );
-    if( !m_vkDevice ) m_vkDevice = p.gpuState.Devices().Add( device, m_vkSurface );
-    assert( m_vkDevice );
-
-    m_connectorId = p.gpuState.Connectors().Add( std::make_shared<WaylandConnector>( *m_vkDevice, m_vkSurface ) );
-*/
 }
 
 WaylandWindow::~WaylandWindow()
 {
     //m_gpuState.Connectors().Remove( m_connectorId );
-    m_vkDevice.reset();
-    vkDestroySurfaceKHR( m_vkInstance, m_vkSurface, nullptr );
+    vkDestroySurfaceKHR( Server::Instance().VkInstance(), m_vkSurface, nullptr );
     if( m_xdgToplevelDecoration ) zxdg_toplevel_decoration_v1_destroy( m_xdgToplevelDecoration );
     xdg_toplevel_destroy( m_xdgToplevel );
     xdg_surface_destroy( m_xdgSurface );

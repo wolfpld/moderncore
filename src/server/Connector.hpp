@@ -20,10 +20,10 @@ public:
 
     virtual void Render( const std::vector<std::shared_ptr<Renderable>>& renderables ) = 0;
 
-    [[nodiscard]] VlkDevice& Device() const { return m_device; }
-    [[nodiscard]] uint32_t Width() const { return m_width; }
-    [[nodiscard]] uint32_t Height() const { return m_height; }
-    [[nodiscard]] VlkRenderPass& RenderPass() const { return *m_renderPass; }
+    [[nodiscard]] auto& Device() const { return m_device; }
+    [[nodiscard]] auto Width() const { return m_width; }
+    [[nodiscard]] auto Height() const { return m_height; }
+    [[nodiscard]] auto& RenderPass() const { return *m_renderPass; }
 
 protected:
     VlkDevice& m_device;

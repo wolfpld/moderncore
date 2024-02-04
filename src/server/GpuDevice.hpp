@@ -21,6 +21,7 @@ public:
 
     [[nodiscard]] bool IsPresentSupported( VkSurfaceKHR surface ) const;
 
+    [[nodiscard]] auto& Device() { return m_device; }
     [[nodiscard]] auto& Device() const { return m_device; }
 
 private:

@@ -10,10 +10,9 @@
 Config::Config( const char* name )
     : m_config( nullptr )
 {
-    std::string path;
-
     if( strncmp( name, "./", 2 ) != 0 )
     {
+        std::string path;
         const auto xdgConfig = getenv( "XDG_CONFIG_HOME" );
         if( xdgConfig )
         {
@@ -26,13 +25,12 @@ Config::Config( const char* name )
             path += "/.config/ModernCore/";
         }
         path += name;
+        m_config = ini_load( path.c_str() );
     }
     else
     {
-        path = name;
+        m_config = ini_load( name );
     }
-
-    m_config = ini_load( path.c_str() );
 }
 
 Config::~Config()

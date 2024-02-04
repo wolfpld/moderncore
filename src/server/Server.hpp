@@ -18,6 +18,8 @@ public:
     Server();
     ~Server();
 
+    static Server& Instance();
+
     NoCopy( Server );
 
     void Run();

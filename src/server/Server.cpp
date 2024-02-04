@@ -1,3 +1,5 @@
+#include <assert.h>
+
 #include <tracy/Tracy.hpp>
 #include <stdlib.h>
 
@@ -11,10 +13,18 @@
 #include "util/Logs.hpp"
 #include "vulkan/VlkInstance.hpp"
 
+namespace
+{
+Server* s_instance = nullptr;
+}
+
 Server::Server()
     : m_dbusSession( std::make_unique<DbusSession>() )
 {
     ZoneScoped;
+
+    assert( !s_instance );
+    s_instance = this;
 
     const auto waylandDpy = getenv( "WAYLAND_DISPLAY" );
     if( waylandDpy )
@@ -31,7 +41,7 @@ Server::Server()
 
     if( waylandDpy )
     {
-        m_backend = std::make_unique<BackendWayland>( *m_vkInstance );
+        m_backend = std::make_unique<BackendWayland>( *this );
     }
     else
     {
@@ -46,6 +56,14 @@ Server::Server()
 
 Server::~Server()
 {
+    assert( s_instance );
+    s_instance = nullptr;
+}
+
+Server& Server::Instance()
+{
+    assert( s_instance );
+    return *s_instance;
 }
 
 void Server::Run()

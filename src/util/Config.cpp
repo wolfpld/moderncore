@@ -5,9 +5,7 @@
 #include "Config.hpp"
 #include "util/Home.hpp"
 
-extern "C" {
 #include "contrib/ini/ini.h"
-}
 
 Config::Config( const char* name )
     : m_config( nullptr )

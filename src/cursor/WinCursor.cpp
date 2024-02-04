@@ -13,9 +13,7 @@
 #include "util/Home.hpp"
 #include "util/Logs.hpp"
 
-extern "C" {
 #include "contrib/ini/ini.h"
-}
 
 constexpr const char* CursorNames[] = {
     "Default",

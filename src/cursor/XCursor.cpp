@@ -15,9 +15,7 @@
 #include "util/Logs.hpp"
 #include "util/RobinHood.hpp"
 
-extern "C" {
 #include "contrib/ini/ini.h"
-}
 
 // Based on https://www.freedesktop.org/wiki/Specifications/cursor-spec/
 constexpr const char* CursorNames[] = {

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 #include "NoCopy.hpp"
 
 extern "C" {
@@ -10,6 +12,7 @@ class Config
 {
 public:
     explicit Config( const char* name );
+    explicit Config( const std::string& name ) : Config( name.c_str() ) {}
     ~Config();
 
     NoCopy( Config );

@@ -14,6 +14,8 @@ public:
 
     NoCopy( Config );
 
+    explicit operator bool() const { return m_config; }
+
     template<typename T>
     T Get( const char* section, const char* key, T defaultVal );
 

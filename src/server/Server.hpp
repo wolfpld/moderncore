@@ -24,6 +24,9 @@ public:
 
     void Run();
 
+    [[nodiscard]] auto& VkInstance() const { return *m_vkInstance; }
+    [[nodiscard]] auto& Gpus() const { return m_gpus; }
+
 private:
     void Render();
 

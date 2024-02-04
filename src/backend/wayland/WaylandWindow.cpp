@@ -73,7 +73,8 @@ WaylandWindow::WaylandWindow( Params&& p )
     auto cb = wl_surface_frame( m_surface );
     wl_callback_add_listener( cb, &frameListener, this );
 
-    auto& vkInstance = Server::Instance().VkInstance();
+    auto& server = Server::Instance();
+    auto& vkInstance = server.VkInstance();
 
     VkWaylandSurfaceCreateInfoKHR createInfo = { VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR };
     createInfo.display = p.dpy;
@@ -81,7 +82,7 @@ WaylandWindow::WaylandWindow( Params&& p )
 
     VkVerify( vkCreateWaylandSurfaceKHR( vkInstance, &createInfo, nullptr, &m_vkSurface ) );
 
-    const auto& gpuList = Server::Instance().Gpus();
+    auto& gpuList = server.Gpus();
     if( p.physDev < 0 )
     {
         VkPhysicalDevice device;
@@ -102,11 +103,15 @@ WaylandWindow::WaylandWindow( Params&& p )
         m_gpu = gpuList[p.physDev];
         CheckPanic( m_gpu->IsPresentSupported( m_vkSurface ), "Selected physical device does not support presentation to Wayland surface" );
     }
+
+    m_connector = std::make_shared<WaylandConnector>( m_gpu->Device(), m_vkSurface );
+    m_gpu->AddConnector( m_connector );
 }
 
 WaylandWindow::~WaylandWindow()
 {
-    //m_gpuState.Connectors().Remove( m_connectorId );
+    m_gpu->RemoveConnector( m_connector );
+    m_connector.reset();
     vkDestroySurfaceKHR( Server::Instance().VkInstance(), m_vkSurface, nullptr );
     if( m_xdgToplevelDecoration ) zxdg_toplevel_decoration_v1_destroy( m_xdgToplevelDecoration );
     xdg_toplevel_destroy( m_xdgToplevel );

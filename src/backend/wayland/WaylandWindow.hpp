@@ -15,6 +15,7 @@ class BackendWayland;
 class CursorLogic;
 class GpuDevice;
 class SoftwareCursor;
+class WaylandConnector;
 class VlkInstance;
 
 class WaylandWindow
@@ -65,6 +66,7 @@ private:
 
     BackendWayland& m_backend;
     std::shared_ptr<GpuDevice> m_gpu;
+    std::shared_ptr<WaylandConnector> m_connector;
 
     std::unique_ptr<SoftwareCursor> m_cursor;
 

@@ -56,3 +56,20 @@ int Config::GetInt( const char* section, const char* key, int def )
     auto num = strtol( val, &end, 10 );
     return (end == val) ? def : num;
 }
+
+bool Config::GetOptString( const char* section, const char* key, const char*& output )
+{
+    if( !m_config ) return false;
+    output = ini_get( m_config, section, key );
+    return output != nullptr;
+}
+
+bool Config::GetOptInt( const char* section, const char* key, int& output )
+{
+    if( !m_config ) return false;
+    auto val = ini_get( m_config, section, key );
+    if( !val ) return false;
+    char* end;
+    output = strtol( val, &end, 10 );
+    return (end != val);
+}

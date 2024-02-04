@@ -13,6 +13,8 @@ public:
 
     NoCopy( GpuDevice );
 
+    [[nodiscard]] auto& Device() const { return m_device; }
+
 private:
     VlkDevice m_device;
 };

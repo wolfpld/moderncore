@@ -1,12 +1,17 @@
 #include <cxxabi.h>
+#include <format>
 #include <stdint.h>
+#include <string>
 #include <string.h>
 
 #include "Callstack.hpp"
 #include "Logs.hpp"
 #include "contrib/libbacktrace/backtrace.h"
 
-static int callstackIdx;
+namespace {
+int callstackIdx;
+bool callstackExternal;
+}
 
 constexpr const char* TypesList[] = {
     "bool ", "char ", "double ", "float ", "int ", "long ", "short ",
@@ -71,8 +76,16 @@ static char* NormalizePath( const char* path )
     return res;
 }
 
+static bool IsPathExternal( const char* path )
+{
+    return strncmp( path, "/usr/", 5 ) == 0 || strncmp( path, "/lib/", 5 ) == 0;
+}
+
 static int CallstackCallback( void*, uintptr_t pc, const char* filename, int lineno, const char* function )
 {
+    bool isExternal = false;
+    std::string msg;
+
     if( function )
     {
         auto demangled = abi::__cxa_demangle( function, nullptr, nullptr, nullptr );
@@ -168,12 +181,17 @@ static int CallstackCallback( void*, uintptr_t pc, const char* filename, int lin
         if( filename )
         {
             auto path = NormalizePath( filename );
-            mclog( LogLevel::Debug, "%i. %s [%s:%i]", callstackIdx++, func, path ? path : filename, lineno );
+            if( IsPathExternal( path ) )
+            {
+                isExternal = true;
+                callstackExternal = true;
+            }
+            msg = std::format( "{}. {} [{}:{}]", callstackIdx++, func, path ? path : filename, lineno );
             free( path );
         }
         else
         {
-            mclog( LogLevel::Debug, "%i. %s", callstackIdx++, func );
+            msg = std::format( "{}. {}", callstackIdx++, func );
         }
 
         free( demangled );
@@ -182,13 +200,29 @@ static int CallstackCallback( void*, uintptr_t pc, const char* filename, int lin
     else if( filename )
     {
         auto path = NormalizePath( filename );
-        mclog( LogLevel::Debug, "%i. <unknown> [%s:%i]", callstackIdx++, path ? path : filename, lineno );
+        if( IsPathExternal( path ) )
+        {
+            isExternal = true;
+            callstackExternal = true;
+        }
+        msg = std::format( "{}. <unknown> [{}:{}]", callstackIdx++, path ? path : filename, lineno );
         free( path );
     }
     else
     {
-        mclog( LogLevel::Debug, "%i. <unknown> (0x%lx)", callstackIdx++, pc );
+        msg = std::format( "{}. <unknown> (0x{:x})", callstackIdx++, pc );
     }
+
+    if( !isExternal )
+    {
+        if( callstackExternal )
+        {
+            mclog( LogLevel::Debug, "…" );
+            callstackExternal = false;
+        }
+        mclog( LogLevel::Debug, "%s", msg.c_str() );
+    }
+
     return 0;
 }
 
@@ -203,6 +237,7 @@ void PrintCallstack( const CallstackData& data )
 
     static auto state = backtrace_create_state( nullptr, 0, nullptr, nullptr );
     callstackIdx = 0;
+    callstackExternal = false;
 
     for( int i = 0; i < data.count; i++ )
     {

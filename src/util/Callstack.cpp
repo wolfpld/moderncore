@@ -186,7 +186,14 @@ static int CallstackCallback( void*, uintptr_t pc, const char* filename, int lin
                 isExternal = true;
                 callstackExternal = true;
             }
-            msg = std::format( "{}. {} [{}:{}]", callstackIdx++, func, path ? path : filename, lineno );
+            if( lineno )
+            {
+                msg = std::format( "{}. {} [{}:{}]", callstackIdx++, func, path ? path : filename, lineno );
+            }
+            else
+            {
+                msg = std::format( "{}. {} [{}]", callstackIdx++, func, path ? path : filename );
+            }
             free( path );
         }
         else
@@ -205,7 +212,14 @@ static int CallstackCallback( void*, uintptr_t pc, const char* filename, int lin
             isExternal = true;
             callstackExternal = true;
         }
-        msg = std::format( "{}. <unknown> [{}:{}]", callstackIdx++, path ? path : filename, lineno );
+        if( lineno )
+        {
+            msg = std::format( "{}. <unknown> [{}:{}]", callstackIdx++, path ? path : filename, lineno );
+        }
+        else
+        {
+            msg = std::format( "{}. <unknown> [{}]", callstackIdx++, path ? path : filename );
+        }
         free( path );
     }
     else

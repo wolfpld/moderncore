@@ -225,6 +225,8 @@ static int CallstackCallback( void*, uintptr_t pc, const char* filename, int lin
     }
     else
     {
+        isExternal = true;
+        callstackExternal = true;
         msg = std::format( "{}. <unknown> (0x{:x})", callstackIdx++, pc );
     }
 

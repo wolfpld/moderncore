@@ -1,5 +1,6 @@
 #include <format>
 #include <string.h>
+#include <tracy/Tracy.hpp>
 
 #include "BackendWayland.hpp"
 #include "WaylandMethod.hpp"
@@ -12,8 +13,10 @@
 #include "util/Panic.hpp"
 
 BackendWayland::BackendWayland()
-    : m_dpy( wl_display_connect( nullptr ) )
 {
+    ZoneScoped;
+
+    m_dpy = wl_display_connect( nullptr );
     CheckPanic( m_dpy, "Failed to connect to Wayland display" );
 
     static constexpr wl_registry_listener listener = {

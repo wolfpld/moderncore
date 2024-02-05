@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <assert.h>
 #include <format>
+#include <tracy/Tracy.hpp>
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_wayland.h>
 
@@ -18,10 +19,12 @@
 #include "vulkan/VlkInstance.hpp"
 
 WaylandWindow::WaylandWindow( Params&& p )
-    : m_surface( wl_compositor_create_surface( p.compositor ) )
-    , m_onClose( std::move( p.onClose ) )
+    : m_onClose( std::move( p.onClose ) )
     , m_backend( p.backend )
 {
+    ZoneScoped;
+
+    m_surface = wl_compositor_create_surface( p.compositor );
     CheckPanic( m_surface, "Failed to create Wayland surface" );
 
     static constexpr wl_surface_listener surfaceListener = {
@@ -46,10 +49,13 @@ WaylandWindow::WaylandWindow( Params&& p )
 
     static int windowCount = 0;
 
+    const auto title = std::format( "ModernCore #{}", ++windowCount );
+    ZoneText( title.c_str(), title.size() );
+
     m_xdgToplevel = xdg_surface_get_toplevel( m_xdgSurface );
     CheckPanic( m_xdgToplevel, "Failed to create Wayland xdg_toplevel" );
     xdg_toplevel_add_listener( m_xdgToplevel, &toplevelListener, this );
-    xdg_toplevel_set_title( m_xdgToplevel, std::format( "ModernCore #{}", ++windowCount ).c_str() );
+    xdg_toplevel_set_title( m_xdgToplevel, title.c_str() );
     xdg_toplevel_set_app_id( m_xdgToplevel, "moderncore" );
 
     if( p.decorationManager )
@@ -103,6 +109,12 @@ WaylandWindow::WaylandWindow( Params&& p )
         m_gpu = gpuList[p.physDev];
         CheckPanic( m_gpu->IsPresentSupported( m_vkSurface ), "Selected physical device does not support presentation to Wayland surface" );
     }
+
+#ifdef TRACY_ENABLE
+    VkPhysicalDeviceProperties properties;
+    vkGetPhysicalDeviceProperties( m_gpu->Device(), &properties );
+    ZoneText( properties.deviceName, strlen( properties.deviceName ) );
+#endif
 
     m_connector = std::make_shared<WaylandConnector>( m_gpu->Device(), m_vkSurface );
     m_gpu->AddConnector( m_connector );

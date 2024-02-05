@@ -1,4 +1,5 @@
 #include <array>
+#include <tracy/Tracy.hpp>
 #include <vulkan/vk_enum_string_helper.h>
 
 #include "WaylandConnector.hpp"
@@ -14,8 +15,11 @@
 
 WaylandConnector::WaylandConnector( VlkDevice& device, VkSurfaceKHR surface )
     : Connector( device )
-    , m_swapchain( std::make_unique<VlkSwapchain>( device, surface ) )
 {
+    ZoneScoped;
+
+    m_swapchain = std::make_unique<VlkSwapchain>( device, surface );
+
     m_width = m_swapchain->GetWidth();
     m_height = m_swapchain->GetHeight();
 

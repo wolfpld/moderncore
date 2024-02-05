@@ -33,10 +33,17 @@ VlkDevice::VlkDevice( VkInstance instance, VkPhysicalDevice physDev, int flags, 
     std::vector<VkBool32> presentSupport( sz );
     if( flags & RequirePresent )
     {
-        assert( presentSurface );
-        for( size_t i=0; i<sz; i++ )
+        if( presentSurface )
         {
-            vkGetPhysicalDeviceSurfaceSupportKHR( physDev, uint32_t( i ), presentSurface, &presentSupport[i] );
+            for( size_t i=0; i<sz; i++ )
+            {
+                vkGetPhysicalDeviceSurfaceSupportKHR( physDev, uint32_t( i ), presentSurface, &presentSupport[i] );
+            }
+        }
+        else
+        {
+            mclog( LogLevel::Debug, "No present surface provided, assuming all queues support present." );
+            std::fill( presentSupport.begin(), presentSupport.end(), VK_TRUE );
         }
     }
 

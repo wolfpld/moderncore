@@ -5,7 +5,7 @@
 #include "vulkan/ext/DeviceInfo.hpp"
 
 GpuDevice::GpuDevice( VkInstance instance, VkPhysicalDevice physDev )
-    : m_device( instance, physDev, VlkDevice::RequireGraphic )
+    : m_device( instance, physDev, VlkDevice::RequireGraphic | VlkDevice::RequirePresent )
 {
     PrintPhysicalDeviceInfo( physDev );
     PrintQueueConfig( m_device );

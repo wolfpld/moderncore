@@ -70,8 +70,7 @@ private:
 
     std::unique_ptr<SoftwareCursor> m_cursor;
 
-    uint32_t m_connectorId;
-
     unordered_flat_set<uint32_t> m_outputs;
     int m_scale = 0;
+    int m_id;
 };

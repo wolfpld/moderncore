@@ -49,7 +49,8 @@ WaylandWindow::WaylandWindow( Params&& p )
 
     static int windowCount = 0;
 
-    const auto title = std::format( "ModernCore #{}", ++windowCount );
+    m_id = ++windowCount;
+    const auto title = std::format( "ModernCore #{}", m_id );
     ZoneText( title.c_str(), title.size() );
 
     m_xdgToplevel = xdg_surface_get_toplevel( m_xdgSurface );
@@ -158,7 +159,7 @@ void WaylandWindow::Enter( struct wl_surface* surface, struct wl_output* output 
     const auto outputScale = it->second->GetScale();
     if( outputScale > m_scale )
     {
-        mclog( LogLevel::Info, "Window %i: Enter output %i, setting scale to %i", m_connectorId, it->first, outputScale );
+        mclog( LogLevel::Info, "Window %i: Enter output %i, setting scale to %i", m_id, it->first, outputScale );
         m_scale = outputScale;
         wl_surface_set_buffer_scale( m_surface, m_scale );
         wl_surface_commit( m_surface );
@@ -184,7 +185,7 @@ void WaylandWindow::Leave( struct wl_surface* surface, struct wl_output* output 
         }
         if( scale != m_scale )
         {
-            mclog( LogLevel::Info, "Window %i: Leave output %i, setting scale to %i", m_connectorId, it->first, scale );
+            mclog( LogLevel::Info, "Window %i: Leave output %i, setting scale to %i", m_id, it->first, scale );
             m_scale = scale;
             wl_surface_set_buffer_scale( m_surface, m_scale );
             wl_surface_commit( m_surface );

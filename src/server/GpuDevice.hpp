@@ -16,6 +16,8 @@ public:
 
     NoCopy( GpuDevice );
 
+    void Render();
+
     void AddConnector( std::shared_ptr<Connector> connector );
     void RemoveConnector( const std::shared_ptr<Connector>& connector );
 

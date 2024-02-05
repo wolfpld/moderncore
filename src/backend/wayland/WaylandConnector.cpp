@@ -86,7 +86,7 @@ WaylandConnector::~WaylandConnector()
     for( auto& frame : m_frame ) frame.fence->Wait();
 }
 
-void WaylandConnector::Render( const std::vector<std::shared_ptr<Renderable>>& renderables )
+void WaylandConnector::Render()
 {
     const auto frameIdx = m_frameIndex;
     m_frameIndex = ( m_frameIndex + 1 ) % m_frame.size();
@@ -115,7 +115,7 @@ void WaylandConnector::Render( const std::vector<std::shared_ptr<Renderable>>& r
 
     vkCmdBeginRenderPass( *frame.commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
 
-    for( auto& renderable : renderables ) renderable->Render( *this, *frame.commandBuffer );
+    //for( auto& renderable : renderables ) renderable->Render( *this, *frame.commandBuffer );
 
     vkCmdEndRenderPass( *frame.commandBuffer );
     frame.commandBuffer->End();

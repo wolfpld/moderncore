@@ -2,7 +2,6 @@
 
 #include <memory>
 #include <stdint.h>
-#include <vector>
 
 #include "util/NoCopy.hpp"
 #include "vulkan/VlkRenderPass.hpp"
@@ -18,7 +17,7 @@ public:
 
     NoCopy( Connector );
 
-    virtual void Render( const std::vector<std::shared_ptr<Renderable>>& renderables ) = 0;
+    virtual void Render() = 0;
 
     [[nodiscard]] auto& Device() const { return m_device; }
     [[nodiscard]] auto Width() const { return m_width; }

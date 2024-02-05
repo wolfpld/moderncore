@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <assert.h>
 
+#include "Connector.hpp"
 #include "GpuDevice.hpp"
 #include "vulkan/ext/DeviceInfo.hpp"
 
@@ -14,6 +15,11 @@ GpuDevice::GpuDevice( VkInstance instance, VkPhysicalDevice physDev )
 GpuDevice::~GpuDevice()
 {
     vkDeviceWaitIdle( m_device );
+}
+
+void GpuDevice::Render()
+{
+    for( auto& c : m_connectors ) c->Render();
 }
 
 void GpuDevice::AddConnector( std::shared_ptr<Connector> connector )

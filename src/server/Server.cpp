@@ -73,7 +73,7 @@ void Server::Run()
 
 void Server::Render()
 {
-    //m_gpuState->Connectors().Render( m_renderables );
+    for( auto& gpu : m_gpus ) gpu->Render();
 }
 
 void Server::SetupGpus()

@@ -28,7 +28,7 @@ public:
     WaylandConnector( VlkDevice& device, VkSurfaceKHR surface );
     ~WaylandConnector() override;
 
-    void Render( const std::vector<std::shared_ptr<Renderable>>& renderables ) override;
+    void Render() override;
 
 private:
     std::unique_ptr<VlkSwapchain> m_swapchain;

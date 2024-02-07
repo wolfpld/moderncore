@@ -3,6 +3,7 @@
 #include <vulkan/vk_enum_string_helper.h>
 
 #include "WaylandConnector.hpp"
+#include "server/Server.hpp"
 #include "server/Renderable.hpp"
 #include "vulkan/VlkCommandBuffer.hpp"
 #include "vulkan/VlkDevice.hpp"
@@ -115,7 +116,7 @@ void WaylandConnector::Render()
 
     vkCmdBeginRenderPass( *frame.commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
 
-    //for( auto& renderable : renderables ) renderable->Render( *this, *frame.commandBuffer );
+    for( auto& renderable : Server::Instance().Renderables() ) renderable->Render( *this, *frame.commandBuffer );
 
     vkCmdEndRenderPass( *frame.commandBuffer );
     frame.commandBuffer->End();

@@ -31,6 +31,7 @@ private:
     void Render();
 
     void SetupGpus();
+    void InitConnectorsInRenderables();
 
     std::unique_ptr<DbusSession> m_dbusSession;
     std::unique_ptr<VlkInstance> m_vkInstance;

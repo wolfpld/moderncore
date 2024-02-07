@@ -96,3 +96,17 @@ void Server::SetupGpus()
         m_gpus.emplace_back( std::make_shared<GpuDevice>( *m_vkInstance, dev ) );
     }
 }
+
+void Server::InitConnectorsInRenderables()
+{
+    for( auto& renderable : m_renderables )
+    {
+        for( auto& gpu : m_gpus )
+        {
+            for( auto& connector : gpu->Connectors() )
+            {
+                renderable->AddConnector( *connector );
+            }
+        }
+    }
+}

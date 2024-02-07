@@ -20,9 +20,10 @@ public:
     virtual void Render() = 0;
 
     [[nodiscard]] auto& Device() const { return m_device; }
+    [[nodiscard]] auto& RenderPass() const { return *m_renderPass; }
+
     [[nodiscard]] auto Width() const { return m_width; }
     [[nodiscard]] auto Height() const { return m_height; }
-    [[nodiscard]] auto& RenderPass() const { return *m_renderPass; }
 
 protected:
     VlkDevice& m_device;

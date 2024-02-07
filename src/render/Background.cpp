@@ -19,7 +19,7 @@
 #include "vulkan/VlkShader.hpp"
 #include "vulkan/VlkShaderModule.hpp"
 
-Background::Background( const GpuState& gpuState )
+Background::Background()
     : m_color {{{ 0.0f, 0.0f, 0.0f, 1.0f }}}
     , m_vert( "Background.vert.spv" )
     , m_frag( "Background.frag.spv" )
@@ -48,13 +48,6 @@ Background::Background( const GpuState& gpuState )
             m_bitmap.reset( img );
         }
     }
-
-/*
-    for( auto& c : gpuState.Connectors().List() )
-    {
-        AddConnector( *c.second );
-    }
-*/
 }
 
 Background::~Background()
@@ -64,6 +57,8 @@ Background::~Background()
 void Background::AddConnector( Connector& connector )
 {
     if( !m_bitmap ) return;
+
+    assert( m_drawData.find( &connector ) == m_drawData.end() );
 
     auto& device = connector.Device();
     const auto width = connector.Width();
@@ -198,6 +193,13 @@ void Background::AddConnector( Connector& connector )
     UpdateVertexBuffer( *data->vertexBuffer, m_bitmap->Width(), m_bitmap->Height(), width, height );
 
     m_drawData.emplace( &connector, std::move( data ) );
+}
+
+void Background::RemoveConnector( Connector& connector )
+{
+    if( !m_bitmap ) return;
+    assert( m_drawData.find( &connector ) != m_drawData.end() );
+    m_drawData.erase( &connector );
 }
 
 void Background::Render( Connector& connector, VkCommandBuffer cmdBuf )

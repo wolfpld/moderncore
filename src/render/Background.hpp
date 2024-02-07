@@ -12,7 +12,6 @@
 
 class Bitmap;
 class Connector;
-class GpuState;
 class Texture;
 class VlkBuffer;
 class VlkDescriptorSetLayout;
@@ -46,17 +45,19 @@ class Background : public Renderable
     };
 
 public:
-    explicit Background( const GpuState& gpuState );
+    Background();
     ~Background() override;
 
     NoCopy( Background );
 
     void Render( Connector& connector, VkCommandBuffer cmdBuf ) override;
 
+    void AddConnector( Connector& connector ) override;
+    void RemoveConnector( Connector& connector ) override;
+
     [[nodiscard]] const VkClearValue& GetColor() const { return m_color; }
 
 private:
-    void AddConnector( Connector& connector );
     static void UpdateVertexBuffer( VlkBuffer& buffer ,uint32_t imageWidth, uint32_t imageHeight, uint32_t displayWidth, uint32_t displayHeight );
 
     VkClearValue m_color;

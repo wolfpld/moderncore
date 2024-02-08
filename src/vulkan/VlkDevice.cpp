@@ -10,18 +10,15 @@
 #include "VlkError.hpp"
 #include "VlkPhysicalDevice.hpp"
 #include "util/Panic.hpp"
+#include "util/Tracy.hpp"
 
 VlkDevice::VlkDevice( VkInstance instance, VkPhysicalDevice physDev, int flags, VkSurfaceKHR presentSurface )
     : m_physDev( physDev )
     , m_queueInfo {}
     , m_queue {}
 {
-#ifdef TRACY_ENABLE
     ZoneScoped;
-    VkPhysicalDeviceProperties properties;
-    vkGetPhysicalDeviceProperties( physDev, &properties );
-    ZoneText( properties.deviceName, strlen( properties.deviceName ) );
-#endif
+    ZoneVkDevice( physDev );
 
     CheckPanic( flags & ( RequireGraphic | RequireCompute ), "Requested Device without graphic and compute queues." );
 

@@ -14,6 +14,7 @@
 #include "server/GpuDevice.hpp"
 #include "server/Server.hpp"
 #include "util/Panic.hpp"
+#include "util/Tracy.hpp"
 #include "vulkan/ext/PhysDevSel.hpp"
 #include "vulkan/VlkError.hpp"
 #include "vulkan/VlkInstance.hpp"
@@ -111,11 +112,7 @@ WaylandWindow::WaylandWindow( Params&& p )
         CheckPanic( m_gpu->IsPresentSupported( m_vkSurface ), "Selected physical device does not support presentation to Wayland surface" );
     }
 
-#ifdef TRACY_ENABLE
-    VkPhysicalDeviceProperties properties;
-    vkGetPhysicalDeviceProperties( m_gpu->Device(), &properties );
-    ZoneText( properties.deviceName, strlen( properties.deviceName ) );
-#endif
+    ZoneVkDevice( m_gpu->Device() );
 
     m_connector = std::make_shared<WaylandConnector>( m_gpu->Device(), m_vkSurface );
     m_gpu->AddConnector( m_connector );

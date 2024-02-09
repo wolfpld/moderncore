@@ -1,8 +1,10 @@
 #include <algorithm>
 #include <assert.h>
+#include <tracy/Tracy.hpp>
 
 #include "Connector.hpp"
 #include "GpuDevice.hpp"
+#include "util/Tracy.hpp"
 #include "vulkan/ext/DeviceInfo.hpp"
 
 GpuDevice::GpuDevice( VkInstance instance, VkPhysicalDevice physDev )
@@ -19,6 +21,9 @@ GpuDevice::~GpuDevice()
 
 void GpuDevice::Render()
 {
+    ZoneScoped;
+    ZoneVkDevice( m_device );
+
     for( auto& c : m_connectors ) c->Render();
 }
 

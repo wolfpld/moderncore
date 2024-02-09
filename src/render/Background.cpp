@@ -3,6 +3,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+#include <tracy/Tracy.hpp>
 
 #include "Background.hpp"
 #include "Texture.hpp"
@@ -10,6 +11,7 @@
 #include "server/Connector.hpp"
 #include "util/Bitmap.hpp"
 #include "util/Config.hpp"
+#include "util/Tracy.hpp"
 #include "vulkan/VlkBuffer.hpp"
 #include "vulkan/VlkDescriptorSetLayout.hpp"
 #include "vulkan/VlkPipeline.hpp"
@@ -24,6 +26,8 @@ Background::Background()
     , m_vert( "Background.vert.spv" )
     , m_frag( "Background.frag.spv" )
 {
+    ZoneScoped;
+
     Config cfg( "background.ini" );
     const auto cstr = cfg.Get( "Background", "Color", "404040" );
     if( strlen( cstr ) == 6 )
@@ -57,6 +61,9 @@ Background::~Background()
 void Background::AddConnector( Connector& connector )
 {
     if( !m_bitmap ) return;
+
+    ZoneScoped;
+    ZoneVkDevice( connector.Device() );
 
     assert( m_drawData.find( &connector ) == m_drawData.end() );
 
@@ -205,6 +212,8 @@ void Background::RemoveConnector( Connector& connector )
 void Background::Render( Connector& connector, VkCommandBuffer cmdBuf )
 {
     if( !m_bitmap ) return;
+
+    ZoneScoped;
 
     auto it = m_drawData.find( &connector );
     assert( it != m_drawData.end() );

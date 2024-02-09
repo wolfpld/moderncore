@@ -75,6 +75,7 @@ void Server::Run()
 
 void Server::Render()
 {
+    ZoneScoped;
     for( auto& gpu : m_gpus ) gpu->Render();
 }
 

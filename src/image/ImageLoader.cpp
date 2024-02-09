@@ -1,4 +1,5 @@
 #include <concepts>
+#include <tracy/Tracy.hpp>
 
 #include "HeifLoader.hpp"
 #include "ImageLoader.hpp"
@@ -28,6 +29,8 @@ static inline Bitmap* LoadImage( FileWrapper& file )
 
 Bitmap* LoadImage( const char* filename )
 {
+    ZoneScoped;
+
     auto path = ExpandHome( filename );
 
     FileWrapper file( path.c_str(), "rb" );

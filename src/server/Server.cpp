@@ -102,10 +102,16 @@ void Server::SetupGpus()
         mclog( LogLevel::Info, "  %d: %s", idx++, properties.deviceName );
     }
 
+    m_gpus.resize( devices.size() );
+    idx = 0;
     for( const auto& dev : devices )
     {
-        m_gpus.emplace_back( std::make_shared<GpuDevice>( *m_vkInstance, dev ) );
+        m_dispatch->Queue( [this, dev, idx] {
+            m_gpus[idx] = std::make_shared<GpuDevice>( *m_vkInstance, dev );
+        } );
+        idx++;
     }
+    m_dispatch->Sync();
 }
 
 void Server::InitConnectorsInRenderables()

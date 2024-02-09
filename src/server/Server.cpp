@@ -21,7 +21,6 @@ Server* s_instance = nullptr;
 }
 
 Server::Server()
-    : m_dbusSession( std::make_unique<DbusSession>() )
 {
     ZoneScoped;
 
@@ -30,6 +29,8 @@ Server::Server()
 
     const auto cpus = std::thread::hardware_concurrency();
     m_dispatch = std::make_unique<TaskDispatch>( cpus == 0 ? 0 : cpus - 1, "Worker" );
+
+    m_dbusSession = std::make_unique<DbusSession>();
 
     const auto waylandDpy = getenv( "WAYLAND_DISPLAY" );
     if( waylandDpy )

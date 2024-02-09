@@ -1,4 +1,5 @@
 #include <systemd/sd-bus.h>
+#include <tracy/Tracy.hpp>
 
 #include "DbusMessage.hpp"
 #include "DbusSession.hpp"
@@ -7,6 +8,8 @@
 DbusSession::DbusSession()
     : m_bus( nullptr )
 {
+    ZoneScoped;
+
     int ret = sd_bus_default_system( &m_bus );
     if( ret < 0 )
     {

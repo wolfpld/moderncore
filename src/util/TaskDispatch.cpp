@@ -2,12 +2,15 @@
 #include <tracy/Tracy.hpp>
 
 #include "TaskDispatch.hpp"
+#include "util/Logs.hpp"
 
 TaskDispatch::TaskDispatch( size_t workers, const char* name )
     : m_exit( false )
     , m_jobs( 0 )
 {
     ZoneScoped;
+
+    mclog( LogLevel::Info, "Creating %zu worker threads named '%s'", workers, name );
 
     m_workers.reserve( workers );
     for( size_t i=0; i<workers; i++ )

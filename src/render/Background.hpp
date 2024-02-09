@@ -2,6 +2,7 @@
 
 #include <glm/glm.hpp>
 #include <memory>
+#include <mutex>
 #include <stdint.h>
 #include <vulkan/vulkan.h>
 
@@ -66,4 +67,5 @@ private:
     std::unique_ptr<Bitmap> m_bitmap;
 
     unordered_flat_map<Connector*, std::unique_ptr<DrawData>> m_drawData;
+    std::mutex m_drawDataLock;
 };

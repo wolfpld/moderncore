@@ -199,12 +199,15 @@ void Background::AddConnector( Connector& connector )
     data->imageInfo.imageView = *data->texture;
     UpdateVertexBuffer( *data->vertexBuffer, m_bitmap->Width(), m_bitmap->Height(), width, height );
 
+    std::lock_guard lock( m_drawDataLock );
     m_drawData.emplace( &connector, std::move( data ) );
 }
 
 void Background::RemoveConnector( Connector& connector )
 {
     if( !m_bitmap ) return;
+
+    std::lock_guard lock( m_drawDataLock );
     assert( m_drawData.find( &connector ) != m_drawData.end() );
     m_drawData.erase( &connector );
 }
@@ -215,9 +218,11 @@ void Background::Render( Connector& connector, VkCommandBuffer cmdBuf )
 
     ZoneScoped;
 
+    m_drawDataLock.lock();
     auto it = m_drawData.find( &connector );
     assert( it != m_drawData.end() );
     auto& data = it->second;
+    m_drawDataLock.unlock();
 
     const std::array<VkBuffer, 1> vtx = { *data->vertexBuffer };
     const std::array<VkDeviceSize, 1> offsets = { 0 };

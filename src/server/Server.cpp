@@ -65,7 +65,6 @@ Server::Server()
 Server::~Server()
 {
     assert( s_instance );
-    s_instance = nullptr;
 }
 
 Server& Server::Instance()

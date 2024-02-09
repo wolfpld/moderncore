@@ -122,8 +122,11 @@ void Server::InitConnectorsInRenderables()
         {
             for( auto& connector : gpu->Connectors() )
             {
-                renderable->AddConnector( *connector );
+                m_dispatch->Queue( [renderable, connector] {
+                    renderable->AddConnector( *connector );
+                } );
             }
         }
     }
+    m_dispatch->Sync();
 }

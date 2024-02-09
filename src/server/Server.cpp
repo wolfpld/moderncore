@@ -1,7 +1,8 @@
 #include <assert.h>
 
-#include <tracy/Tracy.hpp>
 #include <stdlib.h>
+#include <tracy/Tracy.hpp>
+#include <thread>
 
 #include "GpuDevice.hpp"
 #include "Server.hpp"
@@ -11,6 +12,7 @@
 #include "plumbing/Display.hpp"
 #include "render/Background.hpp"
 #include "util/Logs.hpp"
+#include "util/TaskDispatch.hpp"
 #include "vulkan/VlkInstance.hpp"
 
 namespace
@@ -25,6 +27,9 @@ Server::Server()
 
     assert( !s_instance );
     s_instance = this;
+
+    const auto cpus = std::thread::hardware_concurrency();
+    m_dispatch = std::make_unique<TaskDispatch>( cpus == 0 ? 0 : cpus - 1, "Worker" );
 
     const auto waylandDpy = getenv( "WAYLAND_DISPLAY" );
     if( waylandDpy )

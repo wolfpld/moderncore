@@ -2,6 +2,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include <tracy/Tracy.hpp>
 
 #include "Logs.hpp"
 #include "util/Ansi.hpp"
@@ -50,4 +51,22 @@ void MCoreLogMessage( LogLevel level, const char* fileName, size_t line, const c
     fflush( stdout );
 
     va_end( args );
+
+#ifdef TRACY_ENABLE
+    va_start( args, fmt );
+    char tmp[8*1024];
+    const auto res = vsnprintf( tmp, sizeof( tmp ), fmt, args );
+    if( res > 0 )
+    {
+        switch( level )
+        {
+        case LogLevel::Debug: TracyMessageC( tmp, res, 0x888888 ); break;
+        case LogLevel::Info: TracyMessage( tmp, res ); break;
+        case LogLevel::Warning: TracyMessageC( tmp, res, 0xFFFF00 ); break;
+        case LogLevel::Error: TracyMessageC( tmp, res, 0xFF0000 ); break;
+        case LogLevel::Fatal: TracyMessageC( tmp, res, 0xFF00FF ); break;
+        }
+    }
+    va_end( args );
+#endif
 }

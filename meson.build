@@ -50,6 +50,7 @@ files = [
     'src/util/FileBuffer.cpp',
     'src/util/Home.cpp',
     'src/util/Logs.cpp',
+    'src/util/TaskDispatch.cpp',
     'src/vulkan/ext/DeviceInfo.cpp',
     'src/vulkan/ext/PhysDevSel.cpp',
     'src/vulkan/VlkAllocator.cpp',

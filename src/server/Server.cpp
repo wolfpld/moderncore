@@ -27,8 +27,10 @@ Server::Server()
     assert( !s_instance );
     s_instance = this;
 
-    const auto cpus = std::thread::hardware_concurrency();
-    m_dispatch = std::make_unique<TaskDispatch>( cpus == 0 ? 0 : cpus - 1, "Worker" );
+    auto dispatchThread = std::thread( [this] {
+        const auto cpus = std::thread::hardware_concurrency();
+        m_dispatch = std::make_unique<TaskDispatch>( cpus == 0 ? 0 : cpus - 1, "Worker" );
+    } );
 
     m_dbusSession = std::make_unique<DbusSession>();
 
@@ -42,6 +44,7 @@ Server::Server()
     {
         m_vkInstance = std::make_unique<VlkInstance>( VlkInstanceType::Drm );
     }
+    dispatchThread.join();
 
     SetupGpus();
 

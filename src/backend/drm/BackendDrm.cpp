@@ -22,7 +22,7 @@ static bool GetCurrentSession( char*& session, char*& seat )
     return true;
 }
 
-static bool GetActiveLocalSession( char*& session, char*& seat )
+static bool GetActiveLocalSession( const char* currentSession, char*& session, char*& seat )
 {
     char** list;
     sd_uid_get_sessions( getuid(), 1, &list );
@@ -31,17 +31,20 @@ static bool GetActiveLocalSession( char*& session, char*& seat )
     auto ptr = list;
     while( *ptr )
     {
-        mclog( LogLevel::Debug, "Checking session %s", *ptr );
-        if( sd_session_get_seat( *ptr, &seat ) >= 0 )
+        if( !currentSession || strcmp( currentSession, *ptr ) != 0 )
         {
-            mclog( LogLevel::Debug, "Session %s is on seat %s", *ptr, seat );
-            if( sd_seat_can_graphical( seat ) > 0 )
+            mclog( LogLevel::Debug, "Checking session %s", *ptr );
+            if( sd_session_get_seat( *ptr, &seat ) >= 0 )
             {
-                mclog( LogLevel::Info, "Found remote active graphical session %s on seat %s", *ptr, seat );
-                session = strdup( *ptr );
-                break;
+                mclog( LogLevel::Debug, "Session %s is on seat %s", *ptr, seat );
+                if( sd_seat_can_graphical( seat ) > 0 )
+                {
+                    mclog( LogLevel::Info, "Found remote active graphical session %s on seat %s", *ptr, seat );
+                    session = strdup( *ptr );
+                    break;
+                }
+                free( seat );
             }
-            free( seat );
         }
         ptr++;
     }
@@ -61,11 +64,12 @@ BackendDrm::BackendDrm( VkInstance vkInstance, DbusSession& bus )
 
     if( !GetCurrentSession( m_session, m_seat ) )
     {
-        free( m_session );
+        auto currentSession = m_session;
         free( m_seat );
         m_session = nullptr;
         m_seat = nullptr;
-        CheckPanic( GetActiveLocalSession( m_session, m_seat ), "Failed to get an active local session" );
+        CheckPanic( GetActiveLocalSession( currentSession, m_session, m_seat ), "Failed to get an active local session" );
+        free( currentSession );
     }
 
     mclog( LogLevel::Debug, "Login session: %s, seat: %s", m_session, m_seat );

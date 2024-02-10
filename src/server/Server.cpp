@@ -50,12 +50,17 @@ Server::Server()
 
     if( waylandDpy )
     {
-        m_backend = std::make_unique<BackendWayland>();
+        m_dispatch->Queue( [this] {
+            m_backend = std::make_unique<BackendWayland>();
+        } );
     }
     else
     {
-        m_backend = std::make_unique<BackendDrm>( *m_dbusSession );
+        m_dispatch->Queue( [this] {
+            m_backend = std::make_unique<BackendDrm>();
+        } );
     }
+    m_dispatch->Sync();
 
     m_backend->VulkanInit();
 
@@ -113,7 +118,6 @@ void Server::SetupGpus()
         } );
         idx++;
     }
-    m_dispatch->Sync();
 }
 
 void Server::InitConnectorsInRenderables()

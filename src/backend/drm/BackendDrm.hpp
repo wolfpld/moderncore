@@ -16,6 +16,8 @@ public:
     explicit BackendDrm( DbusSession& bus );
     ~BackendDrm() override;
 
+    void VulkanInit() override;
+
     void Run( const std::function<void()>& render ) override;
     void Stop() override;
 

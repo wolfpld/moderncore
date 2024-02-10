@@ -30,7 +30,21 @@ BackendWayland::BackendWayland()
     CheckPanic( m_compositor, "Failed to create Wayland compositor" );
     CheckPanic( m_xdgWmBase, "Failed to create Wayland xdg_wm_base" );
     CheckPanic( m_seat, "Failed to create Wayland seat" );
+}
 
+BackendWayland::~BackendWayland()
+{
+    m_windows.clear();
+    if( m_decorationManager ) zxdg_decoration_manager_v1_destroy( m_decorationManager );
+    m_outputMap.clear();
+    m_seat.reset();
+    xdg_wm_base_destroy( m_xdgWmBase );
+    wl_compositor_destroy( m_compositor );
+    wl_display_disconnect( m_dpy );
+}
+
+void BackendWayland::VulkanInit()
+{
     Config config( "backend-wayland.ini" );
     if( config )
     {
@@ -51,17 +65,6 @@ BackendWayland::BackendWayland()
     {
         OpenWindow();
     }
-}
-
-BackendWayland::~BackendWayland()
-{
-    m_windows.clear();
-    if( m_decorationManager ) zxdg_decoration_manager_v1_destroy( m_decorationManager );
-    m_outputMap.clear();
-    m_seat.reset();
-    xdg_wm_base_destroy( m_xdgWmBase );
-    wl_compositor_destroy( m_compositor );
-    wl_display_disconnect( m_dpy );
 }
 
 void BackendWayland::Run( const std::function<void()>& render )

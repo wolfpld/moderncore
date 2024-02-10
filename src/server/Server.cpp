@@ -57,6 +57,8 @@ Server::Server()
         m_backend = std::make_unique<BackendDrm>( *m_dbusSession );
     }
 
+    m_backend->VulkanInit();
+
     m_dpy = std::make_unique<Display>();
     setenv( "WAYLAND_DISPLAY", m_dpy->Socket(), 1 );
 

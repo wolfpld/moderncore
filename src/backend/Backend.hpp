@@ -15,6 +15,8 @@ public:
 
     NoCopy( Backend );
 
+    virtual void VulkanInit() = 0;
+
     virtual void Run( const std::function<void()>& render ) = 0;
     virtual void Stop() = 0;
 

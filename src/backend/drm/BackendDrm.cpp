@@ -174,6 +174,10 @@ BackendDrm::~BackendDrm()
     free( m_seat );
 }
 
+void BackendDrm::VulkanInit()
+{
+}
+
 void BackendDrm::Run( const std::function<void()>& render )
 {
 }

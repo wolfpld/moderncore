@@ -22,6 +22,8 @@ public:
     BackendWayland();
     ~BackendWayland() override;
 
+    void VulkanInit() override;
+
     void Run( const std::function<void()>& render ) override;
     void Stop() override;
 

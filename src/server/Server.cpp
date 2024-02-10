@@ -54,7 +54,7 @@ Server::Server()
     }
     else
     {
-        m_backend = std::make_unique<BackendDrm>( *m_vkInstance, *m_dbusSession );
+        m_backend = std::make_unique<BackendDrm>( *m_dbusSession );
     }
 
     m_dpy = std::make_unique<Display>();

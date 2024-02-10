@@ -13,7 +13,7 @@ class DrmDevice;
 class BackendDrm : public Backend
 {
 public:
-    explicit BackendDrm( VkInstance vkInstance, DbusSession& bus );
+    explicit BackendDrm( DbusSession& bus );
     ~BackendDrm() override;
 
     void Run( const std::function<void()>& render ) override;

@@ -56,7 +56,7 @@ static bool GetActiveLocalSession( const char* currentSession, char*& session, c
     return session != nullptr;
 }
 
-BackendDrm::BackendDrm( VkInstance vkInstance, DbusSession& bus )
+BackendDrm::BackendDrm( DbusSession& bus )
     : m_session( nullptr )
     , m_seat( nullptr )
 {

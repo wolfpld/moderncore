@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <mutex>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -8,6 +9,7 @@
 #include "util/Ansi.hpp"
 
 static LogLevel s_logLevel = LogLevel::Info;
+static std::recursive_mutex s_logLock;
 
 void SetLogLevel( LogLevel level )
 {
@@ -35,9 +37,10 @@ void MCoreLogMessage( LogLevel level, const char* fileName, size_t line, const c
     va_start( args, fmt );
 
     constexpr int FnLen = 20;
-
-    PrintLevel( level );
     const auto len = strlen( fileName );
+
+    s_logLock.lock();
+    PrintLevel( level );
     if( len > FnLen )
     {
         printf( "…%s:%-4zu| ", fileName + len - FnLen - 1, line );
@@ -49,6 +52,7 @@ void MCoreLogMessage( LogLevel level, const char* fileName, size_t line, const c
     vprintf( fmt, args );
     printf( ANSI_RESET "\n" );
     fflush( stdout );
+    s_logLock.unlock();
 
     va_end( args );
 

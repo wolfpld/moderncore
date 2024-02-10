@@ -5,21 +5,30 @@
 #include "DbusSession.hpp"
 #include "util/Logs.hpp"
 
+thread_local sd_bus* t_bus = nullptr;
+thread_local int t_count = 0;
+
 DbusSession::DbusSession()
-    : m_bus( nullptr )
 {
     ZoneScoped;
 
-    int ret = sd_bus_default_system( &m_bus );
-    if( ret < 0 )
+    if( t_count++ == 0 )
     {
-        mclog( LogLevel::Error, "Failed to connect to system bus: %s", strerror( -ret ) );
+        int ret = sd_bus_default_system( &t_bus );
+        if( ret < 0 )
+        {
+            mclog( LogLevel::Error, "Failed to connect to user bus: %s", strerror( -ret ) );
+        }
     }
 }
 
 DbusSession::~DbusSession()
 {
-    sd_bus_unref( m_bus );
+    if( --t_count == 0 )
+    {
+        sd_bus_unref( t_bus );
+        t_bus = nullptr;
+    }
 }
 
 DbusMessage DbusSession::Call( const char* dst, const char* path, const char* iface, const char* member, const char* sig, ... )
@@ -30,7 +39,7 @@ DbusMessage DbusSession::Call( const char* dst, const char* path, const char* if
     va_list ap;
     va_start( ap, sig );
 
-    auto res = sd_bus_call_methodv( m_bus, dst, path, iface, member, &err, &msg, sig, ap );
+    auto res = sd_bus_call_methodv( t_bus, dst, path, iface, member, &err, &msg, sig, ap );
     va_end( ap );
 
     if( res < 0 )
@@ -47,7 +56,7 @@ bool DbusSession::MatchSignal( const char* sender, const char* path, const char*
 {
     m_callbacks.emplace_back( std::make_unique<std::function<int(DbusMessage)>>( std::move( callback ) ) );
 
-    auto res = sd_bus_match_signal( m_bus, nullptr, sender, path, iface, member, []( sd_bus_message* msg, void* userdata, sd_bus_error* ) -> int
+    auto res = sd_bus_match_signal( t_bus, nullptr, sender, path, iface, member, []( sd_bus_message* msg, void* userdata, sd_bus_error* ) -> int
     {
         auto cb = (const std::function<int(DbusMessage)>*)userdata;
         return (*cb)( DbusMessage( msg ) );
@@ -65,7 +74,7 @@ bool DbusSession::GetProperty( const char* dst, const char* path, const char* if
 {
     sd_bus_error err = SD_BUS_ERROR_NULL;
     int val;
-    if( sd_bus_get_property_trivial( m_bus, dst, path, iface, member, &err, 'b', &val ) < 0 )
+    if( sd_bus_get_property_trivial( t_bus, dst, path, iface, member, &err, 'b', &val ) < 0 )
     {
         mclog( LogLevel::Error, "Failed to get property %s.%s: %s", iface, member, err.message );
         sd_bus_error_free( &err );
@@ -73,4 +82,9 @@ bool DbusSession::GetProperty( const char* dst, const char* path, const char* if
     }
     out = val;
     return true;
+}
+
+DbusSession::operator bool() const
+{
+    return t_bus != nullptr;
 }

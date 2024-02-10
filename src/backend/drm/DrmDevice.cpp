@@ -20,8 +20,7 @@
 constexpr int DriMajor = 226;
 
 DrmDevice::DrmDevice( const char* devName, DbusSession& bus, const char* sessionPath )
-    : m_bus( bus )
-    , m_sessionPath( sessionPath )
+    : m_sessionPath( sessionPath )
     , m_dev( 0 )
     , m_fd( -1 )
     , m_res( nullptr )
@@ -143,5 +142,9 @@ DrmDevice::~DrmDevice()
     gbm_device_destroy( m_gbm );
 
     if( m_fd >= 0 ) close( m_fd );
-    if( m_dev != 0 ) m_bus.Call( LoginService, m_sessionPath.c_str(), LoginSessionIface, "ReleaseDevice", "uu", major( m_dev ), minor( m_dev ) );
+    if( m_dev != 0 )
+    {
+        DbusSession bus;
+        bus.Call( LoginService, m_sessionPath.c_str(), LoginSessionIface, "ReleaseDevice", "uu", major( m_dev ), minor( m_dev ) );
+    }
 }

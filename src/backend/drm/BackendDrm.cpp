@@ -57,12 +57,13 @@ static bool GetActiveLocalSession( const char* currentSession, char*& session, c
     return session != nullptr;
 }
 
-BackendDrm::BackendDrm( DbusSession& bus )
+BackendDrm::BackendDrm()
     : m_session( nullptr )
     , m_seat( nullptr )
 {
     ZoneScoped;
 
+    DbusSession bus;
     CheckPanic( bus, "Cannot continue without a valid Dbus connection." );
 
     if( !GetCurrentSession( m_session, m_seat ) )

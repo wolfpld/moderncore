@@ -6,14 +6,13 @@
 
 #include "backend/Backend.hpp"
 
-class DbusSession;
 class DbusMessage;
 class DrmDevice;
 
 class BackendDrm : public Backend
 {
 public:
-    explicit BackendDrm( DbusSession& bus );
+    explicit BackendDrm();
     ~BackendDrm() override;
 
     void VulkanInit() override;

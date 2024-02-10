@@ -47,7 +47,6 @@ public:
     operator gbm_device*() const { return m_gbm; }
 
 private:
-    DbusSession& m_bus;
     std::string m_sessionPath;
 
     dev_t m_dev;

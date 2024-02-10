@@ -16,8 +16,6 @@
 #include "util/Logs.hpp"
 #include "util/RobinHood.hpp"
 
-#include "contrib/ini/ini.h"
-
 // Based on https://www.freedesktop.org/wiki/Specifications/cursor-spec/
 constexpr const char* CursorNames[] = {
     "left_ptr",         // Default

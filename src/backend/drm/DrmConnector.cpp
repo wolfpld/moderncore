@@ -4,6 +4,7 @@
 #include <format>
 #include <gbm.h>
 #include <string.h>
+#include <tracy/Tracy.hpp>
 #include <xf86drmMode.h>
 
 extern "C" {
@@ -30,6 +31,8 @@ DrmConnector::DrmConnector( DrmDevice& device, uint32_t id, const drmModeRes* re
     , m_monitor( "unknown" )
     , m_device( device )
 {
+    ZoneScoped;
+
     auto conn = drmModeGetConnector( device.Descriptor(), id );
     if( !conn ) throw ConnectorException( "Failed to get connector" );
     assert( id == conn->connector_id );
@@ -113,6 +116,7 @@ DrmConnector::~DrmConnector()
 
 bool DrmConnector::SetMode( const drmModeModeInfo& mode )
 {
+    ZoneScoped;
     assert( m_connected );
 
     auto& crtcs = m_device.GetCrtcs();

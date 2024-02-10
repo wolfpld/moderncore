@@ -5,6 +5,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
+#include <tracy/Tracy.hpp>
 #include <xf86drm.h>
 #include <xf86drmMode.h>
 
@@ -25,6 +26,8 @@ DrmDevice::DrmDevice( const char* devName, DbusSession& bus, const char* session
     , m_fd( -1 )
     , m_res( nullptr )
 {
+    ZoneScoped;
+
     struct stat st;
     if( stat( devName, &st ) != 0 ) throw DeviceException( std::format( "Failed to stat DRM device: {}", strerror( errno ) ) );
     if( major( st.st_rdev ) != DriMajor ) throw DeviceException( "Not a DRM device" );

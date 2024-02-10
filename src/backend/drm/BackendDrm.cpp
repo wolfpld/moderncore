@@ -2,6 +2,7 @@
 #include <string.h>
 #include <systemd/sd-device.h>
 #include <systemd/sd-login.h>
+#include <tracy/Tracy.hpp>
 #include <unistd.h>
 
 #include "BackendDrm.hpp"
@@ -60,6 +61,8 @@ BackendDrm::BackendDrm( DbusSession& bus )
     : m_session( nullptr )
     , m_seat( nullptr )
 {
+    ZoneScoped;
+
     CheckPanic( bus, "Cannot continue without a valid Dbus connection." );
 
     if( !GetCurrentSession( m_session, m_seat ) )

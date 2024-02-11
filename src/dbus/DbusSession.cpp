@@ -8,6 +8,7 @@
 
 thread_local sd_bus* t_bus = nullptr;
 thread_local int t_count = 0;
+thread_local std::vector<std::unique_ptr<std::function<int(DbusMessage)>>> t_callbacks;
 
 DbusSession::DbusSession()
 {
@@ -27,6 +28,12 @@ DbusSession::~DbusSession()
 {
     if( --t_count == 0 )
     {
+        if( !t_callbacks.empty() )
+        {
+            mclog( LogLevel::Debug, "Thread %i: clearing %zu DBus callbacks", gettid(), t_callbacks.size() );
+            t_callbacks.clear();
+        }
+
         sd_bus_unref( t_bus );
         t_bus = nullptr;
     }
@@ -55,13 +62,13 @@ DbusMessage DbusSession::Call( const char* dst, const char* path, const char* if
 
 bool DbusSession::MatchSignal( const char* sender, const char* path, const char* iface, const char* member, std::function<int(DbusMessage)> callback )
 {
-    m_callbacks.emplace_back( std::make_unique<std::function<int(DbusMessage)>>( std::move( callback ) ) );
+    t_callbacks.emplace_back( std::make_unique<std::function<int(DbusMessage)>>( std::move( callback ) ) );
 
     auto res = sd_bus_match_signal( t_bus, nullptr, sender, path, iface, member, []( sd_bus_message* msg, void* userdata, sd_bus_error* ) -> int
     {
         auto cb = (const std::function<int(DbusMessage)>*)userdata;
         return (*cb)( DbusMessage( msg ) );
-    }, m_callbacks.back().get() );
+    }, t_callbacks.back().get() );
 
     if( res < 0 )
     {

@@ -23,7 +23,4 @@ public:
     bool GetProperty( const char* dst, const char* path, const char* iface, const char* member, bool& out );
 
     operator bool() const;
-
-private:
-    std::vector<std::unique_ptr<std::function<int(DbusMessage)>>> m_callbacks;
 };

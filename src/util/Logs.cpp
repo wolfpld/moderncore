@@ -75,8 +75,8 @@ void MCoreLogMessage( LogLevel level, const char* fileName, size_t line, const c
             case LogLevel::Debug: TracyMessageC( tmp, res, 0x888888 ); break;
             case LogLevel::Info: TracyMessage( tmp, res ); break;
             case LogLevel::Warning: TracyMessageC( tmp, res, 0xFFFF00 ); break;
-            case LogLevel::Error: TracyMessageC( tmp, res, 0xFF0000 ); break;
-            case LogLevel::Fatal: TracyMessageC( tmp, res, 0xFF00FF ); break;
+            case LogLevel::Error: TracyMessageCS( tmp, res, 0xFF0000, 64 ); break;
+            case LogLevel::Fatal: TracyMessageCS( tmp, res, 0xFF00FF, 64 ); break;
             default: assert( false ); break;
             }
         }

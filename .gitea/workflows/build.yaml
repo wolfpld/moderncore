@@ -14,7 +14,7 @@ jobs:
         CC: clang
         CXX: clang++
     - run: ninja -C build
-    - run: ninja -C build install
+    - run: meson install -C build --skip-subprojects
       env:
         DESTDIR: ${{ github.workspace }}/dist
     - uses: actions/upload-artifact@v3

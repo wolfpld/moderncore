@@ -252,7 +252,7 @@ static void CallstackError( void*, const char* msg, int errnum )
     mclog( LogLevel::Debug, "Callstack error %i: %s", errnum, msg );
 }
 
-void PrintCallstack( const CallstackData& data )
+void PrintCallstack( const CallstackData& data, int skip )
 {
     mclog( LogLevel::Debug, "Callstack:" );
 
@@ -260,7 +260,7 @@ void PrintCallstack( const CallstackData& data )
     callstackIdx = 0;
     callstackExternal = false;
 
-    for( int i = 0; i < data.count; i++ )
+    for( int i = skip; i < data.count; i++ )
     {
         backtrace_pcinfo( state, (uintptr_t)data.addr[i], CallstackCallback, CallstackError, nullptr );
     }

@@ -12,5 +12,5 @@ struct CallstackData
     CallstackData name; \
     name.count = backtrace( name.addr, 64 );
 
-[[maybe_unused]] void PrintCallstack( const CallstackData& data );
+[[maybe_unused]] void PrintCallstack( const CallstackData& data, int skip = 0 );
 void ShowExternalCallstacks( bool show );

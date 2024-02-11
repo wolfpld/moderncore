@@ -12,11 +12,14 @@ int main( int argc, char** argv )
     struct option longOptions[] = {
         { "debug", no_argument, nullptr, 'd' },
         { "external", no_argument, nullptr, 'e' },
+        { "single-thread", no_argument, nullptr, 's' },
         {}
     };
 
+    bool singleThread = false;
+
     int opt;
-    while( ( opt = getopt_long( argc, argv, "de", longOptions, nullptr ) ) != -1 )
+    while( ( opt = getopt_long( argc, argv, "des", longOptions, nullptr ) ) != -1 )
     {
         switch (opt)
         {
@@ -26,12 +29,15 @@ int main( int argc, char** argv )
         case 'e':
             ShowExternalCallstacks( true );
             break;
+        case 's':
+            singleThread = true;
+            break;
         default:
             break;
         }
     }
 
-    Server server;
+    Server server( singleThread );
     server.Run();
     return 0;
 }

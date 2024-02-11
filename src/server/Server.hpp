@@ -16,7 +16,7 @@ class VlkInstance;
 class Server
 {
 public:
-    Server();
+    Server( bool singleThread );
     ~Server();
 
     static Server& Instance();

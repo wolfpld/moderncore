@@ -21,7 +21,7 @@ namespace
 Server* s_instance = nullptr;
 }
 
-Server::Server()
+Server::Server( bool singleThread )
 {
     ZoneScoped;
 
@@ -30,8 +30,8 @@ Server::Server()
 
     mclog( LogLevel::Debug, "Main thread: %i", gettid() );
 
-    auto dispatchThread = std::thread( [this] {
-        const auto cpus = std::thread::hardware_concurrency();
+    auto dispatchThread = std::thread( [this, singleThread] {
+        const auto cpus = singleThread ? 0 : std::thread::hardware_concurrency();
         m_dispatch = std::make_unique<TaskDispatch>( cpus == 0 ? 0 : cpus - 1, "Worker" );
     } );
 

@@ -44,6 +44,7 @@ DrmDevice::DrmDevice( const char* devName, DbusSession& bus, const char* session
     m_fd = fcntl( fd, F_DUPFD_CLOEXEC, 0 );
     if( m_fd < 0 ) throw DeviceException( std::format( "Failed to dup fd: {}", strerror( errno ) ) );
 
+    if( drmSetClientCap( m_fd, DRM_CLIENT_CAP_UNIVERSAL_PLANES, 1 ) != 0 ) throw DeviceException( "Failed to set universal planes cap" );
     if( drmSetClientCap( m_fd, DRM_CLIENT_CAP_ATOMIC, 1 ) != 0 ) throw DeviceException( "Failed to set atomic cap" );
 
     m_gbm = gbm_create_device( m_fd );

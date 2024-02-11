@@ -13,6 +13,7 @@ struct gbm_device;
 class DbusSession;
 class DrmConnector;
 class DrmCrtc;
+class DrmPlane;
 
 struct DrmCaps
 {
@@ -59,4 +60,5 @@ private:
 
     std::vector<std::unique_ptr<DrmCrtc>> m_crtcs;
     std::vector<std::unique_ptr<DrmConnector>> m_connectors;
+    std::vector<std::unique_ptr<DrmPlane>> m_planes;
 };

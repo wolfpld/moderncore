@@ -13,6 +13,7 @@
 #include "DrmCrtc.hpp"
 #include "DrmConnector.hpp"
 #include "DrmDevice.hpp"
+#include "DrmPlane.hpp"
 #include "dbus/DbusSession.hpp"
 #include "util/Logs.hpp"
 #include "util/Panic.hpp"
@@ -87,8 +88,24 @@ DrmDevice::DrmDevice( const char* devName, DbusSession& bus, const char* session
     mclog( LogLevel::Debug, "  sync obj: %" PRIu64, m_caps.syncObj );
     mclog( LogLevel::Debug, "  sync obj timeline: %" PRIu64, m_caps.syncObjTimeline );
 
-    mclog( LogLevel::Debug, "  %d connectors, %d crtcs, %d framebuffers", m_res->count_connectors, m_res->count_crtcs, m_res->count_fbs );
+    auto planeRes = drmModeGetPlaneResources( m_fd );
+    if( !planeRes ) throw DeviceException( "Failed to get plane resources" );
+
+    mclog( LogLevel::Debug, "  %d connectors, %d crtcs, %d framebuffers, %d planes", m_res->count_connectors, m_res->count_crtcs, m_res->count_fbs, planeRes->count_planes );
     mclog( LogLevel::Debug, "  min resolution: %dx%d, max resolution: %dx%d", m_res->min_width, m_res->min_height, m_res->max_width, m_res->max_height );
+
+    for( int i=0; i<planeRes->count_planes; i++ )
+    {
+        try
+        {
+            m_planes.emplace_back( std::make_unique<DrmPlane>( m_fd, planeRes->planes[i] ) );
+        }
+        catch( DrmPlane::PlaneException& e )
+        {
+            mclog( LogLevel::Warning, "  Skipping plane %d: %s", i, e.what() );
+        }
+    }
+    drmModeFreePlaneResources( planeRes );
 
     for( int i=0; i<m_res->count_crtcs; i++ )
     {
@@ -135,6 +152,7 @@ DrmDevice::DrmDevice( const char* devName, DbusSession& bus, const char* session
 
 DrmDevice::~DrmDevice()
 {
+    m_planes.clear();
     m_connectors.clear();
     m_crtcs.clear();
 

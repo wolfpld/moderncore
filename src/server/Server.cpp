@@ -53,15 +53,11 @@ Server::Server()
 
     if( waylandDpy )
     {
-        m_dispatch->Queue( [this] {
-            m_backend = std::make_unique<BackendWayland>();
-        } );
+        m_backend = std::make_unique<BackendWayland>();
     }
     else
     {
-        m_dispatch->Queue( [this] {
-            m_backend = std::make_unique<BackendDrm>();
-        } );
+        m_backend = std::make_unique<BackendDrm>();
     }
     m_dispatch->Sync();
 

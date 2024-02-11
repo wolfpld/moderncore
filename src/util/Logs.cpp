@@ -41,8 +41,10 @@ void MCoreLogMessage( LogLevel level, const char* fileName, size_t line, const c
     constexpr int FnLen = 20;
     const auto len = strlen( fileName );
 
+    // Get callstack outside of lock
+    const bool printCallstack = level >= LogLevel::Error && s_logLevel <= LogLevel::Callstack;
     CallstackData stack;
-    if( level >= LogLevel::Error ) stack.count = backtrace( stack.addr, 64 );
+    if( printCallstack ) stack.count = backtrace( stack.addr, 64 );
 
     s_logLock.lock();
     PrintLevel( level );
@@ -57,7 +59,7 @@ void MCoreLogMessage( LogLevel level, const char* fileName, size_t line, const c
     vprintf( fmt, args );
     printf( ANSI_RESET "\n" );
     fflush( stdout );
-    if( level >= LogLevel::Error ) PrintCallstack( stack, 1 );
+    if( printCallstack ) PrintCallstack( stack, 1 );
     s_logLock.unlock();
 
     va_end( args );

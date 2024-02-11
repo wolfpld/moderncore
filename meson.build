@@ -168,7 +168,7 @@ foreach shader : shaders
 endforeach
 
 if get_option('buildtype').startswith('debug')
-    add_project_arguments('-DDEBUG', language: 'cpp')
+    add_project_arguments('-DDEBUG', language: ['c', 'cpp'])
 endif
 
 compile_args = compiler.get_supported_arguments([
@@ -197,7 +197,7 @@ deps = [
 ]
 
 if get_option('tracy_enable')
-    add_project_arguments('-DTRACY_ENABLE', language: 'cpp')
+    add_project_arguments('-DTRACY_ENABLE', language: ['c', 'cpp'])
     if get_option('buildtype') != 'debugoptimized'
         message('Profiling builds should set --buildtype=debugoptimized')
     endif

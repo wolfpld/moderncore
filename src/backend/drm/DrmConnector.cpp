@@ -60,7 +60,7 @@ DrmConnector::DrmConnector( DrmDevice& device, uint32_t id, const drmModeRes* re
 
     if( !m_connected )
     {
-        mclog( LogLevel::Debug, "  Connector %s: disconnected", m_name.c_str() );
+        mclog( LogLevel::Info, "  Connector %s: disconnected", m_name.c_str() );
     }
     else
     {

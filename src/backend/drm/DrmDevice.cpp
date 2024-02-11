@@ -50,27 +50,27 @@ DrmDevice::DrmDevice( const char* devName, DbusSession& bus, const char* session
     m_gbm = gbm_create_device( m_fd );
     if( !m_gbm ) throw DeviceException( "Failed to create GBM device" );
 
-    auto ver = drmGetVersion( fd );
+    auto ver = drmGetVersion( m_fd );
     mclog( LogLevel::Info, "DRM device %s: %s (%s)", devName, ver->name ? ver->name : "unknown", ver->desc ? ver->desc : "unknown" );
     drmFreeVersion( ver );
 
     m_res = drmModeGetResources( m_fd );
     if( !m_res ) throw DeviceException( "Failed to get resources" );
 
-    drmGetCap( fd, DRM_CAP_DUMB_BUFFER, &m_caps.dumbBuffer );
-    drmGetCap( fd, DRM_CAP_VBLANK_HIGH_CRTC, &m_caps.vblankHighCrtc );
-    drmGetCap( fd, DRM_CAP_DUMB_PREFERRED_DEPTH, &m_caps.dumbPreferredDepth );
-    drmGetCap( fd, DRM_CAP_DUMB_PREFER_SHADOW, &m_caps.dumbPreferShadow );
-    drmGetCap( fd, DRM_CAP_PRIME, &m_caps.prime );
-    drmGetCap( fd, DRM_CAP_TIMESTAMP_MONOTONIC, &m_caps.timestampMonotonic );
-    drmGetCap( fd, DRM_CAP_ASYNC_PAGE_FLIP, &m_caps.asyncPageFlip );
-    drmGetCap( fd, DRM_CAP_CURSOR_WIDTH, &m_caps.cursorWidth );
-    drmGetCap( fd, DRM_CAP_CURSOR_HEIGHT, &m_caps.cursorHeight );
-    drmGetCap( fd, DRM_CAP_ADDFB2_MODIFIERS, &m_caps.addFB2Modifiers );
-    drmGetCap( fd, DRM_CAP_PAGE_FLIP_TARGET, &m_caps.pageFlipTarget );
-    drmGetCap( fd, DRM_CAP_CRTC_IN_VBLANK_EVENT, &m_caps.crtcInVblankEvent );
-    drmGetCap( fd, DRM_CAP_SYNCOBJ, &m_caps.syncObj );
-    drmGetCap( fd, DRM_CAP_SYNCOBJ_TIMELINE, &m_caps.syncObjTimeline );
+    drmGetCap( m_fd, DRM_CAP_DUMB_BUFFER, &m_caps.dumbBuffer );
+    drmGetCap( m_fd, DRM_CAP_VBLANK_HIGH_CRTC, &m_caps.vblankHighCrtc );
+    drmGetCap( m_fd, DRM_CAP_DUMB_PREFERRED_DEPTH, &m_caps.dumbPreferredDepth );
+    drmGetCap( m_fd, DRM_CAP_DUMB_PREFER_SHADOW, &m_caps.dumbPreferShadow );
+    drmGetCap( m_fd, DRM_CAP_PRIME, &m_caps.prime );
+    drmGetCap( m_fd, DRM_CAP_TIMESTAMP_MONOTONIC, &m_caps.timestampMonotonic );
+    drmGetCap( m_fd, DRM_CAP_ASYNC_PAGE_FLIP, &m_caps.asyncPageFlip );
+    drmGetCap( m_fd, DRM_CAP_CURSOR_WIDTH, &m_caps.cursorWidth );
+    drmGetCap( m_fd, DRM_CAP_CURSOR_HEIGHT, &m_caps.cursorHeight );
+    drmGetCap( m_fd, DRM_CAP_ADDFB2_MODIFIERS, &m_caps.addFB2Modifiers );
+    drmGetCap( m_fd, DRM_CAP_PAGE_FLIP_TARGET, &m_caps.pageFlipTarget );
+    drmGetCap( m_fd, DRM_CAP_CRTC_IN_VBLANK_EVENT, &m_caps.crtcInVblankEvent );
+    drmGetCap( m_fd, DRM_CAP_SYNCOBJ, &m_caps.syncObj );
+    drmGetCap( m_fd, DRM_CAP_SYNCOBJ_TIMELINE, &m_caps.syncObjTimeline );
 
     mclog( LogLevel::Debug, "  dumb buffer: %" PRIu64, m_caps.dumbBuffer );
     mclog( LogLevel::Debug, "  vblank high crtc: %" PRIu64, m_caps.vblankHighCrtc );

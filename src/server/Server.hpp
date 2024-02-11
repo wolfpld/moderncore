@@ -33,7 +33,7 @@ public:
 private:
     void Render();
 
-    void SetupGpus();
+    void SetupGpus( bool skipSoftware );
     void InitConnectorsInRenderables();
 
     std::unique_ptr<TaskDispatch> m_dispatch;

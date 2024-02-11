@@ -18,6 +18,15 @@
 
 namespace
 {
+bool IsDeviceHardware( const VkPhysicalDeviceProperties& properties )
+{
+    return properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU ||
+           properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU;
+}
+}
+
+namespace
+{
 Server* s_instance = nullptr;
 }
 
@@ -49,7 +58,7 @@ Server::Server( bool singleThread )
     }
     dispatchThread.join();
 
-    SetupGpus();
+    SetupGpus( !waylandDpy );
 
     if( waylandDpy )
     {
@@ -93,29 +102,42 @@ void Server::Render()
     for( auto& gpu : m_gpus ) gpu->Render();
 }
 
-void Server::SetupGpus()
+void Server::SetupGpus( bool skipSoftware )
 {
     ZoneScoped;
 
     const auto& devices = m_vkInstance->QueryPhysicalDevices();
+    std::vector<VkPhysicalDeviceProperties> props( devices.size() );
 
     mclog( LogLevel::Info, "Found %d physical devices", devices.size() );
     int idx = 0;
+    int hw = 0;
     for( const auto& device : devices )
     {
-        VkPhysicalDeviceProperties properties;
-        vkGetPhysicalDeviceProperties( device, &properties );
-        mclog( LogLevel::Info, "  %d: %s", idx++, properties.deviceName );
+        vkGetPhysicalDeviceProperties( device, &props[idx] );
+        mclog( LogLevel::Info, "  %d: %s", idx, props[idx].deviceName );
+        if( IsDeviceHardware( props[idx] ) ) hw++;
+        idx++;
     }
 
-    m_gpus.resize( devices.size() );
+    const auto num = skipSoftware ? hw : devices.size();
+    m_gpus.resize( num );
     idx = 0;
+    int vkIdx = 0;
     for( const auto& dev : devices )
     {
-        m_dispatch->Queue( [this, dev, idx] {
-            m_gpus[idx] = std::make_shared<GpuDevice>( *m_vkInstance, dev );
-        } );
-        idx++;
+        if( !skipSoftware || IsDeviceHardware( props[vkIdx] ) )
+        {
+            m_dispatch->Queue( [this, dev, idx] {
+                m_gpus[idx] = std::make_shared<GpuDevice>( *m_vkInstance, dev );
+            } );
+            idx++;
+        }
+        else
+        {
+            mclog( LogLevel::Info, "Skipping software device: %s", props[vkIdx].deviceName );
+        }
+        vkIdx++;
     }
 }
 

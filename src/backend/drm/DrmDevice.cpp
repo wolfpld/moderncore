@@ -32,7 +32,7 @@ DrmDevice::DrmDevice( const char* devName, DbusSession& bus, const char* session
     if( major( st.st_rdev ) != DriMajor ) throw DeviceException( "Not a DRM device" );
 
     auto devMsg = bus.Call( LoginService, sessionPath, LoginSessionIface, "TakeDevice", "uu", major( st.st_rdev ), minor( st.st_rdev ) );
-    if( !devMsg ) throw DeviceException( std::format( "Failed to take device" ) );
+    if( !devMsg ) throw DeviceException( "Failed to take device" );
     m_dev = st.st_rdev;
 
     int fd;

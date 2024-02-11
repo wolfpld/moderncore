@@ -124,7 +124,7 @@ DrmDevice::DrmDevice( const char* devName, DbusSession& bus, const char* session
         found = true;
         break;
     }
-    CheckPanic( found, "There are no displays connected" );
+    if( !found ) mclog( LogLevel::Warning, "  No connected displays found" );
 
     for( auto& crtc : m_crtcs )
     {

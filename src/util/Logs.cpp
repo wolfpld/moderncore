@@ -21,6 +21,7 @@ static void PrintLevel( LogLevel level )
 {
     switch( level )
     {
+    case LogLevel::Callstack: printf( ANSI_CYAN "[STACK] " ); break;
     case LogLevel::Debug: printf( ANSI_BOLD ANSI_BLACK "[DEBUG] " ); break;
     case LogLevel::Info: printf( " [INFO] " ); break;
     case LogLevel::Warning: printf( ANSI_BOLD ANSI_YELLOW " [WARN] " ); break;
@@ -62,20 +63,24 @@ void MCoreLogMessage( LogLevel level, const char* fileName, size_t line, const c
     va_end( args );
 
 #ifdef TRACY_ENABLE
-    va_start( args, fmt );
-    char tmp[8*1024];
-    const auto res = vsnprintf( tmp, sizeof( tmp ), fmt, args );
-    if( res > 0 )
+    if( level != LogLevel::Callstack )
     {
-        switch( level )
+        va_start( args, fmt );
+        char tmp[8*1024];
+        const auto res = vsnprintf( tmp, sizeof( tmp ), fmt, args );
+        if( res > 0 )
         {
-        case LogLevel::Debug: TracyMessageC( tmp, res, 0x888888 ); break;
-        case LogLevel::Info: TracyMessage( tmp, res ); break;
-        case LogLevel::Warning: TracyMessageC( tmp, res, 0xFFFF00 ); break;
-        case LogLevel::Error: TracyMessageC( tmp, res, 0xFF0000 ); break;
-        case LogLevel::Fatal: TracyMessageC( tmp, res, 0xFF00FF ); break;
+            switch( level )
+            {
+            case LogLevel::Debug: TracyMessageC( tmp, res, 0x888888 ); break;
+            case LogLevel::Info: TracyMessage( tmp, res ); break;
+            case LogLevel::Warning: TracyMessageC( tmp, res, 0xFFFF00 ); break;
+            case LogLevel::Error: TracyMessageC( tmp, res, 0xFF0000 ); break;
+            case LogLevel::Fatal: TracyMessageC( tmp, res, 0xFF00FF ); break;
+            default: assert( false ); break;
+            }
         }
+        va_end( args );
     }
-    va_end( args );
 #endif
 }

@@ -4,6 +4,7 @@
 
 enum class LogLevel
 {
+    Callstack,
     Debug,
     Info,
     Warning,

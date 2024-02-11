@@ -21,7 +21,7 @@ int main( int argc, char** argv )
         switch (opt)
         {
         case 'd':
-            SetLogLevel( LogLevel::Debug );
+            SetLogLevel( LogLevel::Callstack );
             break;
         case 'e':
             ShowExternalCallstacks( true );

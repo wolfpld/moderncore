@@ -232,16 +232,16 @@ static int CallstackCallback( void*, uintptr_t pc, const char* filename, int lin
 
     if( callstackShowExternal )
     {
-        mclog( LogLevel::Debug, "%s", msg.c_str() );
+        mclog( LogLevel::Callstack, "%s", msg.c_str() );
     }
     else if( !isExternal )
     {
         if( callstackExternal )
         {
-            mclog( LogLevel::Debug, "…" );
+            mclog( LogLevel::Callstack, "…" );
             callstackExternal = false;
         }
-        mclog( LogLevel::Debug, "%s", msg.c_str() );
+        mclog( LogLevel::Callstack, "%s", msg.c_str() );
     }
 
     return 0;
@@ -249,12 +249,12 @@ static int CallstackCallback( void*, uintptr_t pc, const char* filename, int lin
 
 static void CallstackError( void*, const char* msg, int errnum )
 {
-    mclog( LogLevel::Debug, "Callstack error %i: %s", errnum, msg );
+    mclog( LogLevel::Callstack, "Callstack error %i: %s", errnum, msg );
 }
 
 void PrintCallstack( const CallstackData& data, int skip )
 {
-    mclog( LogLevel::Debug, "Callstack:" );
+    mclog( LogLevel::Callstack, "Callstack:" );
 
     static auto state = backtrace_create_state( nullptr, 0, nullptr, nullptr );
     callstackIdx = 0;

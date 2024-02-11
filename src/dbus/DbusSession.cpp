@@ -1,5 +1,6 @@
 #include <systemd/sd-bus.h>
 #include <tracy/Tracy.hpp>
+#include <unistd.h>
 
 #include "DbusMessage.hpp"
 #include "DbusSession.hpp"
@@ -66,6 +67,10 @@ bool DbusSession::MatchSignal( const char* sender, const char* path, const char*
     {
         mclog( LogLevel::Error, "Failed to match signal %s.%s: %s", iface, member, strerror( -res ) );
         return false;
+    }
+    else
+    {
+        mclog( LogLevel::Debug, "Thread %i: Matched signal %s.%s", gettid(), iface, member );
     }
     return true;
 }

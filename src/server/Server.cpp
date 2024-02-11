@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <tracy/Tracy.hpp>
 #include <thread>
+#include <unistd.h>
 
 #include "GpuDevice.hpp"
 #include "Server.hpp"
@@ -26,6 +27,8 @@ Server::Server()
 
     assert( !s_instance );
     s_instance = this;
+
+    mclog( LogLevel::Debug, "Main thread: %i", gettid() );
 
     auto dispatchThread = std::thread( [this] {
         const auto cpus = std::thread::hardware_concurrency();

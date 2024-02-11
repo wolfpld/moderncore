@@ -41,6 +41,9 @@ DbusSession::~DbusSession()
 
 DbusMessage DbusSession::Call( const char* dst, const char* path, const char* iface, const char* member, const char* sig, ... )
 {
+    ZoneScoped;
+    ZoneTextF( "DBus call %s.%s", iface, member );
+
     sd_bus_error err = SD_BUS_ERROR_NULL;
     sd_bus_message* msg = nullptr;
 
@@ -62,6 +65,9 @@ DbusMessage DbusSession::Call( const char* dst, const char* path, const char* if
 
 bool DbusSession::MatchSignal( const char* sender, const char* path, const char* iface, const char* member, std::function<int(DbusMessage)> callback )
 {
+    ZoneScoped;
+    ZoneTextF( "DBus match %s.%s", iface, member );
+
     t_callbacks.emplace_back( std::make_unique<std::function<int(DbusMessage)>>( std::move( callback ) ) );
 
     auto res = sd_bus_match_signal( t_bus, nullptr, sender, path, iface, member, []( sd_bus_message* msg, void* userdata, sd_bus_error* ) -> int
@@ -84,6 +90,9 @@ bool DbusSession::MatchSignal( const char* sender, const char* path, const char*
 
 bool DbusSession::GetProperty( const char* dst, const char* path, const char* iface, const char* member, bool& out )
 {
+    ZoneScoped;
+    ZoneTextF( "DBus get property %s.%s", iface, member );
+
     sd_bus_error err = SD_BUS_ERROR_NULL;
     int val;
     if( sd_bus_get_property_trivial( t_bus, dst, path, iface, member, &err, 'b', &val ) < 0 )

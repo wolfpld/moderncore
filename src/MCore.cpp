@@ -9,6 +9,10 @@ int main( int argc, char** argv )
 {
     printf( "Starting " ANSI_BOLD ANSI_ITALIC "Modern Core" ANSI_RESET "...\n\n" );
 
+#ifdef NDEBUG
+    SetLogLevel( LogLevel::Error );
+#endif
+
     struct option longOptions[] = {
         { "debug", no_argument, nullptr, 'd' },
         { "external", no_argument, nullptr, 'e' },

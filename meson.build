@@ -169,6 +169,8 @@ endforeach
 
 if get_option('buildtype').startswith('debug')
     add_project_arguments('-DDEBUG', language: ['c', 'cpp'])
+else
+    add_project_arguments('-DNDEBUG', language: ['c', 'cpp'])
 endif
 
 compile_args = compiler.get_supported_arguments([

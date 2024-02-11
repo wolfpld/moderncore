@@ -10,7 +10,6 @@
 #include "VlkError.hpp"
 #include "VlkInstance.hpp"
 #include "VlkProxy.hpp"
-#include "util/Callstack.hpp"
 #include "util/Logs.hpp"
 
 constexpr std::array validationLayers = { "VK_LAYER_KHRONOS_validation" };
@@ -76,11 +75,6 @@ static bool HasValidationLayers()
     }
 
     mclog( loglevel, "%s %s", t, pCallbackData->pMessage );
-    if( severity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT )
-    {
-        GetCallstack( callstack );
-        PrintCallstack( callstack );
-    }
     return VK_FALSE;
 }
 

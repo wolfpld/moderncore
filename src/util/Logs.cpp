@@ -5,8 +5,9 @@
 #include <string.h>
 #include <tracy/Tracy.hpp>
 
+#include "Ansi.hpp"
+#include "Callstack.hpp"
 #include "Logs.hpp"
-#include "util/Ansi.hpp"
 
 static LogLevel s_logLevel = LogLevel::Info;
 static std::recursive_mutex s_logLock;
@@ -39,6 +40,9 @@ void MCoreLogMessage( LogLevel level, const char* fileName, size_t line, const c
     constexpr int FnLen = 20;
     const auto len = strlen( fileName );
 
+    CallstackData stack;
+    if( level >= LogLevel::Error ) stack.count = backtrace( stack.addr, 64 );
+
     s_logLock.lock();
     PrintLevel( level );
     if( len > FnLen )
@@ -52,6 +56,7 @@ void MCoreLogMessage( LogLevel level, const char* fileName, size_t line, const c
     vprintf( fmt, args );
     printf( ANSI_RESET "\n" );
     fflush( stdout );
+    if( level >= LogLevel::Error ) PrintCallstack( stack, 1 );
     s_logLock.unlock();
 
     va_end( args );

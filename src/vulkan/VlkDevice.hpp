@@ -11,6 +11,7 @@
 
 class VlkCommandBuffer;
 class VlkCommandPool;
+class VlkInstance;
 
 class VlkDevice
 {
@@ -32,7 +33,7 @@ public:
         bool sharePresent;
     };
 
-    VlkDevice( VkInstance instance, VkPhysicalDevice physDev, int flags, VkSurfaceKHR presentSurface = VK_NULL_HANDLE );
+    VlkDevice( VlkInstance& instance, VkPhysicalDevice physDev, int flags, VkSurfaceKHR presentSurface = VK_NULL_HANDLE );
     ~VlkDevice();
 
     NoCopy( VlkDevice );

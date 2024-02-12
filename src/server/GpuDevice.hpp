@@ -7,11 +7,12 @@
 #include "vulkan/VlkDevice.hpp"
 
 class Connector;
+class VlkInstance;
 
 class GpuDevice
 {
 public:
-    explicit GpuDevice( VkInstance instance, VkPhysicalDevice physDev );
+    explicit GpuDevice( VlkInstance& instance, VkPhysicalDevice physDev );
     ~GpuDevice();
 
     NoCopy( GpuDevice );

@@ -8,11 +8,12 @@
 #include "VlkCommandPool.hpp"
 #include "VlkDevice.hpp"
 #include "VlkError.hpp"
+#include "VlkInstance.hpp"
 #include "VlkPhysicalDevice.hpp"
 #include "util/Panic.hpp"
 #include "util/Tracy.hpp"
 
-VlkDevice::VlkDevice( VkInstance instance, VkPhysicalDevice physDev, int flags, VkSurfaceKHR presentSurface )
+VlkDevice::VlkDevice( VlkInstance& instance, VkPhysicalDevice physDev, int flags, VkSurfaceKHR presentSurface )
     : m_physDev( physDev )
     , m_queueInfo {}
     , m_queue {}

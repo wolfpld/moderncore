@@ -6,8 +6,9 @@
 #include "GpuDevice.hpp"
 #include "util/Tracy.hpp"
 #include "vulkan/ext/DeviceInfo.hpp"
+#include "vulkan/VlkInstance.hpp"
 
-GpuDevice::GpuDevice( VkInstance instance, VkPhysicalDevice physDev )
+GpuDevice::GpuDevice( VlkInstance& instance, VkPhysicalDevice physDev )
     : m_device( instance, physDev, VlkDevice::RequireGraphic | VlkDevice::RequirePresent )
 {
     PrintPhysicalDeviceInfo( physDev );

@@ -21,9 +21,13 @@ public:
 
     [[nodiscard]] std::vector<VkPhysicalDevice> QueryPhysicalDevices() const;
 
+    [[nodiscard]] auto Type() const { return m_instanceType; }
+
     operator VkInstance() const { return m_instance; }
 
 private:
     VkInstance m_instance;
     VkDebugUtilsMessengerEXT m_debugMessenger;
+
+    VlkInstanceType m_instanceType;
 };

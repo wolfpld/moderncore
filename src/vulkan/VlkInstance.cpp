@@ -80,6 +80,7 @@ static bool HasValidationLayers()
 
 VlkInstance::VlkInstance( VlkInstanceType instanceType )
     : m_debugMessenger( VK_NULL_HANDLE )
+    , m_instanceType( instanceType )
 {
     ZoneScoped;
 

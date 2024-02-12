@@ -62,34 +62,6 @@ DrmDevice::DrmDevice( const char* devName, DbusSession& bus, const char* session
     m_res = drmModeGetResources( m_fd );
     if( !m_res ) throw DeviceException( "Failed to get resources" );
 
-    drmGetCap( m_fd, DRM_CAP_DUMB_BUFFER, &m_caps.dumbBuffer );
-    drmGetCap( m_fd, DRM_CAP_VBLANK_HIGH_CRTC, &m_caps.vblankHighCrtc );
-    drmGetCap( m_fd, DRM_CAP_DUMB_PREFERRED_DEPTH, &m_caps.dumbPreferredDepth );
-    drmGetCap( m_fd, DRM_CAP_DUMB_PREFER_SHADOW, &m_caps.dumbPreferShadow );
-    drmGetCap( m_fd, DRM_CAP_PRIME, &m_caps.prime );
-    drmGetCap( m_fd, DRM_CAP_TIMESTAMP_MONOTONIC, &m_caps.timestampMonotonic );
-    drmGetCap( m_fd, DRM_CAP_ASYNC_PAGE_FLIP, &m_caps.asyncPageFlip );
-    drmGetCap( m_fd, DRM_CAP_CURSOR_WIDTH, &m_caps.cursorWidth );
-    drmGetCap( m_fd, DRM_CAP_CURSOR_HEIGHT, &m_caps.cursorHeight );
-    drmGetCap( m_fd, DRM_CAP_PAGE_FLIP_TARGET, &m_caps.pageFlipTarget );
-    drmGetCap( m_fd, DRM_CAP_CRTC_IN_VBLANK_EVENT, &m_caps.crtcInVblankEvent );
-    drmGetCap( m_fd, DRM_CAP_SYNCOBJ, &m_caps.syncObj );
-    drmGetCap( m_fd, DRM_CAP_SYNCOBJ_TIMELINE, &m_caps.syncObjTimeline );
-
-    mclog( LogLevel::Debug, "  dumb buffer: %" PRIu64, m_caps.dumbBuffer );
-    mclog( LogLevel::Debug, "  vblank high crtc: %" PRIu64, m_caps.vblankHighCrtc );
-    mclog( LogLevel::Debug, "  dumb preferred depth: %" PRIu64, m_caps.dumbPreferredDepth );
-    mclog( LogLevel::Debug, "  dumb prefer shadow: %" PRIu64, m_caps.dumbPreferShadow );
-    mclog( LogLevel::Debug, "  prime: %" PRIu64, m_caps.prime );
-    mclog( LogLevel::Debug, "  timestamp monotonic: %" PRIu64, m_caps.timestampMonotonic );
-    mclog( LogLevel::Debug, "  async page flip: %" PRIu64, m_caps.asyncPageFlip );
-    mclog( LogLevel::Debug, "  cursor width: %" PRIu64, m_caps.cursorWidth );
-    mclog( LogLevel::Debug, "  cursor height: %" PRIu64, m_caps.cursorHeight );
-    mclog( LogLevel::Debug, "  page flip target: %" PRIu64, m_caps.pageFlipTarget );
-    mclog( LogLevel::Debug, "  crtc in vblank event: %" PRIu64, m_caps.crtcInVblankEvent );
-    mclog( LogLevel::Debug, "  sync obj: %" PRIu64, m_caps.syncObj );
-    mclog( LogLevel::Debug, "  sync obj timeline: %" PRIu64, m_caps.syncObjTimeline );
-
     auto planeRes = drmModeGetPlaneResources( m_fd );
     if( !planeRes ) throw DeviceException( "Failed to get plane resources" );
 

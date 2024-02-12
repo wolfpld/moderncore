@@ -15,23 +15,6 @@ class DrmConnector;
 class DrmCrtc;
 class DrmPlane;
 
-struct DrmCaps
-{
-    uint64_t dumbBuffer;
-    uint64_t vblankHighCrtc;
-    uint64_t dumbPreferredDepth;
-    uint64_t dumbPreferShadow;
-    uint64_t prime;
-    uint64_t timestampMonotonic;
-    uint64_t asyncPageFlip;
-    uint64_t cursorWidth;
-    uint64_t cursorHeight;
-    uint64_t pageFlipTarget;
-    uint64_t crtcInVblankEvent;
-    uint64_t syncObj;
-    uint64_t syncObjTimeline;
-};
-
 class DrmDevice
 {
 public:
@@ -53,8 +36,6 @@ private:
     int m_fd;
 
     gbm_device* m_gbm;
-
-    DrmCaps m_caps;
     drmModeRes* m_res;
 
     std::vector<std::unique_ptr<DrmCrtc>> m_crtcs;

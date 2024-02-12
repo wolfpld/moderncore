@@ -59,6 +59,14 @@ DrmDevice::DrmDevice( const char* devName, DbusSession& bus, const char* session
     mclog( LogLevel::Info, "DRM device %s: %s (%s)", devName, ver->name ? ver->name : "unknown", ver->desc ? ver->desc : "unknown" );
     drmFreeVersion( ver );
 
+    drmDevicePtr drmDev;
+    drmGetDevice( m_fd, &drmDev );
+    if( drmDev->bustype != DRM_BUS_PCI ) throw DeviceException( "Not a PCI device" );
+
+    const auto& pci = drmDev->businfo.pci;
+    mclog( LogLevel::Info, "  PCI bus: %04x:%02x:%02x.%x", pci->domain, pci->bus, pci->dev, pci->func );
+    drmFreeDevice( &drmDev );
+
     m_res = drmModeGetResources( m_fd );
     if( !m_res ) throw DeviceException( "Failed to get resources" );
 

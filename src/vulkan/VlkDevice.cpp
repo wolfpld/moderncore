@@ -274,10 +274,22 @@ VlkDevice::VlkDevice( VlkInstance& instance, VkPhysicalDevice physDev, int flags
         queueCreate.emplace_back( qi );
     }
 
-    constexpr std::array deviceExtensions {
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-        VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME
-    };
+    std::vector<const char*> deviceExtensions = { VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME };
+
+    if( instance.Type() == VlkInstanceType::Wayland )
+    {
+        deviceExtensions.emplace_back( VK_KHR_SWAPCHAIN_EXTENSION_NAME );
+    }
+    else
+    {
+        deviceExtensions.emplace_back( VK_EXT_PCI_BUS_INFO_EXTENSION_NAME );
+        deviceExtensions.emplace_back( VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME );
+        deviceExtensions.emplace_back( VK_EXT_EXTERNAL_MEMORY_DMA_BUF_EXTENSION_NAME );
+        deviceExtensions.emplace_back( VK_EXT_IMAGE_DRM_FORMAT_MODIFIER_EXTENSION_NAME );
+        deviceExtensions.emplace_back( VK_KHR_IMAGE_FORMAT_LIST_EXTENSION_NAME );
+        deviceExtensions.emplace_back( VK_EXT_QUEUE_FAMILY_FOREIGN_EXTENSION_NAME );
+        deviceExtensions.emplace_back( VK_KHR_EXTERNAL_SEMAPHORE_FD_EXTENSION_NAME );
+    }
 
     VkDeviceCreateInfo devInfo = { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
     devInfo.queueCreateInfoCount = (uint32_t)queueCreate.size();

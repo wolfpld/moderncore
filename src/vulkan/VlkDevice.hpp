@@ -3,6 +3,7 @@
 #include <array>
 #include <assert.h>
 #include <memory>
+#include <stdexcept>
 #include <vulkan/vulkan.h>
 
 #include "VlkQueueType.hpp"
@@ -32,6 +33,8 @@ public:
         bool shareTransfer;
         bool sharePresent;
     };
+
+    struct DeviceException : public std::runtime_error { explicit DeviceException( const std::string& msg ) : std::runtime_error( msg ) {} };
 
     VlkDevice( VlkInstance& instance, VkPhysicalDevice physDev, int flags, VkSurfaceKHR presentSurface = VK_NULL_HANDLE );
     ~VlkDevice();

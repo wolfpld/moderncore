@@ -129,7 +129,14 @@ void Server::SetupGpus( bool skipSoftware )
         if( !skipSoftware || IsDeviceHardware( props[vkIdx] ) )
         {
             m_dispatch->Queue( [this, dev, idx] {
-                m_gpus[idx] = std::make_shared<GpuDevice>( *m_vkInstance, dev );
+                try
+                {
+                    m_gpus[idx] = std::make_shared<GpuDevice>( *m_vkInstance, dev );
+                }
+                catch( const std::exception& e )
+                {
+                    mclog( LogLevel::Fatal, "Failed to initialize GPU: %s", e.what() );
+                }
             } );
             idx++;
         }

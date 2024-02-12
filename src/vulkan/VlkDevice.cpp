@@ -1,5 +1,6 @@
 #include <array>
 #include <assert.h>
+#include <format>
 #include <string.h>
 #include <tracy/Tracy.hpp>
 #include <vector>
@@ -284,7 +285,8 @@ VlkDevice::VlkDevice( VlkInstance& instance, VkPhysicalDevice physDev, int flags
     devInfo.enabledExtensionCount = (uint32_t)deviceExtensions.size();
     devInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
-    VkVerify( vkCreateDevice( physDev, &devInfo, nullptr, &m_device ) );
+    auto res = vkCreateDevice( physDev, &devInfo, nullptr, &m_device );
+    if( res != VK_SUCCESS ) throw DeviceException( std::format( "Failed to create logical device ({}).", string_VkResult( res ) ) );
 
     if( m_queueInfo[(int)QueueType::Graphic].idx >= 0 )
     {

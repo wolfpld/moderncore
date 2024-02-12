@@ -26,7 +26,6 @@ struct DrmCaps
     uint64_t asyncPageFlip;
     uint64_t cursorWidth;
     uint64_t cursorHeight;
-    uint64_t addFB2Modifiers;
     uint64_t pageFlipTarget;
     uint64_t crtcInVblankEvent;
     uint64_t syncObj;

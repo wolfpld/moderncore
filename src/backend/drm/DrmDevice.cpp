@@ -45,6 +45,10 @@ DrmDevice::DrmDevice( const char* devName, DbusSession& bus, const char* session
     m_fd = fcntl( fd, F_DUPFD_CLOEXEC, 0 );
     if( m_fd < 0 ) throw DeviceException( std::format( "Failed to dup fd: {}", strerror( errno ) ) );
 
+    uint64_t cap;
+    drmGetCap( m_fd, DRM_CAP_ADDFB2_MODIFIERS, &cap );
+    if( !cap ) throw DeviceException( "Device does not support modifiers" );
+
     if( drmSetClientCap( m_fd, DRM_CLIENT_CAP_UNIVERSAL_PLANES, 1 ) != 0 ) throw DeviceException( "Failed to set universal planes cap" );
     if( drmSetClientCap( m_fd, DRM_CLIENT_CAP_ATOMIC, 1 ) != 0 ) throw DeviceException( "Failed to set atomic cap" );
 
@@ -67,7 +71,6 @@ DrmDevice::DrmDevice( const char* devName, DbusSession& bus, const char* session
     drmGetCap( m_fd, DRM_CAP_ASYNC_PAGE_FLIP, &m_caps.asyncPageFlip );
     drmGetCap( m_fd, DRM_CAP_CURSOR_WIDTH, &m_caps.cursorWidth );
     drmGetCap( m_fd, DRM_CAP_CURSOR_HEIGHT, &m_caps.cursorHeight );
-    drmGetCap( m_fd, DRM_CAP_ADDFB2_MODIFIERS, &m_caps.addFB2Modifiers );
     drmGetCap( m_fd, DRM_CAP_PAGE_FLIP_TARGET, &m_caps.pageFlipTarget );
     drmGetCap( m_fd, DRM_CAP_CRTC_IN_VBLANK_EVENT, &m_caps.crtcInVblankEvent );
     drmGetCap( m_fd, DRM_CAP_SYNCOBJ, &m_caps.syncObj );
@@ -82,7 +85,6 @@ DrmDevice::DrmDevice( const char* devName, DbusSession& bus, const char* session
     mclog( LogLevel::Debug, "  async page flip: %" PRIu64, m_caps.asyncPageFlip );
     mclog( LogLevel::Debug, "  cursor width: %" PRIu64, m_caps.cursorWidth );
     mclog( LogLevel::Debug, "  cursor height: %" PRIu64, m_caps.cursorHeight );
-    mclog( LogLevel::Debug, "  addfb2 modifiers: %" PRIu64, m_caps.addFB2Modifiers );
     mclog( LogLevel::Debug, "  page flip target: %" PRIu64, m_caps.pageFlipTarget );
     mclog( LogLevel::Debug, "  crtc in vblank event: %" PRIu64, m_caps.crtcInVblankEvent );
     mclog( LogLevel::Debug, "  sync obj: %" PRIu64, m_caps.syncObj );

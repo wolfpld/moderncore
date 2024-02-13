@@ -1,4 +1,5 @@
 #include "PciBus.hpp"
+#include "server/GpuDevice.hpp"
 #include "server/Server.hpp"
 #include "vulkan/VlkInstance.hpp"
 
@@ -22,4 +23,17 @@ VkPhysicalDevice GetPhysicalDeviceForPciBus( uint16_t domain, uint8_t bus, uint8
     }
 
     return VK_NULL_HANDLE;
+}
+
+std::shared_ptr<GpuDevice> GetGpuDeviceForPhysicalDevice( VkPhysicalDevice dev )
+{
+    auto& gpus = Server::Instance().Gpus();
+    for( auto& gpu : gpus )
+    {
+        if( gpu->Device() == dev )
+        {
+            return gpu;
+        }
+    }
+    return {};
 }

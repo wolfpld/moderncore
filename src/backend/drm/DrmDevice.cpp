@@ -1,7 +1,6 @@
 #include <fcntl.h>
 #include <format>
 #include <gbm.h>
-#include <inttypes.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
@@ -15,8 +14,10 @@
 #include "DrmDevice.hpp"
 #include "DrmPlane.hpp"
 #include "dbus/DbusSession.hpp"
+#include "server/GpuDevice.hpp"
 #include "util/Logs.hpp"
 #include "util/Panic.hpp"
+#include "vulkan/ext/PciBus.hpp"
 
 constexpr int DriMajor = 226;
 
@@ -62,10 +63,14 @@ DrmDevice::DrmDevice( const char* devName, DbusSession& bus, const char* session
     drmDevicePtr drmDev;
     drmGetDevice( m_fd, &drmDev );
     if( drmDev->bustype != DRM_BUS_PCI ) throw DeviceException( "Not a PCI device" );
-
     const auto& pci = drmDev->businfo.pci;
     mclog( LogLevel::Info, "  PCI bus: %04x:%02x:%02x.%x", pci->domain, pci->bus, pci->dev, pci->func );
+    m_gpu = GetGpuForPciBus( pci->domain, pci->bus, pci->dev, pci->func );
     drmFreeDevice( &drmDev );
+    if( !m_gpu ) throw DeviceException( "No matching Vulkan GPU found" );
+    VkPhysicalDeviceProperties properties;
+    vkGetPhysicalDeviceProperties( m_gpu->Device(), &properties );
+    mclog( LogLevel::Info, "  Vulkan device: %s", properties.deviceName );
 
     m_res = drmModeGetResources( m_fd );
     if( !m_res ) throw DeviceException( "Failed to get resources" );

@@ -2,7 +2,6 @@
 
 #include <memory>
 #include <stdexcept>
-#include <stdint.h>
 #include <string>
 #include <sys/types.h>
 #include <vector>
@@ -14,6 +13,7 @@ class DbusSession;
 class DrmConnector;
 class DrmCrtc;
 class DrmPlane;
+class GpuDevice;
 
 class DrmDevice
 {
@@ -37,6 +37,8 @@ private:
 
     gbm_device* m_gbm;
     drmModeRes* m_res;
+
+    std::shared_ptr<GpuDevice> m_gpu;
 
     std::vector<std::unique_ptr<DrmCrtc>> m_crtcs;
     std::vector<std::unique_ptr<DrmConnector>> m_connectors;

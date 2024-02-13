@@ -154,3 +154,11 @@ DrmDevice::~DrmDevice()
         bus.Call( LoginService, m_sessionPath.c_str(), LoginSessionIface, "ReleaseDevice", "uu", major( m_dev ), minor( m_dev ) );
     }
 }
+
+void DrmDevice::ResolveGpuDevice()
+{
+    assert( m_tmpPhysDev );
+    m_gpu = GetGpuDeviceForPhysicalDevice( m_tmpPhysDev );
+    if( !m_gpu ) throw DeviceException( "No matching GPU device found" );
+    m_tmpPhysDev = VK_NULL_HANDLE;
+}

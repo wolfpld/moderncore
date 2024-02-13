@@ -177,6 +177,10 @@ BackendDrm::~BackendDrm()
 
 void BackendDrm::VulkanInit()
 {
+    for( auto& dev : m_drmDevices )
+    {
+        dev->ResolveGpuDevice();
+    }
 }
 
 void BackendDrm::Run( const std::function<void()>& render )

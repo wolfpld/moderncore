@@ -21,6 +21,6 @@ public:
 private:
     int m_fd;
     uint32_t m_id;
+    uint32_t m_bufferId;
     bool m_inUse;
-    bool m_isAttached;
 };

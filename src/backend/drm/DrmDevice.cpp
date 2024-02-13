@@ -65,11 +65,11 @@ DrmDevice::DrmDevice( const char* devName, DbusSession& bus, const char* session
     if( drmDev->bustype != DRM_BUS_PCI ) throw DeviceException( "Not a PCI device" );
     const auto& pci = drmDev->businfo.pci;
     mclog( LogLevel::Info, "  PCI bus: %04x:%02x:%02x.%x", pci->domain, pci->bus, pci->dev, pci->func );
-    m_gpu = GetGpuForPciBus( pci->domain, pci->bus, pci->dev, pci->func );
+    m_tmpPhysDev = GetPhysicalDeviceForPciBus( pci->domain, pci->bus, pci->dev, pci->func );
     drmFreeDevice( &drmDev );
-    if( !m_gpu ) throw DeviceException( "No matching Vulkan GPU found" );
+    if( !m_tmpPhysDev ) throw DeviceException( "No matching Vulkan GPU found" );
     VkPhysicalDeviceProperties properties;
-    vkGetPhysicalDeviceProperties( m_gpu->Device(), &properties );
+    vkGetPhysicalDeviceProperties( m_tmpPhysDev, &properties );
     mclog( LogLevel::Info, "  Vulkan device: %s", properties.deviceName );
 
     m_res = drmModeGetResources( m_fd );

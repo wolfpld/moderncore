@@ -5,6 +5,7 @@
 #include <string>
 #include <sys/types.h>
 #include <vector>
+#include <vulkan/vulkan.h>
 
 using drmModeRes = struct _drmModeRes;
 using drmModeModeInfo = struct _drmModeModeInfo;
@@ -43,4 +44,7 @@ private:
     std::vector<std::unique_ptr<DrmCrtc>> m_crtcs;
     std::vector<std::unique_ptr<DrmConnector>> m_connectors;
     std::vector<std::unique_ptr<DrmPlane>> m_planes;
+
+    // Keep temporary things last
+    VkPhysicalDevice m_tmpPhysDev;
 };

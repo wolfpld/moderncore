@@ -53,9 +53,6 @@ DrmDevice::DrmDevice( const char* devName, DbusSession& bus, const char* session
     if( drmSetClientCap( m_fd, DRM_CLIENT_CAP_UNIVERSAL_PLANES, 1 ) != 0 ) throw DeviceException( "Failed to set universal planes cap" );
     if( drmSetClientCap( m_fd, DRM_CLIENT_CAP_ATOMIC, 1 ) != 0 ) throw DeviceException( "Failed to set atomic cap" );
 
-    m_gbm = gbm_create_device( m_fd );
-    if( !m_gbm ) throw DeviceException( "Failed to create GBM device" );
-
     auto ver = drmGetVersion( m_fd );
     mclog( LogLevel::Info, "DRM device %s: %s (%s)", devName, ver->name ? ver->name : "unknown", ver->desc ? ver->desc : "unknown" );
     drmFreeVersion( ver );
@@ -117,6 +114,9 @@ DrmDevice::DrmDevice( const char* devName, DbusSession& bus, const char* session
             mclog( LogLevel::Warning, "  Skipping connector %d: %s", i, e.what() );
         }
     }
+
+    m_gbm = gbm_create_device( m_fd );
+    if( !m_gbm ) throw DeviceException( "Failed to create GBM device" );
 
     bool found = false;
     for( auto& conn : m_connectors )

@@ -54,6 +54,7 @@ DrmDevice::DrmDevice( const char* devName, DbusSession& bus, const char* session
     if( drmSetClientCap( m_fd, DRM_CLIENT_CAP_ATOMIC, 1 ) != 0 ) throw DeviceException( "Failed to set atomic cap" );
 
     auto ver = drmGetVersion( m_fd );
+    m_name = ver->name;
     mclog( LogLevel::Info, "DRM device %s: %s (%s)", devName, ver->name ? ver->name : "unknown", ver->desc ? ver->desc : "unknown" );
     drmFreeVersion( ver );
 

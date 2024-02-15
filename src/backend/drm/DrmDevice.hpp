@@ -27,6 +27,7 @@ public:
 
     [[nodiscard]] const std::vector<std::unique_ptr<DrmCrtc>>& GetCrtcs() const { return m_crtcs; }
     [[nodiscard]] int Descriptor() const { return m_fd; }
+    [[nodiscard]] const std::string& GetName() const { return m_name; }
 
     operator gbm_device*() const { return m_gbm; }
 
@@ -46,6 +47,8 @@ private:
     std::vector<std::unique_ptr<DrmCrtc>> m_crtcs;
     std::vector<std::unique_ptr<DrmConnector>> m_connectors;
     std::vector<std::unique_ptr<DrmPlane>> m_planes;
+
+    std::string m_name;
 
     // Keep temporary things last
     VkPhysicalDevice m_tmpPhysDev;

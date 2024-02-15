@@ -34,6 +34,8 @@ public:
 
     NoCopy( DrmProperties );
 
+    void List() const;
+
     [[nodiscard]] DrmProperty operator[]( const char* name ) const;
 
     operator bool() const { return m_props; }

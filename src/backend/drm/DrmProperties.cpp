@@ -1,6 +1,7 @@
 #include <string.h>
 
 #include "DrmProperties.hpp"
+#include "util/Logs.hpp"
 
 /* DrmProperty */
 
@@ -40,6 +41,17 @@ DrmProperties::DrmProperties( int fd, uint32_t id, uint32_t type )
 DrmProperties::~DrmProperties()
 {
     drmModeFreeObjectProperties( m_props );
+}
+
+void DrmProperties::List() const
+{
+    for( int i=0; i<m_props->count_props; i++ )
+    {
+        auto prop = drmModeGetProperty( m_fd, m_props->props[i] );
+        if( !prop ) continue;
+        mclog( LogLevel::Info, "  %s: %llu", prop->name, m_props->prop_values[i] );
+        drmModeFreeProperty( prop );
+    }
 }
 
 DrmProperty DrmProperties::operator[]( const char* name ) const

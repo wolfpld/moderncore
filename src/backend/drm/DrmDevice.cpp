@@ -156,10 +156,11 @@ DrmDevice::~DrmDevice()
     }
 }
 
-void DrmDevice::ResolveGpuDevice()
+bool DrmDevice::ResolveGpuDevice()
 {
     assert( m_tmpPhysDev );
     m_gpu = GetGpuDeviceForPhysicalDevice( m_tmpPhysDev );
-    if( !m_gpu ) throw DeviceException( "No matching GPU device found" );
+    if( !m_gpu ) return false;
     m_tmpPhysDev = VK_NULL_HANDLE;
+    return true;
 }

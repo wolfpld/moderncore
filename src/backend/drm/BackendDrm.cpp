@@ -177,9 +177,18 @@ BackendDrm::~BackendDrm()
 
 void BackendDrm::VulkanInit()
 {
-    for( auto& dev : m_drmDevices )
+    auto it = m_drmDevices.begin();
+    while( it != m_drmDevices.end() )
     {
-        dev->ResolveGpuDevice();
+        if( !(*it)->ResolveGpuDevice() )
+        {
+            mclog( LogLevel::Warning, "Failed to resolve Vulkan device for DRM device '%s'", (*it)->GetName().c_str() );
+            it = m_drmDevices.erase( it );
+        }
+        else
+        {
+            ++it;
+        }
     }
 }
 

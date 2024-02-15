@@ -31,7 +31,7 @@ public:
 
     operator gbm_device*() const { return m_gbm; }
 
-    void ResolveGpuDevice();
+    bool ResolveGpuDevice();
 
 private:
     std::string m_sessionPath;

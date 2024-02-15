@@ -300,6 +300,21 @@ VlkDevice::VlkDevice( VlkInstance& instance, VkPhysicalDevice physDev, int flags
     auto res = vkCreateDevice( physDev, &devInfo, nullptr, &m_device );
     if( res != VK_SUCCESS ) throw DeviceException( std::format( "Failed to create logical device ({}).", string_VkResult( res ) ) );
 
+    if( instance.Type() == VlkInstanceType::Drm )
+    {
+        VkPhysicalDeviceExternalSemaphoreInfo extSemInfo = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_SEMAPHORE_INFO };
+        extSemInfo.handleType = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_SYNC_FD_BIT;
+
+        VkExternalSemaphoreProperties extSemProps = { VK_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_PROPERTIES };
+
+        vkGetPhysicalDeviceExternalSemaphoreProperties( physDev, &extSemInfo, &extSemProps );
+
+        if( !( extSemProps.externalSemaphoreFeatures & VK_EXTERNAL_SEMAPHORE_FEATURE_IMPORTABLE_BIT ) )
+        {
+            throw DeviceException( "External semaphore import not supported." );
+        }
+    }
+
     if( m_queueInfo[(int)QueueType::Graphic].idx >= 0 )
     {
         vkGetDeviceQueue( m_device, m_queueInfo[(int)QueueType::Graphic].idx, 0, &m_queue[(int)QueueType::Graphic] );

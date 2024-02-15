@@ -34,6 +34,14 @@ public:
     bool ResolveGpuDevice();
 
 private:
+    struct PciBus
+    {
+        uint16_t domain;
+        uint8_t bus;
+        uint8_t dev;
+        uint8_t func;
+    };
+
     std::string m_sessionPath;
 
     dev_t m_dev;
@@ -49,7 +57,5 @@ private:
     std::vector<std::unique_ptr<DrmPlane>> m_planes;
 
     std::string m_name;
-
-    // Keep temporary things last
-    VkPhysicalDevice m_tmpPhysDev;
+    PciBus m_pci;
 };

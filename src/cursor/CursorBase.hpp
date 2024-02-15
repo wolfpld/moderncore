@@ -37,7 +37,6 @@ struct CursorSize
 class CursorBase
 {
 public:
-    CursorBase() = default;
     virtual ~CursorBase() = default;
 
     NoCopy( CursorBase );
@@ -47,5 +46,7 @@ public:
     [[nodiscard]] bool Valid() const { return !m_cursor.empty(); }
 
 protected:
+    CursorBase() = default;
+
     unordered_flat_map<uint32_t, CursorSize> m_cursor;
 };

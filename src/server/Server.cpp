@@ -46,28 +46,27 @@ Server::Server( bool singleThread )
 
     m_dbusSession = std::make_unique<DbusSession>();
 
+    std::thread vulkanThread;
     const auto waylandDpy = getenv( "WAYLAND_DISPLAY" );
     if( waylandDpy )
     {
         mclog( LogLevel::Info, "Running on Wayland display: %s", waylandDpy );
-        m_vkInstance = std::make_unique<VlkInstance>( VlkInstanceType::Wayland );
-    }
-    else
-    {
-        m_vkInstance = std::make_unique<VlkInstance>( VlkInstanceType::Drm );
-    }
-    dispatchThread.join();
-
-    SetupGpus( !waylandDpy );
-
-    if( waylandDpy )
-    {
+        vulkanThread = std::thread( [this] {
+            m_vkInstance = std::make_unique<VlkInstance>( VlkInstanceType::Wayland );
+        } );
         m_backend = std::make_unique<BackendWayland>();
     }
     else
     {
+        vulkanThread = std::thread( [this] {
+            m_vkInstance = std::make_unique<VlkInstance>( VlkInstanceType::Drm );
+        } );
         m_backend = std::make_unique<BackendDrm>();
     }
+    dispatchThread.join();
+    vulkanThread.join();
+
+    SetupGpus( !waylandDpy );
     m_dispatch->Sync();
 
     m_backend->VulkanInit();

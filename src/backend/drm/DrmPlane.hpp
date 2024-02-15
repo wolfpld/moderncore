@@ -2,6 +2,7 @@
 
 #include <stdexcept>
 #include <stdint.h>
+#include <vector>
 
 #include "util/NoCopy.hpp"
 
@@ -19,4 +20,5 @@ public:
 
 private:
     drmModePlane* m_plane;
+    std::vector<uint64_t> m_modifiers;
 };

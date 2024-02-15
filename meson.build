@@ -32,6 +32,7 @@ files = [
     'src/backend/drm/DrmCrtc.cpp',
     'src/backend/drm/DrmDevice.cpp',
     'src/backend/drm/DrmPlane.cpp',
+    'src/backend/drm/DrmProperties.cpp',
     'src/backend/wayland/BackendWayland.cpp',
     'src/backend/wayland/WaylandConnector.cpp',
     'src/backend/wayland/WaylandKeyboard.cpp',

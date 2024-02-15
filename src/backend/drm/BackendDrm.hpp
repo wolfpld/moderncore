@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "backend/Backend.hpp"
+#include "util/NoCopy.hpp"
 
 class DbusMessage;
 class DrmDevice;
@@ -14,6 +15,8 @@ class BackendDrm : public Backend
 public:
     explicit BackendDrm();
     ~BackendDrm() override;
+
+    NoCopy( BackendDrm );
 
     void VulkanInit() override;
 

@@ -3,6 +3,8 @@
 #include <stdexcept>
 #include <stdint.h>
 
+#include "util/NoCopy.hpp"
+
 using drmModePlane = struct _drmModePlane;
 
 class DrmPlane
@@ -12,6 +14,8 @@ public:
 
     DrmPlane( int fd, uint32_t id );
     ~DrmPlane();
+
+    NoCopy( DrmPlane );
 
 private:
     drmModePlane* m_plane;

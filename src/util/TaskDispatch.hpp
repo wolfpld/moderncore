@@ -7,11 +7,15 @@
 #include <thread>
 #include <vector>
 
+#include "util/NoCopy.hpp"
+
 class TaskDispatch
 {
 public:
     TaskDispatch( size_t workers, const char* name );
     ~TaskDispatch();
+
+    NoCopy( TaskDispatch );
 
     void Queue( const std::function<void(void)>& f );
     void Queue( std::function<void(void)>&& f );

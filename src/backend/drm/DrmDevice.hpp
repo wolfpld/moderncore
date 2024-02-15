@@ -7,6 +7,8 @@
 #include <vector>
 #include <vulkan/vulkan.h>
 
+#include "util/NoCopy.hpp"
+
 using drmModeRes = struct _drmModeRes;
 using drmModeModeInfo = struct _drmModeModeInfo;
 struct gbm_device;
@@ -24,6 +26,8 @@ public:
 
     DrmDevice( const char* devName, DbusSession& bus, const char* sessionPath );
     ~DrmDevice();
+
+    NoCopy( DrmDevice );
 
     [[nodiscard]] const std::vector<std::unique_ptr<DrmCrtc>>& GetCrtcs() const { return m_crtcs; }
     [[nodiscard]] int Descriptor() const { return m_fd; }

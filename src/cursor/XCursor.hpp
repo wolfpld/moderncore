@@ -6,4 +6,6 @@ class XCursor : public CursorBaseMulti
 {
 public:
     explicit XCursor( const char* theme );
+
+    NoCopy( XCursor );
 };

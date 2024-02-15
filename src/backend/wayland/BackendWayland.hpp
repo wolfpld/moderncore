@@ -6,6 +6,7 @@
 #include <wayland-client.h>
 
 #include "backend/Backend.hpp"
+#include "util/NoCopy.hpp"
 #include "util/RobinHood.hpp"
 
 #include "xdg-decoration-unstable-v1-client-protocol.h"
@@ -21,6 +22,8 @@ class BackendWayland : public Backend
 public:
     BackendWayland();
     ~BackendWayland() override;
+
+    NoCopy( BackendWayland );
 
     void VulkanInit() override;
 

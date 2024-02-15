@@ -5,6 +5,7 @@
 #include <vulkan/vulkan.h>
 
 #include "server/Connector.hpp"
+#include "util/NoCopy.hpp"
 
 class VlkCommandBuffer;
 class VlkFence;
@@ -27,6 +28,8 @@ class WaylandConnector : public Connector
 public:
     WaylandConnector( VlkDevice& device, VkSurfaceKHR surface );
     ~WaylandConnector() override;
+
+    NoCopy( WaylandConnector );
 
     void Render() override;
 

@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "util/NoCopy.hpp"
+
 using drmModeConnector = struct _drmModeConnector;
 using drmModeRes = struct _drmModeRes;
 using drmModeModeInfo = struct _drmModeModeInfo;
@@ -18,6 +20,8 @@ public:
 
     DrmConnector( DrmDevice& device, uint32_t id, const drmModeRes* res );
     ~DrmConnector();
+
+    NoCopy( DrmConnector );
 
     bool SetMode( const drmModeModeInfo& mode );
 

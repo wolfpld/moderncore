@@ -6,4 +6,6 @@ class WinCursor : public CursorBaseMulti
 {
 public:
     explicit WinCursor( const char* theme );
+
+    NoCopy( WinCursor );
 };

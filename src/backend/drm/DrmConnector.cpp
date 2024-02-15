@@ -14,6 +14,7 @@ extern "C" {
 #include "DrmDevice.hpp"
 #include "DrmConnector.hpp"
 #include "DrmCrtc.hpp"
+#include "DrmProperties.hpp"
 #include "util/Logs.hpp"
 
 static uint32_t GetRefreshRate( const drmModeModeInfo& mode )
@@ -64,33 +65,24 @@ DrmConnector::DrmConnector( DrmDevice& device, uint32_t id, const drmModeRes* re
     }
     else
     {
-        auto props = drmModeObjectGetProperties( device.Descriptor(), conn->connector_id, DRM_MODE_OBJECT_CONNECTOR );
+        DrmProperties props( device.Descriptor(), conn->connector_id, DRM_MODE_OBJECT_CONNECTOR );
         if( props )
         {
-            for( int j=0; j<props->count_props; j++ )
+            auto prop = props["EDID"];
+            if( prop )
             {
-                auto prop = drmModeGetProperty( device.Descriptor(), props->props[j] );
-                if( prop )
+                auto blob = prop.Blob();
+                if( blob )
                 {
-                    if( strcmp( prop->name, "EDID" ) == 0 )
+                    auto info = di_info_parse_edid( blob->data, blob->length );
+                    if( info )
                     {
-                        auto blob = drmModeGetPropertyBlob( device.Descriptor(), props->prop_values[j] );
-                        if( blob )
-                        {
-                            auto info = di_info_parse_edid( blob->data, blob->length );
-                            if( info )
-                            {
-                                m_monitor = di_info_get_model( info );
-                                di_info_destroy( info );
-                            }
-                            drmModeFreePropertyBlob( blob );
-                        }
+                        m_monitor = di_info_get_model( info );
+                        di_info_destroy( info );
                     }
-                    drmModeFreeProperty( prop );
                 }
             }
         }
-        drmModeFreeObjectProperties( props );
 
         mclog( LogLevel::Debug, "  Connector %s: %s, %dx%d mm", m_name.c_str(), m_monitor.c_str(), conn->mmWidth, conn->mmHeight );
 

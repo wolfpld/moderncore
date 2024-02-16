@@ -19,6 +19,7 @@ public:
     NoCopy( DrmPlane );
 
     [[nodiscard]] auto& Modifiers() const { return m_modifiers; }
+    [[nodiscard]] auto Plane() const { return m_plane; }
 
 private:
     drmModePlane* m_plane;

@@ -18,6 +18,8 @@ public:
 
     NoCopy( DrmPlane );
 
+    [[nodiscard]] auto& Modifiers() const { return m_modifiers; }
+
 private:
     drmModePlane* m_plane;
     std::vector<uint64_t> m_modifiers;

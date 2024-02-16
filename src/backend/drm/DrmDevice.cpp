@@ -92,7 +92,7 @@ DrmDevice::DrmDevice( const char* devName, DbusSession& bus, const char* session
     {
         try
         {
-            m_crtcs.emplace_back( std::make_unique<DrmCrtc>( m_fd, m_res->crtcs[i] ) );
+            m_crtcs.emplace_back( std::make_unique<DrmCrtc>( m_fd, m_res->crtcs[i], 1 << i ) );
         }
         catch( DrmCrtc::CrtcException& e )
         {

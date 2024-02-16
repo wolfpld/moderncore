@@ -4,9 +4,10 @@
 #include "DrmCrtc.hpp"
 #include "util/Logs.hpp"
 
-DrmCrtc::DrmCrtc( int fd, uint32_t id )
+DrmCrtc::DrmCrtc( int fd, uint32_t id, uint32_t mask )
     : m_fd( fd )
     , m_id( id )
+    , m_mask( mask )
     , m_inUse( false )
 {
     auto crtc = drmModeGetCrtc( fd, id );

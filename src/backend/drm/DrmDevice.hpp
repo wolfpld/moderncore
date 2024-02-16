@@ -29,9 +29,11 @@ public:
 
     NoCopy( DrmDevice );
 
-    [[nodiscard]] const std::vector<std::unique_ptr<DrmCrtc>>& GetCrtcs() const { return m_crtcs; }
-    [[nodiscard]] int Descriptor() const { return m_fd; }
-    [[nodiscard]] const std::string& GetName() const { return m_name; }
+    [[nodiscard]] auto& GetCrtcs() const { return m_crtcs; }
+    [[nodiscard]] auto& GetPlanes() const { return m_planes; }
+
+    [[nodiscard]] auto Descriptor() const { return m_fd; }
+    [[nodiscard]] auto& GetName() const { return m_name; }
 
     operator gbm_device*() const { return m_gbm; }
 

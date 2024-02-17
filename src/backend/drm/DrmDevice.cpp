@@ -121,7 +121,6 @@ DrmDevice::DrmDevice( const char* devName, DbusSession& bus, const char* session
         if( !conn->IsConnected() ) continue;
 
         auto& mode = conn->GetBestDisplayMode();
-        mclog( LogLevel::Info, "  Setting connector %s to %dx%d @ %d Hz", conn->GetName().c_str(), mode.hdisplay, mode.vdisplay, mode.vrefresh );
         CheckPanic( conn->SetMode( mode ), "Failed to set mode" );
         found = true;
         break;

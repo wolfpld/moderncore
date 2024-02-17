@@ -111,6 +111,8 @@ bool DrmConnector::SetMode( const drmModeModeInfo& mode )
     ZoneScoped;
     assert( m_connected );
 
+    mclog( LogLevel::Info, "  Setting connector %s to %dx%d @ %d Hz", m_name.c_str(), mode.hdisplay, mode.vdisplay, mode.vrefresh );
+
     auto& crtcs = m_device.GetCrtcs();
     auto it = std::find_if( crtcs.begin(), crtcs.end(), []( const auto& c ) { return !c->IsUsed(); } );
     if( it == crtcs.end() ) return false;

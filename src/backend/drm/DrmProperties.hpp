@@ -14,7 +14,8 @@ public:
 
     NoCopy( DrmProperty );
 
-    drmModePropertyBlobPtr Blob();
+    [[nodiscard]] uint64_t Value() const { return m_value; }
+    [[nodiscard]] drmModePropertyBlobPtr Blob();
 
     operator bool() const { return m_fd != 0; }
 

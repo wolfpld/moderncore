@@ -57,7 +57,7 @@ int main( int argc, char** argv )
         }
     }
 
-    printf( "Starting " ANSI_BOLD ANSI_ITALIC "Modern Core" ANSI_RESET "...\n\n" );
+    printf( "Starting " ANSI_BOLD ANSI_ITALIC "Modern Core" ANSI_RESET "…\n\n" );
 
     Server server( singleThread );
     server.Run();

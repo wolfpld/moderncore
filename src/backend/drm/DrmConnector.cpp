@@ -189,8 +189,11 @@ const std::shared_ptr<DrmPlane>& DrmConnector::GetPlaneForCrtc( const DrmCrtc& c
         auto& p = *plane->Plane();
         if( p.possible_crtcs & crtc.Mask() )
         {
-            mclog( LogLevel::Debug, "  Using plane %d for connector %s", p.plane_id, m_name.c_str() );
-            return plane;
+            if( plane->Type() == DRM_PLANE_TYPE_PRIMARY )
+            {
+                mclog( LogLevel::Debug, "  Using plane %d for connector %s", p.plane_id, m_name.c_str() );
+                return plane;
+            }
         }
     }
 

@@ -53,7 +53,7 @@ int main( int argc, char** argv )
             PrintHelp();
             return 0;
         default:
-            break;
+            return 1;
         }
     }
 

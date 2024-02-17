@@ -58,9 +58,9 @@ private:
 
     std::shared_ptr<GpuDevice> m_gpu;
 
-    std::vector<std::unique_ptr<DrmCrtc>> m_crtcs;
-    std::vector<std::unique_ptr<DrmConnector>> m_connectors;
-    std::vector<std::unique_ptr<DrmPlane>> m_planes;
+    std::vector<std::shared_ptr<DrmCrtc>> m_crtcs;
+    std::vector<std::shared_ptr<DrmConnector>> m_connectors;
+    std::vector<std::shared_ptr<DrmPlane>> m_planes;
 
     std::string m_name;
     PciBus m_pci;

@@ -18,6 +18,10 @@ DrmPlane::DrmPlane( int fd, uint32_t id )
     auto blob = formatsProp.Blob();
     if( !blob ) throw PlaneException( "Failed to get plane formats blob" );
 
+    auto typeProp = props["type"];
+    if( !typeProp ) throw PlaneException( "Failed to get plane type" );
+    m_type = typeProp.Value();
+
     auto data = (drm_format_modifier_blob*)blob->data;
     auto formats = (uint32_t*)( ((char*)data) + data->formats_offset );
     auto modifiers = (drm_format_modifier*)( ((char*)data) + data->modifiers_offset );

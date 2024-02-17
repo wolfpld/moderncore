@@ -20,8 +20,10 @@ public:
 
     [[nodiscard]] auto& Modifiers() const { return m_modifiers; }
     [[nodiscard]] auto Plane() const { return m_plane; }
+    [[nodiscard]] auto Type() const { return m_type; }
 
 private:
     drmModePlane* m_plane;
     std::vector<uint64_t> m_modifiers;
+    uint64_t m_type;
 };

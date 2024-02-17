@@ -28,6 +28,9 @@ public:
 
     bool SetMode( const drmModeModeInfo& mode );
 
+    bool SetModeDrm( const drmModeModeInfo& mode );
+    bool SetModeVulkan( const drmModeModeInfo& mode );
+
     [[nodiscard]] const drmModeModeInfo& GetBestDisplayMode() const;
 
     [[nodiscard]] uint32_t GetId() const { return m_id; }

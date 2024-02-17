@@ -109,6 +109,15 @@ DrmConnector::~DrmConnector()
 
 bool DrmConnector::SetMode( const drmModeModeInfo& mode )
 {
+    if( SetModeDrm( mode ) && SetModeVulkan( mode ) ) return true;
+
+    m_crtc.reset();
+    m_plane.reset();
+    return false;
+}
+
+bool DrmConnector::SetModeDrm( const drmModeModeInfo& mode )
+{
     ZoneScoped;
     assert( m_connected );
 
@@ -117,13 +126,16 @@ bool DrmConnector::SetMode( const drmModeModeInfo& mode )
     auto& crtcs = m_device.GetCrtcs();
     auto it = std::find_if( crtcs.begin(), crtcs.end(), []( const auto& c ) { return !c->IsUsed(); } );
     if( it == crtcs.end() ) return false;
-    auto& crtc = **it;
 
-    m_plane = GetPlaneForCrtc( crtc );
+    m_plane = GetPlaneForCrtc( **it );
     if( !m_plane ) return false;
 
     m_crtc = *it;
+    return true;
+}
 
+bool DrmConnector::SetModeVulkan( const drmModeModeInfo& mode )
+{
     // todo
     assert( !m_bo );
 
@@ -138,7 +150,7 @@ bool DrmConnector::SetMode( const drmModeModeInfo& mode )
     }
 
     auto _mode = mode;
-    if( drmModeSetCrtc( m_device.Descriptor(), crtc.GetId(), m_fbId, 0, 0, &m_id, 1, &_mode ) != 0 )
+    if( drmModeSetCrtc( m_device.Descriptor(), m_crtc->GetId(), m_fbId, 0, 0, &m_id, 1, &_mode ) != 0 )
     {
         drmModeRmFB( m_device.Descriptor(), m_fbId );
         gbm_bo_destroy( m_bo );
@@ -146,7 +158,7 @@ bool DrmConnector::SetMode( const drmModeModeInfo& mode )
         return false;
     }
 
-    crtc.Enable();
+    m_crtc->Enable();
 
     return true;
 }

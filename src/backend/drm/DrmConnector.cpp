@@ -139,6 +139,8 @@ bool DrmConnector::SetModeDrm( const drmModeModeInfo& mode )
 
 bool DrmConnector::SetModeVulkan()
 {
+    ZoneScoped;
+
     // todo
     assert( !m_bo );
 

@@ -5,7 +5,6 @@
 #include <gbm.h>
 #include <string.h>
 #include <tracy/Tracy.hpp>
-#include <xf86drmMode.h>
 
 extern "C" {
 #include <libdisplay-info/info.h>
@@ -32,6 +31,7 @@ DrmConnector::DrmConnector( DrmDevice& device, uint32_t id, const drmModeRes* re
     , m_bo( nullptr )
     , m_monitor( "unknown" )
     , m_device( device )
+    , m_mode{}
 {
     ZoneScoped;
 
@@ -109,10 +109,12 @@ DrmConnector::~DrmConnector()
 
 bool DrmConnector::SetMode( const drmModeModeInfo& mode )
 {
-    if( SetModeDrm( mode ) && SetModeVulkan( mode ) ) return true;
+    if( SetModeDrm( mode ) && SetModeVulkan() ) return true;
 
     m_crtc.reset();
     m_plane.reset();
+    m_mode = {};
+
     return false;
 }
 
@@ -130,26 +132,27 @@ bool DrmConnector::SetModeDrm( const drmModeModeInfo& mode )
     m_plane = GetPlaneForCrtc( **it );
     if( !m_plane ) return false;
 
+    m_mode = mode;
     m_crtc = *it;
     return true;
 }
 
-bool DrmConnector::SetModeVulkan( const drmModeModeInfo& mode )
+bool DrmConnector::SetModeVulkan()
 {
     // todo
     assert( !m_bo );
 
-    m_bo = gbm_bo_create( m_device, mode.hdisplay, mode.vdisplay, GBM_FORMAT_XRGB8888, GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING );
+    m_bo = gbm_bo_create( m_device, m_mode.hdisplay, m_mode.vdisplay, GBM_FORMAT_XRGB8888, GBM_BO_USE_SCANOUT | GBM_BO_USE_RENDERING );
     if( !m_bo ) return false;
 
-    if( drmModeAddFB( m_device.Descriptor(), mode.hdisplay, mode.vdisplay, 24, 32, gbm_bo_get_stride( m_bo ), gbm_bo_get_handle( m_bo ).u32, &m_fbId ) != 0 )
+    if( drmModeAddFB( m_device.Descriptor(), m_mode.hdisplay, m_mode.vdisplay, 24, 32, gbm_bo_get_stride( m_bo ), gbm_bo_get_handle( m_bo ).u32, &m_fbId ) != 0 )
     {
         gbm_bo_destroy( m_bo );
         m_bo = nullptr;
         return false;
     }
 
-    auto _mode = mode;
+    auto _mode = m_mode;
     if( drmModeSetCrtc( m_device.Descriptor(), m_crtc->GetId(), m_fbId, 0, 0, &m_id, 1, &_mode ) != 0 )
     {
         drmModeRmFB( m_device.Descriptor(), m_fbId );

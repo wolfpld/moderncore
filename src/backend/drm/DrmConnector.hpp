@@ -5,12 +5,10 @@
 #include <stdint.h>
 #include <string>
 #include <vector>
+#include <xf86drmMode.h>
 
 #include "util/NoCopy.hpp"
 
-using drmModeConnector = struct _drmModeConnector;
-using drmModeRes = struct _drmModeRes;
-using drmModeModeInfo = struct _drmModeModeInfo;
 class DrmCrtc;
 class DrmDevice;
 class DrmPlane;
@@ -29,7 +27,7 @@ public:
     bool SetMode( const drmModeModeInfo& mode );
 
     bool SetModeDrm( const drmModeModeInfo& mode );
-    bool SetModeVulkan( const drmModeModeInfo& mode );
+    bool SetModeVulkan();
 
     [[nodiscard]] const drmModeModeInfo& GetBestDisplayMode() const;
 
@@ -58,4 +56,5 @@ private:
     std::vector<drmModeModeInfo> m_modes;
 
     DrmDevice& m_device;
+    drmModeModeInfo m_mode;
 };

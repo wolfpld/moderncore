@@ -121,7 +121,7 @@ DrmDevice::DrmDevice( const char* devName, DbusSession& bus, const char* session
         if( !conn->IsConnected() ) continue;
 
         auto& mode = conn->GetBestDisplayMode();
-        CheckPanic( conn->SetMode( mode ), "Failed to set mode" );
+        CheckPanic( conn->SetModeDrm( mode ), "Failed to set mode" );
         found = true;
         break;
     }
@@ -161,5 +161,8 @@ bool DrmDevice::ResolveGpuDevice()
     mclog( LogLevel::Info, "DRM device '%s' matched to Vulkan device '%s'", m_name.c_str(), properties.deviceName );
 
     m_gpu = GetGpuDeviceForPhysicalDevice( physDev );
-    return (bool)m_gpu;
+    if( !m_gpu ) return false;
+
+    for( auto& conn : m_connectors ) conn->SetModeVulkan();
+    return true;
 }

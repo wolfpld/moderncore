@@ -14,6 +14,7 @@ extern "C" {
 #include "DrmDevice.hpp"
 #include "DrmConnector.hpp"
 #include "DrmCrtc.hpp"
+#include "DrmPlane.hpp"
 #include "DrmProperties.hpp"
 #include "util/Logs.hpp"
 
@@ -116,8 +117,12 @@ bool DrmConnector::SetMode( const drmModeModeInfo& mode )
     auto& crtcs = m_device.GetCrtcs();
     auto it = std::find_if( crtcs.begin(), crtcs.end(), []( const auto& c ) { return !c->IsUsed(); } );
     if( it == crtcs.end() ) return false;
+    auto& crtc = **it;
 
-    auto& crtc = *it;
+    m_plane = GetPlaneForCrtc( crtc );
+    if( !m_plane ) return false;
+
+    m_crtc = *it;
 
     // todo
     assert( !m_bo );
@@ -133,7 +138,7 @@ bool DrmConnector::SetMode( const drmModeModeInfo& mode )
     }
 
     auto _mode = mode;
-    if( drmModeSetCrtc( m_device.Descriptor(), crtc->GetId(), m_fbId, 0, 0, &m_id, 1, &_mode ) != 0 )
+    if( drmModeSetCrtc( m_device.Descriptor(), crtc.GetId(), m_fbId, 0, 0, &m_id, 1, &_mode ) != 0 )
     {
         drmModeRmFB( m_device.Descriptor(), m_fbId );
         gbm_bo_destroy( m_bo );
@@ -141,7 +146,7 @@ bool DrmConnector::SetMode( const drmModeModeInfo& mode )
         return false;
     }
 
-    crtc->Enable();
+    crtc.Enable();
 
     return true;
 }
@@ -172,4 +177,23 @@ const drmModeModeInfo& DrmConnector::GetBestDisplayMode() const
     }
 
     return m_modes[best];
+}
+
+const std::shared_ptr<DrmPlane>& DrmConnector::GetPlaneForCrtc( const DrmCrtc& crtc )
+{
+    ZoneScoped;
+
+    auto& planes = m_device.GetPlanes();
+    for( auto& plane : planes )
+    {
+        auto& p = *plane->Plane();
+        if( p.possible_crtcs & crtc.Mask() )
+        {
+            mclog( LogLevel::Debug, "  Using plane %d for connector %s", p.plane_id, m_name.c_str() );
+            return plane;
+        }
+    }
+
+    static std::shared_ptr<DrmPlane> empty;
+    return empty;
 }

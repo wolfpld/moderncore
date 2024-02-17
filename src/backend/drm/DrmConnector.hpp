@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <stdexcept>
 #include <stdint.h>
 #include <string>
@@ -10,7 +11,9 @@
 using drmModeConnector = struct _drmModeConnector;
 using drmModeRes = struct _drmModeRes;
 using drmModeModeInfo = struct _drmModeModeInfo;
+class DrmCrtc;
 class DrmDevice;
+class DrmPlane;
 struct gbm_bo;
 
 class DrmConnector
@@ -34,6 +37,8 @@ public:
     [[nodiscard]] const std::vector<uint32_t>& GetCrtcs() const { return m_crtcs; }
 
 private:
+    const std::shared_ptr<DrmPlane>& GetPlaneForCrtc( const DrmCrtc& crtc );
+
     uint32_t m_id;
 
     gbm_bo* m_bo;
@@ -42,6 +47,9 @@ private:
 
     std::string m_name;
     std::string m_monitor;
+
+    std::shared_ptr<DrmCrtc> m_crtc;
+    std::shared_ptr<DrmPlane> m_plane;
 
     std::vector<uint32_t> m_crtcs;
     std::vector<drmModeModeInfo> m_modes;

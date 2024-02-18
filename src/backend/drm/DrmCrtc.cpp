@@ -4,6 +4,7 @@
 
 #include "DrmCrtc.hpp"
 #include "util/Logs.hpp"
+#include "util/Panic.hpp"
 
 DrmCrtc::DrmCrtc( int fd, uint32_t id, uint32_t mask )
     : m_fd( fd )
@@ -30,11 +31,9 @@ void DrmCrtc::Enable()
 void DrmCrtc::Disable()
 {
     ZoneScoped;
+    CheckPanic( m_bufferId != 0, "CRTC %u: already disabled", m_id );
 
-    if( m_bufferId != 0 )
-    {
-        mclog( LogLevel::Debug, "CRTC %u: disabling", m_id );
-        drmModeSetCrtc( m_fd, m_id, 0, 0, 0, nullptr, 0, nullptr );
-        m_bufferId = 0;
-    }
+    mclog( LogLevel::Debug, "CRTC %u: disabling", m_id );
+    drmModeSetCrtc( m_fd, m_id, 0, 0, 0, nullptr, 0, nullptr );
+    m_bufferId = 0;
 }

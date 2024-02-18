@@ -126,11 +126,6 @@ DrmDevice::DrmDevice( const char* devName, DbusSession& bus, const char* session
         break;
     }
     if( !found ) mclog( LogLevel::Warning, "  No connected displays found" );
-
-    for( auto& crtc : m_crtcs )
-    {
-        if( !crtc->IsUsed() ) crtc->Disable();
-    }
 }
 
 DrmDevice::~DrmDevice()

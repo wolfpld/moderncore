@@ -163,6 +163,9 @@ bool DrmDevice::ResolveGpuDevice()
     m_gpu = GetGpuDeviceForPhysicalDevice( physDev );
     if( !m_gpu ) return false;
 
-    for( auto& conn : m_connectors ) conn->SetModeVulkan();
+    for( auto& conn : m_connectors )
+    {
+        if( conn->IsConnected() ) conn->SetModeVulkan();
+    }
     return true;
 }

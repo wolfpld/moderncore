@@ -9,12 +9,21 @@
 #include "Callstack.hpp"
 #include "Logs.hpp"
 
-static LogLevel s_logLevel = LogLevel::Info;
-static std::recursive_mutex s_logLock;
+namespace
+{
+LogLevel s_logLevel = LogLevel::Info;
+bool s_logSynchronized = false;
+std::recursive_mutex s_logLock;
+}
 
 void SetLogLevel( LogLevel level )
 {
     s_logLevel = level;
+}
+
+void SetLogSynchronized( bool sync )
+{
+    s_logSynchronized = sync;
 }
 
 static void PrintLevel( LogLevel level )

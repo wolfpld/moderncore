@@ -10,10 +10,10 @@ void PrintHelp()
 {
     printf( "Usage: mcore [options]\n" );
     printf( "Options:\n" );
-    printf( "  -d, --debug              Enable debug logging\n" );
-    printf( "  -e, --external           Show external callstacks\n" );
-    printf( "  -s, --single-thread      Run server in single-thread mode\n" );
-    printf( "  --help                   Print this help\n" );
+    printf( "  -d, --debug          Enable debug logging\n" );
+    printf( "  -e, --external       Show external callstacks\n" );
+    printf( "  -s, --sync-logs      Synchronize log output\n" );
+    printf( "  --help               Print this help\n" );
 }
 }
 
@@ -28,12 +28,10 @@ int main( int argc, char** argv )
     struct option longOptions[] = {
         { "debug", no_argument, nullptr, 'd' },
         { "external", no_argument, nullptr, 'e' },
-        { "single-thread", no_argument, nullptr, 's' },
+        { "sync-logs", no_argument, nullptr, 's' },
         { "help", no_argument, nullptr, OptHelp },
         {}
     };
-
-    bool singleThread = false;
 
     int opt;
     while( ( opt = getopt_long( argc, argv, "des", longOptions, nullptr ) ) != -1 )
@@ -47,7 +45,7 @@ int main( int argc, char** argv )
             ShowExternalCallstacks( true );
             break;
         case 's':
-            singleThread = true;
+            SetLogSynchronized( true );
             break;
         case OptHelp:
             PrintHelp();
@@ -59,7 +57,7 @@ int main( int argc, char** argv )
 
     printf( "Starting " ANSI_BOLD ANSI_ITALIC "Modern Core" ANSI_RESET "…\n\n" );
 
-    Server server( singleThread );
+    Server server;
     server.Run();
     return 0;
 }

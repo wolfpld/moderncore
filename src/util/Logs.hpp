@@ -13,6 +13,7 @@ enum class LogLevel
 };
 
 void SetLogLevel( LogLevel level );
+void SetLogSynchronized( bool sync );
 
 void MCoreLogMessage( LogLevel level, const char* fileName, size_t line, const char* fmt, ... );
 

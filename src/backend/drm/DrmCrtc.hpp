@@ -20,7 +20,7 @@ public:
     void Disable();
 
     [[nodiscard]] uint32_t GetId() const { return m_id; }
-    [[nodiscard]] bool IsUsed() const { return m_inUse; }
+    [[nodiscard]] bool IsUsed() const { return m_bufferId != 0; }
     [[nodiscard]] uint32_t Mask() const { return m_mask; }
 
 private:
@@ -28,5 +28,4 @@ private:
     uint32_t m_id;
     uint32_t m_bufferId;
     uint32_t m_mask;
-    bool m_inUse;
 };

@@ -9,7 +9,6 @@ DrmCrtc::DrmCrtc( int fd, uint32_t id, uint32_t mask )
     : m_fd( fd )
     , m_id( id )
     , m_mask( mask )
-    , m_inUse( false )
 {
     ZoneScoped;
 
@@ -26,14 +25,11 @@ DrmCrtc::~DrmCrtc()
 
 void DrmCrtc::Enable()
 {
-    m_inUse = true;
 }
 
 void DrmCrtc::Disable()
 {
     ZoneScoped;
-
-    m_inUse = false;
 
     if( m_bufferId != 0 )
     {

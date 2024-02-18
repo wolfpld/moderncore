@@ -1,4 +1,5 @@
 #include <string.h>
+#include <tracy/Tracy.hpp>
 
 #include "DrmProperties.hpp"
 #include "util/Logs.hpp"
@@ -34,8 +35,9 @@ drmModePropertyBlobPtr DrmProperty::Blob()
 
 DrmProperties::DrmProperties( int fd, uint32_t id, uint32_t type )
     : m_fd( fd )
-    , m_props( drmModeObjectGetProperties( fd, id, type ) )
 {
+    ZoneScoped;
+    m_props = drmModeObjectGetProperties( fd, id, type );
 }
 
 DrmProperties::~DrmProperties()
@@ -56,6 +58,9 @@ void DrmProperties::List() const
 
 DrmProperty DrmProperties::operator[]( const char* name ) const
 {
+    ZoneScoped;
+    ZoneText( name, strlen( name ) );
+
     for( int i=0; i<m_props->count_props; i++ )
     {
         auto prop = drmModeGetProperty( m_fd, m_props->props[i] );

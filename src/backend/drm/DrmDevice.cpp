@@ -135,6 +135,8 @@ DrmDevice::DrmDevice( const char* devName, DbusSession& bus, const char* session
 
 DrmDevice::~DrmDevice()
 {
+    ZoneScoped;
+
     m_planes.clear();
     m_connectors.clear();
     m_crtcs.clear();
@@ -153,6 +155,8 @@ DrmDevice::~DrmDevice()
 
 bool DrmDevice::ResolveGpuDevice()
 {
+    ZoneScoped;
+
     auto physDev = GetPhysicalDeviceForPciBus( m_pci.domain, m_pci.bus, m_pci.dev, m_pci.func );
     if( !physDev ) return false;
 

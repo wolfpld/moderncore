@@ -3,7 +3,6 @@
 #include <bit>
 #include <format>
 #include <gbm.h>
-#include <string.h>
 #include <tracy/Tracy.hpp>
 
 extern "C" {
@@ -111,6 +110,8 @@ DrmConnector::~DrmConnector()
 
 bool DrmConnector::SetMode( const drmModeModeInfo& mode )
 {
+    ZoneScoped;
+
     if( SetModeDrm( mode ) && SetModeVulkan() ) return true;
 
     m_crtc.reset();
@@ -242,8 +243,6 @@ const drmModeModeInfo& DrmConnector::GetBestDisplayMode() const
 
 const std::shared_ptr<DrmPlane>& DrmConnector::GetPlaneForCrtc( const DrmCrtc& crtc )
 {
-    ZoneScoped;
-
     auto& planes = m_device.GetPlanes();
     for( auto& plane : planes )
     {

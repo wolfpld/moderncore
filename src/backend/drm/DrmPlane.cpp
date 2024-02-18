@@ -1,12 +1,15 @@
 #include <drm_fourcc.h>
+#include <tracy/Tracy.hpp>
 #include <xf86drmMode.h>
 
 #include "DrmPlane.hpp"
 #include "DrmProperties.hpp"
 
 DrmPlane::DrmPlane( int fd, uint32_t id )
-    : m_plane( drmModeGetPlane( fd, id ) )
 {
+    ZoneScoped;
+
+    m_plane = drmModeGetPlane( fd, id );
     if( !m_plane ) throw PlaneException( "Failed to get plane" );
 
     DrmProperties props( fd, id, DRM_MODE_OBJECT_PLANE );

@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <tracy/Tracy.hpp>
 #include <xf86drmMode.h>
 
 #include "DrmCrtc.hpp"
@@ -10,6 +11,8 @@ DrmCrtc::DrmCrtc( int fd, uint32_t id, uint32_t mask )
     , m_mask( mask )
     , m_inUse( false )
 {
+    ZoneScoped;
+
     auto crtc = drmModeGetCrtc( fd, id );
     if( !crtc ) throw CrtcException( "Failed to get CRTC" );
     assert( id == crtc->crtc_id );
@@ -28,6 +31,8 @@ void DrmCrtc::Enable()
 
 void DrmCrtc::Disable()
 {
+    ZoneScoped;
+
     m_inUse = false;
 
     if( m_bufferId != 0 )

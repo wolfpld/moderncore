@@ -35,6 +35,8 @@ public:
     [[nodiscard]] auto Descriptor() const { return m_fd; }
     [[nodiscard]] auto& GetName() const { return m_name; }
 
+    [[nodiscard]] auto& GetGpu() const { return m_gpu; }
+
     operator gbm_device*() const { return m_gbm; }
 
     bool ResolveGpuDevice();

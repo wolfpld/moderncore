@@ -26,6 +26,16 @@ void SetLogSynchronized( bool sync )
     s_logSynchronized = sync;
 }
 
+void LogBlockBegin()
+{
+    if( s_logSynchronized ) s_logLock.lock();
+}
+
+void LogBlockEnd()
+{
+    if( s_logSynchronized ) s_logLock.unlock();
+}
+
 static void PrintLevel( LogLevel level )
 {
     switch( level )

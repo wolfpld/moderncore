@@ -54,6 +54,7 @@ private:
 
     std::vector<uint32_t> m_crtcs;
     std::vector<drmModeModeInfo> m_modes;
+    std::vector<uint64_t> m_modifiers;
 
     DrmDevice& m_device;
     drmModeModeInfo m_mode;

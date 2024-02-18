@@ -15,7 +15,9 @@ extern "C" {
 #include "DrmCrtc.hpp"
 #include "DrmPlane.hpp"
 #include "DrmProperties.hpp"
+#include "server/GpuDevice.hpp"
 #include "util/Logs.hpp"
+#include "vulkan/VlkError.hpp"
 
 static uint32_t GetRefreshRate( const drmModeModeInfo& mode )
 {
@@ -132,6 +134,7 @@ bool DrmConnector::SetModeDrm( const drmModeModeInfo& mode )
     m_plane = GetPlaneForCrtc( **it );
     if( !m_plane ) return false;
 
+    m_modifiers.clear();
     m_mode = mode;
     m_crtc = *it;
     return true;
@@ -140,6 +143,47 @@ bool DrmConnector::SetModeDrm( const drmModeModeInfo& mode )
 bool DrmConnector::SetModeVulkan()
 {
     ZoneScoped;
+
+    assert( m_plane );
+    assert( m_crtc );
+    assert( m_modifiers.empty() );
+
+    VkPhysicalDeviceImageDrmFormatModifierInfoEXT modInfo = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_DRM_FORMAT_MODIFIER_INFO_EXT };
+
+    VkPhysicalDeviceExternalImageFormatInfo extInfo = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_IMAGE_FORMAT_INFO };
+    extInfo.pNext = &modInfo;
+    extInfo.handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT;
+
+    VkPhysicalDeviceImageFormatInfo2 formatInfo = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_FORMAT_INFO_2 };
+    formatInfo.pNext = &extInfo;
+    formatInfo.format = VK_FORMAT_B8G8R8A8_SRGB;
+    formatInfo.type = VK_IMAGE_TYPE_2D;
+    formatInfo.tiling = VK_IMAGE_TILING_DRM_FORMAT_MODIFIER_EXT;
+    formatInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+    VkExternalImageFormatProperties extProp = { VK_STRUCTURE_TYPE_EXTERNAL_IMAGE_FORMAT_PROPERTIES };
+
+    VkImageFormatProperties2 prop = { VK_STRUCTURE_TYPE_IMAGE_FORMAT_PROPERTIES_2 };
+    prop.pNext = &extProp;
+
+    auto& modifiers = m_plane->Modifiers();
+    for( auto mod : modifiers )
+    {
+        modInfo.drmFormatModifier = mod;
+        auto res = vkGetPhysicalDeviceImageFormatProperties2( m_device.GetGpu()->Device(), &formatInfo, &prop );
+        if( res == VK_ERROR_FORMAT_NOT_SUPPORTED ) continue;
+        VkVerify( res );
+        if( extProp.externalMemoryProperties.externalMemoryFeatures & VK_EXTERNAL_MEMORY_FEATURE_IMPORTABLE_BIT )
+        {
+            m_modifiers.emplace_back( mod );
+        }
+    }
+
+    if( m_modifiers.empty() )
+    {
+        mclog( LogLevel::Warning, "  No supported modifiers found" );
+        return false;
+    }
 
     // todo
     assert( !m_bo );

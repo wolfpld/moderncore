@@ -13,7 +13,7 @@ namespace
 {
 LogLevel s_logLevel = LogLevel::Info;
 bool s_logSynchronized = false;
-std::recursive_mutex s_logLock;
+TracyLockableN( std::recursive_mutex, s_logLock, "Logger" );
 }
 
 void SetLogLevel( LogLevel level )

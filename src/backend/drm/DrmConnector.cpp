@@ -9,6 +9,7 @@ extern "C" {
 #include <libdisplay-info/info.h>
 }
 
+#include "DrmBuffer.hpp"
 #include "DrmDevice.hpp"
 #include "DrmConnector.hpp"
 #include "DrmCrtc.hpp"
@@ -17,6 +18,8 @@ extern "C" {
 #include "server/GpuDevice.hpp"
 #include "util/Logs.hpp"
 #include "vulkan/VlkError.hpp"
+
+constexpr static int BufferNum = 3;
 
 static uint32_t GetRefreshRate( const drmModeModeInfo& mode )
 {
@@ -29,7 +32,6 @@ static uint32_t GetRefreshRate( const drmModeModeInfo& mode )
 
 DrmConnector::DrmConnector( DrmDevice& device, uint32_t id, const drmModeRes* res )
     : m_id( id )
-    , m_bo( nullptr )
     , m_monitor( "unknown" )
     , m_device( device )
     , m_mode{}
@@ -101,11 +103,6 @@ DrmConnector::DrmConnector( DrmDevice& device, uint32_t id, const drmModeRes* re
 
 DrmConnector::~DrmConnector()
 {
-    if( m_bo )
-    {
-        drmModeRmFB( m_device.Descriptor(), m_fbId );
-        gbm_bo_destroy( m_bo );
-    }
 }
 
 bool DrmConnector::SetMode( const drmModeModeInfo& mode )
@@ -135,9 +132,11 @@ bool DrmConnector::SetModeDrm( const drmModeModeInfo& mode )
     m_plane = GetPlaneForCrtc( **it );
     if( !m_plane ) return false;
 
+    m_buffers.clear();
     m_modifiers.clear();
     m_mode = mode;
     m_crtc = *it;
+
     return true;
 }
 
@@ -148,6 +147,7 @@ bool DrmConnector::SetModeVulkan()
     assert( m_plane );
     assert( m_crtc );
     assert( m_modifiers.empty() );
+    assert( m_buffers.empty() );
 
     VkPhysicalDeviceImageDrmFormatModifierInfoEXT modInfo = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_DRM_FORMAT_MODIFIER_INFO_EXT };
 
@@ -186,6 +186,12 @@ bool DrmConnector::SetModeVulkan()
         return false;
     }
 
+    for( int i=0; i<BufferNum; i++ )
+    {
+        m_buffers.emplace_back( std::make_shared<DrmBuffer>( m_device, m_mode ) );
+    }
+
+#if 0
     // todo
     assert( !m_bo );
 
@@ -209,6 +215,7 @@ bool DrmConnector::SetModeVulkan()
     }
 
     m_crtc->Enable();
+#endif
 
     return true;
 }

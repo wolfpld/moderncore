@@ -9,6 +9,7 @@
 
 #include "util/NoCopy.hpp"
 
+class DrmBuffer;
 class DrmCrtc;
 class DrmDevice;
 class DrmPlane;
@@ -41,9 +42,6 @@ private:
     const std::shared_ptr<DrmPlane>& GetPlaneForCrtc( const DrmCrtc& crtc );
 
     uint32_t m_id;
-
-    gbm_bo* m_bo;
-    uint32_t m_fbId;
     bool m_connected;
 
     std::string m_name;
@@ -55,6 +53,8 @@ private:
     std::vector<uint32_t> m_crtcs;
     std::vector<drmModeModeInfo> m_modes;
     std::vector<uint64_t> m_modifiers;
+
+    std::vector<std::shared_ptr<DrmBuffer>> m_buffers;
 
     DrmDevice& m_device;
     drmModeModeInfo m_mode;

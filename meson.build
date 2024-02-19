@@ -28,6 +28,7 @@ files = [
     'src/image/PngLoader.cpp',
     'src/image/WebpLoader.cpp',
     'src/backend/drm/BackendDrm.cpp',
+    'src/backend/drm/DrmBuffer.cpp',
     'src/backend/drm/DrmConnector.cpp',
     'src/backend/drm/DrmCrtc.cpp',
     'src/backend/drm/DrmDevice.cpp',

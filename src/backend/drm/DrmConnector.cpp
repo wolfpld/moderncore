@@ -188,7 +188,7 @@ bool DrmConnector::SetModeVulkan()
 
     for( int i=0; i<BufferNum; i++ )
     {
-        m_buffers.emplace_back( std::make_shared<DrmBuffer>( m_device, m_mode ) );
+        m_buffers.emplace_back( std::make_shared<DrmBuffer>( m_device, m_mode, m_modifiers ) );
     }
 
 #if 0

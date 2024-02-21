@@ -1,10 +1,70 @@
-#include "DrmBuffer.hpp"
+#include <drm_fourcc.h>
+#include <gbm.h>
 
-DrmBuffer::DrmBuffer( DrmDevice& device, const drmModeModeInfo& mode )
+#include "DrmBuffer.hpp"
+#include "DrmDevice.hpp"
+#include "server/GpuDevice.hpp"
+#include "util/Logs.hpp"
+#include "util/Panic.hpp"
+#include "vulkan/VlkDevice.hpp"
+#include "vulkan/VlkError.hpp"
+
+DrmBuffer::DrmBuffer( DrmDevice& device, const drmModeModeInfo& mode, const std::vector<uint64_t>& modifiers )
     : m_device( device )
 {
+    m_bo = gbm_bo_create_with_modifiers( device, mode.hdisplay, mode.vdisplay, DRM_FORMAT_XRGB8888, modifiers.data(), modifiers.size() );
+    CheckPanic( m_bo, "Failed to create gbm buffer" );
+
+    m_modifier = gbm_bo_get_modifier( m_bo );
+    const auto numPlanes = gbm_bo_get_plane_count( m_bo );
+    //const bool disjoint = numPlanes > 1;
+    const bool disjoint = false;
+    mclog( LogLevel::Debug, "Buffer modifier: 0x%llx, num planes: %d", m_modifier, numPlanes );
+
+    std::vector<int> dmaBufFds( numPlanes );
+    std::vector<VkSubresourceLayout> layouts( numPlanes );
+    for( uint32_t i=0; i<numPlanes; i++ )
+    {
+        dmaBufFds[i] = gbm_bo_get_fd_for_plane( m_bo, i );
+
+        layouts[i].offset = gbm_bo_get_offset( m_bo, i );
+        layouts[i].rowPitch = gbm_bo_get_stride_for_plane( m_bo, i );
+        layouts[i].arrayPitch = 0;
+        layouts[i].depthPitch = 0;
+
+        mclog( LogLevel::Debug, "  Plane %d: offset %d, pitch %d", i, layouts[i].offset, layouts[i].rowPitch );
+    }
+
+    VkImageDrmFormatModifierExplicitCreateInfoEXT modInfo = { VK_STRUCTURE_TYPE_IMAGE_DRM_FORMAT_MODIFIER_EXPLICIT_CREATE_INFO_EXT };
+    modInfo.drmFormatModifier = m_modifier;
+    modInfo.drmFormatModifierPlaneCount = numPlanes;
+    modInfo.pPlaneLayouts = layouts.data();
+
+    VkExternalMemoryImageCreateInfo extInfo = { VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO };
+    extInfo.pNext = &modInfo;
+    extInfo.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT;
+
+    VkImageCreateInfo imageInfo = { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
+    imageInfo.pNext = &extInfo;
+    imageInfo.flags = disjoint ? VK_IMAGE_CREATE_DISJOINT_BIT : 0;
+    imageInfo.imageType = VK_IMAGE_TYPE_2D;
+    imageInfo.format = VK_FORMAT_B8G8R8A8_SRGB;
+    imageInfo.extent.width = mode.hdisplay;
+    imageInfo.extent.height = mode.vdisplay;
+    imageInfo.extent.depth = 1;
+    imageInfo.mipLevels = 1;
+    imageInfo.arrayLayers = 1;
+    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    imageInfo.tiling = VK_IMAGE_TILING_DRM_FORMAT_MODIFIER_EXT;
+    imageInfo.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+    VkVerify( vkCreateImage( device.GetGpu()->Device(), &imageInfo, nullptr, &m_image ) );
 }
 
 DrmBuffer::~DrmBuffer()
 {
+    vkDestroyImage( m_device.GetGpu()->Device(), m_image, nullptr );
+    gbm_bo_destroy( m_bo );
 }

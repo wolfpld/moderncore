@@ -20,8 +20,12 @@ public:
     [[nodiscard]] bool IsSwapchainCapable();
     [[nodiscard]] bool HasPushDescriptor();
 
+    operator VkPhysicalDevice() const { return m_physDev; }
+
 private:
     [[nodiscard]] bool IsExtensionAvailable( const char* extensionName ) const;
+
+    VkPhysicalDevice m_physDev;
 
     std::vector<VkQueueFamilyProperties> m_queueFamilyProperties;
     std::vector<VkExtensionProperties> m_extensionProperties;

@@ -4,6 +4,7 @@
 #include "VlkPhysicalDevice.hpp"
 
 VlkPhysicalDevice::VlkPhysicalDevice( VkPhysicalDevice physDev )
+    : m_physDev( physDev )
 {
     uint32_t count;
     vkGetPhysicalDeviceQueueFamilyProperties( physDev, &count, nullptr );

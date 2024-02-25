@@ -1,5 +1,6 @@
 #include <drm_fourcc.h>
 #include <gbm.h>
+#include <sys/stat.h>
 
 #include "DrmBuffer.hpp"
 #include "DrmDevice.hpp"
@@ -9,6 +10,24 @@
 #include "vulkan/VlkDevice.hpp"
 #include "vulkan/VlkError.hpp"
 
+namespace
+{
+bool CheckDisjoint( const std::vector<int>& dmaBufFds )
+{
+    if( dmaBufFds.size() == 1 ) return false;
+
+    struct stat st_ref, st;
+    if( fstat( dmaBufFds[0], &st_ref ) < 0 ) return false;
+
+    for( size_t i=1; i<dmaBufFds.size(); i++ )
+    {
+        if( fstat( dmaBufFds[i], &st ) < 0 ) return false;
+        if( st.st_ino != st_ref.st_ino ) return true;
+    }
+    return false;
+}
+}
+
 DrmBuffer::DrmBuffer( DrmDevice& device, const drmModeModeInfo& mode, const std::vector<uint64_t>& modifiers )
     : m_device( device )
 {
@@ -17,8 +36,6 @@ DrmBuffer::DrmBuffer( DrmDevice& device, const drmModeModeInfo& mode, const std:
 
     m_modifier = gbm_bo_get_modifier( m_bo );
     const auto numPlanes = gbm_bo_get_plane_count( m_bo );
-    //const bool disjoint = numPlanes > 1;
-    const bool disjoint = false;
     mclog( LogLevel::Debug, "Buffer modifier: 0x%llx, num planes: %d", m_modifier, numPlanes );
 
     std::vector<int> dmaBufFds( numPlanes );
@@ -34,6 +51,8 @@ DrmBuffer::DrmBuffer( DrmDevice& device, const drmModeModeInfo& mode, const std:
 
         mclog( LogLevel::Debug, "  Plane %d: offset %d, pitch %d", i, layouts[i].offset, layouts[i].rowPitch );
     }
+
+    const bool disjoint = CheckDisjoint( dmaBufFds );
 
     VkImageDrmFormatModifierExplicitCreateInfoEXT modInfo = { VK_STRUCTURE_TYPE_IMAGE_DRM_FORMAT_MODIFIER_EXPLICIT_CREATE_INFO_EXT };
     modInfo.drmFormatModifier = m_modifier;

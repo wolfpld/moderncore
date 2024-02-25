@@ -1,11 +1,14 @@
 #include <algorithm>
 #include <string.h>
+#include <tracy/Tracy.hpp>
 
 #include "VlkPhysicalDevice.hpp"
 
 VlkPhysicalDevice::VlkPhysicalDevice( VkPhysicalDevice physDev )
     : m_physDev( physDev )
 {
+    ZoneScoped;
+
     uint32_t count;
     vkGetPhysicalDeviceQueueFamilyProperties( physDev, &count, nullptr );
     m_queueFamilyProperties.resize( count );
@@ -20,12 +23,14 @@ VlkPhysicalDevice::VlkPhysicalDevice( VkPhysicalDevice physDev )
 
 bool VlkPhysicalDevice::IsGraphicCapable()
 {
+    ZoneScoped;
     return std::any_of( m_queueFamilyProperties.begin(), m_queueFamilyProperties.end(),
         []( const auto& v ) { return ( v.queueFlags & VK_QUEUE_GRAPHICS_BIT ) != 0; } );
 }
 
 bool VlkPhysicalDevice::IsComputeCapable()
 {
+    ZoneScoped;
     return std::any_of( m_queueFamilyProperties.begin(), m_queueFamilyProperties.end(),
         []( const auto& v ) { return ( v.queueFlags & VK_QUEUE_GRAPHICS_BIT ) != 0; } );
 }
@@ -42,6 +47,9 @@ bool VlkPhysicalDevice::HasPushDescriptor()
 
 bool VlkPhysicalDevice::IsExtensionAvailable( const char* extensionName ) const
 {
+    ZoneScoped;
+    ZoneText( extensionName, strlen( extensionName ) );
+
     auto it = std::lower_bound( m_extensionProperties.begin(), m_extensionProperties.end(), extensionName,
         []( const auto& lhs, const auto& rhs ) { return strcmp( lhs.extensionName, rhs ) < 0; } );
     return it != m_extensionProperties.end() && strcmp( it->extensionName, extensionName ) == 0;

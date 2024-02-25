@@ -53,6 +53,7 @@ DrmBuffer::DrmBuffer( DrmDevice& device, const drmModeModeInfo& mode, const std:
     }
 
     const bool disjoint = CheckDisjoint( dmaBufFds );
+    CheckPanic( !disjoint, "Disjoint buffers are not supported" );
 
     VkImageDrmFormatModifierExplicitCreateInfoEXT modInfo = { VK_STRUCTURE_TYPE_IMAGE_DRM_FORMAT_MODIFIER_EXPLICIT_CREATE_INFO_EXT };
     modInfo.drmFormatModifier = m_modifier;

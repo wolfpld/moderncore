@@ -12,3 +12,4 @@ void DestroyDebugUtilsMessengerEXT( VkInstance instance, VkDebugUtilsMessengerEX
 extern PFN_vkCmdPushDescriptorSetKHR CmdPushDescriptorSetKHR;
 extern PFN_vkGetSemaphoreFdKHR GetSemaphoreFdKHR;
 extern PFN_vkImportSemaphoreFdKHR ImportSemaphoreFdKHR;
+extern PFN_vkGetMemoryFdPropertiesKHR GetMemoryFdPropertiesKHR;

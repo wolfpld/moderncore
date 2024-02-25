@@ -4,6 +4,7 @@
 PFN_vkCmdPushDescriptorSetKHR CmdPushDescriptorSetKHR;
 PFN_vkGetSemaphoreFdKHR GetSemaphoreFdKHR;
 PFN_vkImportSemaphoreFdKHR ImportSemaphoreFdKHR;
+PFN_vkGetMemoryFdPropertiesKHR GetMemoryFdPropertiesKHR;
 
 VkResult LoadVulkanExtensions( VlkInstance& instance )
 {
@@ -17,6 +18,9 @@ VkResult LoadVulkanExtensions( VlkInstance& instance )
 
         ImportSemaphoreFdKHR = (PFN_vkImportSemaphoreFdKHR)vkGetInstanceProcAddr( instance, "vkImportSemaphoreFdKHR" );
         if( !ImportSemaphoreFdKHR ) return VK_ERROR_EXTENSION_NOT_PRESENT;
+
+        GetMemoryFdPropertiesKHR = (PFN_vkGetMemoryFdPropertiesKHR)vkGetInstanceProcAddr( instance, "vkGetMemoryFdPropertiesKHR" );
+        if( !GetMemoryFdPropertiesKHR ) return VK_ERROR_EXTENSION_NOT_PRESENT;
     }
 
     return VK_SUCCESS;

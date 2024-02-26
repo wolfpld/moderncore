@@ -202,8 +202,14 @@ deps = [
     tracy
 ]
 
-if get_option('tracy_enable') and get_option('buildtype') != 'debugoptimized'
-    message('Profiling builds should set --buildtype=debugoptimized')
+if get_option('tracy_enable')
+    if get_option('buildtype') != 'debugoptimized'
+        message('Profiling builds should set --buildtype=debugoptimized')
+    endif
+    frame_pointer_args = compiler.get_supported_arguments([
+        '-fno-omit-frame-pointer'
+    ])
+    add_project_arguments(frame_pointer_args, language: ['c', 'cpp'])
 endif
 
 mcorelib = static_library('mcorelib',

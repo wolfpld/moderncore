@@ -15,6 +15,7 @@
 #include "util/Logs.hpp"
 #include "util/TaskDispatch.hpp"
 #include "vulkan/VlkInstance.hpp"
+#include "vulkan/VlkPhysicalDevice.hpp"
 
 namespace
 {
@@ -66,6 +67,8 @@ Server::Server()
     dispatchThread.join();
     vulkanThread.join();
 
+    m_vkInstance->InitPhysicalDevices( *m_dispatch );
+
     SetupGpus( !waylandDpy );
     m_dispatch->Sync();
 
@@ -106,26 +109,25 @@ void Server::SetupGpus( bool skipSoftware )
     ZoneScoped;
 
     const auto& devices = m_vkInstance->QueryPhysicalDevices();
-    std::vector<VkPhysicalDeviceProperties> props( devices.size() );
 
     mclog( LogLevel::Info, "Found %d physical devices", devices.size() );
     int idx = 0;
     int hw = 0;
-    for( const auto& device : devices )
+    for( const auto& dev : devices )
     {
-        vkGetPhysicalDeviceProperties( device, &props[idx] );
-        mclog( LogLevel::Info, "  %d: %s", idx, props[idx].deviceName );
-        if( IsDeviceHardware( props[idx] ) ) hw++;
+        auto& props = dev->GetProperties();
+        mclog( LogLevel::Info, "  %d: %s", idx, props.deviceName );
+        if( IsDeviceHardware( props ) ) hw++;
         idx++;
     }
 
     const auto num = skipSoftware ? hw : devices.size();
     m_gpus.resize( num );
     idx = 0;
-    int vkIdx = 0;
     for( const auto& dev : devices )
     {
-        if( !skipSoftware || IsDeviceHardware( props[vkIdx] ) )
+        auto& props = dev->GetProperties();
+        if( !skipSoftware || IsDeviceHardware( props ) )
         {
             m_dispatch->Queue( [this, dev, idx] {
                 LogBlockBegin();
@@ -143,9 +145,8 @@ void Server::SetupGpus( bool skipSoftware )
         }
         else
         {
-            mclog( LogLevel::Info, "Skipping software device: %s", props[vkIdx].deviceName );
+            mclog( LogLevel::Info, "Skipping software device: %s", props.deviceName );
         }
-        vkIdx++;
     }
 }
 

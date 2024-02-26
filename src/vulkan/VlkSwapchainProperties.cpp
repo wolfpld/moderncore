@@ -1,8 +1,9 @@
 #include <vector>
 
+#include "VlkPhysicalDevice.hpp"
 #include "VlkSwapchainProperties.hpp"
 
-VlkSwapchainProperties::VlkSwapchainProperties( VkPhysicalDevice physicalDevice, VkSurfaceKHR surface )
+VlkSwapchainProperties::VlkSwapchainProperties( VlkPhysicalDevice& physicalDevice, VkSurfaceKHR surface )
 {
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR( physicalDevice, surface, &m_capabilities );
 

@@ -6,10 +6,9 @@
 #include "vulkan/VlkDevice.hpp"
 #include "vulkan/VlkPhysicalDevice.hpp"
 
-void PrintPhysicalDeviceInfo( VkPhysicalDevice physDev )
+void PrintPhysicalDeviceInfo( const VlkPhysicalDevice& physDev )
 {
-    VkPhysicalDeviceProperties properties;
-    vkGetPhysicalDeviceProperties( physDev, &properties );
+    auto& properties = physDev.GetProperties();
 
     uint32_t count;
     vkEnumerateDeviceExtensionProperties( physDev, nullptr, &count, nullptr );
@@ -34,8 +33,7 @@ void PrintPhysicalDeviceInfo( VkPhysicalDevice physDev )
 
     mclog( LogLevel::Info, "  Max 2D texture size: %" PRIu32, properties.limits.maxImageDimension2D );
 
-    VlkPhysicalDevice phys( physDev );
-    auto& qfp = phys.GetQueueFamilyProperties();
+    auto& qfp = physDev.GetQueueFamilyProperties();
     mclog( LogLevel::Info, "  Number of queue families: %zu", qfp.size() );
 
     for( size_t j=0; j<qfp.size(); j++ )

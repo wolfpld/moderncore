@@ -5,6 +5,7 @@
 #include <vulkan/vulkan.h>
 
 class GpuDevice;
+class VlkPhysicalDevice;
 
-VkPhysicalDevice GetPhysicalDeviceForPciBus( uint16_t domain, uint8_t bus, uint8_t dev, uint8_t func );
-std::shared_ptr<GpuDevice> GetGpuDeviceForPhysicalDevice( VkPhysicalDevice dev );
+std::shared_ptr<VlkPhysicalDevice> GetPhysicalDeviceForPciBus( uint16_t domain, uint8_t bus, uint8_t dev, uint8_t func );
+std::shared_ptr<GpuDevice> GetGpuDeviceForPhysicalDevice( VlkPhysicalDevice& dev );

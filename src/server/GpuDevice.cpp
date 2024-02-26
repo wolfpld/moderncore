@@ -7,11 +7,12 @@
 #include "util/Tracy.hpp"
 #include "vulkan/ext/DeviceInfo.hpp"
 #include "vulkan/VlkInstance.hpp"
+#include "vulkan/VlkPhysicalDevice.hpp"
 
-GpuDevice::GpuDevice( VlkInstance& instance, VkPhysicalDevice physDev )
+GpuDevice::GpuDevice( VlkInstance& instance, const std::shared_ptr<VlkPhysicalDevice>& physDev )
     : m_device( instance, physDev, VlkDevice::RequireGraphic | VlkDevice::RequirePresent )
 {
-    PrintPhysicalDeviceInfo( physDev );
+    PrintPhysicalDeviceInfo( *physDev );
     PrintQueueConfig( m_device );
 }
 
@@ -23,7 +24,7 @@ GpuDevice::~GpuDevice()
 void GpuDevice::Render()
 {
     ZoneScoped;
-    ZoneVkDevice( m_device );
+    ZoneVkDevice( m_device.GetPhysicalDevice() );
 
     for( auto& c : m_connectors ) c->Render();
 }

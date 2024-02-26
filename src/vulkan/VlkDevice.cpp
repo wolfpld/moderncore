@@ -14,18 +14,17 @@
 #include "util/Panic.hpp"
 #include "util/Tracy.hpp"
 
-VlkDevice::VlkDevice( VlkInstance& instance, VkPhysicalDevice physDev, int flags, VkSurfaceKHR presentSurface )
-    : m_physDev( physDev )
+VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> physDev, int flags, VkSurfaceKHR presentSurface )
+    : m_physDev( std::move( physDev ) )
     , m_queueInfo {}
     , m_queue {}
 {
     ZoneScoped;
-    ZoneVkDevice( physDev );
+    ZoneVkDevice( m_physDev );
 
     CheckPanic( flags & ( RequireGraphic | RequireCompute ), "Requested Device without graphic and compute queues." );
 
-    VlkPhysicalDevice phys( physDev );
-    auto& qfp = phys.GetQueueFamilyProperties();
+    auto& qfp = m_physDev->GetQueueFamilyProperties();
     const auto sz = uint32_t( qfp.size() );
 
     bool presentOnGraphicsQueue = false;
@@ -36,7 +35,7 @@ VlkDevice::VlkDevice( VlkInstance& instance, VkPhysicalDevice physDev, int flags
         {
             for( size_t i=0; i<sz; i++ )
             {
-                vkGetPhysicalDeviceSurfaceSupportKHR( physDev, uint32_t( i ), presentSurface, &presentSupport[i] );
+                vkGetPhysicalDeviceSurfaceSupportKHR( *m_physDev, uint32_t( i ), presentSurface, &presentSupport[i] );
             }
         }
         else
@@ -48,7 +47,7 @@ VlkDevice::VlkDevice( VlkInstance& instance, VkPhysicalDevice physDev, int flags
 
     if( flags & RequireGraphic )
     {
-        CheckPanic( phys.IsGraphicCapable(), "Requested Device with graphic queue, but it does not has any graphic queues." );
+        CheckPanic( m_physDev->IsGraphicCapable(), "Requested Device with graphic queue, but it does not has any graphic queues." );
         uint32_t idx = sz;
         if( flags & RequirePresent )
         {
@@ -105,7 +104,7 @@ VlkDevice::VlkDevice( VlkInstance& instance, VkPhysicalDevice physDev, int flags
 
     if( flags & RequireCompute )
     {
-        CheckPanic( phys.IsComputeCapable(), "Requested Device with compute queue, but it does not has any compute queues." );
+        CheckPanic( m_physDev->IsComputeCapable(), "Requested Device with compute queue, but it does not has any compute queues." );
         uint32_t idx = sz;
         for( idx=0; idx<sz; idx++ )
         {
@@ -296,7 +295,7 @@ VlkDevice::VlkDevice( VlkInstance& instance, VkPhysicalDevice physDev, int flags
     devInfo.enabledExtensionCount = (uint32_t)deviceExtensions.size();
     devInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
-    auto res = vkCreateDevice( physDev, &devInfo, nullptr, &m_device );
+    auto res = vkCreateDevice( *m_physDev, &devInfo, nullptr, &m_device );
     if( res != VK_SUCCESS ) throw DeviceException( std::format( "Failed to create logical device ({}).", string_VkResult( res ) ) );
 
     if( instance.Type() == VlkInstanceType::Drm )
@@ -306,7 +305,7 @@ VlkDevice::VlkDevice( VlkInstance& instance, VkPhysicalDevice physDev, int flags
 
         VkExternalSemaphoreProperties extSemProps = { VK_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_PROPERTIES };
 
-        vkGetPhysicalDeviceExternalSemaphoreProperties( physDev, &extSemInfo, &extSemProps );
+        vkGetPhysicalDeviceExternalSemaphoreProperties( *m_physDev, &extSemInfo, &extSemProps );
 
         if( !( extSemProps.externalSemaphoreFeatures & VK_EXTERNAL_SEMAPHORE_FEATURE_IMPORTABLE_BIT ) )
         {
@@ -332,7 +331,7 @@ VlkDevice::VlkDevice( VlkInstance& instance, VkPhysicalDevice physDev, int flags
     }
 
     VmaAllocatorCreateInfo allocInfo = {};
-    allocInfo.physicalDevice = physDev;
+    allocInfo.physicalDevice = *m_physDev;
     allocInfo.device = m_device;
     allocInfo.instance = instance;
     allocInfo.vulkanApiVersion = VK_API_VERSION_1_1;

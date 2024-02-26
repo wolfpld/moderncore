@@ -93,11 +93,11 @@ WaylandWindow::WaylandWindow( Params&& p )
     auto& gpuList = server.Gpus();
     if( p.physDev < 0 )
     {
-        VkPhysicalDevice device;
         const auto physicalDevices = vkInstance.QueryPhysicalDevices();
 
-        device = PhysDevSel::PickBest( physicalDevices, m_vkSurface );
-        CheckPanic( device != VK_NULL_HANDLE, "Failed to find suitable physical device" );
+        auto device_ = PhysDevSel::PickBest( physicalDevices, m_vkSurface );
+        CheckPanic( device_, "Failed to find suitable physical device" );
+        auto device = (VkPhysicalDevice)*device_;
 
         auto it = std::find_if( gpuList.begin(), gpuList.end(), [device]( const auto& v ) { return v->Device() == device; } );
         CheckPanic( it != gpuList.end(), "Selected physical device has valid index, but not found in list of GPUs (?)" );
@@ -112,7 +112,7 @@ WaylandWindow::WaylandWindow( Params&& p )
         CheckPanic( m_gpu->IsPresentSupported( m_vkSurface ), "Selected physical device does not support presentation to Wayland surface" );
     }
 
-    ZoneVkDevice( m_gpu->Device() );
+    ZoneVkDevice( m_gpu->Device().GetPhysicalDevice() );
 
     m_connector = std::make_shared<WaylandConnector>( m_gpu->Device(), m_vkSurface );
     m_gpu->AddConnector( m_connector );

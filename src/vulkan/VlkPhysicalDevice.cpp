@@ -19,6 +19,8 @@ VlkPhysicalDevice::VlkPhysicalDevice( VkPhysicalDevice physDev )
     vkEnumerateDeviceExtensionProperties( physDev, nullptr, &count, m_extensionProperties.data() );
 
     std::sort( m_extensionProperties.begin(), m_extensionProperties.end(), []( const auto& lhs, const auto& rhs ) { return strcmp( lhs.extensionName, rhs.extensionName ) < 0; } );
+
+    vkGetPhysicalDeviceProperties( physDev, &m_properties );
 }
 
 bool VlkPhysicalDevice::IsGraphicCapable()

@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <vulkan/vulkan.h>
 
+#include "VlkPhysicalDevice.hpp"
 #include "VlkQueueType.hpp"
 #include "contrib/vk_mem_alloc.h"
 #include "util/NoCopy.hpp"
@@ -36,7 +37,7 @@ public:
 
     struct DeviceException : public std::runtime_error { explicit DeviceException( const std::string& msg ) : std::runtime_error( msg ) {} };
 
-    VlkDevice( VlkInstance& instance, VkPhysicalDevice physDev, int flags, VkSurfaceKHR presentSurface = VK_NULL_HANDLE );
+    VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> physDev, int flags, VkSurfaceKHR presentSurface = VK_NULL_HANDLE );
     ~VlkDevice();
 
     NoCopy( VlkDevice );
@@ -46,14 +47,15 @@ public:
     [[nodiscard]] auto& GetQueueInfo( QueueType type ) const { return m_queueInfo[(int)type]; }
     [[nodiscard]] auto GetQueue( QueueType type ) const { assert( m_queue[(int)type] != VK_NULL_HANDLE ); return m_queue[(int)type]; }
     [[nodiscard]] auto& GetCommandPool( QueueType type ) const { assert( m_commandPool[(int)type] ); return m_commandPool[(int)type]; }
+    [[nodiscard]] auto& GetPhysicalDevice() const { return m_physDev; }
 
     operator VkDevice() const { return m_device; }
-    operator VkPhysicalDevice() const { return m_physDev; }
+    operator VkPhysicalDevice() const { return *m_physDev; }
     operator VmaAllocator() const { return m_allocator; }
 
 private:
     VkDevice m_device;
-    VkPhysicalDevice m_physDev;
+    std::shared_ptr<VlkPhysicalDevice> m_physDev;
 
     std::array<QueueInfo, 4> m_queueInfo;
     std::array<VkQueue, 4> m_queue;

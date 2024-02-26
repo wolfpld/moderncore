@@ -5,10 +5,12 @@
 
 #include "util/NoCopy.hpp"
 
+class VlkPhysicalDevice;
+
 class VlkSwapchainProperties
 {
 public:
-    VlkSwapchainProperties( VkPhysicalDevice physicalDevice, VkSurfaceKHR surface );
+    VlkSwapchainProperties( VlkPhysicalDevice& physicalDevice, VkSurfaceKHR surface );
 
     NoCopy( VlkSwapchainProperties );
 

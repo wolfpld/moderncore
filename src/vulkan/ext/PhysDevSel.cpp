@@ -7,29 +7,28 @@
 namespace PhysDevSel
 {
 
-VkPhysicalDevice PickBest( const std::vector<VkPhysicalDevice>& list, VkSurfaceKHR presentSurface, int flags )
+std::shared_ptr<VlkPhysicalDevice> PickBest( const std::vector<std::shared_ptr<VlkPhysicalDevice>>& list, VkSurfaceKHR presentSurface, int flags )
 {
-    VkPhysicalDevice best = VK_NULL_HANDLE;
+    std::shared_ptr<VlkPhysicalDevice> best;
     const bool preferIntegrated = flags & PreferIntegrated;
     int bestScore = 0;
     for( auto& dev : list )
     {
         if( flags != 0 || presentSurface != VK_NULL_HANDLE )
         {
-            VlkPhysicalDevice physDev( dev );
-            if( flags & RequireGraphic && !physDev.IsGraphicCapable() ) continue;
-            if( flags & RequireCompute && !physDev.IsComputeCapable() ) continue;
-            if( !physDev.HasPushDescriptor() ) continue;
+            if( flags & RequireGraphic && !dev->IsGraphicCapable() ) continue;
+            if( flags & RequireCompute && !dev->IsComputeCapable() ) continue;
+            if( !dev->HasPushDescriptor() ) continue;
             if( presentSurface != VK_NULL_HANDLE )
             {
-                if( !physDev.IsSwapchainCapable() ) continue;
+                if( !dev->IsSwapchainCapable() ) continue;
 
-                const auto numQueues = physDev.GetQueueFamilyProperties().size();
+                const auto numQueues = dev->GetQueueFamilyProperties().size();
                 bool support = false;
                 for( size_t i=0; i<numQueues; i++ )
                 {
                     VkBool32 res;
-                    vkGetPhysicalDeviceSurfaceSupportKHR( dev, i, presentSurface, &res );
+                    vkGetPhysicalDeviceSurfaceSupportKHR( *dev, i, presentSurface, &res );
                     if( res )
                     {
                         support = true;
@@ -38,7 +37,7 @@ VkPhysicalDevice PickBest( const std::vector<VkPhysicalDevice>& list, VkSurfaceK
                 }
                 if( !support ) continue;
 
-                VlkSwapchainProperties swapchainProps( dev, presentSurface );
+                VlkSwapchainProperties swapchainProps( *dev, presentSurface );
                 support = false;
                 for( auto& format : swapchainProps.GetFormats() )
                 {
@@ -56,8 +55,7 @@ VkPhysicalDevice PickBest( const std::vector<VkPhysicalDevice>& list, VkSurfaceK
             }
         }
 
-        VkPhysicalDeviceProperties properties;
-        vkGetPhysicalDeviceProperties( dev, &properties );
+        auto properties = dev->GetProperties();
         int score = properties.limits.maxImageDimension2D;
         switch( properties.deviceType )
         {

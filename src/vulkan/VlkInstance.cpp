@@ -11,6 +11,8 @@
 #include "VlkInstance.hpp"
 #include "VlkProxy.hpp"
 #include "util/Logs.hpp"
+#include "util/TaskDispatch.hpp"
+#include "vulkan/VlkPhysicalDevice.hpp"
 
 constexpr std::array validationLayers = { "VK_LAYER_KHRONOS_validation" };
 
@@ -137,12 +139,25 @@ VlkInstance::~VlkInstance()
     vkDestroyInstance( m_instance, nullptr );
 }
 
-std::vector<VkPhysicalDevice> VlkInstance::QueryPhysicalDevices() const
+void VlkInstance::InitPhysicalDevices( TaskDispatch& dispatch )
 {
-    std::vector<VkPhysicalDevice> ret;
+    ZoneScoped;
+
+    std::vector<VkPhysicalDevice> phys;
     uint32_t cnt;
     vkEnumeratePhysicalDevices( m_instance, &cnt, nullptr );
-    ret.resize( cnt );
-    vkEnumeratePhysicalDevices( m_instance, &cnt, ret.data() );
-    return ret;
+    phys.resize( cnt );
+    vkEnumeratePhysicalDevices( m_instance, &cnt, phys.data() );
+
+    m_physicalDevices.resize( phys.size() );
+    size_t i = 0;
+    for( auto& p : phys )
+    {
+        dispatch.Queue( [this, p, i] {
+            m_physicalDevices[i] = std::make_shared<VlkPhysicalDevice>( p );
+        } );
+        i++;
+    }
+
+    dispatch.Sync();
 }

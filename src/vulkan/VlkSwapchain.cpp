@@ -28,7 +28,7 @@ static void PrintSwapchainProperties( const VlkSwapchainProperties &properties )
 }
 
 VlkSwapchain::VlkSwapchain( const VlkDevice& device, VkSurfaceKHR surface )
-    : m_properties( device, surface )
+    : m_properties( *device.GetPhysicalDevice(), surface )
     , m_format { VK_FORMAT_UNDEFINED }
     , m_presentMode( VK_PRESENT_MODE_FIFO_KHR )
     , m_device( device )

@@ -63,7 +63,7 @@ void Background::AddConnector( Connector& connector )
     if( !m_bitmap ) return;
 
     ZoneScoped;
-    ZoneVkDevice( connector.Device() );
+    ZoneVkDevice( connector.Device().GetPhysicalDevice() );
 
     assert( m_drawData.find( &connector ) == m_drawData.end() );
 

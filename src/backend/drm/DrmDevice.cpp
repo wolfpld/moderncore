@@ -18,6 +18,7 @@
 #include "util/Logs.hpp"
 #include "util/Panic.hpp"
 #include "vulkan/ext/PciBus.hpp"
+#include "vulkan/VlkPhysicalDevice.hpp"
 
 constexpr int DriMajor = 226;
 
@@ -155,11 +156,10 @@ bool DrmDevice::ResolveGpuDevice()
     auto physDev = GetPhysicalDeviceForPciBus( m_pci.domain, m_pci.bus, m_pci.dev, m_pci.func );
     if( !physDev ) return false;
 
-    VkPhysicalDeviceProperties properties;
-    vkGetPhysicalDeviceProperties( physDev, &properties );
+    auto& properties = physDev->GetProperties();
     mclog( LogLevel::Info, "DRM device '%s' matched to Vulkan device '%s'", m_name.c_str(), properties.deviceName );
 
-    m_gpu = GetGpuDeviceForPhysicalDevice( physDev );
+    m_gpu = GetGpuDeviceForPhysicalDevice( *physDev );
     if( !m_gpu ) return false;
 
     for( auto& conn : m_connectors )

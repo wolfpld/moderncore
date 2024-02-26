@@ -1,9 +1,13 @@
 #pragma once
 
+#include <memory>
 #include <vector>
 #include <vulkan/vulkan.h>
 
 #include "util/NoCopy.hpp"
+
+class TaskDispatch;
+class VlkPhysicalDevice;
 
 enum class VlkInstanceType
 {
@@ -19,8 +23,9 @@ public:
 
     NoCopy( VlkInstance );
 
-    [[nodiscard]] std::vector<VkPhysicalDevice> QueryPhysicalDevices() const;
+    void InitPhysicalDevices( TaskDispatch& dispatch );
 
+    [[nodiscard]] auto& QueryPhysicalDevices() const { return m_physicalDevices; }
     [[nodiscard]] auto Type() const { return m_instanceType; }
 
     operator VkInstance() const { return m_instance; }
@@ -30,4 +35,6 @@ private:
     VkDebugUtilsMessengerEXT m_debugMessenger;
 
     VlkInstanceType m_instanceType;
+
+    std::vector<std::shared_ptr<VlkPhysicalDevice>> m_physicalDevices;
 };

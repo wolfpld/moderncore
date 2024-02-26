@@ -6,6 +6,8 @@
 
 #else
 
-#define ZoneVkDevice( device ) { VkPhysicalDeviceProperties properties; vkGetPhysicalDeviceProperties( device, &properties ); ZoneText( properties.deviceName, strlen( properties.deviceName ) ); }
+#include "vulkan/VlkPhysicalDevice.hpp"
+
+#define ZoneVkDevice( device ) { auto& properties = device->GetProperties(); ZoneText( properties.deviceName, strlen( properties.deviceName ) ); }
 
 #endif

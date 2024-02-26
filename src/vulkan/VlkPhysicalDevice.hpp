@@ -12,8 +12,9 @@ public:
 
     NoCopy( VlkPhysicalDevice );
 
-    [[nodiscard]] const std::vector<VkQueueFamilyProperties>& GetQueueFamilyProperties() const { return m_queueFamilyProperties; }
-    [[nodiscard]] const std::vector<VkExtensionProperties>& GetExtensionProperties() const { return m_extensionProperties; }
+    [[nodiscard]] auto& GetProperties() const { return m_properties; }
+    [[nodiscard]] auto& GetQueueFamilyProperties() const { return m_queueFamilyProperties; }
+    [[nodiscard]] auto& GetExtensionProperties() const { return m_extensionProperties; }
 
     [[nodiscard]] bool IsGraphicCapable();
     [[nodiscard]] bool IsComputeCapable();
@@ -26,6 +27,7 @@ private:
     [[nodiscard]] bool IsExtensionAvailable( const char* extensionName ) const;
 
     VkPhysicalDevice m_physDev;
+    VkPhysicalDeviceProperties m_properties;
 
     std::vector<VkQueueFamilyProperties> m_queueFamilyProperties;
     std::vector<VkExtensionProperties> m_extensionProperties;

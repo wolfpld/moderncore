@@ -12,7 +12,7 @@ class VlkInstance;
 class GpuDevice
 {
 public:
-    explicit GpuDevice( VlkInstance& instance, VkPhysicalDevice physDev );
+    explicit GpuDevice( VlkInstance& instance, const std::shared_ptr<VlkPhysicalDevice>& physDev );
     ~GpuDevice();
 
     NoCopy( GpuDevice );

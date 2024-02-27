@@ -91,7 +91,7 @@ VlkInstance::VlkInstance( VlkInstanceType instanceType )
     appInfo.applicationVersion = VK_MAKE_API_VERSION( 0, 1, 0, 0 );
     appInfo.pEngineName = "Modern Core";
     appInfo.engineVersion = VK_MAKE_API_VERSION( 0, 0, 0, 0 );
-    appInfo.apiVersion = VK_API_VERSION_1_2;
+    appInfo.apiVersion = ApiVersion();
 
     VkInstanceCreateInfo createInfo = { VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO };
     createInfo.pApplicationInfo = &appInfo;

@@ -334,7 +334,7 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
     allocInfo.physicalDevice = *m_physDev;
     allocInfo.device = m_device;
     allocInfo.instance = instance;
-    allocInfo.vulkanApiVersion = VK_API_VERSION_1_1;
+    allocInfo.vulkanApiVersion = instance.ApiVersion();
 
     VkVerify( vmaCreateAllocator( &allocInfo, &m_allocator ) );
 

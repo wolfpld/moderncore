@@ -124,7 +124,6 @@ DrmDevice::DrmDevice( const char* devName, DbusSession& bus, const char* session
         auto& mode = conn->GetBestDisplayMode();
         CheckPanic( conn->SetModeDrm( mode ), "Failed to set mode" );
         found = true;
-        break;
     }
     if( !found ) mclog( LogLevel::Warning, "  No connected displays found" );
 }

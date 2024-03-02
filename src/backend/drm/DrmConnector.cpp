@@ -88,7 +88,7 @@ DrmConnector::DrmConnector( DrmDevice& device, uint32_t id, const drmModeRes* re
             }
         }
 
-        mclog( LogLevel::Debug, "  Connector %s: %s, %dx%d mm", m_name.c_str(), m_monitor.c_str(), conn->mmWidth, conn->mmHeight );
+        mclog( LogLevel::Info, "  Connector %s: %s, %dx%d mm", m_name.c_str(), m_monitor.c_str(), conn->mmWidth, conn->mmHeight );
 
         for( int j=0; j<conn->count_modes; j++ )
         {

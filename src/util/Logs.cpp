@@ -50,14 +50,28 @@ static void PrintLevel( LogLevel level )
     }
 }
 
+namespace
+{
+void PrintSourceLocation( FILE* f, const char* fileName, size_t len, size_t line )
+{
+    constexpr int FnLen = 20;
+    if( len > FnLen )
+    {
+        fprintf( f, "…%s:%-4zu| ", fileName + len - FnLen - 1, line );
+    }
+    else
+    {
+        fprintf( f, "%*s:%-4zu| ", FnLen, fileName, line );
+    }
+}
+}
+
 void MCoreLogMessage( LogLevel level, const char* fileName, size_t line, const char *fmt, ... )
 {
     if( level < s_logLevel ) return;
 
     va_list args;
     va_start( args, fmt );
-
-    constexpr int FnLen = 20;
     const auto len = strlen( fileName );
 
     // Get callstack outside of lock
@@ -67,14 +81,7 @@ void MCoreLogMessage( LogLevel level, const char* fileName, size_t line, const c
 
     s_logLock.lock();
     PrintLevel( level );
-    if( len > FnLen )
-    {
-        printf( "…%s:%-4zu| ", fileName + len - FnLen - 1, line );
-    }
-    else
-    {
-        printf( "%*s:%-4zu| ", FnLen, fileName, line );
-    }
+    PrintSourceLocation( stdout, fileName, len, line );
     vprintf( fmt, args );
     printf( ANSI_RESET "\n" );
     fflush( stdout );

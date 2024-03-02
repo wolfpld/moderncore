@@ -1,10 +1,10 @@
-#include <assert.h>
 #include <png.h>
 #include <setjmp.h>
 #include <stdio.h>
 
 #include "PngLoader.hpp"
 #include "util/Bitmap.hpp"
+#include "util/Panic.hpp"
 
 PngLoader::PngLoader( FileWrapper& file )
     : m_file( file )
@@ -21,7 +21,7 @@ bool PngLoader::IsValid() const
 
 Bitmap* PngLoader::Load()
 {
-    assert( m_valid );
+    CheckPanic( m_valid, "Invalid PNG file" );
 
     auto png = png_create_read_struct( PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr );
     if( !png ) return nullptr;

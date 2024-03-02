@@ -1,9 +1,9 @@
 #include <algorithm>
-#include <assert.h>
 #include <tracy/Tracy.hpp>
 
 #include "Connector.hpp"
 #include "GpuDevice.hpp"
+#include "util/Panic.hpp"
 #include "util/Tracy.hpp"
 #include "vulkan/ext/DeviceInfo.hpp"
 #include "vulkan/VlkInstance.hpp"
@@ -37,7 +37,7 @@ void GpuDevice::AddConnector( std::shared_ptr<Connector> connector )
 void GpuDevice::RemoveConnector( const std::shared_ptr<Connector>& connector )
 {
     auto it = std::find( m_connectors.begin(), m_connectors.end(), connector );
-    assert( it != m_connectors.end() );
+    CheckPanic( it != m_connectors.end(), "Connector not found" );
     m_connectors.erase( it );
 }
 

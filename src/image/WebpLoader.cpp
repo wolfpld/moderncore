@@ -1,10 +1,10 @@
-#include <assert.h>
 #include <string.h>
 #include <webp/decode.h>
 #include <vector>
 
 #include "WebpLoader.hpp"
 #include "util/Bitmap.hpp"
+#include "util/Panic.hpp"
 
 WebpLoader::WebpLoader( FileWrapper& file )
     : m_file( file )
@@ -21,7 +21,7 @@ bool WebpLoader::IsValid() const
 
 Bitmap* WebpLoader::Load()
 {
-    assert( m_valid );
+    CheckPanic( m_valid, "Invalid WebP file" );
 
     fseek( m_file, 0, SEEK_END );
     const auto sz = ftell( m_file );

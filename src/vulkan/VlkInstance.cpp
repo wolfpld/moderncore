@@ -1,4 +1,3 @@
-#include <assert.h>
 #include <algorithm>
 #include <array>
 #include <string.h>
@@ -11,6 +10,7 @@
 #include "VlkInstance.hpp"
 #include "VlkProxy.hpp"
 #include "util/Logs.hpp"
+#include "util/Panic.hpp"
 #include "util/TaskDispatch.hpp"
 #include "vulkan/VlkPhysicalDevice.hpp"
 
@@ -73,7 +73,8 @@ static bool HasValidationLayers()
         t = "[Perf]";
         break;
     default:
-        assert( false );
+        CheckPanic( false, "Unknown debug message type" );
+        break;
     }
 
     mclog( loglevel, "%s %s", t, pCallbackData->pMessage );

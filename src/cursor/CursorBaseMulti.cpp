@@ -1,12 +1,12 @@
 #include <algorithm>
-#include <assert.h>
 
 #include "CursorBaseMulti.hpp"
+#include "util/Panic.hpp"
 
 uint32_t CursorBaseMulti::FitSize( uint32_t size ) const
 {
-    assert( !m_cursor.empty() );
-    assert( !m_sizes.empty() );
+    CheckPanic( !m_cursor.empty(), "Cursor is empty" );
+    CheckPanic( !m_sizes.empty(), "Sizes are not calculated" );
 
     const auto mit = m_cursor.find( size );
     if( mit != m_cursor.end() ) return size;
@@ -24,8 +24,8 @@ uint32_t CursorBaseMulti::FitSize( uint32_t size ) const
 
 void CursorBaseMulti::CalcSizes()
 {
-    assert( !m_cursor.empty() );
-    assert( m_sizes.empty() );
+    CheckPanic( !m_cursor.empty(), "Cursor is empty" );
+    CheckPanic( m_sizes.empty(), "Sizes are already calculated" );
 
     for( auto& v : m_cursor ) m_sizes.emplace_back( v.first );
     std::sort( m_sizes.begin(), m_sizes.end() );

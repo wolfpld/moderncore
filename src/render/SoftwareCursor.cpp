@@ -1,4 +1,3 @@
-#include <assert.h>
 #include <array>
 #include <string.h>
 
@@ -8,6 +7,7 @@
 #include "cursor/CursorLogic.hpp"
 #include "util/Bitmap.hpp"
 #include "util/FileBuffer.hpp"
+#include "util/Panic.hpp"
 #include "vulkan/VlkBuffer.hpp"
 #include "vulkan/VlkDescriptorSetLayout.hpp"
 #include "vulkan/VlkDevice.hpp"
@@ -219,8 +219,7 @@ void SoftwareCursor::Render( VkCommandBuffer cmdBuf, CursorLogic& cursorLogic )
 
 void SoftwareCursor::UpdateVertexBuffer( uint32_t width, uint32_t height )
 {
-    assert( m_w != width );
-    assert( m_h != height );
+    CheckPanic( m_w != width || m_h != height, "Cursor size is unchanged" );
     m_w = width;
     m_h = height;
 
@@ -245,7 +244,7 @@ void SoftwareCursor::UpdateVertexBuffer( uint32_t width, uint32_t height )
 void SoftwareCursor::UpdateImage( const CursorBitmap& cursorData )
 {
     const auto cursorPtr = cursorData.bitmap.get();
-    assert( cursorPtr != m_currentBitmap );
+    CheckPanic( cursorPtr != m_currentBitmap, "Cursor bitmap is unchanged" );
     m_currentBitmap = cursorPtr;
 
     m_image = std::make_unique<Texture>( m_device, *cursorPtr, VK_FORMAT_B8G8R8A8_SRGB );

@@ -1,4 +1,3 @@
-#include <assert.h>
 #include <tracy/Tracy.hpp>
 #include <xf86drmMode.h>
 
@@ -15,7 +14,7 @@ DrmCrtc::DrmCrtc( int fd, uint32_t id, uint32_t mask )
 
     auto crtc = drmModeGetCrtc( fd, id );
     if( !crtc ) throw CrtcException( "Failed to get CRTC" );
-    assert( id == crtc->crtc_id );
+    CheckPanic( id == crtc->crtc_id, "CRTC ID mismatch" );
     m_bufferId = crtc->buffer_id;
     drmModeFreeCrtc( crtc );
 }

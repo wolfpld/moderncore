@@ -1,5 +1,3 @@
-#include <assert.h>
-
 #include <stdlib.h>
 #include <tracy/Tracy.hpp>
 #include <thread>
@@ -13,6 +11,7 @@
 #include "plumbing/Display.hpp"
 #include "render/Background.hpp"
 #include "util/Logs.hpp"
+#include "util/Panic.hpp"
 #include "util/TaskDispatch.hpp"
 #include "vulkan/VlkInstance.hpp"
 #include "vulkan/VlkPhysicalDevice.hpp"
@@ -35,7 +34,7 @@ Server::Server()
 {
     ZoneScoped;
 
-    assert( !s_instance );
+    CheckPanic( !s_instance, "Server already exists" );
     s_instance = this;
 
     mclog( LogLevel::Debug, "Main thread: %i", gettid() );
@@ -84,12 +83,12 @@ Server::Server()
 
 Server::~Server()
 {
-    assert( s_instance );
+    CheckPanic( s_instance, "Server does not exist" );
 }
 
 Server& Server::Instance()
 {
-    assert( s_instance );
+    CheckPanic( s_instance, "Server does not exist" );
     return *s_instance;
 }
 

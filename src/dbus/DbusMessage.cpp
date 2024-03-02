@@ -1,8 +1,8 @@
-#include <assert.h>
 #include <systemd/sd-bus.h>
 
 #include "DbusMessage.hpp"
 #include "util/Logs.hpp"
+#include "util/Panic.hpp"
 
 DbusMessage::DbusMessage()
     : m_msg( nullptr )
@@ -35,7 +35,7 @@ DbusMessage& DbusMessage::operator=( DbusMessage&& other ) noexcept
 
 bool DbusMessage::Read( const char* sig, ... )
 {
-    assert( m_msg );
+    CheckPanic( m_msg, "Message is null" );
 
     va_list ap;
     va_start( ap, sig );

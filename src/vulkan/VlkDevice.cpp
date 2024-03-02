@@ -1,5 +1,4 @@
 #include <array>
-#include <assert.h>
 #include <format>
 #include <string.h>
 #include <tracy/Tracy.hpp>
@@ -11,7 +10,6 @@
 #include "VlkError.hpp"
 #include "VlkInstance.hpp"
 #include "VlkPhysicalDevice.hpp"
-#include "util/Panic.hpp"
 #include "util/Tracy.hpp"
 
 VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> physDev, int flags, VkSurfaceKHR presentSurface )
@@ -346,13 +344,13 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
     }
     if( m_queueInfo[(int)QueueType::Compute].idx >= 0 )
     {
-        assert( !m_commandPool[(int)QueueType::Compute] );
+        CheckPanic( !m_commandPool[(int)QueueType::Compute], "Command pool already created for compute queue" );
         m_commandPool[(int)QueueType::Compute] = std::make_shared<VlkCommandPool>( *this, m_queueInfo[(int)QueueType::Compute].idx, QueueType::Compute );
         if( m_queueInfo[(int)QueueType::Compute].shareTransfer ) m_commandPool[(int)QueueType::Transfer] = m_commandPool[(int)QueueType::Compute];
     }
     if( m_queueInfo[(int)QueueType::Transfer].idx >= 0 )
     {
-        assert( !m_commandPool[(int)QueueType::Transfer] );
+        CheckPanic( !m_commandPool[(int)QueueType::Transfer], "Command pool already created for transfer queue" );
         if( !m_commandPool[(int)QueueType::Transfer] ) m_commandPool[(int)QueueType::Transfer] = std::make_shared<VlkCommandPool>( *this, m_queueInfo[(int)QueueType::Transfer].idx, QueueType::Transfer );
     }
 }

@@ -1,10 +1,10 @@
-#include <assert.h>
 #include <jxl/decode.h>
 #include <jxl/resizable_parallel_runner.h>
 #include <vector>
 
 #include "JxlLoader.hpp"
 #include "util/Bitmap.hpp"
+#include "util/Panic.hpp"
 
 JxlLoader::JxlLoader( FileWrapper& file )
     : m_file( file )
@@ -23,7 +23,7 @@ bool JxlLoader::IsValid() const
 
 Bitmap* JxlLoader::Load()
 {
-    assert( m_valid );
+    CheckPanic( m_valid, "Invalid JPEG XL file" );
 
     fseek( m_file, 0, SEEK_END );
     const auto sz = ftell( m_file );

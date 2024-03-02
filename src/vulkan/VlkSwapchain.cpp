@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <array>
-#include <assert.h>
 #include <stdint.h>
 #include <vector>
 #include <vulkan/vk_enum_string_helper.h>
@@ -10,6 +9,7 @@
 #include "VlkSwapchain.hpp"
 #include "VlkSwapchainFormats.hpp"
 #include "util/Logs.hpp"
+#include "util/Panic.hpp"
 
 static void PrintSwapchainProperties( const VlkSwapchainProperties &properties )
 {
@@ -49,7 +49,7 @@ VlkSwapchain::VlkSwapchain( const VlkDevice& device, VkSurfaceKHR surface )
         }
         if( m_format.format != VK_FORMAT_UNDEFINED ) break;
     }
-    assert( m_format.format != VK_FORMAT_UNDEFINED );
+    CheckPanic( m_format.format != VK_FORMAT_UNDEFINED, "No valid swapchain format found" );
 
     mclog( LogLevel::Info, "Swapchain format: %s / %s", string_VkFormat( m_format.format ), string_VkColorSpaceKHR( m_format.colorSpace ) );
 

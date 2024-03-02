@@ -1,10 +1,10 @@
-#include <assert.h>
 #include <libheif/heif.h>
 #include <string.h>
 #include <vector>
 
 #include "HeifLoader.hpp"
 #include "util/Bitmap.hpp"
+#include "util/Panic.hpp"
 
 HeifLoader::HeifLoader( FileWrapper& file )
     : m_file( file )
@@ -26,7 +26,7 @@ bool HeifLoader::IsValid() const
 
 Bitmap* HeifLoader::Load()
 {
-    assert( m_valid );
+    CheckPanic( m_valid, "Invalid HEIF file" );
 
     fseek( m_file, 0, SEEK_END );
     const auto sz = ftell( m_file );

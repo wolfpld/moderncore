@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <assert.h>
 #include <format>
 #include <tracy/Tracy.hpp>
 #include <vulkan/vulkan.h>
@@ -131,7 +130,7 @@ WaylandWindow::~WaylandWindow()
 
 void WaylandWindow::Show( const std::function<void()>& render )
 {
-    assert( !m_onRender );
+    CheckPanic( !m_onRender, "Window already shown" );
     m_onRender = render;
     render();
 }
@@ -150,7 +149,7 @@ void WaylandWindow::Enter( struct wl_surface* surface, struct wl_output* output 
 {
     auto& outputMap = m_backend.OutputMap();
     auto it = std::find_if( outputMap.begin(), outputMap.end(), [output]( const auto& pair ) { return pair.second->GetOutput() == output; } );
-    assert( it != outputMap.end() );
+    CheckPanic( it != outputMap.end(), "Output not found" );
     m_outputs.insert( it->first );
 
     const auto outputScale = it->second->GetScale();
@@ -167,7 +166,7 @@ void WaylandWindow::Leave( struct wl_surface* surface, struct wl_output* output 
 {
     auto& outputMap = m_backend.OutputMap();
     auto it = std::find_if( outputMap.begin(), outputMap.end(), [output]( const auto& pair ) { return pair.second->GetOutput() == output; } );
-    assert( it != outputMap.end() );
+    CheckPanic( it != outputMap.end(), "Output not found" );
     m_outputs.erase( it->first );
 
     if( it->second->GetScale() == m_scale )
@@ -176,7 +175,7 @@ void WaylandWindow::Leave( struct wl_surface* surface, struct wl_output* output 
         for( const auto& outputId : m_outputs )
         {
             const auto oit = outputMap.find( outputId );
-            assert( oit != outputMap.end() );
+            CheckPanic( oit != outputMap.end(), "Output not found" );
             const auto outputScale = oit->second->GetScale();
             if( outputScale > scale ) scale = outputScale;
         }

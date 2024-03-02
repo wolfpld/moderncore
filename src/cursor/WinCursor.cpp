@@ -1,5 +1,4 @@
 #include <alloca.h>
-#include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string>
@@ -13,6 +12,7 @@
 #include "util/FileWrapper.hpp"
 #include "util/Home.hpp"
 #include "util/Logs.hpp"
+#include "util/Panic.hpp"
 
 constexpr const char* CursorNames[] = {
     "Default",
@@ -362,14 +362,14 @@ static bool LoadCursor( const std::string& path, CursorType cursorType, unordere
         }
         else if( memcmp( &chunk.fourcc, "rate", 4 ) == 0 )
         {
-            assert( gotAniHeader );
+            CheckPanic( gotAniHeader, "rate chunk before anih" );
             if( chunk.size != sizeof( uint32_t ) * aniHeader.numSteps ) return false;
             rate.resize( aniHeader.numSteps );
             if( !f.Read( rate.data(), sizeof( uint32_t ) * aniHeader.numSteps ) ) return false;
         }
         else if( memcmp( &chunk.fourcc, "seq ", 4 ) == 0 )
         {
-            assert( gotAniHeader );
+            CheckPanic( gotAniHeader, "seq chunk before anih" );
             if( chunk.size != sizeof( uint32_t ) * aniHeader.numSteps ) return false;
             seq.resize( aniHeader.numSteps );
             if( !f.Read( seq.data(), sizeof( uint32_t ) * aniHeader.numSteps ) ) return false;
@@ -446,11 +446,11 @@ WinCursor::WinCursor( const char* theme )
             const char* defaultName;
             if( ini.GetOpt( "Theme", "Default", defaultName ) )
             {
-                assert( m_cursor.empty() );
+                CheckPanic( m_cursor.empty(), "m_cursor is not empty" );
                 if( LoadCursor( path + defaultName, CursorType::Default, m_cursor ) )
                 {
                     auto it = m_cursor.find( 32 );
-                    assert( it != m_cursor.end() );
+                    CheckPanic( it != m_cursor.end(), "32x32 cursor size not found" );
 
                     for( int i=1; i<(int)CursorType::NUM; i++ )
                     {

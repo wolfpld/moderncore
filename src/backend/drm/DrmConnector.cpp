@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <assert.h>
 #include <bit>
 #include <format>
 #include <gbm.h>
@@ -17,6 +16,7 @@ extern "C" {
 #include "DrmProperties.hpp"
 #include "server/GpuDevice.hpp"
 #include "util/Logs.hpp"
+#include "util/Panic.hpp"
 #include "vulkan/VlkError.hpp"
 
 constexpr static int BufferNum = 3;
@@ -40,7 +40,7 @@ DrmConnector::DrmConnector( DrmDevice& device, uint32_t id, const drmModeRes* re
 
     auto conn = drmModeGetConnector( device.Descriptor(), id );
     if( !conn ) throw ConnectorException( "Failed to get connector" );
-    assert( id == conn->connector_id );
+    CheckPanic( id == conn->connector_id, "Connector ID mismatch" );
 
     auto cTypeName = drmModeGetConnectorTypeName( conn->connector_type );
     if( !cTypeName ) cTypeName = "unknown";
@@ -59,7 +59,7 @@ DrmConnector::DrmConnector( DrmDevice& device, uint32_t id, const drmModeRes* re
     {
         auto bit = std::countr_zero( crtcs );
         crtcs &= ~( 1 << bit );
-        assert( bit < res->count_crtcs );
+        CheckPanic( bit < res->count_crtcs, "CRTC index out of bounds" );
         m_crtcs.push_back( bit );
     }
 
@@ -121,7 +121,7 @@ bool DrmConnector::SetMode( const drmModeModeInfo& mode )
 bool DrmConnector::SetModeDrm( const drmModeModeInfo& mode )
 {
     ZoneScoped;
-    assert( m_connected );
+    CheckPanic( m_connected, "Connector is not connected" );
 
     mclog( LogLevel::Info, "  Setting connector %s to %dx%d @ %d Hz", m_name.c_str(), mode.hdisplay, mode.vdisplay, mode.vrefresh );
 
@@ -144,10 +144,10 @@ bool DrmConnector::SetModeVulkan()
 {
     ZoneScoped;
 
-    assert( m_plane );
-    assert( m_crtc );
-    assert( m_modifiers.empty() );
-    assert( m_buffers.empty() );
+    CheckPanic( m_plane, "m_plane is nullptr" );
+    CheckPanic( m_crtc, "m_crtc is nullptr" );
+    CheckPanic( m_modifiers.empty(), "m_modifiers is empty" );
+    CheckPanic( m_buffers.empty(), "m_buffers is empty" );
 
     VkPhysicalDeviceImageDrmFormatModifierInfoEXT modInfo = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_DRM_FORMAT_MODIFIER_INFO_EXT };
 
@@ -222,8 +222,8 @@ bool DrmConnector::SetModeVulkan()
 
 const drmModeModeInfo& DrmConnector::GetBestDisplayMode() const
 {
-    assert( m_connected );
-    assert( !m_modes.empty() );
+    CheckPanic( m_connected, "Connector is not connected");
+    CheckPanic( !m_modes.empty(), "No modes available" );
 
     uint32_t best = 0;
     uint32_t bestRes = m_modes[0].hdisplay * m_modes[0].vdisplay;

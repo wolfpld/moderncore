@@ -1,4 +1,3 @@
-#include <assert.h>
 #include <stdio.h>
 #include <jpeglib.h>
 #include <setjmp.h>
@@ -6,6 +5,7 @@
 
 #include "JpgLoader.hpp"
 #include "util/Bitmap.hpp"
+#include "util/Panic.hpp"
 
 JpgLoader::JpgLoader( FileWrapper& file )
     : m_file( file )
@@ -28,7 +28,7 @@ struct JpgErrorMgr
 
 Bitmap* JpgLoader::Load()
 {
-    assert( m_valid );
+    CheckPanic( m_valid, "Invalid JPEG file" );
     fseek( m_file, 0, SEEK_SET );
 
     jpeg_decompress_struct cinfo;

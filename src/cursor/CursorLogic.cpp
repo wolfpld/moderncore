@@ -1,8 +1,7 @@
-#include <assert.h>
-
 #include "CursorLogic.hpp"
 #include "CursorTheme.hpp"
 #include "util/Clock.hpp"
+#include "util/Panic.hpp"
 
 CursorLogic::CursorLogic()
     : m_theme( std::make_unique<CursorTheme>() )
@@ -11,7 +10,7 @@ CursorLogic::CursorLogic()
     , m_lastTime( GetTimeMicro() )
     , m_needUpdate( false )
 {
-    assert( m_theme->Cursor().Valid() );
+    CheckPanic( m_theme->Cursor().Valid(), "Failed to load cursor theme" );
     m_cursor = m_theme->Cursor().Get( m_theme->Size(), m_type );
     m_frameTime = m_cursor->frames.front().delay;
 }
@@ -48,7 +47,7 @@ void CursorLogic::SetCursor( CursorType type )
 
 [[nodiscard]] const CursorBitmap& CursorLogic::GetCurrentCursorFrame() const
 {
-    assert( m_cursor );
+    CheckPanic( m_cursor, "Cursor is not set" );
     if( m_cursor->bitmaps.size() == 1 ) return m_cursor->bitmaps.front();
 
     const auto animFrame = m_cursor->frames[m_frame];
@@ -57,7 +56,7 @@ void CursorLogic::SetCursor( CursorType type )
 
 bool CursorLogic::NeedUpdate()
 {
-    assert( m_cursor );
+    CheckPanic( m_cursor, "Cursor is not set" );
     if( m_cursor->bitmaps.size() == 1 )
     {
         const auto ret = m_needUpdate;

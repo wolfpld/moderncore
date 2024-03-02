@@ -1,5 +1,5 @@
 #pragma once
 
-#include <assert.h>
+#include "util/Panic.hpp"
 
-#define Method( func ) [](void* ptr, auto... args) { assert( ptr ); ((decltype(this))ptr)->func( args... ); }
+#define Method( func ) [](void* ptr, auto... args) { CheckPanic( ptr, "Class pointer is nullptr" ); ((decltype(this))ptr)->func( args... ); }

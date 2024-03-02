@@ -1,5 +1,4 @@
 #include <array>
-#include <assert.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,6 +10,7 @@
 #include "server/Connector.hpp"
 #include "util/Bitmap.hpp"
 #include "util/Config.hpp"
+#include "util/Panic.hpp"
 #include "util/Tracy.hpp"
 #include "vulkan/VlkBuffer.hpp"
 #include "vulkan/VlkDescriptorSetLayout.hpp"
@@ -35,7 +35,7 @@ Background::Background()
         const auto color = strtol( cstr, nullptr, 16 );
         if( color != LONG_MAX && color != LONG_MIN )
         {
-            assert( ( color & ~0xFFFFFF ) == 0 );
+            CheckPanic( ( color & ~0xFFFFFF ) == 0, "Invalid color" );
 
             m_color.color.float32[0] = ( color >> 16 ) / 255.0f;
             m_color.color.float32[1] = ( ( color >> 8 ) & 0xFF ) / 255.0f;
@@ -65,7 +65,7 @@ void Background::AddConnector( Connector& connector )
     ZoneScoped;
     ZoneVkDevice( connector.Device().GetPhysicalDevice() );
 
-    assert( m_drawData.find( &connector ) == m_drawData.end() );
+    CheckPanic( m_drawData.find( &connector ) == m_drawData.end(), "Connector already exists" );
 
     auto& device = connector.Device();
     const auto width = connector.Width();
@@ -208,7 +208,7 @@ void Background::RemoveConnector( Connector& connector )
     if( !m_bitmap ) return;
 
     std::lock_guard lock( m_drawDataLock );
-    assert( m_drawData.find( &connector ) != m_drawData.end() );
+    CheckPanic( m_drawData.find( &connector ) != m_drawData.end(), "Connector does not exist" );
     m_drawData.erase( &connector );
 }
 
@@ -220,7 +220,7 @@ void Background::Render( Connector& connector, VkCommandBuffer cmdBuf )
 
     m_drawDataLock.lock();
     auto it = m_drawData.find( &connector );
-    assert( it != m_drawData.end() );
+    CheckPanic( it != m_drawData.end(), "Connector does not exist" );
     auto& data = it->second;
     m_drawDataLock.unlock();
 

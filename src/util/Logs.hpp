@@ -14,6 +14,7 @@ enum class LogLevel
 
 void SetLogLevel( LogLevel level );
 void SetLogSynchronized( bool sync );
+void SetLogToFile( bool enabled );
 
 void LogBlockBegin();
 void LogBlockEnd();

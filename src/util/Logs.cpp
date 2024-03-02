@@ -13,6 +13,7 @@ namespace
 {
 LogLevel s_logLevel = LogLevel::Info;
 bool s_logSynchronized = false;
+FILE* s_logFile = nullptr;
 TracyLockableN( std::recursive_mutex, s_logLock, "Logger" );
 }
 
@@ -24,6 +25,22 @@ void SetLogLevel( LogLevel level )
 void SetLogSynchronized( bool sync )
 {
     s_logSynchronized = sync;
+}
+
+void SetLogToFile( bool enabled )
+{
+    std::lock_guard lock( s_logLock );
+    if( enabled )
+    {
+        assert( !s_logFile );
+        s_logFile = fopen( "mcore.log", "w" );
+    }
+    else
+    {
+        assert( s_logFile );
+        fclose( s_logFile );
+        s_logFile = nullptr;
+    }
 }
 
 void LogBlockBegin()
@@ -38,16 +55,21 @@ void LogBlockEnd()
 
 static void PrintLevel( LogLevel level )
 {
+    const char* str = nullptr;
+
     switch( level )
     {
-    case LogLevel::Callstack: printf( ANSI_CYAN "[STACK] " ); break;
-    case LogLevel::Debug: printf( ANSI_BOLD ANSI_BLACK "[DEBUG] " ); break;
-    case LogLevel::Info: printf( " [INFO] " ); break;
-    case LogLevel::Warning: printf( ANSI_BOLD ANSI_YELLOW " [WARN] " ); break;
-    case LogLevel::Error: printf( ANSI_BOLD ANSI_RED "[ERROR] " ); break;
-    case LogLevel::Fatal: printf( ANSI_BOLD ANSI_MAGENTA "[FATAL] " ); break;
+    case LogLevel::Callstack: str = ANSI_CYAN "[STACK] "; break;
+    case LogLevel::Debug: str = ANSI_BOLD ANSI_BLACK "[DEBUG] "; break;
+    case LogLevel::Info: str = " [INFO] "; break;
+    case LogLevel::Warning: str = ANSI_BOLD ANSI_YELLOW " [WARN] "; break;
+    case LogLevel::Error: str = ANSI_BOLD ANSI_RED "[ERROR] "; break;
+    case LogLevel::Fatal: str = ANSI_BOLD ANSI_MAGENTA "[FATAL] "; break;
     default: assert( false ); break;
     }
+
+    printf( "%s", str );
+    if( s_logFile ) fprintf( s_logFile, "%s", str );
 }
 
 namespace
@@ -85,9 +107,17 @@ void MCoreLogMessage( LogLevel level, const char* fileName, size_t line, const c
     vprintf( fmt, args );
     printf( ANSI_RESET "\n" );
     fflush( stdout );
+    if( s_logFile )
+    {
+        va_end( args );
+        va_start( args, fmt );
+        PrintSourceLocation( s_logFile, fileName, len, line );
+        vfprintf( s_logFile, fmt, args );
+        fprintf( s_logFile, ANSI_RESET "\n" );
+        fflush( s_logFile );
+    }
     if( printCallstack ) PrintCallstack( stack, 1 );
     s_logLock.unlock();
-
     va_end( args );
 
 #ifdef TRACY_ENABLE

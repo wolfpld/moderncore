@@ -53,7 +53,9 @@ void LogBlockEnd()
     if( s_logSynchronized ) s_logLock.unlock();
 }
 
-static void PrintLevel( LogLevel level )
+namespace
+{
+void PrintLevel( LogLevel level )
 {
     const char* str = nullptr;
 
@@ -72,8 +74,6 @@ static void PrintLevel( LogLevel level )
     if( s_logFile ) fprintf( s_logFile, "%s", str );
 }
 
-namespace
-{
 void PrintSourceLocation( FILE* f, const char* fileName, size_t len, size_t line )
 {
     constexpr int FnLen = 20;

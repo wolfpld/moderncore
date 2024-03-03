@@ -12,9 +12,9 @@ public:
 
     NoCopy( VlkPhysicalDevice );
 
-    [[nodiscard]] auto& GetProperties() const { return m_properties; }
-    [[nodiscard]] auto& GetQueueFamilyProperties() const { return m_queueFamilyProperties; }
-    [[nodiscard]] auto& GetExtensionProperties() const { return m_extensionProperties; }
+    [[nodiscard]] auto& Properties() const { return m_properties; }
+    [[nodiscard]] auto& QueueFamilyProperties() const { return m_queueFamilyProperties; }
+    [[nodiscard]] auto& ExtensionProperties() const { return m_extensionProperties; }
 
     [[nodiscard]] bool IsGraphicCapable();
     [[nodiscard]] bool IsComputeCapable();

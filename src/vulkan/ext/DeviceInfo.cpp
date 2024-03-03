@@ -8,7 +8,7 @@
 
 void PrintPhysicalDeviceInfo( const VlkPhysicalDevice& physDev )
 {
-    auto& properties = physDev.GetProperties();
+    auto& properties = physDev.Properties();
 
     uint32_t count;
     vkEnumerateDeviceExtensionProperties( physDev, nullptr, &count, nullptr );
@@ -26,7 +26,7 @@ void PrintPhysicalDeviceInfo( const VlkPhysicalDevice& physDev )
     default: devType = "Unknown"; break;
     };
 
-    auto& qfp = physDev.GetQueueFamilyProperties();
+    auto& qfp = physDev.QueueFamilyProperties();
 
     mclog( LogLevel::Info, "Using Vulkan physical device '%s'", properties.deviceName );
     mclog( LogLevel::Info, "  API: %" PRIu32 ".%" PRIu32 ".%" PRIu32 ", driver: %" PRIu32 ".%" PRIu32 ".%" PRIu32 ", type: %s, max tex: %" PRIu32 ", queue families: %zu",

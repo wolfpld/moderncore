@@ -8,6 +8,6 @@
 
 #include "vulkan/VlkPhysicalDevice.hpp"
 
-#define ZoneVkDevice( device ) { auto& properties = device->GetProperties(); ZoneText( properties.deviceName, strlen( properties.deviceName ) ); }
+#define ZoneVkDevice( device ) { auto& properties = device->Properties(); ZoneText( properties.deviceName, strlen( properties.deviceName ) ); }
 
 #endif

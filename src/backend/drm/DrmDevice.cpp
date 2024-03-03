@@ -155,7 +155,7 @@ bool DrmDevice::ResolveGpuDevice()
     auto physDev = GetPhysicalDeviceForPciBus( m_pci.domain, m_pci.bus, m_pci.dev, m_pci.func );
     if( !physDev ) return false;
 
-    auto& properties = physDev->GetProperties();
+    auto& properties = physDev->Properties();
     mclog( LogLevel::Info, "DRM device '%s' matched to Vulkan device '%s'", m_name.c_str(), properties.deviceName );
 
     m_gpu = GetGpuDeviceForPhysicalDevice( *physDev );

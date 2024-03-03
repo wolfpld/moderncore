@@ -114,7 +114,7 @@ void Server::SetupGpus( bool skipSoftware )
     int hw = 0;
     for( const auto& dev : devices )
     {
-        auto& props = dev->GetProperties();
+        auto& props = dev->Properties();
         mclog( LogLevel::Info, "  %d: %s", idx, props.deviceName );
         if( IsDeviceHardware( props ) ) hw++;
         idx++;
@@ -125,7 +125,7 @@ void Server::SetupGpus( bool skipSoftware )
     idx = 0;
     for( const auto& dev : devices )
     {
-        auto& props = dev->GetProperties();
+        auto& props = dev->Properties();
         if( !skipSoftware || IsDeviceHardware( props ) )
         {
             m_dispatch->Queue( [this, dev, idx] {

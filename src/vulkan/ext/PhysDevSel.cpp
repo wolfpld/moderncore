@@ -23,7 +23,7 @@ std::shared_ptr<VlkPhysicalDevice> PickBest( const std::vector<std::shared_ptr<V
             {
                 if( !dev->IsSwapchainCapable() ) continue;
 
-                const auto numQueues = dev->GetQueueFamilyProperties().size();
+                const auto numQueues = dev->QueueFamilyProperties().size();
                 bool support = false;
                 for( size_t i=0; i<numQueues; i++ )
                 {
@@ -55,7 +55,7 @@ std::shared_ptr<VlkPhysicalDevice> PickBest( const std::vector<std::shared_ptr<V
             }
         }
 
-        auto properties = dev->GetProperties();
+        auto properties = dev->Properties();
         int score = properties.limits.maxImageDimension2D;
         switch( properties.deviceType )
         {

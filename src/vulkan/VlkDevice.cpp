@@ -22,7 +22,7 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
 
     CheckPanic( flags & ( RequireGraphic | RequireCompute ), "Requested Device without graphic and compute queues." );
 
-    auto& qfp = m_physDev->GetQueueFamilyProperties();
+    auto& qfp = m_physDev->QueueFamilyProperties();
     const auto sz = uint32_t( qfp.size() );
 
     bool presentOnGraphicsQueue = false;

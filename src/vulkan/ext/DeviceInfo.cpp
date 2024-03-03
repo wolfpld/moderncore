@@ -38,31 +38,29 @@ void PrintPhysicalDeviceInfo( const VlkPhysicalDevice& physDev )
 
     for( size_t j=0; j<qfp.size(); j++ )
     {
-        mclog( LogLevel::Info, "  Queue family %zu:", j );
-        mclog( LogLevel::Info, "    Count: %" PRIu32, qfp[j].queueCount );
-        mclog( LogLevel::Info, "    Timestamp valid bits: %" PRIu32, qfp[j].timestampValidBits );
-        mclog( LogLevel::Info, "    Capabilities:" );
-        if( qfp[j].queueFlags & VK_QUEUE_GRAPHICS_BIT ) mclog( LogLevel::Info, "      graphic" );
-        if( qfp[j].queueFlags & VK_QUEUE_COMPUTE_BIT ) mclog( LogLevel::Info, "      compute" );
-        if( qfp[j].queueFlags & VK_QUEUE_TRANSFER_BIT ) mclog( LogLevel::Info, "      transfer" );
-        if( qfp[j].queueFlags & VK_QUEUE_SPARSE_BINDING_BIT ) mclog( LogLevel::Info, "      sparse" );
-        if( qfp[j].queueFlags & VK_QUEUE_PROTECTED_BIT ) mclog( LogLevel::Info, "      protected" );
-        if( qfp[j].queueFlags & VK_QUEUE_VIDEO_DECODE_BIT_KHR ) mclog( LogLevel::Info, "      video decode" );
+        mclog( LogLevel::Info, "    Queue family %zu, count: %" PRIu32 ", %" PRIu32 "-bit timestamp, caps:%s%s%s%s%s%s", j, qfp[j].queueCount, qfp[j].timestampValidBits,
+            (qfp[j].queueFlags & VK_QUEUE_GRAPHICS_BIT) ? " graphic" : "",
+            (qfp[j].queueFlags & VK_QUEUE_COMPUTE_BIT) ? " compute" : "",
+            (qfp[j].queueFlags & VK_QUEUE_TRANSFER_BIT) ? " transfer" : "",
+            (qfp[j].queueFlags & VK_QUEUE_SPARSE_BINDING_BIT) ? " sparse" : "",
+            (qfp[j].queueFlags & VK_QUEUE_PROTECTED_BIT) ? " protected" : "",
+            (qfp[j].queueFlags & VK_QUEUE_VIDEO_DECODE_BIT_KHR) ? " video_decode" : "" );
     }
 }
 
 void PrintQueueConfig( const VlkDevice& device )
 {
-    mclog( LogLevel::Info, "  Queue configuration:" );
+    mclog( LogLevel::Info, "  Using queue configuration:" );
 
     {
         auto q = device.GetQueueInfo( QueueType::Graphic );
         if( q.idx >= 0 )
         {
-            mclog( LogLevel::Info, "    Graphics queue family: %i", q.idx );
-            if( q.shareCompute ) mclog( LogLevel::Info, "      <share compute>" );
-            if( q.shareTransfer ) mclog( LogLevel::Info, "      <share transfer>" );
-            if( q.sharePresent ) mclog( LogLevel::Info, "      <share present>" );
+            mclog( LogLevel::Info, "    Graphics queue family: %i%s%s%s%s", q.idx,
+                q.shareCompute || q.shareTransfer || q.sharePresent ? ", sharing:" : "",
+                q.shareCompute ? " compute" : "",
+                q.shareTransfer ? " transfer" : "",
+                q.sharePresent ? " present" : "" );
         }
         else
         {
@@ -74,10 +72,11 @@ void PrintQueueConfig( const VlkDevice& device )
         auto q = device.GetQueueInfo( QueueType::Compute );
         if( q.idx >= 0 )
         {
-            mclog( LogLevel::Info, "    Compute queue family: %i", q.idx );
-            if( q.shareGraphic ) mclog( LogLevel::Info, "      <share graphic>" );
-            if( q.shareTransfer ) mclog( LogLevel::Info, "      <share transfer>" );
-            if( q.sharePresent ) mclog( LogLevel::Info, "      <share present>" );
+            mclog( LogLevel::Info, "    Compute queue family: %i%s%s%s%s", q.idx,
+                q.shareGraphic || q.shareTransfer || q.sharePresent ? ", sharing:" : "",
+                q.shareGraphic ? " graphic" : "",
+                q.shareTransfer ? " transfer" : "",
+                q.sharePresent ? " present" : "" );
         }
         else
         {
@@ -89,10 +88,11 @@ void PrintQueueConfig( const VlkDevice& device )
         auto q = device.GetQueueInfo( QueueType::Transfer );
         if( q.idx >= 0 )
         {
-            mclog( LogLevel::Info, "    Transfer queue family: %i", q.idx );
-            if( q.shareGraphic ) mclog( LogLevel::Info, "      <share graphic>" );
-            if( q.shareCompute ) mclog( LogLevel::Info, "      <share compute>" );
-            if( q.sharePresent ) mclog( LogLevel::Info, "      <share present>" );
+            mclog( LogLevel::Info, "    Transfer queue family: %i%s%s%s%s", q.idx,
+                q.shareGraphic || q.shareCompute || q.sharePresent ? ", sharing:" : "",
+                q.shareGraphic ? " graphic" : "",
+                q.shareCompute ? " compute" : "",
+                q.sharePresent ? " present" : "" );
         }
         else
         {
@@ -104,10 +104,11 @@ void PrintQueueConfig( const VlkDevice& device )
         auto q = device.GetQueueInfo( QueueType::Present );
         if( q.idx >= 0 )
         {
-            mclog( LogLevel::Info, "    Present queue family: %i", q.idx );
-            if( q.shareGraphic ) mclog( LogLevel::Info, "      <share graphic>" );
-            if( q.shareCompute ) mclog( LogLevel::Info, "      <share compute>" );
-            if( q.shareTransfer ) mclog( LogLevel::Info, "      <share transfer>" );
+            mclog( LogLevel::Info, "    Present queue family: %i%s%s%s%s", q.idx,
+                q.shareGraphic || q.shareCompute || q.shareTransfer ? ", sharing:" : "",
+                q.shareGraphic ? " graphic" : "",
+                q.shareCompute ? " compute" : "",
+                q.shareTransfer ? " transfer" : "" );
         }
         else
         {

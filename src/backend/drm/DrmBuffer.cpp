@@ -81,6 +81,13 @@ DrmBuffer::DrmBuffer( DrmDevice& device, const drmModeModeInfo& mode, const std:
     imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
     VkVerify( vkCreateImage( device.GetGpu()->Device(), &imageInfo, nullptr, &m_image ) );
+
+    VkImageMemoryRequirementsInfo2 memReqInfo = { VK_STRUCTURE_TYPE_IMAGE_MEMORY_REQUIREMENTS_INFO_2 };
+    memReqInfo.image = m_image;
+
+    VkMemoryRequirements2 memReq = { VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2 };
+
+    vkGetImageMemoryRequirements2( device.GetGpu()->Device(), &memReqInfo, &memReq );
 }
 
 DrmBuffer::~DrmBuffer()

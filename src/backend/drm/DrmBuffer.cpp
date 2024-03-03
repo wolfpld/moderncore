@@ -88,6 +88,7 @@ DrmBuffer::DrmBuffer( DrmDevice& device, const drmModeModeInfo& mode, const std:
     VkMemoryRequirements2 memReq = { VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2 };
 
     vkGetImageMemoryRequirements2( device.GetGpu()->Device(), &memReqInfo, &memReq );
+    mclog( LogLevel::Debug, "  Memory requirements: size %d, alignment %d", memReq.memoryRequirements.size, memReq.memoryRequirements.alignment );
 }
 
 DrmBuffer::~DrmBuffer()

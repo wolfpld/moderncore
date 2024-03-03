@@ -28,11 +28,22 @@ void PrintPhysicalDeviceInfo( const VlkPhysicalDevice& physDev )
 
     auto& qfp = physDev.QueueFamilyProperties();
 
+    auto& memProps = physDev.MemoryProperties();
+    size_t memSize = 0;
+    for( size_t i=0; i<memProps.memoryHeapCount; i++ )
+    {
+        if( memProps.memoryHeaps[i].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT )
+        {
+            memSize += memProps.memoryHeaps[i].size;
+        }
+    }
+    memSize /= 1024 * 1024;
+
     mclog( LogLevel::Info, "Using Vulkan physical device '%s'", properties.deviceName );
-    mclog( LogLevel::Info, "  API: %" PRIu32 ".%" PRIu32 ".%" PRIu32 ", driver: %" PRIu32 ".%" PRIu32 ".%" PRIu32 ", type: %s, max tex: %" PRIu32 ", queue families: %zu",
+    mclog( LogLevel::Info, "  API: %" PRIu32 ".%" PRIu32 ".%" PRIu32 ", driver: %" PRIu32 ".%" PRIu32 ".%" PRIu32 ", type: %s, mem: %zu MB, max tex: %" PRIu32 ", queue families: %zu",
         VK_API_VERSION_MAJOR( properties.apiVersion ), VK_API_VERSION_MINOR( properties.apiVersion ), VK_API_VERSION_PATCH( properties.apiVersion ),
         VK_API_VERSION_MAJOR( properties.driverVersion ), VK_API_VERSION_MINOR( properties.driverVersion ), VK_API_VERSION_PATCH( properties.driverVersion ),
-        devType, properties.limits.maxImageDimension2D, qfp.size() );
+        devType, memSize, properties.limits.maxImageDimension2D, qfp.size() );
 
     for( size_t j=0; j<qfp.size(); j++ )
     {

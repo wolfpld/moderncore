@@ -43,6 +43,11 @@ void SetLogToFile( bool enabled )
     }
 }
 
+LogLevel GetLogLevel()
+{
+    return s_logLevel;
+}
+
 void LogBlockBegin()
 {
     if( s_logSynchronized ) s_logLock.lock();

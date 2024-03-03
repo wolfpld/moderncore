@@ -16,6 +16,8 @@ void SetLogLevel( LogLevel level );
 void SetLogSynchronized( bool sync );
 void SetLogToFile( bool enabled );
 
+LogLevel GetLogLevel();
+
 void LogBlockBegin();
 void LogBlockEnd();
 

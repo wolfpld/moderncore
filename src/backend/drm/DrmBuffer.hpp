@@ -14,6 +14,8 @@ public:
     ~DrmBuffer();
 
 private:
+    int FindMemoryType( uint32_t typeBits, VkMemoryPropertyFlags properties );
+
     DrmDevice& m_device;
 
     gbm_bo* m_bo;

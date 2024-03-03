@@ -96,3 +96,16 @@ DrmBuffer::~DrmBuffer()
     vkDestroyImage( m_device.GetGpu()->Device(), m_image, nullptr );
     gbm_bo_destroy( m_bo );
 }
+
+int DrmBuffer::FindMemoryType( uint32_t typeBits, VkMemoryPropertyFlags properties )
+{
+    const auto& memProps = m_device.GetGpu()->Device().GetPhysicalDevice()->MemoryProperties();
+    for( uint32_t i=0; i<memProps.memoryTypeCount; i++ )
+    {
+        if( (typeBits & (1 << i)) && (memProps.memoryTypes[i].propertyFlags & properties) == properties )
+        {
+            return i;
+        }
+    }
+    return -1;
+}

@@ -1,6 +1,7 @@
 #include <drm_fourcc.h>
 #include <gbm.h>
 #include <sys/stat.h>
+#include <xf86drm.h>
 
 #include "DrmBuffer.hpp"
 #include "DrmDevice.hpp"
@@ -36,7 +37,13 @@ DrmBuffer::DrmBuffer( DrmDevice& device, const drmModeModeInfo& mode, const std:
 
     m_modifier = gbm_bo_get_modifier( m_bo );
     const auto numPlanes = gbm_bo_get_plane_count( m_bo );
-    mclog( LogLevel::Debug, "Buffer modifier: 0x%llx, num planes: %d", m_modifier, numPlanes );
+
+    if( GetLogLevel() <= LogLevel::Debug )
+    {
+        auto modifierName = drmGetFormatModifierName( m_modifier );
+        mclog( LogLevel::Debug, "Buffer modifier: 0x%llx (%s), num planes: %d", m_modifier, modifierName, numPlanes );
+        free( modifierName );
+    }
 
     std::vector<int> dmaBufFds( numPlanes );
     std::vector<VkSubresourceLayout> layouts( numPlanes );

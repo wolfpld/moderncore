@@ -15,6 +15,7 @@ public:
     [[nodiscard]] auto& Properties() const { return m_properties; }
     [[nodiscard]] auto& QueueFamilyProperties() const { return m_queueFamilyProperties; }
     [[nodiscard]] auto& ExtensionProperties() const { return m_extensionProperties; }
+    [[nodiscard]] auto& MemoryProperties() const { return m_memoryProperties; }
 
     [[nodiscard]] bool IsGraphicCapable();
     [[nodiscard]] bool IsComputeCapable();
@@ -28,6 +29,7 @@ private:
 
     VkPhysicalDevice m_physDev;
     VkPhysicalDeviceProperties m_properties;
+    VkPhysicalDeviceMemoryProperties m_memoryProperties;
 
     std::vector<VkQueueFamilyProperties> m_queueFamilyProperties;
     std::vector<VkExtensionProperties> m_extensionProperties;

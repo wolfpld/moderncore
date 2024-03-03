@@ -22,4 +22,5 @@ private:
     uint64_t m_modifier;
 
     VkImage m_image;
+    VkDeviceMemory m_memory;
 };

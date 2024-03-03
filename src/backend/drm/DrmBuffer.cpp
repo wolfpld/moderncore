@@ -10,6 +10,7 @@
 #include "util/Panic.hpp"
 #include "vulkan/VlkDevice.hpp"
 #include "vulkan/VlkError.hpp"
+#include "vulkan/VlkProxy.hpp"
 
 namespace
 {
@@ -87,20 +88,58 @@ DrmBuffer::DrmBuffer( DrmDevice& device, const drmModeModeInfo& mode, const std:
     imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
-    VkVerify( vkCreateImage( device.GetGpu()->Device(), &imageInfo, nullptr, &m_image ) );
+    auto& dev = device.GetGpu()->Device();
+    VkVerify( vkCreateImage( dev, &imageInfo, nullptr, &m_image ) );
+
+    VkMemoryFdPropertiesKHR memFdProps = { VK_STRUCTURE_TYPE_MEMORY_FD_PROPERTIES_KHR };
+    VkVerify( GetMemoryFdPropertiesKHR( dev, VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT, dmaBufFds[0], &memFdProps ) );
 
     VkImageMemoryRequirementsInfo2 memReqInfo = { VK_STRUCTURE_TYPE_IMAGE_MEMORY_REQUIREMENTS_INFO_2 };
     memReqInfo.image = m_image;
 
     VkMemoryRequirements2 memReq = { VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2 };
 
-    vkGetImageMemoryRequirements2( device.GetGpu()->Device(), &memReqInfo, &memReq );
+    vkGetImageMemoryRequirements2( dev, &memReqInfo, &memReq );
     mclog( LogLevel::Debug, "  Memory requirements: size %d, alignment %d", memReq.memoryRequirements.size, memReq.memoryRequirements.alignment );
+
+    auto memIdx = FindMemoryType( memReq.memoryRequirements.memoryTypeBits & memFdProps.memoryTypeBits, 0 );
+    CheckPanic( memIdx >= 0, "Failed to find suitable memory type" );
+
+    VkMemoryDedicatedAllocateInfo dedInfo = { VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO };
+    dedInfo.image = m_image;
+
+    VkImportMemoryFdInfoKHR importInfo = { VK_STRUCTURE_TYPE_IMPORT_MEMORY_FD_INFO_KHR };
+    importInfo.pNext = &dedInfo;
+    importInfo.handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT;
+    importInfo.fd = dmaBufFds[0];
+
+    dmaBufFds[0] = -1;      // ownership transferred
+
+    VkMemoryAllocateInfo memInfo = { VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO };
+    memInfo.pNext = &importInfo;
+    memInfo.allocationSize = memReq.memoryRequirements.size;
+    memInfo.memoryTypeIndex = memIdx;
+
+    VkVerify( vkAllocateMemory( dev, &memInfo, nullptr, &m_memory ) );
+
+    VkBindImageMemoryInfo bindInfo = { VK_STRUCTURE_TYPE_BIND_IMAGE_MEMORY_INFO };
+    bindInfo.image = m_image;
+    bindInfo.memory = m_memory;
+    bindInfo.memoryOffset = 0;
+
+    VkVerify( vkBindImageMemory2( dev, 1, &bindInfo ) );
+
+    for( auto& fd : dmaBufFds )
+    {
+        if( fd != -1 ) close( fd );
+    }
 }
 
 DrmBuffer::~DrmBuffer()
 {
-    vkDestroyImage( m_device.GetGpu()->Device(), m_image, nullptr );
+    auto& dev = m_device.GetGpu()->Device();
+    vkFreeMemory( dev, m_memory, nullptr );
+    vkDestroyImage( dev, m_image, nullptr );
     gbm_bo_destroy( m_bo );
 }
 

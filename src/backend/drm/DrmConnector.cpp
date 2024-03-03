@@ -15,6 +15,7 @@ extern "C" {
 #include "DrmPlane.hpp"
 #include "DrmProperties.hpp"
 #include "server/GpuDevice.hpp"
+#include "util/Ansi.hpp"
 #include "util/Logs.hpp"
 #include "util/Panic.hpp"
 #include "vulkan/VlkError.hpp"
@@ -65,7 +66,7 @@ DrmConnector::DrmConnector( DrmDevice& device, uint32_t id, const drmModeRes* re
 
     if( !m_connected )
     {
-        mclog( LogLevel::Info, "  Connector %s: disconnected", m_name.c_str() );
+        mclog( LogLevel::Info, "  Connector %s: " ANSI_BLACK ANSI_BOLD "disconnected", m_name.c_str() );
     }
     else
     {

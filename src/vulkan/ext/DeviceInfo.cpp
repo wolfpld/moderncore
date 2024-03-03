@@ -64,7 +64,7 @@ void PrintQueueConfig( const VlkDevice& device )
         }
         else
         {
-            mclog( LogLevel::Info, "    Graphics queue family not present" );
+            mclog( LogLevel::Debug, "    Graphics queue family not present" );
         }
     }
 
@@ -80,7 +80,7 @@ void PrintQueueConfig( const VlkDevice& device )
         }
         else
         {
-            mclog( LogLevel::Info, "    Compute queue family not present" );
+            mclog( LogLevel::Debug, "    Compute queue family not present" );
         }
     }
 
@@ -96,7 +96,7 @@ void PrintQueueConfig( const VlkDevice& device )
         }
         else
         {
-            mclog( LogLevel::Info, "    Transfer queue family not present" );
+            mclog( LogLevel::Debug, "    Transfer queue family not present" );
         }
     }
 
@@ -112,7 +112,7 @@ void PrintQueueConfig( const VlkDevice& device )
         }
         else
         {
-            mclog( LogLevel::Info, "    Present queue family not present" );
+            mclog( LogLevel::Debug, "    Present queue family not present" );
         }
     }
 }

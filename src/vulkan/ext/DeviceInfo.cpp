@@ -15,10 +15,6 @@ void PrintPhysicalDeviceInfo( const VlkPhysicalDevice& physDev )
     std::vector<VkExtensionProperties> exts( count );
     vkEnumerateDeviceExtensionProperties( physDev, nullptr, &count, exts.data() );
 
-    mclog( LogLevel::Info, "Using Vulkan physical device '%s'", properties.deviceName );
-    mclog( LogLevel::Info, "  API version: %" PRIu32 ".%" PRIu32 ".%" PRIu32, VK_API_VERSION_MAJOR( properties.apiVersion ), VK_API_VERSION_MINOR( properties.apiVersion ), VK_API_VERSION_PATCH( properties.apiVersion ) );
-    mclog( LogLevel::Info, "  Driver version: %" PRIu32 ".%" PRIu32 ".%" PRIu32, VK_API_VERSION_MAJOR( properties.driverVersion ), VK_API_VERSION_MINOR( properties.driverVersion ), VK_API_VERSION_PATCH( properties.driverVersion ) );
-
     const char* devType;
     switch( properties.deviceType )
     {
@@ -29,12 +25,14 @@ void PrintPhysicalDeviceInfo( const VlkPhysicalDevice& physDev )
     case VK_PHYSICAL_DEVICE_TYPE_CPU: devType = "CPU"; break;
     default: devType = "Unknown"; break;
     };
-    mclog( LogLevel::Info, "  Device type: %s", devType );
-
-    mclog( LogLevel::Info, "  Max 2D texture size: %" PRIu32, properties.limits.maxImageDimension2D );
 
     auto& qfp = physDev.GetQueueFamilyProperties();
-    mclog( LogLevel::Info, "  Number of queue families: %zu", qfp.size() );
+
+    mclog( LogLevel::Info, "Using Vulkan physical device '%s'", properties.deviceName );
+    mclog( LogLevel::Info, "  API: %" PRIu32 ".%" PRIu32 ".%" PRIu32 ", driver: %" PRIu32 ".%" PRIu32 ".%" PRIu32 ", type: %s, max tex: %" PRIu32 ", queue families: %zu",
+        VK_API_VERSION_MAJOR( properties.apiVersion ), VK_API_VERSION_MINOR( properties.apiVersion ), VK_API_VERSION_PATCH( properties.apiVersion ),
+        VK_API_VERSION_MAJOR( properties.driverVersion ), VK_API_VERSION_MINOR( properties.driverVersion ), VK_API_VERSION_PATCH( properties.driverVersion ),
+        devType, properties.limits.maxImageDimension2D, qfp.size() );
 
     for( size_t j=0; j<qfp.size(); j++ )
     {

@@ -30,7 +30,7 @@ namespace
 Server* s_instance = nullptr;
 }
 
-Server::Server()
+Server::Server( bool enableValidation )
 {
     ZoneScoped;
 
@@ -51,15 +51,15 @@ Server::Server()
     if( waylandDpy )
     {
         mclog( LogLevel::Info, "Running on Wayland display: %s", waylandDpy );
-        vulkanThread = std::thread( [this] {
-            m_vkInstance = std::make_unique<VlkInstance>( VlkInstanceType::Wayland );
+        vulkanThread = std::thread( [this, enableValidation] {
+            m_vkInstance = std::make_unique<VlkInstance>( VlkInstanceType::Wayland, enableValidation );
         } );
         m_backend = std::make_unique<BackendWayland>();
     }
     else
     {
-        vulkanThread = std::thread( [this] {
-            m_vkInstance = std::make_unique<VlkInstance>( VlkInstanceType::Drm );
+        vulkanThread = std::thread( [this, enableValidation] {
+            m_vkInstance = std::make_unique<VlkInstance>( VlkInstanceType::Drm, enableValidation );
         } );
         m_backend = std::make_unique<BackendDrm>();
     }

@@ -24,6 +24,12 @@ int main( int argc, char** argv )
     SetLogLevel( LogLevel::Error );
 #endif
 
+#ifdef DEBUG
+    bool enableValidation = true;
+#else
+    bool enableValidation = false;
+#endif
+
     enum { OptHelp };
 
     struct option longOptions[] = {
@@ -62,7 +68,7 @@ int main( int argc, char** argv )
 
     printf( "Starting " ANSI_BOLD ANSI_ITALIC "Modern Core" ANSI_RESET "…\n\n" );
 
-    Server server;
+    Server server( enableValidation );
     server.Run();
     return 0;
 }

@@ -16,7 +16,7 @@ class VlkInstance;
 class Server
 {
 public:
-    Server();
+    explicit Server( bool enableValidation );
     ~Server();
 
     static Server& Instance();

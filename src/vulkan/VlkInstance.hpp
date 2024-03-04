@@ -18,7 +18,7 @@ enum class VlkInstanceType
 class VlkInstance
 {
 public:
-    explicit VlkInstance( VlkInstanceType instanceType );
+    VlkInstance( VlkInstanceType instanceType, bool enableValidation );
     ~VlkInstance();
 
     NoCopy( VlkInstance );

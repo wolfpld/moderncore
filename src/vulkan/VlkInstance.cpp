@@ -18,7 +18,6 @@ constexpr std::array validationLayers = { "VK_LAYER_KHRONOS_validation" };
 
 static bool HasValidationLayers()
 {
-#ifdef DEBUG
     uint32_t numLayers;
     vkEnumerateInstanceLayerProperties( &numLayers, nullptr );
     std::vector<VkLayerProperties> layers( numLayers );
@@ -34,9 +33,6 @@ static bool HasValidationLayers()
     }
 
     return true;
-#else
-    return false;
-#endif
 }
 
 [[maybe_unused]] static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback( VkDebugUtilsMessageSeverityFlagBitsEXT severity,
@@ -81,7 +77,7 @@ static bool HasValidationLayers()
     return VK_FALSE;
 }
 
-VlkInstance::VlkInstance( VlkInstanceType instanceType )
+VlkInstance::VlkInstance( VlkInstanceType instanceType, bool enableValidation )
     : m_debugMessenger( VK_NULL_HANDLE )
     , m_instanceType( instanceType )
 {
@@ -111,7 +107,7 @@ VlkInstance::VlkInstance( VlkInstanceType instanceType )
 
     VkDebugUtilsMessengerCreateInfoEXT dbgInfo = { VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT };
 
-    const bool hasValidationLayers = HasValidationLayers();
+    const bool hasValidationLayers = enableValidation && HasValidationLayers();
     if( hasValidationLayers )
     {
         dbgInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;

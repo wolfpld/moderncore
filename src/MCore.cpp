@@ -2,6 +2,7 @@
 
 #include "server/Server.hpp"
 #include "util/Ansi.hpp"
+#include "util/ArgParser.hpp"
 #include "util/Callstack.hpp"
 #include "util/Logs.hpp"
 
@@ -10,11 +11,12 @@ void PrintHelp()
 {
     printf( "Usage: mcore [options]\n" );
     printf( "Options:\n" );
-    printf( "  -d, --debug          Enable debug logging\n" );
-    printf( "  -e, --external       Show external callstacks\n" );
-    printf( "  -s, --sync-logs      Synchronize log output\n" );
-    printf( "  -l, --log-file       Log to file\n" );
-    printf( "  --help               Print this help\n" );
+    printf( "  -d, --debug                  Enable debug logging\n" );
+    printf( "  -e, --external               Show external callstacks\n" );
+    printf( "  -s, --sync-logs              Synchronize log output\n" );
+    printf( "  -l, --log-file               Log to file\n" );
+    printf( "  -V, --validation [on|off]    Enable or disable validation layers\n" );
+    printf( "  --help                       Print this help\n" );
 }
 }
 
@@ -37,12 +39,13 @@ int main( int argc, char** argv )
         { "external", no_argument, nullptr, 'e' },
         { "sync-logs", no_argument, nullptr, 's' },
         { "log-file", no_argument, nullptr, 'l' },
+        { "validation", required_argument, nullptr, 'V' },
         { "help", no_argument, nullptr, OptHelp },
         {}
     };
 
     int opt;
-    while( ( opt = getopt_long( argc, argv, "desl", longOptions, nullptr ) ) != -1 )
+    while( ( opt = getopt_long( argc, argv, "deslV:", longOptions, nullptr ) ) != -1 )
     {
         switch (opt)
         {
@@ -57,6 +60,9 @@ int main( int argc, char** argv )
             break;
         case 'l':
             SetLogToFile( true );
+            break;
+        case 'V':
+            enableValidation = ParseBoolean( optarg );
             break;
         case OptHelp:
             PrintHelp();

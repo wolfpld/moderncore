@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdint.h>
 #include <vector>
 #include <vulkan/vulkan.h>
 #include <xf86drmMode.h>
@@ -19,6 +20,7 @@ private:
     DrmDevice& m_device;
 
     gbm_bo* m_bo;
+    uint32_t m_kmsFb;
     uint64_t m_modifier;
 
     VkImage m_image;

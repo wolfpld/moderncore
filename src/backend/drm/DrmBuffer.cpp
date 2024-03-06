@@ -47,18 +47,23 @@ DrmBuffer::DrmBuffer( DrmDevice& device, const drmModeModeInfo& mode, const std:
     }
 
     std::vector<int> dmaBufFds( numPlanes );
+    std::vector<uint32_t> pitches( numPlanes );
+    std::vector<uint32_t> offsets( numPlanes );
     std::vector<VkSubresourceLayout> layouts( numPlanes );
     for( uint32_t i=0; i<numPlanes; i++ )
     {
         dmaBufFds[i] = gbm_bo_get_fd_for_plane( m_bo, i );
 
-        layouts[i].offset = gbm_bo_get_offset( m_bo, i );
-        layouts[i].rowPitch = gbm_bo_get_stride_for_plane( m_bo, i );
+        layouts[i].offset = offsets[i] = gbm_bo_get_offset( m_bo, i );
+        layouts[i].rowPitch = pitches[i] = gbm_bo_get_stride_for_plane( m_bo, i );
         layouts[i].arrayPitch = 0;
         layouts[i].depthPitch = 0;
 
         mclog( LogLevel::Debug, "  Plane %d: offset %d, pitch %d", i, layouts[i].offset, layouts[i].rowPitch );
     }
+
+    std::vector<uint64_t> drmModifiers( numPlanes, m_modifier );
+    CheckPanic( drmModeAddFB2WithModifiers( device.Descriptor(), mode.hdisplay, mode.vdisplay, DRM_FORMAT_XRGB8888, (uint32_t*)dmaBufFds.data(), pitches.data(), offsets.data(), drmModifiers.data(), &m_kmsFb, DRM_MODE_FB_MODIFIERS ), "Failed to create KMS framebuffer" );
 
     const bool disjoint = CheckDisjoint( dmaBufFds );
     CheckPanic( !disjoint, "Disjoint buffers are not supported" );
@@ -140,6 +145,7 @@ DrmBuffer::~DrmBuffer()
     auto& dev = m_device.GetGpu()->Device();
     vkFreeMemory( dev, m_memory, nullptr );
     vkDestroyImage( dev, m_image, nullptr );
+    drmModeRmFB( m_device.Descriptor(), m_kmsFb );
     gbm_bo_destroy( m_bo );
 }
 

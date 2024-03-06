@@ -239,7 +239,7 @@ const drmModeModeInfo& DrmConnector::GetBestDisplayMode() const
             bestRes = res;
             bestRefresh = refresh;
         }
-        else if( refresh > bestRefresh )
+        else if( res == bestRes && refresh > bestRefresh )
         {
             best = i;
             bestRefresh = refresh;

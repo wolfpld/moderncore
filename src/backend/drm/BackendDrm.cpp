@@ -177,6 +177,8 @@ BackendDrm::~BackendDrm()
 
 void BackendDrm::VulkanInit()
 {
+    ZoneScoped;
+
     auto it = m_drmDevices.begin();
     while( it != m_drmDevices.end() )
     {

@@ -1,6 +1,7 @@
 #include <drm_fourcc.h>
 #include <gbm.h>
 #include <sys/stat.h>
+#include <tracy/Tracy.hpp>
 #include <xf86drm.h>
 
 #include "DrmBuffer.hpp"
@@ -33,6 +34,8 @@ bool CheckDisjoint( const std::vector<int>& dmaBufFds )
 DrmBuffer::DrmBuffer( DrmDevice& device, const drmModeModeInfo& mode, const std::vector<uint64_t>& modifiers )
     : m_device( device )
 {
+    ZoneScoped;
+
     m_bo = gbm_bo_create_with_modifiers( device, mode.hdisplay, mode.vdisplay, DRM_FORMAT_XRGB8888, modifiers.data(), modifiers.size() );
     CheckPanic( m_bo, "Failed to create gbm buffer" );
 

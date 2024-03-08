@@ -21,6 +21,7 @@ public:
     [[nodiscard]] bool IsComputeCapable();
     [[nodiscard]] bool IsSwapchainCapable();
     [[nodiscard]] bool HasPushDescriptor();
+    [[nodiscard]] bool HasDynamicRendering();
 
     operator VkPhysicalDevice() const { return m_physDev; }
 

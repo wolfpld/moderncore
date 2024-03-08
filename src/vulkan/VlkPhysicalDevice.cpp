@@ -55,6 +55,11 @@ bool VlkPhysicalDevice::HasPushDescriptor()
     return IsExtensionAvailable( VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME );
 }
 
+bool VlkPhysicalDevice::HasDynamicRendering()
+{
+    return m_dynamicRenderingFeatures.dynamicRendering == VK_TRUE;
+}
+
 bool VlkPhysicalDevice::IsExtensionAvailable( const char* extensionName ) const
 {
     ZoneScoped;

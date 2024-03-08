@@ -287,7 +287,11 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
         deviceExtensions.emplace_back( VK_KHR_EXTERNAL_SEMAPHORE_FD_EXTENSION_NAME );
     }
 
+    VkPhysicalDeviceDynamicRenderingFeatures renderFeatures = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES };
+    renderFeatures.dynamicRendering = VK_TRUE;
+
     VkDeviceCreateInfo devInfo = { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
+    devInfo.pNext = &renderFeatures;
     devInfo.queueCreateInfoCount = (uint32_t)queueCreate.size();
     devInfo.pQueueCreateInfos = queueCreate.data();
     devInfo.enabledExtensionCount = (uint32_t)deviceExtensions.size();

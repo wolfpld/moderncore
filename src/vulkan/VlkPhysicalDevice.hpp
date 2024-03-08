@@ -17,11 +17,11 @@ public:
     [[nodiscard]] auto& ExtensionProperties() const { return m_extensionProperties; }
     [[nodiscard]] auto& MemoryProperties() const { return m_memoryProperties; }
 
-    [[nodiscard]] bool IsGraphicCapable();
-    [[nodiscard]] bool IsComputeCapable();
-    [[nodiscard]] bool IsSwapchainCapable();
-    [[nodiscard]] bool HasPushDescriptor();
-    [[nodiscard]] bool HasDynamicRendering();
+    [[nodiscard]] bool IsGraphicCapable() const;
+    [[nodiscard]] bool IsComputeCapable() const;
+    [[nodiscard]] bool IsSwapchainCapable() const;
+    [[nodiscard]] bool HasPushDescriptor() const;
+    [[nodiscard]] bool HasDynamicRendering() const;
 
     operator VkPhysicalDevice() const { return m_physDev; }
 

@@ -18,7 +18,6 @@ std::shared_ptr<VlkPhysicalDevice> PickBest( const std::vector<std::shared_ptr<V
         {
             if( flags & RequireGraphic && !dev->IsGraphicCapable() ) continue;
             if( flags & RequireCompute && !dev->IsComputeCapable() ) continue;
-            if( !dev->HasPushDescriptor() ) continue;
             if( presentSurface != VK_NULL_HANDLE )
             {
                 if( !dev->IsSwapchainCapable() ) continue;

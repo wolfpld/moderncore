@@ -27,7 +27,7 @@ public:
 
     [[nodiscard]] auto& QueryPhysicalDevices() const { return m_physicalDevices; }
     [[nodiscard]] auto Type() const { return m_instanceType; }
-    [[nodiscard]] auto ApiVersion() const { return VK_API_VERSION_1_2; }
+    [[nodiscard]] auto ApiVersion() const { return VK_API_VERSION_1_3; }
 
     operator VkInstance() const { return m_instance; }
 

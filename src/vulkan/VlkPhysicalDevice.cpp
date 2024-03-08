@@ -22,6 +22,13 @@ VlkPhysicalDevice::VlkPhysicalDevice( VkPhysicalDevice physDev )
 
     vkGetPhysicalDeviceProperties( physDev, &m_properties );
     vkGetPhysicalDeviceMemoryProperties( physDev, &m_memoryProperties );
+
+    m_dynamicRenderingFeatures = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES };
+
+    m_features = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2 };
+    m_features.pNext = &m_dynamicRenderingFeatures;
+
+    vkGetPhysicalDeviceFeatures2( physDev, &m_features );
 }
 
 bool VlkPhysicalDevice::IsGraphicCapable()

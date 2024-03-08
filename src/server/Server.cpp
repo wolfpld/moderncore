@@ -108,6 +108,7 @@ void Server::SetupGpus( bool skipSoftware )
     ZoneScoped;
 
     const auto& devices = m_vkInstance->QueryPhysicalDevices();
+    CheckPanic( !devices.empty(), "No physical devices found" );
 
     mclog( LogLevel::Info, "Found %d physical devices", devices.size() );
     int idx = 0;

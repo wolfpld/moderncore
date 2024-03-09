@@ -7,6 +7,7 @@
 #include "WaylandConnector.hpp"
 #include "server/Server.hpp"
 #include "server/Renderable.hpp"
+#include "util/Tracy.hpp"
 #include "vulkan/VlkCommandBuffer.hpp"
 #include "vulkan/VlkDevice.hpp"
 #include "vulkan/VlkError.hpp"
@@ -79,7 +80,17 @@ void WaylandConnector::Render()
     m_swapchain->RenderBarrier( *frame.commandBuffer, imgIndex );
     vkCmdBeginRendering( *frame.commandBuffer, &frame.renderingInfo );
 
+#ifdef TRACY_ENABLE
+    auto tracyCtx = m_device.GetTracyContext();
+    tracy::VkCtxScope* tracyScope = nullptr;
+    if( tracyCtx ) ZoneVkNew( tracyCtx, tracyScope, *frame.commandBuffer, "Render", true );
+#endif
+
     for( auto& renderable : Server::Instance().Renderables() ) renderable->Render( *this, *frame.commandBuffer );
+
+#ifdef TRACY_ENABLE
+    delete tracyScope;
+#endif
 
     vkCmdEndRendering( *frame.commandBuffer );
     m_swapchain->PresentBarrier( *frame.commandBuffer, imgIndex );

@@ -75,7 +75,7 @@ void WaylandConnector::Render()
 
     frame.commandBuffer->Reset();
     frame.commandBuffer->Begin( VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT );
-    
+
     m_swapchain->RenderBarrier( *frame.commandBuffer, imgIndex );
     vkCmdBeginRendering( *frame.commandBuffer, &frame.renderingInfo );
 

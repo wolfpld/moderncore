@@ -22,6 +22,7 @@ public:
     [[nodiscard]] bool IsSwapchainCapable() const;
     [[nodiscard]] bool HasPushDescriptor() const;
     [[nodiscard]] bool HasDynamicRendering() const;
+    [[nodiscard]] bool HasCalibratedTimestamps() const;
 
     operator VkPhysicalDevice() const { return m_physDev; }
 

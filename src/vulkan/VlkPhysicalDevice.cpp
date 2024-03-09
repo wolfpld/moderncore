@@ -60,6 +60,11 @@ bool VlkPhysicalDevice::HasDynamicRendering() const
     return m_dynamicRenderingFeatures.dynamicRendering == VK_TRUE;
 }
 
+bool VlkPhysicalDevice::HasCalibratedTimestamps() const
+{
+    return IsExtensionAvailable( VK_KHR_CALIBRATED_TIMESTAMPS_EXTENSION_NAME );
+}
+
 bool VlkPhysicalDevice::IsExtensionAvailable( const char* extensionName ) const
 {
     ZoneScoped;

@@ -9,8 +9,6 @@
 
 class VlkCommandBuffer;
 class VlkFence;
-class VlkFramebuffer;
-class VlkRenderPass;
 class VlkSemaphore;
 class VlkSwapchain;
 
@@ -18,11 +16,12 @@ class WaylandConnector : public Connector
 {
     struct FrameData
     {
-        std::unique_ptr<VlkFramebuffer> framebuffer;
         std::unique_ptr<VlkCommandBuffer> commandBuffer;
         std::unique_ptr<VlkSemaphore> imageAvailable;
         std::unique_ptr<VlkSemaphore> renderFinished;
         std::unique_ptr<VlkFence> fence;
+        VkRenderingAttachmentInfo attachmentInfo;
+        VkRenderingInfo renderingInfo;
     };
 
 public:

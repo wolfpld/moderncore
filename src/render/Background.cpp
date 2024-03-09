@@ -147,7 +147,13 @@ void Background::AddConnector( Connector& connector )
 
     data->pipelineLayout = std::make_unique<VlkPipelineLayout>( device, pipelineLayoutInfo );
 
+    VkFormat format = connector.Format();
+    VkPipelineRenderingCreateInfo renderingInfo = { VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO };
+    renderingInfo.colorAttachmentCount = 1;
+    renderingInfo.pColorAttachmentFormats = &format;
+
     VkGraphicsPipelineCreateInfo pipelineInfo = { VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO };
+    pipelineInfo.pNext = &renderingInfo;
     pipelineInfo.stageCount = data->shader->GetStageCount();
     pipelineInfo.pStages = data->shader->GetStages();
     pipelineInfo.pVertexInputState = &vertexInputInfo;
@@ -157,7 +163,6 @@ void Background::AddConnector( Connector& connector )
     pipelineInfo.pMultisampleState = &multisampling;
     pipelineInfo.pColorBlendState = &colorBlending;
     pipelineInfo.layout = *data->pipelineLayout;
-    pipelineInfo.renderPass = connector.RenderPass();
 
     data->pipeline = std::make_unique<VlkPipeline>( device, pipelineInfo );
 

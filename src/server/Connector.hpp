@@ -1,11 +1,9 @@
 #pragma once
 
-#include <memory>
 #include <stdint.h>
 #include <vulkan/vulkan.h>
 
 #include "util/NoCopy.hpp"
-#include "vulkan/VlkRenderPass.hpp"
 
 class Renderable;
 class VlkDevice;
@@ -21,7 +19,6 @@ public:
     virtual void Render() = 0;
 
     [[nodiscard]] auto& Device() const { return m_device; }
-    [[nodiscard]] auto& RenderPass() const { return *m_renderPass; }
 
     [[nodiscard]] auto Width() const { return m_width; }
     [[nodiscard]] auto Height() const { return m_height; }
@@ -33,6 +30,5 @@ protected:
     uint32_t m_width = 0;
     uint32_t m_height = 0;
 
-    std::unique_ptr<VlkRenderPass> m_renderPass;
     VkFormat m_format;
 };

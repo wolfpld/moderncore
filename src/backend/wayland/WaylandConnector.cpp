@@ -9,8 +9,6 @@
 #include "vulkan/VlkDevice.hpp"
 #include "vulkan/VlkError.hpp"
 #include "vulkan/VlkFence.hpp"
-#include "vulkan/VlkFramebuffer.hpp"
-#include "vulkan/VlkRenderPass.hpp"
 #include "vulkan/VlkSemaphore.hpp"
 #include "vulkan/VlkSwapchain.hpp"
 
@@ -25,61 +23,31 @@ WaylandConnector::WaylandConnector( VlkDevice& device, VkSurfaceKHR surface )
     m_height = m_swapchain->GetHeight();
     m_format = m_swapchain->GetFormat();
 
-    VkAttachmentDescription colorAttachment = {};
-    colorAttachment.format = m_swapchain->GetFormat();
-    colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-    VkAttachmentReference colorAttachmentRef = {};
-    colorAttachmentRef.attachment = 0;
-    colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-    VkSubpassDescription subpassDesc = {};
-    subpassDesc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpassDesc.colorAttachmentCount = 1;
-    subpassDesc.pColorAttachments = &colorAttachmentRef;
-
-    VkSubpassDependency dependency = {};
-    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-    dependency.dstSubpass = 0;
-    dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependency.srcAccessMask = 0;
-    dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-    VkRenderPassCreateInfo renderPassInfo = { VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO };
-    renderPassInfo.attachmentCount = 1;
-    renderPassInfo.pAttachments = &colorAttachment;
-    renderPassInfo.subpassCount = 1;
-    renderPassInfo.pSubpasses = &subpassDesc;
-    renderPassInfo.dependencyCount = 1;
-    renderPassInfo.pDependencies = &dependency;
-
-    m_renderPass = std::make_unique<VlkRenderPass>( device, renderPassInfo );
-
     const auto& imageViews = m_swapchain->GetImageViews();
-    VkFramebufferCreateInfo framebufferInfo = { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
-    framebufferInfo.renderPass = *m_renderPass;
-    framebufferInfo.attachmentCount = 1;
-    framebufferInfo.width = m_width;
-    framebufferInfo.height = m_height;
-    framebufferInfo.layers = 1;
-
     const auto numImages = imageViews.size();
+
     m_frame.resize( numImages );
     for( size_t i=0; i<numImages; i++ )
     {
-        framebufferInfo.pAttachments = &imageViews[i];
-        m_frame[i].framebuffer = std::make_unique<VlkFramebuffer>( device, framebufferInfo );
         m_frame[i].commandBuffer = std::make_unique<VlkCommandBuffer>( *device.GetCommandPool( QueueType::Graphic ), true );
         m_frame[i].imageAvailable = std::make_unique<VlkSemaphore>( device );
         m_frame[i].renderFinished = std::make_unique<VlkSemaphore>( device );
         m_frame[i].fence = std::make_unique<VlkFence>( device, VK_FENCE_CREATE_SIGNALED_BIT );
+        m_frame[i].attachmentInfo = {
+            .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+            .imageView = imageViews[i],
+            .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .clearValue = {{{ 0.25f, 0.25f, 0.25f, 1.0f }}}
+        };
+        m_frame[i].renderingInfo = {
+            .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+            .renderArea = { { 0, 0 }, { m_width, m_height } },
+            .layerCount = 1,
+            .colorAttachmentCount = 1,
+            .pColorAttachments = &m_frame[i].attachmentInfo
+        };
     }
 }
 
@@ -105,21 +73,15 @@ void WaylandConnector::Render()
 
     frame.commandBuffer->Reset();
     frame.commandBuffer->Begin( VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT );
-
-    VkRenderPassBeginInfo renderPassInfo = { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
-    renderPassInfo.renderPass = *m_renderPass;
-    renderPassInfo.framebuffer = *frame.framebuffer;
-    renderPassInfo.renderArea.offset = { 0, 0 };
-    renderPassInfo.renderArea.extent = { m_swapchain->GetWidth(), m_swapchain->GetHeight() };
-    renderPassInfo.clearValueCount = 1;
-    VkClearValue clearValue = {{{ 0.25f, 0.25f, 0.25f, 1.0f }}};
-    renderPassInfo.pClearValues = &clearValue;
-
-    vkCmdBeginRenderPass( *frame.commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
+    
+    m_swapchain->RenderBarrier( *frame.commandBuffer, imgIndex );
+    vkCmdBeginRendering( *frame.commandBuffer, &frame.renderingInfo );
 
     for( auto& renderable : Server::Instance().Renderables() ) renderable->Render( *this, *frame.commandBuffer );
 
-    vkCmdEndRenderPass( *frame.commandBuffer );
+    vkCmdEndRendering( *frame.commandBuffer );
+    m_swapchain->PresentBarrier( *frame.commandBuffer, imgIndex );
+
     frame.commandBuffer->End();
 
     const std::array<VkSemaphore, 1> waitSemaphores = { *frame.imageAvailable };

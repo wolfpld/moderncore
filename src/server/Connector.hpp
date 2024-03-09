@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <stdint.h>
+#include <vulkan/vulkan.h>
 
 #include "util/NoCopy.hpp"
 #include "vulkan/VlkRenderPass.hpp"
@@ -24,6 +25,7 @@ public:
 
     [[nodiscard]] auto Width() const { return m_width; }
     [[nodiscard]] auto Height() const { return m_height; }
+    [[nodiscard]] auto Format() const { return m_format; }
 
 protected:
     VlkDevice& m_device;
@@ -32,4 +34,5 @@ protected:
     uint32_t m_height = 0;
 
     std::unique_ptr<VlkRenderPass> m_renderPass;
+    VkFormat m_format;
 };

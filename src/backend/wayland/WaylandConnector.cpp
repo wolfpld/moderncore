@@ -23,6 +23,7 @@ WaylandConnector::WaylandConnector( VlkDevice& device, VkSurfaceKHR surface )
 
     m_width = m_swapchain->GetWidth();
     m_height = m_swapchain->GetHeight();
+    m_format = m_swapchain->GetFormat();
 
     VkAttachmentDescription colorAttachment = {};
     colorAttachment.format = m_swapchain->GetFormat();

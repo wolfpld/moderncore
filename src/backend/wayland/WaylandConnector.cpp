@@ -1,6 +1,8 @@
 #include <array>
 #include <tracy/Tracy.hpp>
 #include <vulkan/vk_enum_string_helper.h>
+#include <vulkan/vulkan.h>
+#include <tracy/TracyVulkan.hpp>
 
 #include "WaylandConnector.hpp"
 #include "server/Server.hpp"
@@ -81,6 +83,10 @@ void WaylandConnector::Render()
 
     vkCmdEndRendering( *frame.commandBuffer );
     m_swapchain->PresentBarrier( *frame.commandBuffer, imgIndex );
+
+#ifdef TRACY_ENABLE
+    { auto tracyCtx = m_device.GetTracyContext(); if( tracyCtx ) TracyVkCollect( tracyCtx, *frame.commandBuffer ); }
+#endif
 
     frame.commandBuffer->End();
 

@@ -4,6 +4,7 @@
 #include <memory>
 #include <stdexcept>
 #include <vulkan/vulkan.h>
+#include <tracy/TracyVulkan.hpp>
 
 #include "VlkPhysicalDevice.hpp"
 #include "VlkQueueType.hpp"
@@ -53,6 +54,10 @@ public:
     operator VkPhysicalDevice() const { return *m_physDev; }
     operator VmaAllocator() const { return m_allocator; }
 
+#ifdef TRACY_ENABLE
+    [[nodiscard]] auto& GetTracyContext() const { return m_tracyCtx; }
+#endif
+
 private:
     VkDevice m_device;
     std::shared_ptr<VlkPhysicalDevice> m_physDev;
@@ -63,4 +68,8 @@ private:
     VmaAllocator m_allocator;
 
     std::array<std::shared_ptr<VlkCommandPool>, 4> m_commandPool;
+
+#ifdef TRACY_ENABLE
+    TracyVkCtx m_tracyCtx = {};
+#endif
 };

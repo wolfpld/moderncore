@@ -290,6 +290,18 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
     VkPhysicalDeviceDynamicRenderingFeatures renderFeatures = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES };
     renderFeatures.dynamicRendering = VK_TRUE;
 
+#ifdef TRACY_ENABLE
+    VkPhysicalDeviceVulkan12Features features12 = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES };
+
+    bool profile = m_physDev->HasCalibratedTimestamps();
+    if( profile )
+    {
+        deviceExtensions.emplace_back( VK_KHR_CALIBRATED_TIMESTAMPS_EXTENSION_NAME );
+        features12.hostQueryReset = VK_TRUE;
+        renderFeatures.pNext = &features12;
+    }
+#endif
+
     VkDeviceCreateInfo devInfo = { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
     devInfo.pNext = &renderFeatures;
     devInfo.queueCreateInfoCount = (uint32_t)queueCreate.size();
@@ -355,10 +367,34 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
     {
         if( !m_commandPool[(int)QueueType::Transfer] ) m_commandPool[(int)QueueType::Transfer] = std::make_shared<VlkCommandPool>( *this, m_queueInfo[(int)QueueType::Transfer].idx, QueueType::Transfer );
     }
+
+#ifdef TRACY_ENABLE
+    if( profile )
+    {
+        auto gpdctd = (PFN_vkGetPhysicalDeviceCalibrateableTimeDomainsKHR)vkGetInstanceProcAddr( instance, "vkGetPhysicalDeviceCalibrateableTimeDomainsKHR" );
+        auto gct = (PFN_vkGetCalibratedTimestampsKHR)vkGetInstanceProcAddr( instance, "vkGetCalibratedTimestampsKHR" );
+
+        uint32_t count;
+        gpdctd( *m_physDev, &count, nullptr );
+        std::vector<VkTimeDomainEXT> domains( count );
+        gpdctd( *m_physDev, &count, domains.data() );
+
+        if( std::find( domains.begin(), domains.end(), VK_TIME_DOMAIN_CLOCK_MONOTONIC_RAW_EXT ) != domains.end() )
+        {
+            m_tracyCtx = TracyVkContextHostCalibrated( *m_physDev, m_device, vkResetQueryPool, gpdctd, gct );
+            auto& properties = m_physDev->Properties();
+            TracyVkContextName( m_tracyCtx, properties.deviceName, strlen( properties.deviceName ) );
+        }
+    }
+#endif
 }
 
 VlkDevice::~VlkDevice()
 {
+#ifdef TRACY_PROFILE
+    if( m_tracyCtx ) TracyVkDestroy( m_tracyCtx );
+#endif
+
     for( auto& pool : m_commandPool ) pool.reset();
     vmaDestroyAllocator( m_allocator );
     vkDestroyDevice( m_device, nullptr );

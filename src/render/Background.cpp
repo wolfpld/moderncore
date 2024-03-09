@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <tracy/Tracy.hpp>
+#include <vulkan/vulkan.h>
+#include <tracy/TracyVulkan.hpp>
 
 #include "Background.hpp"
 #include "Texture.hpp"
@@ -232,11 +234,21 @@ void Background::Render( Connector& connector, VkCommandBuffer cmdBuf )
     const std::array<VkBuffer, 1> vtx = { *data->vertexBuffer };
     const std::array<VkDeviceSize, 1> offsets = { 0 };
 
+#ifdef TRACY_ENABLE
+    auto tracyCtx = connector.Device().GetTracyContext();
+    tracy::VkCtxScope* tracyScope = nullptr;
+    if( tracyCtx ) ZoneVkNew( tracyCtx, tracyScope, cmdBuf, "Background", true );
+#endif
+
     vkCmdBindPipeline( cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, *data->pipeline );
     vkCmdBindVertexBuffers( cmdBuf, 0, 1, vtx.data(), offsets.data() );
     vkCmdBindIndexBuffer( cmdBuf, *data->indexBuffer, 0, VK_INDEX_TYPE_UINT16 );
     CmdPushDescriptorSetKHR( cmdBuf, VK_PIPELINE_BIND_POINT_GRAPHICS, *data->pipelineLayout, 0, 1, &data->descriptorWrite );
     vkCmdDrawIndexed( cmdBuf, 6, 1, 0, 0, 0 );
+
+#ifdef TRACY_ENABLE
+    delete tracyScope;
+#endif
 }
 
 void Background::UpdateVertexBuffer( VlkBuffer& buffer, uint32_t imageWidth, uint32_t imageHeight, uint32_t displayWidth, uint32_t displayHeight )

@@ -17,6 +17,9 @@ public:
 
     NoCopy( VlkSwapchain );
 
+    void PresentBarrier( VkCommandBuffer cmd, uint32_t imageIndex );
+    void RenderBarrier( VkCommandBuffer cmd, uint32_t imageIndex );
+
     [[nodiscard]] VkFormat GetFormat() const { return m_format.format; }
     [[nodiscard]] uint32_t GetWidth() const { return m_extent.width; }
     [[nodiscard]] uint32_t GetHeight() const { return m_extent.height; }

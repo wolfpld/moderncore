@@ -1,7 +1,10 @@
 #include <string.h>
+#include <vulkan/vulkan.h>
+#include <tracy/TracyVulkan.hpp>
 
 #include "Texture.hpp"
 #include "util/Bitmap.hpp"
+#include "util/Tracy.hpp"
 #include "vulkan/VlkBuffer.hpp"
 #include "vulkan/VlkCommandBuffer.hpp"
 #include "vulkan/VlkDevice.hpp"
@@ -47,6 +50,12 @@ Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format )
     auto cmdBuf = std::make_unique<VlkCommandBuffer>( *device.GetCommandPool( QueueType::Graphic ), true );
     cmdBuf->Begin( VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT );
 
+#ifdef TRACY_ENABLE
+    auto tracyCtx = device.GetTracyContext();
+    tracy::VkCtxScope* tracyScope = nullptr;
+    if( tracyCtx ) ZoneVkNew( tracyCtx, tracyScope, *cmdBuf, "Texture upload", true );
+#endif
+
     VkImageMemoryBarrier barrier = { VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
     barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
@@ -75,6 +84,10 @@ Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format )
     barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
     vkCmdPipelineBarrier( *cmdBuf, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier );
+
+#ifdef TRACY_ENABLE
+    delete tracyScope;
+#endif
 
     cmdBuf->End();
 

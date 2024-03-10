@@ -384,6 +384,7 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
             m_tracyCtx = TracyVkContextHostCalibrated( *m_physDev, m_device, vkResetQueryPool, gpdctd, gct );
             auto& properties = m_physDev->Properties();
             TracyVkContextName( m_tracyCtx, properties.deviceName, strlen( properties.deviceName ) );
+            mclog( LogLevel::Info, "Vulkan profiling available on device %s", properties.deviceName );
         }
     }
 #endif

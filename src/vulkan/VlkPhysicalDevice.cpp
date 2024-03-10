@@ -62,7 +62,7 @@ bool VlkPhysicalDevice::HasDynamicRendering() const
 
 bool VlkPhysicalDevice::HasCalibratedTimestamps() const
 {
-    return IsExtensionAvailable( VK_KHR_CALIBRATED_TIMESTAMPS_EXTENSION_NAME );
+    return IsExtensionAvailable( VK_EXT_CALIBRATED_TIMESTAMPS_EXTENSION_NAME );
 }
 
 bool VlkPhysicalDevice::IsExtensionAvailable( const char* extensionName ) const

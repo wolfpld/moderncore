@@ -296,7 +296,7 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
     bool profile = m_physDev->HasCalibratedTimestamps();
     if( profile )
     {
-        deviceExtensions.emplace_back( VK_KHR_CALIBRATED_TIMESTAMPS_EXTENSION_NAME );
+        deviceExtensions.emplace_back( VK_EXT_CALIBRATED_TIMESTAMPS_EXTENSION_NAME );
         features12.hostQueryReset = VK_TRUE;
         renderFeatures.pNext = &features12;
     }
@@ -371,8 +371,8 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
 #ifdef TRACY_ENABLE
     if( profile )
     {
-        auto gpdctd = (PFN_vkGetPhysicalDeviceCalibrateableTimeDomainsKHR)vkGetInstanceProcAddr( instance, "vkGetPhysicalDeviceCalibrateableTimeDomainsKHR" );
-        auto gct = (PFN_vkGetCalibratedTimestampsKHR)vkGetInstanceProcAddr( instance, "vkGetCalibratedTimestampsKHR" );
+        auto gpdctd = (PFN_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT)vkGetInstanceProcAddr( instance, "vkGetPhysicalDeviceCalibrateableTimeDomainsEXT" );
+        auto gct = (PFN_vkGetCalibratedTimestampsEXT)vkGetInstanceProcAddr( instance, "vkGetCalibratedTimestampsEXT" );
 
         uint32_t count;
         gpdctd( *m_physDev, &count, nullptr );

@@ -126,7 +126,7 @@ bool DrmConnector::SetModeDrm( const drmModeModeInfo& mode )
 
     mclog( LogLevel::Info, "  Setting connector %s to %dx%d @ %d Hz", m_name.c_str(), mode.hdisplay, mode.vdisplay, mode.vrefresh );
 
-    auto& crtcs = m_device.GetCrtcs();
+    auto& crtcs = m_device.Crtcs();
     auto it = std::find_if( crtcs.begin(), crtcs.end(), []( const auto& c ) { return !c->IsUsed(); } );
     if( it == crtcs.end() ) return false;
 
@@ -172,7 +172,7 @@ bool DrmConnector::SetModeVulkan()
     for( auto mod : modifiers )
     {
         modInfo.drmFormatModifier = mod;
-        auto res = vkGetPhysicalDeviceImageFormatProperties2( m_device.GetGpu()->Device(), &formatInfo, &prop );
+        auto res = vkGetPhysicalDeviceImageFormatProperties2( m_device.Gpu()->Device(), &formatInfo, &prop );
         if( res == VK_ERROR_FORMAT_NOT_SUPPORTED ) continue;
         VkVerify( res );
         if( extProp.externalMemoryProperties.externalMemoryFeatures & VK_EXTERNAL_MEMORY_FEATURE_IMPORTABLE_BIT )
@@ -221,7 +221,7 @@ bool DrmConnector::SetModeVulkan()
     return true;
 }
 
-const drmModeModeInfo& DrmConnector::GetBestDisplayMode() const
+const drmModeModeInfo& DrmConnector::BestDisplayMode() const
 {
     CheckPanic( m_connected, "Connector is not connected");
     CheckPanic( !m_modes.empty(), "No modes available" );
@@ -251,7 +251,7 @@ const drmModeModeInfo& DrmConnector::GetBestDisplayMode() const
 
 const std::shared_ptr<DrmPlane>& DrmConnector::GetPlaneForCrtc( const DrmCrtc& crtc )
 {
-    auto& planes = m_device.GetPlanes();
+    auto& planes = m_device.Planes();
     for( auto& plane : planes )
     {
         auto& p = *plane->Plane();

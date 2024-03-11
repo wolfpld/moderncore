@@ -19,7 +19,7 @@ public:
     void Enable();
     void Disable();
 
-    [[nodiscard]] uint32_t GetId() const { return m_id; }
+    [[nodiscard]] uint32_t Id() const { return m_id; }
     [[nodiscard]] bool IsUsed() const { return m_bufferId != 0; }
     [[nodiscard]] uint32_t Mask() const { return m_mask; }
 

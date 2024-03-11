@@ -121,7 +121,7 @@ DrmDevice::DrmDevice( const char* devName, DbusSession& bus, const char* session
     {
         if( !conn->IsConnected() ) continue;
 
-        auto& mode = conn->GetBestDisplayMode();
+        auto& mode = conn->BestDisplayMode();
         CheckPanic( conn->SetModeDrm( mode ), "Failed to set mode" );
         found = true;
     }

@@ -29,13 +29,13 @@ public:
 
     NoCopy( DrmDevice );
 
-    [[nodiscard]] auto& GetCrtcs() const { return m_crtcs; }
-    [[nodiscard]] auto& GetPlanes() const { return m_planes; }
+    [[nodiscard]] auto& Crtcs() const { return m_crtcs; }
+    [[nodiscard]] auto& Planes() const { return m_planes; }
 
     [[nodiscard]] auto Descriptor() const { return m_fd; }
-    [[nodiscard]] auto& GetName() const { return m_name; }
+    [[nodiscard]] auto& Name() const { return m_name; }
 
-    [[nodiscard]] auto& GetGpu() const { return m_gpu; }
+    [[nodiscard]] auto& Gpu() const { return m_gpu; }
 
     operator gbm_device*() const { return m_gbm; }
 

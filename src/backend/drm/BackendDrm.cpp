@@ -184,7 +184,7 @@ void BackendDrm::VulkanInit()
     {
         if( !(*it)->ResolveGpuDevice() )
         {
-            mclog( LogLevel::Warning, "Failed to resolve Vulkan device for DRM device '%s'", (*it)->GetName().c_str() );
+            mclog( LogLevel::Warning, "Failed to resolve Vulkan device for DRM device '%s'", (*it)->Name().c_str() );
             it = m_drmDevices.erase( it );
         }
         else

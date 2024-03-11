@@ -30,13 +30,13 @@ public:
     bool SetModeDrm( const drmModeModeInfo& mode );
     bool SetModeVulkan();
 
-    [[nodiscard]] const drmModeModeInfo& GetBestDisplayMode() const;
+    [[nodiscard]] const drmModeModeInfo& BestDisplayMode() const;
 
-    [[nodiscard]] uint32_t GetId() const { return m_id; }
+    [[nodiscard]] uint32_t Id() const { return m_id; }
     [[nodiscard]] bool IsConnected() const { return m_connected; }
-    [[nodiscard]] const std::string& GetName() const { return m_name; }
-    [[nodiscard]] const std::string& GetMonitor() const { return m_monitor; }
-    [[nodiscard]] const std::vector<uint32_t>& GetCrtcs() const { return m_crtcs; }
+    [[nodiscard]] const std::string& Name() const { return m_name; }
+    [[nodiscard]] const std::string& Monitor() const { return m_monitor; }
+    [[nodiscard]] const std::vector<uint32_t>& Crtcs() const { return m_crtcs; }
 
 private:
     const std::shared_ptr<DrmPlane>& GetPlaneForCrtc( const DrmCrtc& crtc );

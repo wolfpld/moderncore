@@ -35,6 +35,7 @@ BackendWayland::BackendWayland()
 BackendWayland::~BackendWayland()
 {
     m_windows.clear();
+    if( m_viewporter ) wp_viewporter_destroy( m_viewporter );
     if( m_fractionalScaleManager ) wp_fractional_scale_manager_v1_destroy( m_fractionalScaleManager );
     if( m_decorationManager ) zxdg_decoration_manager_v1_destroy( m_decorationManager );
     m_outputMap.clear();
@@ -111,6 +112,10 @@ void BackendWayland::RegistryGlobal( wl_registry* reg, uint32_t name, const char
     else if( strcmp( interface, wp_fractional_scale_manager_v1_interface.name ) == 0 )
     {
         m_fractionalScaleManager = RegistryBind( wp_fractional_scale_manager_v1 );
+    }
+    else if( strcmp( interface, wp_viewporter_interface.name ) == 0 )
+    {
+        m_viewporter = RegistryBind( wp_viewporter );
     }
 }
 

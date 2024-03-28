@@ -10,6 +10,7 @@
 #include "util/RobinHood.hpp"
 
 #include "fractional-scale-v1-client-protocol.h"
+#include "viewporter-client-protocol.h"
 #include "xdg-decoration-unstable-v1-client-protocol.h"
 #include "xdg-shell-client-protocol.h"
 
@@ -48,6 +49,7 @@ private:
     xdg_wm_base* m_xdgWmBase = nullptr;
     zxdg_decoration_manager_v1* m_decorationManager = nullptr;
     wp_fractional_scale_manager_v1* m_fractionalScaleManager = nullptr;
+    wp_viewporter* m_viewporter = nullptr;
 
     std::unique_ptr<WaylandSeat> m_seat;
     std::vector<std::unique_ptr<WaylandWindow>> m_windows;

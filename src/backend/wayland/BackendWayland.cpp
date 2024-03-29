@@ -144,6 +144,8 @@ void BackendWayland::OpenWindow( int physDev )
         .compositor = m_compositor,
         .xdgWmBase = m_xdgWmBase,
         .decorationManager = m_decorationManager,
+        .fractionalScaleManager = m_fractionalScaleManager,
+        .viewporter = m_viewporter,
         .dpy = m_dpy,
         .onClose = [this]{ Stop(); },
         .backend = *this

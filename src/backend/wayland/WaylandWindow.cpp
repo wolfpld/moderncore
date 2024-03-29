@@ -27,12 +27,28 @@ WaylandWindow::WaylandWindow( Params&& p )
     m_surface = wl_compositor_create_surface( p.compositor );
     CheckPanic( m_surface, "Failed to create Wayland surface" );
 
-    static constexpr wl_surface_listener surfaceListener = {
-        .enter = Method( Enter ),
-        .leave = Method( Leave )
-    };
+    if( p.fractionalScaleManager && p.viewporter )
+    {
+        static constexpr wp_fractional_scale_v1_listener listener = {
+            .preferred_scale = Method( FractionalScalePreferredScale )
+        };
 
-    wl_surface_add_listener( m_surface, &surfaceListener, this );
+        m_fractionalScale = wp_fractional_scale_manager_v1_get_fractional_scale( p.fractionalScaleManager, m_surface );
+        CheckPanic( m_fractionalScale, "Failed to create Wayland fractional scale" );
+        wp_fractional_scale_v1_add_listener( m_fractionalScale, &listener, this );
+
+        m_viewport = wp_viewporter_get_viewport( p.viewporter, m_surface );
+        CheckPanic( m_viewport, "Failed to create Wayland viewport" );
+    }
+    else
+    {
+        static constexpr wl_surface_listener surfaceListener = {
+            .enter = Method( Enter ),
+            .leave = Method( Leave )
+        };
+
+        wl_surface_add_listener( m_surface, &surfaceListener, this );
+    }
 
     static constexpr xdg_surface_listener xdgSurfaceListener = {
         .configure = Method( XdgSurfaceConfigure )
@@ -122,6 +138,8 @@ WaylandWindow::~WaylandWindow()
     m_gpu->RemoveConnector( m_connector );
     m_connector.reset();
     vkDestroySurfaceKHR( Server::Instance().VkInstance(), m_vkSurface, nullptr );
+    if( m_viewport ) wp_viewport_destroy( m_viewport );
+    if( m_fractionalScale ) wp_fractional_scale_v1_destroy( m_fractionalScale );
     if( m_xdgToplevelDecoration ) zxdg_toplevel_decoration_v1_destroy( m_xdgToplevelDecoration );
     xdg_toplevel_destroy( m_xdgToplevel );
     xdg_surface_destroy( m_xdgSurface );
@@ -147,6 +165,8 @@ void WaylandWindow::PointerMotion( double x, double y )
 
 void WaylandWindow::Enter( struct wl_surface* surface, struct wl_output* output )
 {
+    CheckPanic( !m_fractionalScale, "Outputs should not be tracked when fractional scaling is enabled" );
+
     auto& outputMap = m_backend.OutputMap();
     auto it = std::find_if( outputMap.begin(), outputMap.end(), [output]( const auto& pair ) { return pair.second->GetOutput() == output; } );
     CheckPanic( it != outputMap.end(), "Output not found" );
@@ -164,6 +184,8 @@ void WaylandWindow::Enter( struct wl_surface* surface, struct wl_output* output 
 
 void WaylandWindow::Leave( struct wl_surface* surface, struct wl_output* output )
 {
+    CheckPanic( !m_fractionalScale, "Outputs should not be tracked when fractional scaling is enabled" );
+
     auto& outputMap = m_backend.OutputMap();
     auto it = std::find_if( outputMap.begin(), outputMap.end(), [output]( const auto& pair ) { return pair.second->GetOutput() == output; } );
     CheckPanic( it != outputMap.end(), "Output not found" );
@@ -196,7 +218,6 @@ void WaylandWindow::XdgSurfaceConfigure( struct xdg_surface *xdg_surface, uint32
 
 void WaylandWindow::XdgToplevelConfigure( struct xdg_toplevel* toplevel, int32_t width, int32_t height, struct wl_array* states )
 {
-    if( width == 0 || height == 0 ) return;
 }
 
 void WaylandWindow::XdgToplevelClose( struct xdg_toplevel* toplevel )
@@ -220,4 +241,12 @@ void WaylandWindow::FrameDone( struct wl_callback* cb, uint32_t time )
 
 void WaylandWindow::DecorationConfigure( zxdg_toplevel_decoration_v1* tldec, uint32_t mode )
 {
+}
+
+// TODO: window size is hardcoded in swapchain
+void WaylandWindow::FractionalScalePreferredScale( wp_fractional_scale_v1* scale, uint32_t scaleValue )
+{
+    mclog( LogLevel::Info, "Window %i scale: %g", m_id, scaleValue / 120.f );
+    wp_viewport_set_source( m_viewport, 0, 0, wl_fixed_from_int( 1650 ), wl_fixed_from_int( 1050 ) );
+    wp_viewport_set_destination( m_viewport, 1650 * 120 / scaleValue, 1050 * 120 / scaleValue );
 }

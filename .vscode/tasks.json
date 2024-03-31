@@ -1,0 +1,29 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "postdebugKillTerminal",
+      "type": "process",
+      "command":[
+          "${command:workbench.action.terminal.kill}",
+      ],
+    },
+    {
+        "label": "Meson: Build all targets",
+        "type": "process",
+        "command": "meson",
+        "args": [
+            "compile",
+            "-C",
+            "${config:mesonbuild.buildFolder}"
+        ],
+        "group": {
+            "kind": "build",
+            "isDefault": true
+        },
+        "presentation": {
+            "close": true
+        },
+    }
+  ],
+}

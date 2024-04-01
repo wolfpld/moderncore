@@ -13,19 +13,19 @@ class CursorLogic;
 class GpuDevice;
 class SoftwareCursor;
 class WaylandConnector;
-class VlkInstance;
+class WaylandDisplay;
 
 class WaylandBackendWindow : public WaylandWindow
 {
 public:
-    struct Params : public WaylandWindow::Params
+    struct Params
     {
         int physDev;
         std::function<void()> onClose;
         BackendWayland& backend;
     };
 
-    explicit WaylandBackendWindow( Params&& p );
+    WaylandBackendWindow( WaylandDisplay& display, Params&& p );
     ~WaylandBackendWindow() override;
 
     NoCopy( WaylandBackendWindow );

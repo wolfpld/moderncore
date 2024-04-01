@@ -18,14 +18,14 @@
 #include "vulkan/VlkInstance.hpp"
 #include "wayland/WaylandMethod.hpp"
 
-WaylandBackendWindow::WaylandBackendWindow( Params&& p )
-    : WaylandWindow( p )
+WaylandBackendWindow::WaylandBackendWindow( WaylandDisplay& display, Params&& p )
+    : WaylandWindow( display )
     , m_onClose( std::move( p.onClose ) )
     , m_backend( p.backend )
 {
     ZoneScoped;
 
-    if( !p.fractionalScaleManager || !p.viewporter )
+    if( !display.FractionalScaleManager() || !display.Viewporter() )
     {
         static constexpr wl_surface_listener surfaceListener = {
             .enter = Method( Enter ),
@@ -45,7 +45,7 @@ WaylandBackendWindow::WaylandBackendWindow( Params&& p )
     xdg_toplevel_set_app_id( XdgToplevel(), "moderncore" );
 
     wl_surface_commit( Surface() );
-    wl_display_roundtrip( p.dpy );
+    wl_display_roundtrip( display.Display() );
 
     static constexpr wl_callback_listener frameListener = {
         .done = Method( FrameDone )
@@ -58,7 +58,7 @@ WaylandBackendWindow::WaylandBackendWindow( Params&& p )
     auto& vkInstance = server.VkInstance();
 
     VkWaylandSurfaceCreateInfoKHR createInfo = { VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR };
-    createInfo.display = p.dpy;
+    createInfo.display = display.Display();
     createInfo.surface = Surface();
 
     VkVerify( vkCreateWaylandSurfaceKHR( vkInstance, &createInfo, nullptr, &m_vkSurface ) );

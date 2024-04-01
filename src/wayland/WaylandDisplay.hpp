@@ -23,16 +23,15 @@ public:
     void Connect();
 
     [[nodiscard]] wl_display* Display() { return m_dpy; }
-
-protected:
-    virtual void RegistryGlobal( wl_registry* reg, uint32_t name, const char* interface, uint32_t version );
-    virtual void RegistryGlobalRemove( wl_registry* reg, uint32_t name );
-
     [[nodiscard]] wl_compositor* Compositor() { return m_compositor; }
     [[nodiscard]] xdg_wm_base* XdgWmBase() { return m_xdgWmBase; }
     [[nodiscard]] zxdg_decoration_manager_v1* DecorationManager() { return m_decorationManager; }
     [[nodiscard]] wp_fractional_scale_manager_v1* FractionalScaleManager() { return m_fractionalScaleManager; }
     [[nodiscard]] wp_viewporter* Viewporter() { return m_viewporter; }
+
+protected:
+    virtual void RegistryGlobal( wl_registry* reg, uint32_t name, const char* interface, uint32_t version );
+    virtual void RegistryGlobalRemove( wl_registry* reg, uint32_t name );
 
 private:
     void RegistryGlobalShim( wl_registry* reg, uint32_t name, const char* interface, uint32_t version );

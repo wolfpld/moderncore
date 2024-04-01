@@ -9,20 +9,12 @@
 #include "fractional-scale-v1-client-protocol.h"
 #include "viewporter-client-protocol.h"
 
+class WaylandDisplay;
+
 class WaylandWindow
 {
 public:
-    struct Params
-    {
-        wl_display* dpy;
-        wl_compositor* compositor;
-        xdg_wm_base* xdgWmBase;
-        zxdg_decoration_manager_v1* decorationManager;
-        wp_fractional_scale_manager_v1* fractionalScaleManager;
-        wp_viewporter* viewporter;
-    };
-
-    explicit WaylandWindow( const Params& p );
+    explicit WaylandWindow( WaylandDisplay& display );
     virtual ~WaylandWindow();
 
     NoCopy( WaylandWindow );

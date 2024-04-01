@@ -1,27 +1,28 @@
 #include <tracy/Tracy.hpp>
 
+#include "WaylandDisplay.hpp"
 #include "WaylandMethod.hpp"
 #include "WaylandWindow.hpp"
 #include "util/Panic.hpp"
 
-WaylandWindow::WaylandWindow( const Params& p )
+WaylandWindow::WaylandWindow( WaylandDisplay& display )
 {
     ZoneScoped;
 
-    m_surface = wl_compositor_create_surface( p.compositor );
+    m_surface = wl_compositor_create_surface( display.Compositor() );
     CheckPanic( m_surface, "Failed to create Wayland surface" );
 
-    if( p.fractionalScaleManager && p.viewporter )
+    if( display.FractionalScaleManager() && display.Viewporter() )
     {
         static constexpr wp_fractional_scale_v1_listener listener = {
             .preferred_scale = Method( FractionalScalePreferredScale )
         };
 
-        m_fractionalScale = wp_fractional_scale_manager_v1_get_fractional_scale( p.fractionalScaleManager, m_surface );
+        m_fractionalScale = wp_fractional_scale_manager_v1_get_fractional_scale( display.FractionalScaleManager(), m_surface );
         CheckPanic( m_fractionalScale, "Failed to create Wayland fractional scale" );
         wp_fractional_scale_v1_add_listener( m_fractionalScale, &listener, this );
 
-        m_viewport = wp_viewporter_get_viewport( p.viewporter, m_surface );
+        m_viewport = wp_viewporter_get_viewport( display.Viewporter(), m_surface );
         CheckPanic( m_viewport, "Failed to create Wayland viewport" );
     }
 
@@ -29,7 +30,7 @@ WaylandWindow::WaylandWindow( const Params& p )
         .configure = Method( XdgSurfaceConfigure )
     };
 
-    m_xdgSurface = xdg_wm_base_get_xdg_surface( p.xdgWmBase, m_surface );
+    m_xdgSurface = xdg_wm_base_get_xdg_surface( display.XdgWmBase(), m_surface );
     CheckPanic( m_xdgSurface, "Failed to create Wayland xdg_surface" );
     xdg_surface_add_listener( m_xdgSurface, &xdgSurfaceListener, this );
 
@@ -42,13 +43,13 @@ WaylandWindow::WaylandWindow( const Params& p )
     CheckPanic( m_xdgToplevel, "Failed to create Wayland xdg_toplevel" );
     xdg_toplevel_add_listener( m_xdgToplevel, &toplevelListener, this );
 
-    if( p.decorationManager )
+    if( display.DecorationManager() )
     {
         static constexpr zxdg_toplevel_decoration_v1_listener decorationListener = {
             .configure = Method( DecorationConfigure )
         };
 
-        m_xdgToplevelDecoration = zxdg_decoration_manager_v1_get_toplevel_decoration( p.decorationManager, m_xdgToplevel );
+        m_xdgToplevelDecoration = zxdg_decoration_manager_v1_get_toplevel_decoration( display.DecorationManager(), m_xdgToplevel );
         zxdg_toplevel_decoration_v1_add_listener( m_xdgToplevelDecoration, &decorationListener, this );
         zxdg_toplevel_decoration_v1_set_mode( m_xdgToplevelDecoration, ZXDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE );
     }

@@ -5,6 +5,7 @@
 
 #include "util/NoCopy.hpp"
 
+#include "cursor-shape-v1-client-protocol.h"
 #include "fractional-scale-v1-client-protocol.h"
 #include "viewporter-client-protocol.h"
 #include "xdg-decoration-unstable-v1-client-protocol.h"
@@ -45,4 +46,5 @@ private:
     zxdg_decoration_manager_v1* m_decorationManager = nullptr;
     wp_fractional_scale_manager_v1* m_fractionalScaleManager = nullptr;
     wp_viewporter* m_viewporter = nullptr;
+    wp_cursor_shape_manager_v1* m_cursorShapeManager = nullptr;
 };

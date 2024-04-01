@@ -13,10 +13,11 @@ WaylandDisplay::WaylandDisplay()
 
 WaylandDisplay::~WaylandDisplay()
 {
+    m_seat.reset();
+    if( m_cursorShapeManager ) wp_cursor_shape_manager_v1_destroy( m_cursorShapeManager );
     if( m_viewporter ) wp_viewporter_destroy( m_viewporter );
     if( m_fractionalScaleManager ) wp_fractional_scale_manager_v1_destroy( m_fractionalScaleManager );
     if( m_decorationManager ) zxdg_decoration_manager_v1_destroy( m_decorationManager );
-    m_seat.reset();
     if( m_xdgWmBase ) xdg_wm_base_destroy( m_xdgWmBase );
     if( m_compositor ) wl_compositor_destroy( m_compositor );
     if( m_dpy ) wl_display_disconnect( m_dpy );
@@ -81,6 +82,10 @@ void WaylandDisplay::RegistryGlobal( wl_registry* reg, uint32_t name, const char
     else if( strcmp( interface, wp_viewporter_interface.name ) == 0 )
     {
         m_viewporter = RegistryBind( wp_viewporter );
+    }
+    else if( strcmp( interface, wp_cursor_shape_manager_v1_interface.name ) == 0 )
+    {
+        m_cursorShapeManager = RegistryBind( wp_cursor_shape_manager_v1 );
     }
 }
 

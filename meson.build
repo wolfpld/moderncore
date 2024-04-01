@@ -46,6 +46,8 @@ protocols = {
     'xdg-decoration': wl_proto_dir / 'unstable/xdg-decoration/xdg-decoration-unstable-v1.xml',
     'fractional-scale': wl_proto_dir / 'staging/fractional-scale/fractional-scale-v1.xml',
     'viewporter': wl_proto_dir / 'stable/viewporter/viewporter.xml',
+    'cursor-shape': wl_proto_dir / 'staging/cursor-shape/cursor-shape-v1.xml',
+    'tablet': wl_proto_dir / 'unstable/tablet/tablet-unstable-v2.xml',
 }
 
 wayland_src = []

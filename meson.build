@@ -297,7 +297,7 @@ afiv_src = [
 
 executable('afiv',
     afiv_src,
-    link_with: [mcoreutil, mcorevulkan],
+    link_with: [mcoreutil, mcorevulkan, mcorewayland],
     include_directories: incdir,
     install: true
 )

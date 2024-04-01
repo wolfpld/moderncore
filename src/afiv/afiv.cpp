@@ -7,9 +7,12 @@
 #include "util/Panic.hpp"
 #include "util/TaskDispatch.hpp"
 #include "vulkan/VlkInstance.hpp"
+#include "wayland/WaylandDisplay.hpp"
+
 
 std::unique_ptr<TaskDispatch> g_dispatch;
 std::unique_ptr<VlkInstance> g_vkInstance;
+std::unique_ptr<WaylandDisplay> g_waylandDisplay;
 
 
 int main( int argc, char** argv )
@@ -52,6 +55,10 @@ int main( int argc, char** argv )
         const auto cpus = std::thread::hardware_concurrency();
         g_dispatch = std::make_unique<TaskDispatch>( cpus == 0 ? 0 : cpus - 1, "Worker" );
     } );
+
+    g_waylandDisplay = std::make_unique<WaylandDisplay>();
+    g_waylandDisplay->Connect();
+
     dispatchThread.join();
     vulkanThread.join();
 

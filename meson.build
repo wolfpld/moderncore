@@ -266,3 +266,16 @@ executable('mcore',
     include_directories: incdir,
     install: true
 )
+
+# afiv
+
+afiv_src = [
+    'src/afiv/afiv.cpp',
+]
+
+executable('afiv',
+    afiv_src,
+    link_with: [mcoreutil, mcorevulkan],
+    include_directories: incdir,
+    install: true
+)

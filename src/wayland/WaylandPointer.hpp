@@ -4,6 +4,8 @@
 
 #include "util/NoCopy.hpp"
 
+#include "cursor-shape-v1-client-protocol.h"
+
 class WaylandSeat;
 
 class WaylandPointer
@@ -13,6 +15,8 @@ public:
     ~WaylandPointer();
 
     NoCopy( WaylandPointer );
+
+    void SetCursorShapeManager( wp_cursor_shape_manager_v1* cursorShapeManager );
 
 private:
     void Enter( wl_pointer* pointer, uint32_t serial, wl_surface* surf, wl_fixed_t sx, wl_fixed_t sy );
@@ -29,4 +33,7 @@ private:
 
     wl_pointer* m_pointer;
     WaylandSeat& m_seat;
+
+    wp_cursor_shape_manager_v1* m_cursorShapeManager = nullptr;
+    wp_cursor_shape_device_v1* m_cursorShapeDevice = nullptr;
 };

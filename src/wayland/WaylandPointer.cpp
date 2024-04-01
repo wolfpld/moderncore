@@ -25,7 +25,16 @@ WaylandPointer::WaylandPointer( wl_pointer* pointer, WaylandSeat& seat )
 
 WaylandPointer::~WaylandPointer()
 {
+    if( m_cursorShapeDevice ) wp_cursor_shape_device_v1_destroy( m_cursorShapeDevice );
     wl_pointer_destroy( m_pointer );
+}
+
+void WaylandPointer::SetCursorShapeManager( wp_cursor_shape_manager_v1* cursorShapeManager )
+{
+    if( m_cursorShapeManager ) return;
+
+    m_cursorShapeManager = cursorShapeManager;
+    m_cursorShapeDevice = wp_cursor_shape_manager_v1_get_pointer( m_cursorShapeManager, m_pointer );
 }
 
 void WaylandPointer::Enter( wl_pointer* pointer, uint32_t serial, wl_surface* surf, wl_fixed_t sx, wl_fixed_t sy )

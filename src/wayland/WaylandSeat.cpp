@@ -23,6 +23,12 @@ WaylandSeat::~WaylandSeat()
     wl_seat_destroy( m_seat );
 }
 
+void WaylandSeat::SetCursorShapeManager( wp_cursor_shape_manager_v1* cursorShapeManager )
+{
+    m_cursorShapeManager = cursorShapeManager;
+    if( m_pointer ) m_pointer->SetCursorShapeManager( cursorShapeManager );
+}
+
 void WaylandSeat::Capabilities( wl_seat* seat, uint32_t caps )
 {
     const bool hasPointer = caps & WL_SEAT_CAPABILITY_POINTER;
@@ -31,6 +37,7 @@ void WaylandSeat::Capabilities( wl_seat* seat, uint32_t caps )
     if( hasPointer && !m_pointer )
     {
         m_pointer = std::make_unique<WaylandPointer>( wl_seat_get_pointer( seat ), *this );
+        if( m_cursorShapeManager ) m_pointer->SetCursorShapeManager( m_cursorShapeManager );
     }
     else if( !hasPointer && m_pointer )
     {

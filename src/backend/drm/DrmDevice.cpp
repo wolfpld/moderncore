@@ -13,11 +13,11 @@
 #include "DrmConnector.hpp"
 #include "DrmDevice.hpp"
 #include "DrmPlane.hpp"
+#include "PciBus.hpp"
 #include "dbus/DbusSession.hpp"
 #include "server/GpuDevice.hpp"
 #include "util/Logs.hpp"
 #include "util/Panic.hpp"
-#include "vulkan/ext/PciBus.hpp"
 #include "vulkan/VlkPhysicalDevice.hpp"
 
 constexpr int DriMajor = 226;

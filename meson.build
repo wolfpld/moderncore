@@ -1,52 +1,49 @@
 project('ModernCore', 'c', 'cpp', default_options: ['cpp_std=c++20'])
 
-entry_point = 'src/MCore.cpp'
+# common setup
 
-files = [
+compiler = meson.get_compiler('cpp')
+compile_args = compiler.get_supported_arguments(['-march=native'])
+add_project_arguments(compile_args, language: ['c', 'cpp'])
+
+if get_option('buildtype').startswith('debug')
+    add_project_arguments('-DDEBUG', language: ['c', 'cpp'])
+else
+    add_project_arguments('-DNDEBUG', language: ['c', 'cpp'])
+endif
+
+if get_option('tracy_enable')
+    if get_option('buildtype') != 'debugoptimized'
+        warning('Profiling builds should set --buildtype=debugoptimized')
+    endif
+    if get_option('default_library') != 'static'
+        error('Profiling builds should set --default-library=static')
+    endif
+    frame_pointer_args = compiler.get_supported_arguments([
+        '-fno-omit-frame-pointer'
+    ])
+    add_project_arguments(frame_pointer_args, language: ['c', 'cpp'])
+endif
+
+# common dependencies
+
+vulkan = dependency('vulkan')
+tracy = dependency('tracy', static: true)
+
+incdir = include_directories('src')
+
+# mcoreutil
+
+mcoreutil_src = [
     'contrib/ini/ini.c',
     'contrib/libbacktrace/alloc.c',
     'contrib/libbacktrace/dwarf.c',
     'contrib/libbacktrace/elf.c',
     'contrib/libbacktrace/fileline.c',
-    'contrib/libbacktrace/macho.c',
     'contrib/libbacktrace/mmapio.c',
     'contrib/libbacktrace/posix.c',
     'contrib/libbacktrace/sort.c',
     'contrib/libbacktrace/state.c',
-    'src/cursor/CursorBase.cpp',
-    'src/cursor/CursorBaseMulti.cpp',
-    'src/cursor/CursorLogic.cpp',
-    'src/cursor/CursorTheme.cpp',
-    'src/cursor/WinCursor.cpp',
-    'src/cursor/XCursor.cpp',
-    'src/dbus/DbusMessage.cpp',
-    'src/dbus/DbusSession.cpp',
-    'src/image/HeifLoader.cpp',
-    'src/image/ImageLoader.cpp',
-    'src/image/JpgLoader.cpp',
-    'src/image/JxlLoader.cpp',
-    'src/image/PngLoader.cpp',
-    'src/image/WebpLoader.cpp',
-    'src/backend/drm/BackendDrm.cpp',
-    'src/backend/drm/DrmBuffer.cpp',
-    'src/backend/drm/DrmConnector.cpp',
-    'src/backend/drm/DrmCrtc.cpp',
-    'src/backend/drm/DrmDevice.cpp',
-    'src/backend/drm/DrmPlane.cpp',
-    'src/backend/drm/DrmProperties.cpp',
-    'src/backend/wayland/BackendWayland.cpp',
-    'src/backend/wayland/WaylandConnector.cpp',
-    'src/backend/wayland/WaylandKeyboard.cpp',
-    'src/backend/wayland/WaylandOutput.cpp',
-    'src/backend/wayland/WaylandPointer.cpp',
-    'src/backend/wayland/WaylandSeat.cpp',
-    'src/backend/wayland/WaylandWindow.cpp',
-    'src/plumbing/Display.cpp',
-    'src/render/Background.cpp',
-    'src/render/SoftwareCursor.cpp',
-    'src/render/Texture.cpp',
-    'src/server/GpuDevice.cpp',
-    'src/server/Server.cpp',
     'src/util/ArgParser.cpp',
     'src/util/Bitmap.cpp',
     'src/util/Callstack.cpp',
@@ -55,8 +52,45 @@ files = [
     'src/util/Home.cpp',
     'src/util/Logs.cpp',
     'src/util/TaskDispatch.cpp',
+]
+
+mcoreutil = library('mcoreutil',
+    mcoreutil_src,
+    include_directories: incdir,
+    dependencies: [tracy],
+    install: true
+)
+
+# mcoreimage
+
+mcoreimage_src = [
+    'src/image/HeifLoader.cpp',
+    'src/image/ImageLoader.cpp',
+    'src/image/JpgLoader.cpp',
+    'src/image/JxlLoader.cpp',
+    'src/image/PngLoader.cpp',
+    'src/image/WebpLoader.cpp',
+]
+
+mcoreimage = library('mcoreimage',
+    mcoreimage_src,
+    include_directories: incdir,
+    link_with: mcoreutil,
+    dependencies: [
+        dependency('libpng'),
+        dependency('libjpeg'),
+        dependency('libjxl'), dependency('libjxl_threads'),
+        dependency('libwebp'),
+        dependency('libheif'),
+        tracy
+    ],
+    install: true
+)
+
+# mcorevulkan
+
+mcorevulkan_src = [
     'src/vulkan/ext/DeviceInfo.cpp',
-    'src/vulkan/ext/PciBus.cpp',
     'src/vulkan/ext/PhysDevSel.cpp',
     'src/vulkan/VlkAllocator.cpp',
     'src/vulkan/VlkBuffer.cpp',
@@ -80,12 +114,15 @@ files = [
     'src/vulkan/VlkSwapchainProperties.cpp',
 ]
 
-shaders = [
-    'shader/Background.frag',
-    'shader/Background.vert',
-    'shader/SoftwareCursor.frag',
-    'shader/SoftwareCursor.vert',
-]
+mcorevulkan = library('mcorevulkan',
+    mcorevulkan_src,
+    include_directories: incdir,
+    link_with: mcoreutil,
+    dependencies: [vulkan, tracy],
+    install: true
+)
+
+# util tests
 
 tests = [
     'util/Config',
@@ -97,27 +134,56 @@ tests = [
     'util/Panic',
 ]
 
-compiler = meson.get_compiler('cpp')
-glslc = find_program('glslc')
+gtest = dependency('gtest')
 
-vulkan = dependency('vulkan')
-wayland_server = dependency('wayland-server')
-wayland_client = dependency('wayland-client')
-xkbcommon = dependency('xkbcommon')
+foreach test : tests
+    testexe = executable('test_' + test.underscorify(),
+        'tests/TestEntry.cpp',
+        'tests/' + test + 'Test.cpp',
+        link_with: mcoreutil,
+        dependencies: gtest,
+        include_directories: incdir
+    )
+    test( test, testexe )
+endforeach
+
+# mcore
+
+mcore_src = [
+    'src/cursor/CursorBase.cpp',
+    'src/cursor/CursorBaseMulti.cpp',
+    'src/cursor/CursorLogic.cpp',
+    'src/cursor/CursorTheme.cpp',
+    'src/cursor/WinCursor.cpp',
+    'src/cursor/XCursor.cpp',
+    'src/dbus/DbusMessage.cpp',
+    'src/dbus/DbusSession.cpp',
+    'src/backend/drm/BackendDrm.cpp',
+    'src/backend/drm/DrmBuffer.cpp',
+    'src/backend/drm/DrmConnector.cpp',
+    'src/backend/drm/DrmCrtc.cpp',
+    'src/backend/drm/DrmDevice.cpp',
+    'src/backend/drm/DrmPlane.cpp',
+    'src/backend/drm/DrmProperties.cpp',
+    'src/backend/drm/PciBus.cpp',
+    'src/backend/wayland/BackendWayland.cpp',
+    'src/backend/wayland/WaylandConnector.cpp',
+    'src/backend/wayland/WaylandKeyboard.cpp',
+    'src/backend/wayland/WaylandOutput.cpp',
+    'src/backend/wayland/WaylandPointer.cpp',
+    'src/backend/wayland/WaylandSeat.cpp',
+    'src/backend/wayland/WaylandWindow.cpp',
+    'src/plumbing/Display.cpp',
+    'src/render/Background.cpp',
+    'src/render/SoftwareCursor.cpp',
+    'src/render/Texture.cpp',
+    'src/server/GpuDevice.cpp',
+    'src/server/Server.cpp',
+    'src/MCore.cpp',
+]
+
 wl_proto = dependency('wayland-protocols')
 wl_scanner = dependency('wayland-scanner')
-glm = dependency('glm')
-libpng = dependency('libpng')
-libjpeg = dependency('libjpeg')
-libjxl = [dependency('libjxl'), dependency('libjxl_threads')]
-libwebp = dependency('libwebp')
-libheif = dependency('libheif')
-libsystemd = dependency('libsystemd')
-libdrm = dependency('libdrm')
-libdisplayinfo = dependency('libdisplay-info')
-libgbm = dependency('gbm')
-gtest = dependency('gtest')
-tracy = dependency('tracy', static: true)
 
 wl_proto_dir = wl_proto.get_variable('pkgdatadir')
 wl_scanner_bin = find_program(wl_scanner.get_variable('wayland_scanner'))
@@ -136,7 +202,7 @@ foreach name, path : protocols
         output: '@BASENAME@-protocol.c',
         command: [wl_scanner_bin, 'private-code', '@INPUT@', '@OUTPUT@']
     )
-    files += code
+    mcore_src += code
 
     header = custom_target(
         name.underscorify() + '_h',
@@ -144,7 +210,7 @@ foreach name, path : protocols
         output: '@BASENAME@-protocol.h',
         command: [wl_scanner_bin, 'server-header', '@INPUT@', '@OUTPUT@']
     )
-    files += header
+    mcore_src += header
 
     client_header = custom_target(
         name.underscorify() + '_client_h',
@@ -152,8 +218,17 @@ foreach name, path : protocols
         output: '@BASENAME@-client-protocol.h',
         command: [wl_scanner_bin, 'client-header', '@INPUT@', '@OUTPUT@']
     )
-    files += client_header
+    mcore_src += client_header
 endforeach
+
+shaders = [
+    'shader/Background.frag',
+    'shader/Background.vert',
+    'shader/SoftwareCursor.frag',
+    'shader/SoftwareCursor.vert',
+]
+
+glslc = find_program('glslc')
 
 foreach shader : shaders
     spirv = custom_target(
@@ -167,74 +242,28 @@ foreach shader : shaders
             '@INPUT@',
         ],
         install: true,
-        install_dir: '/'
+        install_dir: get_option('datadir') + '/mcore/shaders'
     )
-    files += spirv
+    mcore_src += spirv
 endforeach
-
-if get_option('buildtype').startswith('debug')
-    add_project_arguments('-DDEBUG', language: ['c', 'cpp'])
-else
-    add_project_arguments('-DNDEBUG', language: ['c', 'cpp'])
-endif
-
-compile_args = compiler.get_supported_arguments([
-    '-march=native'
-])
-add_project_arguments(compile_args, language: ['c', 'cpp'])
-
-incdir = include_directories('src')
 
 deps = [
     vulkan,
-    wayland_server,
-    wayland_client,
-    xkbcommon,
-    glm,
-    libpng,
-    libjpeg,
-    libjxl,
-    libwebp,
-    libheif,
-    libsystemd,
-    libdrm,
-    libdisplayinfo,
-    libgbm,
+    dependency('wayland-server'),
+    dependency('wayland-client'),
+    dependency('xkbcommon'),
+    dependency('glm'),
+    dependency('libsystemd'),
+    dependency('libdrm'),
+    dependency('libdisplay-info'),
+    dependency('gbm'),
     tracy
 ]
 
-if get_option('tracy_enable')
-    if get_option('buildtype') != 'debugoptimized'
-        message('Profiling builds should set --buildtype=debugoptimized')
-    endif
-    frame_pointer_args = compiler.get_supported_arguments([
-        '-fno-omit-frame-pointer'
-    ])
-    add_project_arguments(frame_pointer_args, language: ['c', 'cpp'])
-endif
-
-mcorelib = static_library('mcorelib',
-    files,
-    dependencies: deps,
-    include_directories: incdir,
-)
-
 executable('mcore',
-    entry_point,
-    link_with: mcorelib,
+    mcore_src,
+    link_with: [mcoreutil, mcoreimage, mcorevulkan],
     dependencies: deps,
     include_directories: incdir,
-    install: true,
-    install_dir: '/'
+    install: true
 )
-
-foreach test : tests
-    testexe = executable('test_' + test.underscorify(),
-        'tests/TestEntry.cpp',
-        'tests/' + test + 'Test.cpp',
-        link_with: mcorelib,
-        dependencies: [deps, gtest],
-        include_directories: incdir
-    )
-    test( test, testexe )
-endforeach

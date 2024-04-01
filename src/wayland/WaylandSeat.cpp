@@ -1,12 +1,12 @@
-#include "BackendWayland.hpp"
+#include "WaylandDisplay.hpp"
 #include "WaylandKeyboard.hpp"
 #include "WaylandMethod.hpp"
 #include "WaylandPointer.hpp"
 #include "WaylandSeat.hpp"
 
-WaylandSeat::WaylandSeat( wl_seat* seat, BackendWayland& backend )
+WaylandSeat::WaylandSeat( wl_seat* seat, WaylandDisplay& dpy )
     : m_seat( seat )
-    , m_backend( backend )
+    , m_dpy( dpy )
 {
     static constexpr wl_seat_listener listener = {
         .capabilities = Method( Capabilities ),
@@ -53,5 +53,5 @@ void WaylandSeat::Name( wl_seat* seat, const char* name )
 
 void WaylandSeat::PointerMotion( double x, double y )
 {
-    m_backend.PointerMotion( x, y );
+    //m_backend.PointerMotion( x, y );
 }

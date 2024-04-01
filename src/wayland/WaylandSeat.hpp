@@ -5,14 +5,14 @@
 
 #include "util/NoCopy.hpp"
 
-class BackendWayland;
+class WaylandDisplay;
 class WaylandKeyboard;
 class WaylandPointer;
 
 class WaylandSeat
 {
 public:
-    explicit WaylandSeat( wl_seat* seat, BackendWayland& backend );
+    explicit WaylandSeat( wl_seat* seat, WaylandDisplay& dpy );
     ~WaylandSeat();
 
     NoCopy( WaylandSeat );
@@ -27,5 +27,5 @@ private:
     std::unique_ptr<WaylandPointer> m_pointer;
     std::unique_ptr<WaylandKeyboard> m_keyboard;
 
-    BackendWayland& m_backend;
+    WaylandDisplay& m_dpy;
 };

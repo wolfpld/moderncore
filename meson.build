@@ -28,9 +28,54 @@ endif
 # common dependencies
 
 vulkan = dependency('vulkan')
+wayland_client = dependency('wayland-client')
 tracy = dependency('tracy', static: true)
 
 incdir = include_directories('src')
+
+# wayland protocols
+
+wl_proto = dependency('wayland-protocols')
+wl_scanner = dependency('wayland-scanner')
+
+wl_proto_dir = wl_proto.get_variable('pkgdatadir')
+wl_scanner_bin = find_program(wl_scanner.get_variable('wayland_scanner'))
+
+protocols = {
+    'xdg-shell': wl_proto_dir / 'stable/xdg-shell/xdg-shell.xml',
+    'xdg-decoration': wl_proto_dir / 'unstable/xdg-decoration/xdg-decoration-unstable-v1.xml',
+    'fractional-scale': wl_proto_dir / 'staging/fractional-scale/fractional-scale-v1.xml',
+    'viewporter': wl_proto_dir / 'stable/viewporter/viewporter.xml',
+}
+
+wayland_src = []
+wayland_server_src = []
+
+foreach name, path : protocols
+    code = custom_target(
+        name.underscorify() + '_c',
+        input: path,
+        output: '@BASENAME@-protocol.c',
+        command: [wl_scanner_bin, 'private-code', '@INPUT@', '@OUTPUT@']
+    )
+    wayland_src += code
+
+    header = custom_target(
+        name.underscorify() + '_h',
+        input: path,
+        output: '@BASENAME@-protocol.h',
+        command: [wl_scanner_bin, 'server-header', '@INPUT@', '@OUTPUT@']
+    )
+    wayland_server_src += header
+
+    client_header = custom_target(
+        name.underscorify() + '_client_h',
+        input: path,
+        output: '@BASENAME@-client-protocol.h',
+        command: [wl_scanner_bin, 'client-header', '@INPUT@', '@OUTPUT@']
+    )
+    wayland_src += client_header
+endforeach
 
 # mcoreutil
 
@@ -122,6 +167,24 @@ mcorevulkan = library('mcorevulkan',
     install: true
 )
 
+# mcorewayland
+
+mcorewayland_src = [
+    'src/wayland/WaylandDisplay.cpp',
+    'src/wayland/WaylandKeyboard.cpp',
+    'src/wayland/WaylandPointer.cpp',
+    'src/wayland/WaylandSeat.cpp',
+]
+
+mcorewayland = library('mcorewayland',
+    mcorewayland_src,
+    wayland_src,
+    include_directories: incdir,
+    link_with: mcoreutil,
+    dependencies: [wayland_client, tracy],
+    install: true
+)
+
 # util tests
 
 tests = [
@@ -168,10 +231,7 @@ mcore_src = [
     'src/backend/drm/PciBus.cpp',
     'src/backend/wayland/BackendWayland.cpp',
     'src/backend/wayland/WaylandConnector.cpp',
-    'src/backend/wayland/WaylandKeyboard.cpp',
     'src/backend/wayland/WaylandOutput.cpp',
-    'src/backend/wayland/WaylandPointer.cpp',
-    'src/backend/wayland/WaylandSeat.cpp',
     'src/backend/wayland/WaylandWindow.cpp',
     'src/plumbing/Display.cpp',
     'src/render/Background.cpp',
@@ -181,45 +241,6 @@ mcore_src = [
     'src/server/Server.cpp',
     'src/MCore.cpp',
 ]
-
-wl_proto = dependency('wayland-protocols')
-wl_scanner = dependency('wayland-scanner')
-
-wl_proto_dir = wl_proto.get_variable('pkgdatadir')
-wl_scanner_bin = find_program(wl_scanner.get_variable('wayland_scanner'))
-
-protocols = {
-    'xdg-shell': wl_proto_dir / 'stable/xdg-shell/xdg-shell.xml',
-    'xdg-decoration': wl_proto_dir / 'unstable/xdg-decoration/xdg-decoration-unstable-v1.xml',
-    'fractional-scale': wl_proto_dir / 'staging/fractional-scale/fractional-scale-v1.xml',
-    'viewporter': wl_proto_dir / 'stable/viewporter/viewporter.xml',
-}
-
-foreach name, path : protocols
-    code = custom_target(
-        name.underscorify() + '_c',
-        input: path,
-        output: '@BASENAME@-protocol.c',
-        command: [wl_scanner_bin, 'private-code', '@INPUT@', '@OUTPUT@']
-    )
-    mcore_src += code
-
-    header = custom_target(
-        name.underscorify() + '_h',
-        input: path,
-        output: '@BASENAME@-protocol.h',
-        command: [wl_scanner_bin, 'server-header', '@INPUT@', '@OUTPUT@']
-    )
-    mcore_src += header
-
-    client_header = custom_target(
-        name.underscorify() + '_client_h',
-        input: path,
-        output: '@BASENAME@-client-protocol.h',
-        command: [wl_scanner_bin, 'client-header', '@INPUT@', '@OUTPUT@']
-    )
-    mcore_src += client_header
-endforeach
 
 shaders = [
     'shader/Background.frag',
@@ -249,19 +270,20 @@ endforeach
 
 deps = [
     vulkan,
+    wayland_client,
+    tracy,
     dependency('wayland-server'),
-    dependency('wayland-client'),
     dependency('xkbcommon'),
     dependency('libsystemd'),
     dependency('libdrm'),
     dependency('libdisplay-info'),
     dependency('gbm'),
-    tracy
 ]
 
 executable('mcore',
     mcore_src,
-    link_with: [mcoreutil, mcoreimage, mcorevulkan],
+    wayland_src,
+    link_with: [mcoreutil, mcoreimage, mcorevulkan, mcorewayland],
     dependencies: deps,
     include_directories: incdir,
     install: true

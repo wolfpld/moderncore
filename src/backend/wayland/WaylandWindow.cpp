@@ -6,7 +6,6 @@
 
 #include "BackendWayland.hpp"
 #include "WaylandConnector.hpp"
-#include "WaylandMethod.hpp"
 #include "WaylandOutput.hpp"
 #include "WaylandWindow.hpp"
 #include "render/SoftwareCursor.hpp"
@@ -17,6 +16,7 @@
 #include "vulkan/ext/PhysDevSel.hpp"
 #include "vulkan/VlkError.hpp"
 #include "vulkan/VlkInstance.hpp"
+#include "wayland/WaylandMethod.hpp"
 
 WaylandWindow::WaylandWindow( Params&& p )
     : m_onClose( std::move( p.onClose ) )

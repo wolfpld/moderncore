@@ -183,8 +183,8 @@ mcorewayland = library('mcorewayland',
     mcorewayland_src,
     wayland_src,
     include_directories: incdir,
-    link_with: mcoreutil,
-    dependencies: [wayland_client, tracy],
+    link_with: [mcoreutil, mcorevulkan],
+    dependencies: [vulkan, wayland_client, tracy],
     install: true
 )
 

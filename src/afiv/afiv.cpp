@@ -61,17 +61,15 @@ int main( int argc, char** argv )
     g_waylandDisplay = std::make_unique<WaylandDisplay>();
     g_waylandDisplay->Connect();
 
-    g_waylandWindow = std::make_unique<WaylandWindow>( *g_waylandDisplay );
-
     dispatchThread.join();
     vulkanThread.join();
+
+    g_waylandWindow = std::make_unique<WaylandWindow>( *g_waylandDisplay, *g_vkInstance );
 
     g_vkInstance->InitPhysicalDevices( *g_dispatch );
     const auto& devices = g_vkInstance->QueryPhysicalDevices();
     CheckPanic( !devices.empty(), "No physical devices found" );
-
     mclog( LogLevel::Info, "Found %d physical devices", devices.size() );
-
 
     return 0;
 }

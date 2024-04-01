@@ -18,8 +18,8 @@
 #include "vulkan/VlkInstance.hpp"
 #include "wayland/WaylandMethod.hpp"
 
-WaylandBackendWindow::WaylandBackendWindow( WaylandDisplay& display, Params&& p )
-    : WaylandWindow( display )
+WaylandBackendWindow::WaylandBackendWindow( WaylandDisplay& display, VlkInstance& vkInstance, Params&& p )
+    : WaylandWindow( display, vkInstance )
     , m_onClose( std::move( p.onClose ) )
     , m_backend( p.backend )
 {
@@ -55,20 +55,12 @@ WaylandBackendWindow::WaylandBackendWindow( WaylandDisplay& display, Params&& p 
     wl_callback_add_listener( cb, &frameListener, this );
 
     auto& server = Server::Instance();
-    auto& vkInstance = server.VkInstance();
-
-    VkWaylandSurfaceCreateInfoKHR createInfo = { VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR };
-    createInfo.display = display.Display();
-    createInfo.surface = Surface();
-
-    VkVerify( vkCreateWaylandSurfaceKHR( vkInstance, &createInfo, nullptr, &m_vkSurface ) );
-
     auto& gpuList = server.Gpus();
     if( p.physDev < 0 )
     {
         const auto physicalDevices = vkInstance.QueryPhysicalDevices();
 
-        auto device_ = PhysDevSel::PickBest( physicalDevices, m_vkSurface );
+        auto device_ = PhysDevSel::PickBest( physicalDevices, VkSurface() );
         CheckPanic( device_, "Failed to find suitable physical device" );
         auto device = (VkPhysicalDevice)*device_;
 
@@ -82,12 +74,12 @@ WaylandBackendWindow::WaylandBackendWindow( WaylandDisplay& display, Params&& p 
     {
         CheckPanic( p.physDev < gpuList.size(), "Invalid physical device index set in backend-wayland.ini. Value: %i, max: %zu.", p.physDev, gpuList.size() - 1 );
         m_gpu = gpuList[p.physDev];
-        CheckPanic( m_gpu->IsPresentSupported( m_vkSurface ), "Selected physical device does not support presentation to Wayland surface" );
+        CheckPanic( m_gpu->IsPresentSupported( VkSurface() ), "Selected physical device does not support presentation to Wayland surface" );
     }
 
     ZoneVkDevice( m_gpu->Device().GetPhysicalDevice() );
 
-    m_connector = std::make_shared<WaylandConnector>( m_gpu->Device(), m_vkSurface );
+    m_connector = std::make_shared<WaylandConnector>( m_gpu->Device(), VkSurface() );
     m_gpu->AddConnector( m_connector );
 }
 
@@ -95,7 +87,6 @@ WaylandBackendWindow::~WaylandBackendWindow()
 {
     m_gpu->RemoveConnector( m_connector );
     m_connector.reset();
-    vkDestroySurfaceKHR( Server::Instance().VkInstance(), m_vkSurface, nullptr );
 }
 
 void WaylandBackendWindow::Show( const std::function<void()>& render )

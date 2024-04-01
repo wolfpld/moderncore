@@ -12,7 +12,6 @@
 
 class WaylandOutput;
 class WaylandBackendWindow;
-class VlkInstance;
 
 class BackendWayland : public Backend, public WaylandDisplay
 {

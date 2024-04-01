@@ -14,6 +14,7 @@ class GpuDevice;
 class SoftwareCursor;
 class WaylandConnector;
 class WaylandDisplay;
+class VlkInstance;
 
 class WaylandBackendWindow : public WaylandWindow
 {
@@ -25,7 +26,7 @@ public:
         BackendWayland& backend;
     };
 
-    WaylandBackendWindow( WaylandDisplay& display, Params&& p );
+    WaylandBackendWindow( WaylandDisplay& display, VlkInstance& vkInstance, Params&& p );
     ~WaylandBackendWindow() override;
 
     NoCopy( WaylandBackendWindow );
@@ -40,8 +41,6 @@ private:
     void Leave( struct wl_surface* surface, struct wl_output* output );
 
     void FrameDone( struct wl_callback* cb, uint32_t time );
-
-    VkSurfaceKHR m_vkSurface;
 
     std::function<void()> m_onClose;
     std::function<void()> m_onRender;

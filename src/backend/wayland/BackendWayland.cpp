@@ -84,7 +84,7 @@ void BackendWayland::OpenWindow( int physDev )
 {
     mclog( LogLevel::Info, "Opening window on physical device %i", physDev );
 
-    m_windows.emplace_back( std::make_unique<WaylandBackendWindow>( *this, WaylandBackendWindow::Params {
+    m_windows.emplace_back( std::make_unique<WaylandBackendWindow>( *this, Server::Instance().VkInstance(), WaylandBackendWindow::Params {
         physDev,
         [this]{ Stop(); },
         *this

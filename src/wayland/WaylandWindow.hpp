@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vulkan/vulkan.h>
 #include <wayland-client.h>
 
 #include "util/NoCopy.hpp"
@@ -9,18 +10,20 @@
 #include "fractional-scale-v1-client-protocol.h"
 #include "viewporter-client-protocol.h"
 
+class VlkInstance;
 class WaylandDisplay;
 
 class WaylandWindow
 {
 public:
-    explicit WaylandWindow( WaylandDisplay& display );
+    WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance );
     virtual ~WaylandWindow();
 
     NoCopy( WaylandWindow );
 
     [[nodiscard]] wl_surface* Surface() { return m_surface; }
     [[nodiscard]] xdg_toplevel* XdgToplevel() { return m_xdgToplevel; }
+    [[nodiscard]] VkSurfaceKHR VkSurface() { return m_vkSurface; }
 
 protected:
     [[nodiscard]] wp_fractional_scale_v1* FractionalScale() { return m_fractionalScale; }
@@ -41,4 +44,7 @@ private:
     zxdg_toplevel_decoration_v1* m_xdgToplevelDecoration = nullptr;
     wp_fractional_scale_v1* m_fractionalScale = nullptr;
     wp_viewport* m_viewport = nullptr;
+
+    VkSurfaceKHR m_vkSurface;
+    VlkInstance& m_vkInstance;
 };

@@ -1,11 +1,16 @@
 #include <tracy/Tracy.hpp>
+#include <vulkan/vulkan.h>
+#include <vulkan/vulkan_wayland.h>
 
 #include "WaylandDisplay.hpp"
 #include "WaylandMethod.hpp"
 #include "WaylandWindow.hpp"
 #include "util/Panic.hpp"
+#include "vulkan/VlkError.hpp"
+#include "vulkan/VlkInstance.hpp"
 
-WaylandWindow::WaylandWindow( WaylandDisplay& display )
+WaylandWindow::WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance )
+    : m_vkInstance( vkInstance )
 {
     ZoneScoped;
 
@@ -53,10 +58,17 @@ WaylandWindow::WaylandWindow( WaylandDisplay& display )
         zxdg_toplevel_decoration_v1_add_listener( m_xdgToplevelDecoration, &decorationListener, this );
         zxdg_toplevel_decoration_v1_set_mode( m_xdgToplevelDecoration, ZXDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE );
     }
+
+    VkWaylandSurfaceCreateInfoKHR createInfo = { VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR };
+    createInfo.display = display.Display();
+    createInfo.surface = Surface();
+
+    VkVerify( vkCreateWaylandSurfaceKHR( vkInstance, &createInfo, nullptr, &m_vkSurface ) );
 }
 
 WaylandWindow::~WaylandWindow()
 {
+    vkDestroySurfaceKHR( m_vkInstance, m_vkSurface, nullptr );
     if( m_viewport ) wp_viewport_destroy( m_viewport );
     if( m_fractionalScale ) wp_fractional_scale_v1_destroy( m_fractionalScale );
     if( m_xdgToplevelDecoration ) zxdg_toplevel_decoration_v1_destroy( m_xdgToplevelDecoration );

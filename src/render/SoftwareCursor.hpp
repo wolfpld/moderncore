@@ -1,6 +1,5 @@
 #pragma once
 
-#include <glm/glm.hpp>
 #include <memory>
 #include <vulkan/vulkan.h>
 
@@ -22,18 +21,18 @@ class SoftwareCursor
 {
     struct Vertex
     {
-        glm::vec2 pos;
-        glm::vec2 uv;
+        float pos[2];
+        float uv[2];
     };
 
     struct Position
     {
-        glm::vec2 pos;
+        float pos[2];
     };
 
     struct ScreenUniform
     {
-        glm::vec2 screenSize;
+        float screenSize[2];
     };
 
 public:

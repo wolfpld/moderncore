@@ -1,6 +1,5 @@
 #pragma once
 
-#include <glm/glm.hpp>
 #include <memory>
 #include <mutex>
 #include <stdint.h>
@@ -26,8 +25,8 @@ class Background : public Renderable
 {
     struct Vertex
     {
-        glm::vec2 pos;
-        glm::vec2 uv;
+        float pos[2];
+        float uv[2];
     };
 
     struct DrawData

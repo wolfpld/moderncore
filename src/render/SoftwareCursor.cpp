@@ -230,11 +230,14 @@ void SoftwareCursor::UpdateVertexBuffer( uint32_t width, uint32_t height )
 
     m_vertexBuffer = std::make_unique<VlkBuffer>( m_device, bufferInfo, VlkBuffer::WillWrite );
 
+    float w = width;
+    float h = height;
+
     const Vertex vertices[] = {
         { { 0, 0 }, { 0, 0 } },
-        { { 0, height }, { 0, 1 } },
-        { { width, 0 }, { 1, 0 } },
-        { { width, height }, { 1, 1 } }
+        { { 0, h }, { 0, 1 } },
+        { { w, 0 }, { 1, 0 } },
+        { { w, h }, { 1, 1 } }
     };
 
     memcpy( m_vertexBuffer->Ptr(), vertices, sizeof( vertices ) );

@@ -252,7 +252,6 @@ deps = [
     dependency('wayland-server'),
     dependency('wayland-client'),
     dependency('xkbcommon'),
-    dependency('glm'),
     dependency('libsystemd'),
     dependency('libdrm'),
     dependency('libdisplay-info'),

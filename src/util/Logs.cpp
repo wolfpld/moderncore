@@ -88,7 +88,7 @@ void PrintSourceLocation( FILE* f, const char* fileName, size_t len, size_t line
     }
     else
     {
-        fprintf( f, "%*s:%-4zu| ", FnLen, fileName, line );
+        fprintf( f, "%*s:%-4zu%*s| ", FnLen, fileName, line, int( FnLen - len + 2 ), "" );
     }
 }
 }

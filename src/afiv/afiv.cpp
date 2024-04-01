@@ -6,6 +6,7 @@
 #include "util/Logs.hpp"
 #include "util/Panic.hpp"
 #include "util/TaskDispatch.hpp"
+#include "vulkan/VlkDevice.hpp"
 #include "vulkan/VlkInstance.hpp"
 #include "vulkan/ext/PhysDevSel.hpp"
 #include "wayland/WaylandDisplay.hpp"
@@ -16,6 +17,7 @@ std::unique_ptr<TaskDispatch> g_dispatch;
 std::unique_ptr<VlkInstance> g_vkInstance;
 std::unique_ptr<WaylandDisplay> g_waylandDisplay;
 std::unique_ptr<WaylandWindow> g_waylandWindow;
+std::unique_ptr<VlkDevice> g_vkDevice;
 
 
 int main( int argc, char** argv )
@@ -74,6 +76,8 @@ int main( int argc, char** argv )
 
     auto best = PhysDevSel::PickBest( g_vkInstance->QueryPhysicalDevices(), g_waylandWindow->VkSurface(), PhysDevSel::RequireGraphic );
     CheckPanic( best, "Failed to find suitable physical device" );
+
+    g_vkDevice = std::make_unique<VlkDevice>( *g_vkInstance, best, VlkDevice::RequireGraphic | VlkDevice::RequirePresent, g_waylandWindow->VkSurface() );
 
     return 0;
 }

@@ -34,6 +34,8 @@ protected:
     [[nodiscard]] wp_viewporter* Viewporter() { return m_viewporter; }
 
 private:
+    void RegistryGlobalShim( wl_registry* reg, uint32_t name, const char* interface, uint32_t version );
+
     void XdgWmPing( xdg_wm_base* shell, uint32_t serial );
 
     wl_display* m_dpy = nullptr;

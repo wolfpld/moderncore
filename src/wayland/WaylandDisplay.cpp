@@ -30,7 +30,7 @@ void WaylandDisplay::Connect()
     CheckPanic( m_dpy, "Failed to connect to Wayland display" );
 
     static constexpr wl_registry_listener listener = {
-        .global = Method( RegistryGlobal ),
+        .global = Method( RegistryGlobalShim ),
         .global_remove = Method( RegistryGlobalRemove )
     };
 
@@ -40,6 +40,14 @@ void WaylandDisplay::Connect()
     CheckPanic( m_compositor, "Failed to create Wayland compositor" );
     CheckPanic( m_xdgWmBase, "Failed to create Wayland xdg_wm_base" );
     CheckPanic( m_seat, "Failed to create Wayland seat" );
+}
+
+void WaylandDisplay::RegistryGlobalShim( wl_registry* reg, uint32_t name, const char* interface, uint32_t version )
+{
+    ZoneScoped;
+    ZoneText( interface, strlen( interface ) );
+
+    RegistryGlobal( reg, name, interface, version );
 }
 
 void WaylandDisplay::RegistryGlobal( wl_registry* reg, uint32_t name, const char* interface, uint32_t version )

@@ -176,6 +176,7 @@ mcorewayland_src = [
     'src/wayland/WaylandKeyboard.cpp',
     'src/wayland/WaylandPointer.cpp',
     'src/wayland/WaylandSeat.cpp',
+    'src/wayland/WaylandWindow.cpp',
 ]
 
 mcorewayland = library('mcorewayland',

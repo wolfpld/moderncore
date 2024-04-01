@@ -85,14 +85,16 @@ void BackendWayland::OpenWindow( int physDev )
     mclog( LogLevel::Info, "Opening window on physical device %i", physDev );
 
     m_windows.emplace_back( std::make_unique<WaylandBackendWindow>( WaylandBackendWindow::Params {
-        .physDev = physDev,
-        .compositor = Compositor(),
-        .xdgWmBase = XdgWmBase(),
-        .decorationManager = DecorationManager(),
-        .fractionalScaleManager = FractionalScaleManager(),
-        .viewporter = Viewporter(),
-        .dpy = Display(),
-        .onClose = [this]{ Stop(); },
-        .backend = *this
+        {
+            .dpy = Display(),
+            .compositor = Compositor(),
+            .xdgWmBase = XdgWmBase(),
+            .decorationManager = DecorationManager(),
+            .fractionalScaleManager = FractionalScaleManager(),
+            .viewporter = Viewporter()
+        },
+        physDev,
+        [this]{ Stop(); },
+        *this
     } ) );
 }

@@ -7,6 +7,7 @@
 #include "util/Panic.hpp"
 #include "util/TaskDispatch.hpp"
 #include "vulkan/VlkInstance.hpp"
+#include "vulkan/ext/PhysDevSel.hpp"
 #include "wayland/WaylandDisplay.hpp"
 #include "wayland/WaylandWindow.hpp"
 
@@ -70,6 +71,9 @@ int main( int argc, char** argv )
     const auto& devices = g_vkInstance->QueryPhysicalDevices();
     CheckPanic( !devices.empty(), "No physical devices found" );
     mclog( LogLevel::Info, "Found %d physical devices", devices.size() );
+
+    auto best = PhysDevSel::PickBest( g_vkInstance->QueryPhysicalDevices(), g_waylandWindow->VkSurface(), PhysDevSel::RequireGraphic );
+    CheckPanic( best, "Failed to find suitable physical device" );
 
     return 0;
 }

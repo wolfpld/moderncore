@@ -8,11 +8,13 @@
 #include "util/TaskDispatch.hpp"
 #include "vulkan/VlkInstance.hpp"
 #include "wayland/WaylandDisplay.hpp"
+#include "wayland/WaylandWindow.hpp"
 
 
 std::unique_ptr<TaskDispatch> g_dispatch;
 std::unique_ptr<VlkInstance> g_vkInstance;
 std::unique_ptr<WaylandDisplay> g_waylandDisplay;
+std::unique_ptr<WaylandWindow> g_waylandWindow;
 
 
 int main( int argc, char** argv )
@@ -58,6 +60,8 @@ int main( int argc, char** argv )
 
     g_waylandDisplay = std::make_unique<WaylandDisplay>();
     g_waylandDisplay->Connect();
+
+    g_waylandWindow = std::make_unique<WaylandWindow>( *g_waylandDisplay );
 
     dispatchThread.join();
     vulkanThread.join();

@@ -4,7 +4,7 @@
 
 #include "BackendWayland.hpp"
 #include "WaylandOutput.hpp"
-#include "WaylandWindow.hpp"
+#include "WaylandBackendWindow.hpp"
 #include "server/Server.hpp"
 #include "util/Config.hpp"
 #include "util/Panic.hpp"
@@ -84,7 +84,7 @@ void BackendWayland::OpenWindow( int physDev )
 {
     mclog( LogLevel::Info, "Opening window on physical device %i", physDev );
 
-    m_windows.emplace_back( std::make_unique<WaylandWindow>( WaylandWindow::Params {
+    m_windows.emplace_back( std::make_unique<WaylandBackendWindow>( WaylandBackendWindow::Params {
         .physDev = physDev,
         .compositor = Compositor(),
         .xdgWmBase = XdgWmBase(),

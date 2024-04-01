@@ -7,7 +7,7 @@
 #include "BackendWayland.hpp"
 #include "WaylandConnector.hpp"
 #include "WaylandOutput.hpp"
-#include "WaylandWindow.hpp"
+#include "WaylandBackendWindow.hpp"
 #include "render/SoftwareCursor.hpp"
 #include "server/GpuDevice.hpp"
 #include "server/Server.hpp"
@@ -18,7 +18,7 @@
 #include "vulkan/VlkInstance.hpp"
 #include "wayland/WaylandMethod.hpp"
 
-WaylandWindow::WaylandWindow( Params&& p )
+WaylandBackendWindow::WaylandBackendWindow( Params&& p )
     : m_onClose( std::move( p.onClose ) )
     , m_backend( p.backend )
 {
@@ -133,7 +133,7 @@ WaylandWindow::WaylandWindow( Params&& p )
     m_gpu->AddConnector( m_connector );
 }
 
-WaylandWindow::~WaylandWindow()
+WaylandBackendWindow::~WaylandBackendWindow()
 {
     m_gpu->RemoveConnector( m_connector );
     m_connector.reset();
@@ -146,24 +146,24 @@ WaylandWindow::~WaylandWindow()
     wl_surface_destroy( m_surface );
 }
 
-void WaylandWindow::Show( const std::function<void()>& render )
+void WaylandBackendWindow::Show( const std::function<void()>& render )
 {
     CheckPanic( !m_onRender, "Window already shown" );
     m_onRender = render;
     render();
 }
 
-void WaylandWindow::RenderCursor( VkCommandBuffer cmdBuf, CursorLogic& cursorLogic )
+void WaylandBackendWindow::RenderCursor( VkCommandBuffer cmdBuf, CursorLogic& cursorLogic )
 {
     m_cursor->Render( cmdBuf, cursorLogic );
 }
 
-void WaylandWindow::PointerMotion( double x, double y )
+void WaylandBackendWindow::PointerMotion( double x, double y )
 {
     m_cursor->SetPosition( x, y );
 }
 
-void WaylandWindow::Enter( struct wl_surface* surface, struct wl_output* output )
+void WaylandBackendWindow::Enter( struct wl_surface* surface, struct wl_output* output )
 {
     CheckPanic( !m_fractionalScale, "Outputs should not be tracked when fractional scaling is enabled" );
 
@@ -182,7 +182,7 @@ void WaylandWindow::Enter( struct wl_surface* surface, struct wl_output* output 
     }
 }
 
-void WaylandWindow::Leave( struct wl_surface* surface, struct wl_output* output )
+void WaylandBackendWindow::Leave( struct wl_surface* surface, struct wl_output* output )
 {
     CheckPanic( !m_fractionalScale, "Outputs should not be tracked when fractional scaling is enabled" );
 
@@ -211,21 +211,21 @@ void WaylandWindow::Leave( struct wl_surface* surface, struct wl_output* output 
     }
 }
 
-void WaylandWindow::XdgSurfaceConfigure( struct xdg_surface *xdg_surface, uint32_t serial )
+void WaylandBackendWindow::XdgSurfaceConfigure( struct xdg_surface *xdg_surface, uint32_t serial )
 {
     xdg_surface_ack_configure( xdg_surface, serial );
 }
 
-void WaylandWindow::XdgToplevelConfigure( struct xdg_toplevel* toplevel, int32_t width, int32_t height, struct wl_array* states )
+void WaylandBackendWindow::XdgToplevelConfigure( struct xdg_toplevel* toplevel, int32_t width, int32_t height, struct wl_array* states )
 {
 }
 
-void WaylandWindow::XdgToplevelClose( struct xdg_toplevel* toplevel )
+void WaylandBackendWindow::XdgToplevelClose( struct xdg_toplevel* toplevel )
 {
     m_onClose();
 }
 
-void WaylandWindow::FrameDone( struct wl_callback* cb, uint32_t time )
+void WaylandBackendWindow::FrameDone( struct wl_callback* cb, uint32_t time )
 {
     wl_callback_destroy( cb );
 
@@ -239,12 +239,12 @@ void WaylandWindow::FrameDone( struct wl_callback* cb, uint32_t time )
     m_onRender();
 }
 
-void WaylandWindow::DecorationConfigure( zxdg_toplevel_decoration_v1* tldec, uint32_t mode )
+void WaylandBackendWindow::DecorationConfigure( zxdg_toplevel_decoration_v1* tldec, uint32_t mode )
 {
 }
 
 // TODO: window size is hardcoded in swapchain
-void WaylandWindow::FractionalScalePreferredScale( wp_fractional_scale_v1* scale, uint32_t scaleValue )
+void WaylandBackendWindow::FractionalScalePreferredScale( wp_fractional_scale_v1* scale, uint32_t scaleValue )
 {
     mclog( LogLevel::Info, "Window %i scale: %g", m_id, scaleValue / 120.f );
     wp_viewport_set_source( m_viewport, 0, 0, wl_fixed_from_int( 1650 ), wl_fixed_from_int( 1050 ) );

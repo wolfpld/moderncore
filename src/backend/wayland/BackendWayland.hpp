@@ -11,7 +11,7 @@
 #include "wayland/WaylandDisplay.hpp"
 
 class WaylandOutput;
-class WaylandWindow;
+class WaylandBackendWindow;
 class VlkInstance;
 
 class BackendWayland : public Backend, public WaylandDisplay
@@ -39,7 +39,7 @@ private:
 
     void OpenWindow( int physDev = -1 );
 
-    std::vector<std::unique_ptr<WaylandWindow>> m_windows;
+    std::vector<std::unique_ptr<WaylandBackendWindow>> m_windows;
     unordered_flat_map<uint32_t, std::unique_ptr<WaylandOutput>> m_outputMap;
 
     bool m_keepRunning = true;

@@ -20,7 +20,7 @@ class SoftwareCursor;
 class WaylandConnector;
 class VlkInstance;
 
-class WaylandWindow
+class WaylandBackendWindow
 {
 public:
     struct Params
@@ -36,10 +36,10 @@ public:
         BackendWayland& backend;
     };
 
-    explicit WaylandWindow( Params&& p );
-    ~WaylandWindow();
+    explicit WaylandBackendWindow( Params&& p );
+    ~WaylandBackendWindow();
 
-    NoCopy( WaylandWindow );
+    NoCopy( WaylandBackendWindow );
 
     void Show( const std::function<void()>& render );
     void RenderCursor( VkCommandBuffer cmdBuf, CursorLogic& cursorLogic );

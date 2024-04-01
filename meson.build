@@ -234,7 +234,7 @@ mcore_src = [
     'src/backend/wayland/BackendWayland.cpp',
     'src/backend/wayland/WaylandConnector.cpp',
     'src/backend/wayland/WaylandOutput.cpp',
-    'src/backend/wayland/WaylandWindow.cpp',
+    'src/backend/wayland/WaylandBackendWindow.cpp',
     'src/plumbing/Display.cpp',
     'src/render/Background.cpp',
     'src/render/SoftwareCursor.cpp',

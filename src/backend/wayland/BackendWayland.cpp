@@ -7,6 +7,7 @@
 #include "WaylandBackendWindow.hpp"
 #include "server/Server.hpp"
 #include "util/Config.hpp"
+#include "util/Invoke.hpp"
 #include "util/Panic.hpp"
 #include "wayland/WaylandRegistry.hpp"
 
@@ -84,9 +85,16 @@ void BackendWayland::OpenWindow( int physDev )
 {
     mclog( LogLevel::Info, "Opening window on physical device %i", physDev );
 
-    m_windows.emplace_back( std::make_unique<WaylandBackendWindow>( *this, Server::Instance().VkInstance(), WaylandBackendWindow::Params {
-        physDev,
-        [this]{ Stop(); },
-        *this
-    } ) );
+    static constexpr WaylandWindow::Listener listener = {
+        .OnClose = Method( Close )
+    };
+
+    auto window = std::make_unique<WaylandBackendWindow>( *this, Server::Instance().VkInstance(), WaylandBackendWindow::Params { physDev, *this } );
+    window->SetListener( &listener, this );
+    m_windows.emplace_back( std::move( window ) );
+}
+
+void BackendWayland::Close( WaylandWindow* )
+{
+    m_keepRunning = false;
 }

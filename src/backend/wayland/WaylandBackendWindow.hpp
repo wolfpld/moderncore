@@ -22,7 +22,6 @@ public:
     struct Params
     {
         int physDev;
-        std::function<void()> onClose;
         BackendWayland& backend;
     };
 
@@ -42,7 +41,6 @@ private:
 
     void FrameDone( struct wl_callback* cb, uint32_t time );
 
-    std::function<void()> m_onClose;
     std::function<void()> m_onRender;
 
     BackendWayland& m_backend;

@@ -10,8 +10,9 @@
 #include "util/RobinHood.hpp"
 #include "wayland/WaylandDisplay.hpp"
 
-class WaylandOutput;
 class WaylandBackendWindow;
+class WaylandOutput;
+class WaylandWindow;
 
 class BackendWayland : public Backend, public WaylandDisplay
 {
@@ -37,6 +38,8 @@ private:
     void XdgWmPing( xdg_wm_base* shell, uint32_t serial );
 
     void OpenWindow( int physDev = -1 );
+
+    void Close( WaylandWindow* );
 
     std::vector<std::unique_ptr<WaylandBackendWindow>> m_windows;
     unordered_flat_map<uint32_t, std::unique_ptr<WaylandOutput>> m_outputMap;

@@ -20,7 +20,6 @@
 
 WaylandBackendWindow::WaylandBackendWindow( WaylandDisplay& display, VlkInstance& vkInstance, Params&& p )
     : WaylandWindow( display, vkInstance )
-    , m_onClose( std::move( p.onClose ) )
     , m_backend( p.backend )
 {
     ZoneScoped;

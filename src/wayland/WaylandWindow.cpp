@@ -94,7 +94,7 @@ void WaylandWindow::XdgToplevelConfigure( struct xdg_toplevel* toplevel, int32_t
 
 void WaylandWindow::XdgToplevelClose( struct xdg_toplevel* toplevel )
 {
-    if( m_listener->OnClose ) m_listener->OnClose( m_listenerPtr, this );
+    Invoke( OnClose, this );
 }
 
 void WaylandWindow::DecorationConfigure( zxdg_toplevel_decoration_v1* tldec, uint32_t mode )

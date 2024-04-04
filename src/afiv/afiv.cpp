@@ -19,6 +19,8 @@ std::unique_ptr<WaylandDisplay> g_waylandDisplay;
 std::unique_ptr<WaylandWindow> g_waylandWindow;
 std::unique_ptr<VlkDevice> g_vkDevice;
 
+bool g_keepRunning = true;
+
 
 int main( int argc, char** argv )
 {
@@ -67,7 +69,12 @@ int main( int argc, char** argv )
     dispatchThread.join();
     vulkanThread.join();
 
+    static constexpr WaylandWindow::Listener listener = {
+        .OnClose = [] (void*, WaylandWindow*) { g_keepRunning = false; },
+    };
+
     g_waylandWindow = std::make_unique<WaylandWindow>( *g_waylandDisplay, *g_vkInstance );
+    g_waylandWindow->SetListener( &listener, nullptr );
 
     g_vkInstance->InitPhysicalDevices( *g_dispatch );
     const auto& devices = g_vkInstance->QueryPhysicalDevices();

@@ -1,6 +1,6 @@
 #include "WaylandOutput.hpp"
 #include "util/Logs.hpp"
-#include "wayland/WaylandMethod.hpp"
+#include "util/Invoke.hpp"
 
 WaylandOutput::WaylandOutput( wl_output *output, uint32_t name )
     : m_output( output )

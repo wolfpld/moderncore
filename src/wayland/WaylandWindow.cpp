@@ -3,8 +3,8 @@
 #include <vulkan/vulkan_wayland.h>
 
 #include "WaylandDisplay.hpp"
-#include "WaylandMethod.hpp"
 #include "WaylandWindow.hpp"
+#include "util/Invoke.hpp"
 #include "util/Panic.hpp"
 #include "vulkan/VlkError.hpp"
 #include "vulkan/VlkInstance.hpp"

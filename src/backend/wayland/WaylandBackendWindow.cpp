@@ -11,12 +11,12 @@
 #include "render/SoftwareCursor.hpp"
 #include "server/GpuDevice.hpp"
 #include "server/Server.hpp"
+#include "util/Invoke.hpp"
 #include "util/Panic.hpp"
 #include "util/Tracy.hpp"
 #include "vulkan/ext/PhysDevSel.hpp"
 #include "vulkan/VlkError.hpp"
 #include "vulkan/VlkInstance.hpp"
-#include "wayland/WaylandMethod.hpp"
 
 WaylandBackendWindow::WaylandBackendWindow( WaylandDisplay& display, VlkInstance& vkInstance, Params&& p )
     : WaylandWindow( display, vkInstance )

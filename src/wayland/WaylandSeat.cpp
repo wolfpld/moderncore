@@ -1,8 +1,8 @@
 #include "WaylandDisplay.hpp"
 #include "WaylandKeyboard.hpp"
-#include "WaylandMethod.hpp"
 #include "WaylandPointer.hpp"
 #include "WaylandSeat.hpp"
+#include "util/Invoke.hpp"
 
 WaylandSeat::WaylandSeat( wl_seat* seat, WaylandDisplay& dpy )
     : m_seat( seat )

@@ -2,9 +2,9 @@
 #include <tracy/Tracy.hpp>
 
 #include "WaylandDisplay.hpp"
-#include "WaylandMethod.hpp"
 #include "WaylandRegistry.hpp"
 #include "WaylandSeat.hpp"
+#include "util/Invoke.hpp"
 #include "util/Panic.hpp"
 
 WaylandDisplay::WaylandDisplay()

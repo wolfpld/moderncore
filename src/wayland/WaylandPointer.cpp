@@ -1,6 +1,6 @@
-#include "WaylandMethod.hpp"
 #include "WaylandPointer.hpp"
 #include "WaylandSeat.hpp"
+#include "util/Invoke.hpp"
 
 WaylandPointer::WaylandPointer( wl_pointer* pointer, WaylandSeat& seat )
     : m_pointer( pointer )

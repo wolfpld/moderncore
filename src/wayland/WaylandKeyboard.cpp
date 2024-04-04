@@ -1,5 +1,5 @@
 #include "WaylandKeyboard.hpp"
-#include "WaylandMethod.hpp"
+#include "util/Invoke.hpp"
 
 WaylandKeyboard::WaylandKeyboard( wl_keyboard *keyboard )
     : m_keyboard( keyboard )

@@ -16,10 +16,17 @@ class WaylandDisplay;
 class WaylandWindow
 {
 public:
+    struct Listener
+    {
+        void (*OnClose)( void* ptr, WaylandWindow* window );
+    };
+
     WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance );
     virtual ~WaylandWindow();
 
     NoCopy( WaylandWindow );
+
+    void SetListener( const Listener* listener, void* listenerPtr );
 
     [[nodiscard]] wl_surface* Surface() { return m_surface; }
     [[nodiscard]] xdg_toplevel* XdgToplevel() { return m_xdgToplevel; }
@@ -47,4 +54,7 @@ private:
 
     VkSurfaceKHR m_vkSurface;
     VlkInstance& m_vkInstance;
+
+    const Listener* m_listener = nullptr;
+    void* m_listenerPtr;
 };

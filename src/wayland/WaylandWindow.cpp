@@ -77,6 +77,12 @@ WaylandWindow::~WaylandWindow()
     wl_surface_destroy( m_surface );
 }
 
+void WaylandWindow::SetListener( const Listener* listener, void* listenerPtr )
+{
+    m_listener = listener;
+    m_listenerPtr = listenerPtr;
+}
+
 void WaylandWindow::XdgSurfaceConfigure( struct xdg_surface *xdg_surface, uint32_t serial )
 {
     xdg_surface_ack_configure( xdg_surface, serial );
@@ -88,7 +94,7 @@ void WaylandWindow::XdgToplevelConfigure( struct xdg_toplevel* toplevel, int32_t
 
 void WaylandWindow::XdgToplevelClose( struct xdg_toplevel* toplevel )
 {
-    //m_onClose();
+    if( m_listener->OnClose ) m_listener->OnClose( m_listenerPtr, this );
 }
 
 void WaylandWindow::DecorationConfigure( zxdg_toplevel_decoration_v1* tldec, uint32_t mode )

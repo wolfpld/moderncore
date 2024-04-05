@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <memory>
 #include <stdint.h>
 #include <vector>
@@ -40,9 +41,12 @@ private:
     void OpenWindow( int physDev = -1 );
 
     void Close( WaylandWindow* );
+    void Render( WaylandWindow* );
 
     std::vector<std::unique_ptr<WaylandBackendWindow>> m_windows;
     unordered_flat_map<uint32_t, std::unique_ptr<WaylandOutput>> m_outputMap;
 
     bool m_keepRunning = true;
+
+    std::function<void()> m_render;
 };

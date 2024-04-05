@@ -1,6 +1,5 @@
 #pragma once
 
-#include <functional>
 #include <memory>
 #include <vulkan/vulkan.h>
 
@@ -30,7 +29,6 @@ public:
 
     NoCopy( WaylandBackendWindow );
 
-    void Show( const std::function<void()>& render );
     void RenderCursor( VkCommandBuffer cmdBuf, CursorLogic& cursorLogic );
 
     void PointerMotion( double x, double y );
@@ -38,10 +36,6 @@ public:
 private:
     void Enter( struct wl_surface* surface, struct wl_output* output );
     void Leave( struct wl_surface* surface, struct wl_output* output );
-
-    void FrameDone( struct wl_callback* cb, uint32_t time );
-
-    std::function<void()> m_onRender;
 
     BackendWayland& m_backend;
     std::shared_ptr<GpuDevice> m_gpu;

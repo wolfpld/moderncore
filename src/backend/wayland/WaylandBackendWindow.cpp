@@ -46,13 +46,6 @@ WaylandBackendWindow::WaylandBackendWindow( WaylandDisplay& display, VlkInstance
 
     wl_display_roundtrip( display.Display() );
 
-    static constexpr wl_callback_listener frameListener = {
-        .done = Method( FrameDone )
-    };
-
-    auto cb = wl_surface_frame( Surface() );
-    wl_callback_add_listener( cb, &frameListener, this );
-
     auto& server = Server::Instance();
     auto& gpuList = server.Gpus();
     if( p.physDev < 0 )
@@ -86,13 +79,6 @@ WaylandBackendWindow::~WaylandBackendWindow()
 {
     m_gpu->RemoveConnector( m_connector );
     m_connector.reset();
-}
-
-void WaylandBackendWindow::Show( const std::function<void()>& render )
-{
-    CheckPanic( !m_onRender, "Window already shown" );
-    m_onRender = render;
-    render();
 }
 
 void WaylandBackendWindow::RenderCursor( VkCommandBuffer cmdBuf, CursorLogic& cursorLogic )
@@ -151,18 +137,4 @@ void WaylandBackendWindow::Leave( struct wl_surface* surface, struct wl_output* 
             wl_surface_commit( Surface() );
         }
     }
-}
-
-void WaylandBackendWindow::FrameDone( struct wl_callback* cb, uint32_t time )
-{
-    wl_callback_destroy( cb );
-
-    static constexpr wl_callback_listener listener = {
-        .done = Method( FrameDone )
-    };
-
-    cb = wl_surface_frame( Surface() );
-    wl_callback_add_listener( cb, &listener, this );
-
-    m_onRender();
 }

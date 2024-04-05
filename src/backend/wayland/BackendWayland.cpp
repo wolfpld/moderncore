@@ -48,7 +48,13 @@ void BackendWayland::VulkanInit()
 
 void BackendWayland::Run( const std::function<void()>& render )
 {
-    for( auto& window : m_windows ) window->Show( render );
+    m_render = render;
+    m_keepRunning = true;
+    for( auto& window : m_windows )
+    {
+        m_render();
+        window->Commit();
+    }
     while( m_keepRunning && wl_display_dispatch( Display() ) != -1 ) {}
 }
 
@@ -86,7 +92,8 @@ void BackendWayland::OpenWindow( int physDev )
     mclog( LogLevel::Info, "Opening window on physical device %i", physDev );
 
     static constexpr WaylandWindow::Listener listener = {
-        .OnClose = Method( Close )
+        .OnClose = Method( Close ),
+        .OnRender = Method( Render )
     };
 
     auto window = std::make_unique<WaylandBackendWindow>( *this, Server::Instance().VkInstance(), WaylandBackendWindow::Params { physDev, *this } );
@@ -97,4 +104,9 @@ void BackendWayland::OpenWindow( int physDev )
 void BackendWayland::Close( WaylandWindow* )
 {
     m_keepRunning = false;
+}
+
+void BackendWayland::Render( WaylandWindow* )
+{
+    m_render();
 }

@@ -19,6 +19,7 @@ public:
     struct Listener
     {
         void (*OnClose)( void* ptr, WaylandWindow* window );
+        void (*OnRender)( void* ptr, WaylandWindow* window );
     };
 
     WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance );
@@ -48,6 +49,8 @@ private:
     void DecorationConfigure( zxdg_toplevel_decoration_v1* tldec, uint32_t mode );
 
     void FractionalScalePreferredScale( wp_fractional_scale_v1* scale, uint32_t scaleValue );
+
+    void FrameDone( struct wl_callback* cb, uint32_t time );
 
     wl_surface* m_surface;
     xdg_surface* m_xdgSurface;

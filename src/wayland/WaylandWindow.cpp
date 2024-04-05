@@ -64,6 +64,13 @@ WaylandWindow::WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance )
     createInfo.surface = Surface();
 
     VkVerify( vkCreateWaylandSurfaceKHR( vkInstance, &createInfo, nullptr, &m_vkSurface ) );
+
+    static constexpr wl_callback_listener frameListener = {
+        .done = Method( FrameDone )
+    };
+
+    auto cb = wl_surface_frame( m_surface );
+    wl_callback_add_listener( cb, &frameListener, this );
 }
 
 WaylandWindow::~WaylandWindow()
@@ -121,4 +128,18 @@ void WaylandWindow::FractionalScalePreferredScale( wp_fractional_scale_v1* scale
     //mclog( LogLevel::Info, "Window %i scale: %g", m_id, scaleValue / 120.f );
     wp_viewport_set_source( m_viewport, 0, 0, wl_fixed_from_int( 1650 ), wl_fixed_from_int( 1050 ) );
     wp_viewport_set_destination( m_viewport, 1650 * 120 / scaleValue, 1050 * 120 / scaleValue );
+}
+
+void WaylandWindow::FrameDone( struct wl_callback* cb, uint32_t time )
+{
+    wl_callback_destroy( cb );
+
+    static constexpr wl_callback_listener listener = {
+        .done = Method( FrameDone )
+    };
+
+    cb = wl_surface_frame( m_surface );
+    wl_callback_add_listener( cb, &listener, this );
+
+    Invoke( OnRender, this );
 }

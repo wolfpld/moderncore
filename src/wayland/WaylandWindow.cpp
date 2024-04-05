@@ -77,6 +77,16 @@ WaylandWindow::~WaylandWindow()
     wl_surface_destroy( m_surface );
 }
 
+void WaylandWindow::SetAppId( const char* appId )
+{
+    xdg_toplevel_set_app_id( m_xdgToplevel, appId );
+}
+
+void WaylandWindow::SetTitle( const char* title )
+{
+    xdg_toplevel_set_title( m_xdgToplevel, title );
+}
+
 void WaylandWindow::SetListener( const Listener* listener, void* listenerPtr )
 {
     m_listener = listener;

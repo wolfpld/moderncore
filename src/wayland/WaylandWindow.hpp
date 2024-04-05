@@ -26,6 +26,9 @@ public:
 
     NoCopy( WaylandWindow );
 
+    void SetAppId( const char* appId );
+    void SetTitle( const char* title );
+
     void SetListener( const Listener* listener, void* listenerPtr );
 
     [[nodiscard]] wl_surface* Surface() { return m_surface; }

@@ -28,6 +28,7 @@ public:
 
     void SetAppId( const char* appId );
     void SetTitle( const char* title );
+    void Commit();
 
     void SetListener( const Listener* listener, void* listenerPtr );
 

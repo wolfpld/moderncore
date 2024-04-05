@@ -87,6 +87,11 @@ void WaylandWindow::SetTitle( const char* title )
     xdg_toplevel_set_title( m_xdgToplevel, title );
 }
 
+void WaylandWindow::Commit()
+{
+    wl_surface_commit( m_surface );
+}
+
 void WaylandWindow::SetListener( const Listener* listener, void* listenerPtr )
 {
     m_listener = listener;

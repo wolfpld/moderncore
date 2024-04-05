@@ -40,8 +40,8 @@ WaylandBackendWindow::WaylandBackendWindow( WaylandDisplay& display, VlkInstance
     const auto title = std::format( "ModernCore #{}", m_id );
     ZoneText( title.c_str(), title.size() );
 
-    xdg_toplevel_set_title( XdgToplevel(), title.c_str() );
-    xdg_toplevel_set_app_id( XdgToplevel(), "moderncore" );
+    SetAppId( "moderncore" );
+    SetTitle( title.c_str() );
 
     wl_surface_commit( Surface() );
     wl_display_roundtrip( display.Display() );

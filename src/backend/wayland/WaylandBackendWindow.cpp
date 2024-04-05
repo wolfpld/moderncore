@@ -57,7 +57,7 @@ WaylandBackendWindow::WaylandBackendWindow( WaylandDisplay& display, VlkInstance
     auto& gpuList = server.Gpus();
     if( p.physDev < 0 )
     {
-        const auto physicalDevices = vkInstance.QueryPhysicalDevices();
+        const auto& physicalDevices = vkInstance.QueryPhysicalDevices();
 
         auto device_ = PhysDevSel::PickBest( physicalDevices, VkSurface() );
         CheckPanic( device_, "Failed to find suitable physical device" );

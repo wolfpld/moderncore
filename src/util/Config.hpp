@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdint.h>
 #include <string>
 
 #include "NoCopy.hpp"
@@ -29,9 +30,11 @@ public:
 private:
     const char* GetString( const char* section, const char* key, const char* def );
     int GetInt( const char* section, const char* key, int def );
+    uint32_t GetUInt( const char* section, const char* key, uint32_t def );
 
     bool GetOptString( const char* section, const char* key, const char*& output );
     bool GetOptInt( const char* section, const char* key, int& output );
+    bool GetOptUInt( const char* section, const char* key, uint32_t& output );
 
     ini_t* m_config;
 };
@@ -43,7 +46,13 @@ template<>
 inline int Config::Get( const char* s, const char* k, int v ) { return GetInt( s, k, v ); }
 
 template<>
+inline uint32_t Config::Get( const char* s, const char* k, uint32_t v ) { return GetUInt( s, k, v ); }
+
+template<>
 inline bool Config::GetOpt( const char* s, const char* k, const char*& v ) { return GetOptString( s, k, v ); }
 
 template<>
 inline bool Config::GetOpt( const char* s, const char* k, int& v ) { return GetOptInt( s, k, v ); }
+
+template<>
+inline bool Config::GetOpt( const char* s, const char* k, uint32_t& v ) { return GetOptUInt( s, k, v ); }

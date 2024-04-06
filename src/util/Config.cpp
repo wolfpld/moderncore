@@ -55,6 +55,16 @@ int Config::GetInt( const char* section, const char* key, int def )
     return (end == val) ? def : num;
 }
 
+uint32_t Config::GetUInt( const char* section, const char* key, uint32_t def )
+{
+    if( !m_config ) return def;
+    auto val = ini_get( m_config, section, key );
+    if( !val ) return def;
+    char* end;
+    auto num = strtoul( val, &end, 10 );
+    return (end == val) ? def : num;
+}
+
 bool Config::GetOptString( const char* section, const char* key, const char*& output )
 {
     if( !m_config ) return false;
@@ -69,5 +79,15 @@ bool Config::GetOptInt( const char* section, const char* key, int& output )
     if( !val ) return false;
     char* end;
     output = strtol( val, &end, 10 );
+    return (end != val);
+}
+
+bool Config::GetOptUInt( const char* section, const char* key, uint32_t& output )
+{
+    if( !m_config ) return false;
+    auto val = ini_get( m_config, section, key );
+    if( !val ) return false;
+    char* end;
+    output = strtoul( val, &end, 10 );
     return (end != val);
 }

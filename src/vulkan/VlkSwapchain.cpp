@@ -27,7 +27,7 @@ static void PrintSwapchainProperties( const VlkSwapchainProperties &properties )
     }
 }
 
-VlkSwapchain::VlkSwapchain( const VlkDevice& device, VkSurfaceKHR surface )
+VlkSwapchain::VlkSwapchain( const VlkDevice& device, VkSurfaceKHR surface, const VkExtent2D& extent )
     : m_properties( *device.GetPhysicalDevice(), surface )
     , m_format { VK_FORMAT_UNDEFINED }
     , m_presentMode( VK_PRESENT_MODE_FIFO_KHR )
@@ -55,9 +55,9 @@ VlkSwapchain::VlkSwapchain( const VlkDevice& device, VkSurfaceKHR surface )
 
     const auto caps = m_properties.GetCapabilities();
     m_extent.width = caps.currentExtent.width == UINT32_MAX ?
-        std::clamp( 1650u, caps.minImageExtent.width, caps.maxImageExtent.width ) : caps.currentExtent.width;
+        std::clamp( extent.width, caps.minImageExtent.width, caps.maxImageExtent.width ) : caps.currentExtent.width;
     m_extent.height = caps.currentExtent.height == UINT32_MAX ?
-        std::clamp( 1050u, caps.minImageExtent.height, caps.maxImageExtent.height ) : caps.currentExtent.height;
+        std::clamp( extent.height, caps.minImageExtent.height, caps.maxImageExtent.height ) : caps.currentExtent.height;
 
     mclog( LogLevel::Info, "Swapchain extent: %ux%u", m_extent.width, m_extent.height );
 

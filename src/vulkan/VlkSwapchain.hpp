@@ -12,7 +12,7 @@ class VlkDevice;
 class VlkSwapchain
 {
 public:
-    VlkSwapchain( const VlkDevice& device, VkSurfaceKHR surface );
+    VlkSwapchain( const VlkDevice& device, VkSurfaceKHR surface, const VkExtent2D& extent );
     ~VlkSwapchain();
 
     NoCopy( VlkSwapchain );

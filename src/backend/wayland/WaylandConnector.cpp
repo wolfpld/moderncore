@@ -20,7 +20,7 @@ WaylandConnector::WaylandConnector( VlkDevice& device, VkSurfaceKHR surface, uin
 {
     ZoneScoped;
 
-    m_swapchain = std::make_unique<VlkSwapchain>( device, surface );
+    m_swapchain = std::make_unique<VlkSwapchain>( device, surface, VkExtent2D( width, height ) );
 
     m_width = m_swapchain->GetWidth();
     m_height = m_swapchain->GetHeight();

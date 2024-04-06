@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <stdint.h>
 #include <vulkan/vulkan.h>
 
 #include "util/NoCopy.hpp"
@@ -21,6 +22,7 @@ public:
     struct Params
     {
         int physDev;
+        uint32_t width, height;
         BackendWayland& backend;
     };
 

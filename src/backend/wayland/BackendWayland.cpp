@@ -100,7 +100,7 @@ void BackendWayland::OpenWindow( int physDev, uint32_t width, uint32_t height )
         .OnRender = Method( Render )
     };
 
-    auto window = std::make_unique<WaylandBackendWindow>( *this, Server::Instance().VkInstance(), WaylandBackendWindow::Params { physDev, *this } );
+    auto window = std::make_unique<WaylandBackendWindow>( *this, Server::Instance().VkInstance(), WaylandBackendWindow::Params { physDev, width, height, *this } );
     window->SetListener( &listener, this );
     m_windows.emplace_back( std::move( window ) );
 }

@@ -25,7 +25,7 @@ class WaylandConnector : public Connector
     };
 
 public:
-    WaylandConnector( VlkDevice& device, VkSurfaceKHR surface );
+    WaylandConnector( VlkDevice& device, VkSurfaceKHR surface, uint32_t width, uint32_t height );
     ~WaylandConnector() override;
 
     NoCopy( WaylandConnector );

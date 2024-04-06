@@ -71,7 +71,7 @@ WaylandBackendWindow::WaylandBackendWindow( WaylandDisplay& display, VlkInstance
 
     ZoneVkDevice( m_gpu->Device().GetPhysicalDevice() );
 
-    m_connector = std::make_shared<WaylandConnector>( m_gpu->Device(), VkSurface() );
+    m_connector = std::make_shared<WaylandConnector>( m_gpu->Device(), VkSurface(), p.width, p.height );
     m_gpu->AddConnector( m_connector );
 }
 

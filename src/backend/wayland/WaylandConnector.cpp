@@ -15,7 +15,7 @@
 #include "vulkan/VlkSemaphore.hpp"
 #include "vulkan/VlkSwapchain.hpp"
 
-WaylandConnector::WaylandConnector( VlkDevice& device, VkSurfaceKHR surface )
+WaylandConnector::WaylandConnector( VlkDevice& device, VkSurfaceKHR surface, uint32_t width, uint32_t height )
     : Connector( device )
 {
     ZoneScoped;

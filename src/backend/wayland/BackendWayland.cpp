@@ -1,4 +1,5 @@
 #include <format>
+#include <inttypes.h>
 #include <string.h>
 #include <tracy/Tracy.hpp>
 
@@ -33,8 +34,11 @@ void BackendWayland::VulkanInit()
         {
             const auto section = std::format( "Window{}", idx );
             int physDev;
+            uint32_t width, height;
             if( !config.GetOpt( section.c_str(), "PhysicalDevice", physDev ) ) break;
-            OpenWindow( physDev );
+            width = config.Get( section.c_str(), "Width", 1650u );
+            height = config.Get( section.c_str(), "Height", 1050u );
+            OpenWindow( physDev, width, height );
             windowAdded = true;
             idx++;
         }
@@ -42,7 +46,7 @@ void BackendWayland::VulkanInit()
     }
     else
     {
-        OpenWindow();
+        OpenWindow( -1, 1650, 1050 );
     }
 }
 
@@ -87,9 +91,9 @@ void BackendWayland::PointerMotion( double x, double y )
     //m_window->PointerMotion( x * m_scale, y * m_scale );
 }
 
-void BackendWayland::OpenWindow( int physDev )
+void BackendWayland::OpenWindow( int physDev, uint32_t width, uint32_t height )
 {
-    mclog( LogLevel::Info, "Opening window on physical device %i", physDev );
+    mclog( LogLevel::Info, "Opening window on physical device %i, size %" PRIu32 "x%" PRIu32, physDev, width, height );
 
     static constexpr WaylandWindow::Listener listener = {
         .OnClose = Method( Close ),

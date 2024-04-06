@@ -38,7 +38,7 @@ private:
 
     void XdgWmPing( xdg_wm_base* shell, uint32_t serial );
 
-    void OpenWindow( int physDev = -1 );
+    void OpenWindow( int physDev, uint32_t width, uint32_t height );
 
     void Close( WaylandWindow* );
     void Render( WaylandWindow* );

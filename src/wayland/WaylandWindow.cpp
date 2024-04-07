@@ -6,9 +6,12 @@
 #include "WaylandWindow.hpp"
 #include "util/Invoke.hpp"
 #include "util/Panic.hpp"
+#include "vulkan/VlkCommandBuffer.hpp"
 #include "vulkan/VlkDevice.hpp"
 #include "vulkan/VlkError.hpp"
+#include "vulkan/VlkFence.hpp"
 #include "vulkan/VlkInstance.hpp"
+#include "vulkan/VlkSemaphore.hpp"
 #include "vulkan/VlkSwapchain.hpp"
 
 WaylandWindow::WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance )
@@ -116,6 +119,19 @@ void WaylandWindow::SetListener( const Listener* listener, void* listenerPtr )
 void WaylandWindow::SetDevice( std::shared_ptr<VlkDevice> device, const VkExtent2D& extent )
 {
     m_swapchain = std::make_unique<VlkSwapchain>( *device, m_vkSurface, extent );
+
+    const auto imageViews = m_swapchain->GetImageViews();
+    const auto numImages = imageViews.size();
+
+    m_frameData.resize( numImages );
+    for( size_t i=0; i<numImages; i++ )
+    {
+        m_frameData[i].commandBuffer = std::make_unique<VlkCommandBuffer>( *device->GetCommandPool( QueueType::Graphic ), true );
+        m_frameData[i].imageAvailable = std::make_unique<VlkSemaphore>( *device );
+        m_frameData[i].renderFinished = std::make_unique<VlkSemaphore>( *device );
+        m_frameData[i].fence = std::make_unique<VlkFence>( *device, VK_FENCE_CREATE_SIGNALED_BIT );
+    }
+
     m_vkDevice = std::move( device );
 }
 

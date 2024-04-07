@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 #include <vulkan/vulkan.h>
 #include <wayland-client.h>
 
@@ -11,13 +12,24 @@
 #include "fractional-scale-v1-client-protocol.h"
 #include "viewporter-client-protocol.h"
 
+class VlkCommandBuffer;
 class VlkDevice;
+class VlkFence;
 class VlkInstance;
+class VlkSemaphore;
 class VlkSwapchain;
 class WaylandDisplay;
 
 class WaylandWindow
 {
+    struct FrameData
+    {
+        std::unique_ptr<VlkCommandBuffer> commandBuffer;
+        std::unique_ptr<VlkSemaphore> imageAvailable;
+        std::unique_ptr<VlkSemaphore> renderFinished;
+        std::unique_ptr<VlkFence> fence;
+    };
+
 public:
     struct Listener
     {
@@ -70,4 +82,8 @@ private:
 
     const Listener* m_listener = nullptr;
     void* m_listenerPtr;
+
+    std::vector<FrameData> m_frameData;
+    uint32_t m_frameIdx = 0;
+    uint32_t m_imageIdx;
 };

@@ -82,9 +82,16 @@ int main( int argc, char** argv )
             enableValidation = ParseBoolean( optarg );
             break;
         default:
-            return 1;
+            break;
         }
     }
+    if (optind == argc)
+    {
+        mclog( LogLevel::Error, "Image file name must be provided" );
+        return 1;
+    }
+
+    const char* imageFile = argv[optind];
 
     auto vulkanThread = std::thread( [enableValidation] {
         g_vkInstance = std::make_unique<VlkInstance>( VlkInstanceType::Wayland, enableValidation );

@@ -1,3 +1,4 @@
+#include <math.h>
 #include <tracy/Tracy.hpp>
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_wayland.h>
@@ -233,7 +234,9 @@ void WaylandWindow::XdgSurfaceConfigure( struct xdg_surface *xdg_surface, uint32
     xdg_surface_ack_configure( xdg_surface, serial );
     if( m_stageWidth == 0 || m_stageHeight == 0 ) return;
     auto& extent = m_swapchain->GetExtent();
-    if( extent.width != m_stageWidth || extent.height != m_stageHeight )
+    const auto dx = abs( int32_t( extent.width ) - int32_t( m_stageWidth ) );
+    const auto dy = abs( int32_t( extent.height ) - int32_t( m_stageHeight ) );
+    if( dx > 1 || dy > 1 )
     {
         Invoke( OnResize, this, m_stageWidth, m_stageHeight );
     }

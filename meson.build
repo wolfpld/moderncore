@@ -116,6 +116,7 @@ mcoreimage_src = [
     'src/image/JpgLoader.cpp',
     'src/image/JxlLoader.cpp',
     'src/image/PngLoader.cpp',
+    'src/image/PvrLoader.cpp',
     'src/image/WebpLoader.cpp',
 ]
 

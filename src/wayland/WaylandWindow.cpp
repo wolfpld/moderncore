@@ -121,8 +121,8 @@ VlkCommandBuffer& WaylandWindow::BeginFrame()
     {
         m_prevScale = m_scale;
         const auto& extent = m_swapchain->GetExtent();
-        wp_viewport_set_source( m_viewport, 0, 0, wl_fixed_from_double( extent.width * m_scale / 120. ), wl_fixed_from_double( extent.height * m_scale / 120. ) );
-        wp_viewport_set_destination( m_viewport, extent.width, extent.height );
+        wp_viewport_set_source( m_viewport, 0, 0, wl_fixed_from_int( extent.width ), wl_fixed_from_int( extent.height ) );
+        wp_viewport_set_destination( m_viewport, extent.width * 120 / m_scale, extent.height * 120 / m_scale );
     }
 
     auto& frame = m_frameData[m_frameIdx];

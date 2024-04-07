@@ -37,7 +37,7 @@ void Render( void*, WaylandWindow* window )
 
     VkRenderingInfo renderingInfo = {
         .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
-        .renderArea = { { 0, 0 }, { 100, 100 } },
+        .renderArea = { { 0, 0 }, window->GetExtent() },
         .layerCount = 1,
         .colorAttachmentCount = 1,
         .pColorAttachments = &attachmentInfo

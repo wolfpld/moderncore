@@ -6,6 +6,7 @@
 #include "WaylandWindow.hpp"
 #include "util/Invoke.hpp"
 #include "util/Panic.hpp"
+#include "vulkan/VlkDevice.hpp"
 #include "vulkan/VlkError.hpp"
 #include "vulkan/VlkInstance.hpp"
 
@@ -103,6 +104,11 @@ void WaylandWindow::SetListener( const Listener* listener, void* listenerPtr )
 {
     m_listener = listener;
     m_listenerPtr = listenerPtr;
+}
+
+void WaylandWindow::SetDevice( std::shared_ptr<VlkDevice> device )
+{
+    m_vkDevice = std::move( device );
 }
 
 void WaylandWindow::XdgSurfaceConfigure( struct xdg_surface *xdg_surface, uint32_t serial )

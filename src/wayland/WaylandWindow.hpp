@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <vulkan/vulkan.h>
 #include <wayland-client.h>
 
@@ -10,6 +11,7 @@
 #include "fractional-scale-v1-client-protocol.h"
 #include "viewporter-client-protocol.h"
 
+class VlkDevice;
 class VlkInstance;
 class WaylandDisplay;
 
@@ -32,6 +34,7 @@ public:
     void Commit();
 
     void SetListener( const Listener* listener, void* listenerPtr );
+    void SetDevice( std::shared_ptr<VlkDevice> device );
 
     [[nodiscard]] wl_surface* Surface() { return m_surface; }
     [[nodiscard]] xdg_toplevel* XdgToplevel() { return m_xdgToplevel; }
@@ -61,6 +64,7 @@ private:
 
     VkSurfaceKHR m_vkSurface;
     VlkInstance& m_vkInstance;
+    std::shared_ptr<VlkDevice> m_vkDevice;
 
     const Listener* m_listener = nullptr;
     void* m_listenerPtr;

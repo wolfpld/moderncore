@@ -64,6 +64,8 @@ public:
     [[nodiscard]] VlkDevice& Device() { return *m_vkDevice; }
 
 private:
+    void CreateSwapchain( const VkExtent2D& extent );
+
     void XdgSurfaceConfigure( struct xdg_surface *xdg_surface, uint32_t serial );
 
     void XdgToplevelConfigure( struct xdg_toplevel* toplevel, int32_t width, int32_t height, struct wl_array* states );

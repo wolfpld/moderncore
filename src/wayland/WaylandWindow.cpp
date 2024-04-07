@@ -191,22 +191,31 @@ void WaylandWindow::SetListener( const Listener* listener, void* listenerPtr )
 void WaylandWindow::SetDevice( std::shared_ptr<VlkDevice> device, const VkExtent2D& extent )
 {
     CheckPanic( !m_vkDevice, "Vulkan device already set" );
+    m_vkDevice = std::move( device );
+    CreateSwapchain( extent );
+}
 
-    m_swapchain = std::make_unique<VlkSwapchain>( *device, m_vkSurface, extent );
+void WaylandWindow::CreateSwapchain( const VkExtent2D& extent )
+{
+    m_swapchain.reset();
+    m_swapchain = std::make_unique<VlkSwapchain>( *m_vkDevice, m_vkSurface, extent );
 
     const auto imageViews = m_swapchain->GetImageViews();
     const auto numImages = imageViews.size();
+    const auto oldSize = m_frameData.size();
+
+    if( oldSize == numImages ) return;
 
     m_frameData.resize( numImages );
-    for( size_t i=0; i<numImages; i++ )
-    {
-        m_frameData[i].commandBuffer = std::make_unique<VlkCommandBuffer>( *device->GetCommandPool( QueueType::Graphic ), true );
-        m_frameData[i].imageAvailable = std::make_unique<VlkSemaphore>( *device );
-        m_frameData[i].renderFinished = std::make_unique<VlkSemaphore>( *device );
-        m_frameData[i].fence = std::make_unique<VlkFence>( *device, VK_FENCE_CREATE_SIGNALED_BIT );
-    }
+    if( oldSize > numImages ) return;
 
-    m_vkDevice = std::move( device );
+    for( size_t i=oldSize; i<numImages; i++ )
+    {
+        m_frameData[i].commandBuffer = std::make_unique<VlkCommandBuffer>( *m_vkDevice->GetCommandPool( QueueType::Graphic ), true );
+        m_frameData[i].imageAvailable = std::make_unique<VlkSemaphore>( *m_vkDevice );
+        m_frameData[i].renderFinished = std::make_unique<VlkSemaphore>( *m_vkDevice );
+        m_frameData[i].fence = std::make_unique<VlkFence>( *m_vkDevice, VK_FENCE_CREATE_SIGNALED_BIT );
+    }
 }
 
 void WaylandWindow::XdgSurfaceConfigure( struct xdg_surface *xdg_surface, uint32_t serial )

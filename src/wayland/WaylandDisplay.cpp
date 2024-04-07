@@ -43,6 +43,7 @@ void WaylandDisplay::Connect()
     CheckPanic( m_seat, "Failed to create Wayland seat" );
     CheckPanic( m_viewporter, "Failed to create Wayland viewporter" );
     CheckPanic( m_fractionalScaleManager, "Failed to create Wayland fractional scale manager" );
+    CheckPanic( m_cursorShapeManager, "Failed to create Wayland cursor shape manager" );
 }
 
 void WaylandDisplay::Run()

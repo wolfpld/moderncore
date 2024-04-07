@@ -3,6 +3,7 @@
 #include <thread>
 
 #include "util/ArgParser.hpp"
+#include "util/Callstack.hpp"
 #include "util/Logs.hpp"
 #include "util/Panic.hpp"
 #include "util/TaskDispatch.hpp"
@@ -36,16 +37,20 @@ int main( int argc, char** argv )
 
     struct option longOptions[] = {
         { "debug", no_argument, nullptr, 'd' },
+        { "external", no_argument, nullptr, 'e' },
         { "validation", required_argument, nullptr, 'V' },
     };
 
     int opt;
-    while( ( opt = getopt_long( argc, argv, "dV:", longOptions, nullptr ) ) != -1 )
+    while( ( opt = getopt_long( argc, argv, "deV:", longOptions, nullptr ) ) != -1 )
     {
         switch (opt)
         {
         case 'd':
             SetLogLevel( LogLevel::Callstack );
+            break;
+        case 'e':
+            ShowExternalCallstacks( true );
             break;
         case 'V':
             enableValidation = ParseBoolean( optarg );

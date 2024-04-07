@@ -18,7 +18,7 @@ std::unique_ptr<TaskDispatch> g_dispatch;
 std::unique_ptr<VlkInstance> g_vkInstance;
 std::unique_ptr<WaylandDisplay> g_waylandDisplay;
 std::unique_ptr<WaylandWindow> g_waylandWindow;
-std::unique_ptr<VlkDevice> g_vkDevice;
+std::shared_ptr<VlkDevice> g_vkDevice;
 
 bool g_keepRunning = true;
 
@@ -94,7 +94,8 @@ int main( int argc, char** argv )
     auto best = PhysDevSel::PickBest( g_vkInstance->QueryPhysicalDevices(), g_waylandWindow->VkSurface(), PhysDevSel::RequireGraphic );
     CheckPanic( best, "Failed to find suitable physical device" );
 
-    g_vkDevice = std::make_unique<VlkDevice>( *g_vkInstance, best, VlkDevice::RequireGraphic | VlkDevice::RequirePresent, g_waylandWindow->VkSurface() );
+    g_vkDevice = std::make_shared<VlkDevice>( *g_vkInstance, best, VlkDevice::RequireGraphic | VlkDevice::RequirePresent, g_waylandWindow->VkSurface() );
+    g_waylandWindow->SetDevice( g_vkDevice );
 
     return 0;
 }

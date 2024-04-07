@@ -42,7 +42,6 @@ WaylandBackendWindow::WaylandBackendWindow( WaylandDisplay& display, VlkInstance
 
     SetAppId( "moderncore" );
     SetTitle( title.c_str() );
-    Commit();
 
     wl_display_roundtrip( display.Display() );
 

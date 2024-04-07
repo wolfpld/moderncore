@@ -77,7 +77,7 @@ VlkSwapchain::VlkSwapchain( const VlkDevice& device, VkSurfaceKHR surface, const
     createInfo.imageColorSpace = m_format.colorSpace;
     createInfo.imageExtent = m_extent;
     createInfo.imageArrayLayers = 1;
-    createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
     createInfo.preTransform = caps.currentTransform;
     createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     createInfo.presentMode = m_presentMode;

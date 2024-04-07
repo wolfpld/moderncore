@@ -36,6 +36,7 @@ public:
         void (*OnClose)( void* ptr, WaylandWindow* window );
         void (*OnRender)( void* ptr, WaylandWindow* window );
         void (*OnScale)( void* ptr, WaylandWindow* window, uint32_t scale );
+        void (*OnResize)( void* ptr, WaylandWindow* window, uint32_t width, uint32_t height );
     };
 
     WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance );
@@ -93,4 +94,7 @@ private:
 
     uint32_t m_scale = 120;
     uint32_t m_prevScale = 120;
+
+    uint32_t m_stageWidth = 0;
+    uint32_t m_stageHeight = 0;
 };

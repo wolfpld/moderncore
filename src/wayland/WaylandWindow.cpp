@@ -210,10 +210,16 @@ void WaylandWindow::SetDevice( std::shared_ptr<VlkDevice> device, const VkExtent
 void WaylandWindow::XdgSurfaceConfigure( struct xdg_surface *xdg_surface, uint32_t serial )
 {
     xdg_surface_ack_configure( xdg_surface, serial );
+    if( m_stageWidth == 0 || m_stageHeight == 0 ) return;
+    Invoke( OnResize, this, m_stageWidth, m_stageHeight );
+    m_stageWidth = m_stageHeight = 0;
 }
 
 void WaylandWindow::XdgToplevelConfigure( struct xdg_toplevel* toplevel, int32_t width, int32_t height, struct wl_array* states )
 {
+    if( width == 0 || height == 0 ) return;
+    m_stageWidth = width;
+    m_stageHeight = height;
 }
 
 void WaylandWindow::XdgToplevelClose( struct xdg_toplevel* toplevel )

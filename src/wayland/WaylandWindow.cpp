@@ -97,6 +97,14 @@ void WaylandWindow::SetTitle( const char* title )
     xdg_toplevel_set_title( m_xdgToplevel, title );
 }
 
+void WaylandWindow::Resize( uint32_t width, uint32_t height )
+{
+    CreateSwapchain( VkExtent2D( width, height ) );
+
+    // Ensure viewport is updated
+    m_prevScale = 0;
+}
+
 void WaylandWindow::Commit()
 {
     CheckPanic( m_listener, "Listener not set" );

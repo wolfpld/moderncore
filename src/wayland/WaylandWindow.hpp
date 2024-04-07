@@ -46,6 +46,7 @@ public:
 
     void SetAppId( const char* appId );
     void SetTitle( const char* title );
+    void Resize( uint32_t width, uint32_t height );
     void Commit();
 
     VlkCommandBuffer& BeginFrame();

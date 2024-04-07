@@ -392,7 +392,7 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
 
 VlkDevice::~VlkDevice()
 {
-#ifdef TRACY_PROFILE
+#ifdef TRACY_ENABLE
     if( m_tracyCtx ) TracyVkDestroy( m_tracyCtx );
 #endif
 

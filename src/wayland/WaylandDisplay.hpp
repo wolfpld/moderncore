@@ -21,6 +21,8 @@ public:
     NoCopy( WaylandDisplay );
 
     void Connect();
+    void Roundtrip();
+
     void Run();
     void Stop() { m_keepRunning = false; }
 

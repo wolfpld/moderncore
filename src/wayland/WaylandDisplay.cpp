@@ -46,6 +46,11 @@ void WaylandDisplay::Connect()
     CheckPanic( m_cursorShapeManager, "Failed to create Wayland cursor shape manager" );
 }
 
+void WaylandDisplay::Roundtrip()
+{
+    wl_display_roundtrip( m_dpy );
+}
+
 void WaylandDisplay::Run()
 {
     while( m_keepRunning && wl_display_dispatch( m_dpy ) != -1 ) {}

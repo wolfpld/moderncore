@@ -2,7 +2,9 @@
 #include <memory>
 #include <thread>
 
+#include "image/ImageLoader.hpp"
 #include "util/ArgParser.hpp"
+#include "util/Bitmap.hpp"
 #include "util/Callstack.hpp"
 #include "util/Logs.hpp"
 #include "util/Panic.hpp"
@@ -20,6 +22,7 @@ std::unique_ptr<VlkInstance> g_vkInstance;
 std::unique_ptr<WaylandDisplay> g_waylandDisplay;
 std::unique_ptr<WaylandWindow> g_waylandWindow;
 std::shared_ptr<VlkDevice> g_vkDevice;
+std::unique_ptr<Bitmap> g_bitmap;
 
 
 void Render( void*, WaylandWindow* window )
@@ -100,6 +103,10 @@ int main( int argc, char** argv )
         const auto cpus = std::thread::hardware_concurrency();
         g_dispatch = std::make_unique<TaskDispatch>( cpus == 0 ? 0 : cpus - 1, "Worker" );
     } );
+    auto imageThread = std::thread( [imageFile] {
+        g_bitmap.reset( LoadImage( imageFile ) );
+        CheckPanic( g_bitmap, "Failed to load image" );
+    } );
 
     g_waylandDisplay = std::make_unique<WaylandDisplay>();
     g_waylandDisplay->Connect();
@@ -130,7 +137,8 @@ int main( int argc, char** argv )
     CheckPanic( best, "Failed to find suitable physical device" );
 
     g_vkDevice = std::make_shared<VlkDevice>( *g_vkInstance, best, VlkDevice::RequireGraphic | VlkDevice::RequirePresent, g_waylandWindow->VkSurface() );
-    g_waylandWindow->SetDevice( g_vkDevice, VkExtent2D( 150, 150 ) );
+    imageThread.join();
+    g_waylandWindow->SetDevice( g_vkDevice, VkExtent2D( g_bitmap->Width(), g_bitmap->Height() ) );
 
     g_waylandWindow->Commit();
     g_waylandDisplay->Run();

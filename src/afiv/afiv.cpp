@@ -49,6 +49,13 @@ void Render( void*, WaylandWindow* window )
     };
 
     vkCmdBeginRendering( cmdbuf, &renderingInfo );
+    VkImageBlit region = {
+        .srcSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 },
+        .srcOffsets = { { 0, 0, 0 }, { int32_t( g_bitmap->Width() ), int32_t( g_bitmap->Height() ), 1 } },
+        .dstSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 },
+        .dstOffsets = { { 0, 0, 0 }, { int32_t( window->GetExtent().width ), int32_t( window->GetExtent().height ), 1 } }
+    };
+    vkCmdBlitImage( cmdbuf, *g_texture, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, g_waylandWindow->GetImage(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 1, &region, VK_FILTER_NEAREST );
     vkCmdEndRendering( cmdbuf );
 
     window->EndFrame();

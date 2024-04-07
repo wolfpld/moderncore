@@ -21,8 +21,7 @@ public:
     void RenderBarrier( VkCommandBuffer cmd, uint32_t imageIndex );
 
     [[nodiscard]] VkFormat GetFormat() const { return m_format.format; }
-    [[nodiscard]] uint32_t GetWidth() const { return m_extent.width; }
-    [[nodiscard]] uint32_t GetHeight() const { return m_extent.height; }
+    [[nodiscard]] const VkExtent2D& GetExtent() const { return m_extent; }
     [[nodiscard]] const std::vector<VkImageView>& GetImageViews() const { return m_imageViews; }
 
     operator VkSwapchainKHR() const { return m_swapchain; }

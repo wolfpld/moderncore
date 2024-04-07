@@ -22,8 +22,8 @@ WaylandConnector::WaylandConnector( VlkDevice& device, VkSurfaceKHR surface, uin
 
     m_swapchain = std::make_unique<VlkSwapchain>( device, surface, VkExtent2D( width, height ) );
 
-    m_width = m_swapchain->GetWidth();
-    m_height = m_swapchain->GetHeight();
+    m_width = m_swapchain->GetExtent().width;
+    m_height = m_swapchain->GetExtent().height;
     m_format = m_swapchain->GetFormat();
 
     const auto& imageViews = m_swapchain->GetImageViews();

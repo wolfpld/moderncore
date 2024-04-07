@@ -295,6 +295,7 @@ executable('mcore',
 
 afiv_src = [
     'src/afiv/afiv.cpp',
+    'src/render/Texture.cpp',
 ]
 
 executable('afiv',

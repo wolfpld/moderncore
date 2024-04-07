@@ -3,6 +3,7 @@
 #include <thread>
 
 #include "image/ImageLoader.hpp"
+#include "render/Texture.hpp"
 #include "util/ArgParser.hpp"
 #include "util/Bitmap.hpp"
 #include "util/Callstack.hpp"
@@ -23,6 +24,7 @@ std::unique_ptr<WaylandDisplay> g_waylandDisplay;
 std::unique_ptr<WaylandWindow> g_waylandWindow;
 std::shared_ptr<VlkDevice> g_vkDevice;
 std::unique_ptr<Bitmap> g_bitmap;
+std::unique_ptr<Texture> g_texture;
 
 
 void Render( void*, WaylandWindow* window )
@@ -139,6 +141,8 @@ int main( int argc, char** argv )
     g_vkDevice = std::make_shared<VlkDevice>( *g_vkInstance, best, VlkDevice::RequireGraphic | VlkDevice::RequirePresent, g_waylandWindow->VkSurface() );
     imageThread.join();
     g_waylandWindow->SetDevice( g_vkDevice, VkExtent2D( g_bitmap->Width(), g_bitmap->Height() ) );
+
+    g_texture = std::make_unique<Texture>( *g_vkDevice, *g_bitmap, VK_FORMAT_R8G8B8A8_SRGB );
 
     g_waylandWindow->Commit();
     g_waylandDisplay->Run();

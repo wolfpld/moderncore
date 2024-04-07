@@ -151,7 +151,7 @@ int main( int argc, char** argv )
 
     g_texture = std::make_unique<Texture>( *g_vkDevice, *g_bitmap, VK_FORMAT_R8G8B8A8_SRGB );
 
-    g_waylandWindow->Commit();
+    g_waylandWindow->Commit( true );
     g_waylandDisplay->Run();
 
     return 0;

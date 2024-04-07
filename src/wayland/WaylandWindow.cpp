@@ -106,12 +106,15 @@ void WaylandWindow::Resize( uint32_t width, uint32_t height )
     m_prevScale = 0;
 }
 
-void WaylandWindow::Commit()
+void WaylandWindow::Commit( bool render )
 {
-    CheckPanic( m_listener, "Listener not set" );
-    CheckPanic( m_vkDevice, "Vulkan device not set" );
+    if( render )
+    {
+        CheckPanic( m_listener, "Listener not set" );
+        CheckPanic( m_vkDevice, "Vulkan device not set" );
 
-    Invoke( OnRender, this );
+        Invoke( OnRender, this );
+    }
 
     wl_surface_commit( m_surface );
 }

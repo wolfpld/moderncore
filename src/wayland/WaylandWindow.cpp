@@ -110,6 +110,66 @@ void WaylandWindow::Commit()
     wl_surface_commit( m_surface );
 }
 
+VlkCommandBuffer& WaylandWindow::BeginFrame( uint32_t& imageIdx )
+{
+    auto& frame = m_frameData[m_frameIdx];
+
+    frame.fence->Wait();
+    frame.fence->Reset();
+
+    auto res = vkAcquireNextImageKHR( *m_vkDevice, *m_swapchain, UINT64_MAX, *frame.imageAvailable, VK_NULL_HANDLE, &m_imageIdx );
+    imageIdx = m_imageIdx;
+
+    frame.commandBuffer->Reset();
+    frame.commandBuffer->Begin( VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT );
+
+    m_swapchain->RenderBarrier( *frame.commandBuffer, m_imageIdx );
+
+    return *frame.commandBuffer;
+}
+
+void WaylandWindow::EndFrame()
+{
+    auto& frame = m_frameData[m_frameIdx];
+
+    m_swapchain->PresentBarrier( *frame.commandBuffer, m_imageIdx );
+
+#ifdef TRACY_ENABLE
+    { auto tracyCtx = m_vkDevice->GetTracyContext(); if( tracyCtx ) TracyVkCollect( tracyCtx, *frame.commandBuffer ); }
+#endif
+
+    frame.commandBuffer->End();
+
+    const std::array<VkSemaphore, 1> waitSemaphores = { *frame.imageAvailable };
+    const std::array<VkSemaphore, 1> signalSemaphores = { *frame.renderFinished };
+    constexpr std::array<VkPipelineStageFlags, 1> waitStages = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+    const std::array<VkCommandBuffer, 1> commandBuffers = { *frame.commandBuffer };
+
+    VkSubmitInfo submitInfo = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
+    submitInfo.waitSemaphoreCount = waitSemaphores.size();
+    submitInfo.pWaitSemaphores = waitSemaphores.data();
+    submitInfo.pWaitDstStageMask = waitStages.data();
+    submitInfo.commandBufferCount = commandBuffers.size();
+    submitInfo.pCommandBuffers = commandBuffers.data();
+    submitInfo.signalSemaphoreCount = signalSemaphores.size();
+    submitInfo.pSignalSemaphores = signalSemaphores.data();
+
+    VkVerify( vkQueueSubmit( m_vkDevice->GetQueue( QueueType::Graphic ), 1, &submitInfo, *frame.fence ) );
+
+    const std::array<VkSwapchainKHR, 1> swapchains = { *m_swapchain };
+
+    VkPresentInfoKHR presentInfo = { VK_STRUCTURE_TYPE_PRESENT_INFO_KHR };
+    presentInfo.waitSemaphoreCount = signalSemaphores.size();
+    presentInfo.pWaitSemaphores = signalSemaphores.data();
+    presentInfo.swapchainCount = swapchains.size();
+    presentInfo.pSwapchains = swapchains.data();
+    presentInfo.pImageIndices = &m_imageIdx;
+
+    VkVerify( vkQueuePresentKHR( m_vkDevice->GetQueue( QueueType::Present ), &presentInfo ) );
+
+    m_frameIdx = ( m_frameIdx + 1 ) % m_frameData.size();
+}
+
 void WaylandWindow::SetListener( const Listener* listener, void* listenerPtr )
 {
     m_listener = listener;

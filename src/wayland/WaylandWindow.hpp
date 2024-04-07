@@ -46,6 +46,9 @@ public:
     void SetTitle( const char* title );
     void Commit();
 
+    VlkCommandBuffer& BeginFrame( uint32_t& imageIdx );
+    void EndFrame();
+
     void SetListener( const Listener* listener, void* listenerPtr );
     void SetDevice( std::shared_ptr<VlkDevice> device, const VkExtent2D& extent );
 

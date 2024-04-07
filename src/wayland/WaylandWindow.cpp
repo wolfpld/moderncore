@@ -9,6 +9,7 @@
 #include "vulkan/VlkDevice.hpp"
 #include "vulkan/VlkError.hpp"
 #include "vulkan/VlkInstance.hpp"
+#include "vulkan/VlkSwapchain.hpp"
 
 WaylandWindow::WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance )
     : m_vkInstance( vkInstance )
@@ -76,6 +77,7 @@ WaylandWindow::WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance )
 
 WaylandWindow::~WaylandWindow()
 {
+    if( m_swapchain ) m_swapchain.reset();
     vkDestroySurfaceKHR( m_vkInstance, m_vkSurface, nullptr );
     if( m_viewport ) wp_viewport_destroy( m_viewport );
     if( m_fractionalScale ) wp_fractional_scale_v1_destroy( m_fractionalScale );
@@ -106,8 +108,9 @@ void WaylandWindow::SetListener( const Listener* listener, void* listenerPtr )
     m_listenerPtr = listenerPtr;
 }
 
-void WaylandWindow::SetDevice( std::shared_ptr<VlkDevice> device )
+void WaylandWindow::SetDevice( std::shared_ptr<VlkDevice> device, const VkExtent2D& extent )
 {
+    m_swapchain = std::make_unique<VlkSwapchain>( *device, m_vkSurface, extent );
     m_vkDevice = std::move( device );
 }
 

@@ -95,7 +95,7 @@ int main( int argc, char** argv )
     CheckPanic( best, "Failed to find suitable physical device" );
 
     g_vkDevice = std::make_shared<VlkDevice>( *g_vkInstance, best, VlkDevice::RequireGraphic | VlkDevice::RequirePresent, g_waylandWindow->VkSurface() );
-    g_waylandWindow->SetDevice( g_vkDevice );
+    g_waylandWindow->SetDevice( g_vkDevice, VkExtent2D( 100, 100 ) );
 
     return 0;
 }

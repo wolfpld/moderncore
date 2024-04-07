@@ -13,6 +13,7 @@
 
 class VlkDevice;
 class VlkInstance;
+class VlkSwapchain;
 class WaylandDisplay;
 
 class WaylandWindow
@@ -34,7 +35,7 @@ public:
     void Commit();
 
     void SetListener( const Listener* listener, void* listenerPtr );
-    void SetDevice( std::shared_ptr<VlkDevice> device );
+    void SetDevice( std::shared_ptr<VlkDevice> device, const VkExtent2D& extent );
 
     [[nodiscard]] wl_surface* Surface() { return m_surface; }
     [[nodiscard]] xdg_toplevel* XdgToplevel() { return m_xdgToplevel; }
@@ -65,6 +66,7 @@ private:
     VkSurfaceKHR m_vkSurface;
     VlkInstance& m_vkInstance;
     std::shared_ptr<VlkDevice> m_vkDevice;
+    std::unique_ptr<VlkSwapchain> m_swapchain;
 
     const Listener* m_listener = nullptr;
     void* m_listenerPtr;

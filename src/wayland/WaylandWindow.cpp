@@ -119,7 +119,7 @@ void WaylandWindow::Commit( bool render )
     wl_surface_commit( m_surface );
 }
 
-VlkCommandBuffer& WaylandWindow::BeginFrame()
+VlkCommandBuffer& WaylandWindow::BeginFrame( bool imageTransfer )
 {
     if( m_scale != m_prevScale )
     {
@@ -139,7 +139,14 @@ VlkCommandBuffer& WaylandWindow::BeginFrame()
     frame.commandBuffer->Reset();
     frame.commandBuffer->Begin( VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT );
 
-    m_swapchain->RenderBarrier( *frame.commandBuffer, m_imageIdx );
+    if( imageTransfer )
+    {
+        m_swapchain->TransferBarrier( *frame.commandBuffer, m_imageIdx );
+    }
+    else
+    {
+        m_swapchain->RenderBarrier( *frame.commandBuffer, m_imageIdx );
+    }
 
     return *frame.commandBuffer;
 }

@@ -49,7 +49,7 @@ public:
     void Resize( uint32_t width, uint32_t height );
     void Commit( bool render = false );
 
-    VlkCommandBuffer& BeginFrame();
+    VlkCommandBuffer& BeginFrame( bool imageTransfer = false );
     void EndFrame();
 
     VkImage GetImage();

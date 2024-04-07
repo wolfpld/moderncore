@@ -21,6 +21,7 @@ public:
     NoCopy( WaylandDisplay );
 
     void Connect();
+    void Run();
     void Stop() { m_keepRunning = false; }
 
     [[nodiscard]] wl_display* Display() { return m_dpy; }

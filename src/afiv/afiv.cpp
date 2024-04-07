@@ -21,6 +21,13 @@ std::unique_ptr<WaylandWindow> g_waylandWindow;
 std::shared_ptr<VlkDevice> g_vkDevice;
 
 
+void Render( void*, WaylandWindow* window )
+{
+    uint32_t imageIdx;
+    window->BeginFrame( imageIdx );
+    window->EndFrame();
+}
+
 int main( int argc, char** argv )
 {
 #ifdef NDEBUG
@@ -74,6 +81,7 @@ int main( int argc, char** argv )
 
     static constexpr WaylandWindow::Listener listener = {
         .OnClose = [] (void*, WaylandWindow*) { g_waylandDisplay->Stop(); },
+        .OnRender = Render
     };
 
     // Sync is being performed in InitPhysicalDevices

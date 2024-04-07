@@ -19,6 +19,7 @@ public:
 
     void PresentBarrier( VkCommandBuffer cmd, uint32_t imageIndex );
     void RenderBarrier( VkCommandBuffer cmd, uint32_t imageIndex );
+    void TransferBarrier( VkCommandBuffer cmd, uint32_t imageIndex );
 
     [[nodiscard]] VkFormat GetFormat() const { return m_format.format; }
     [[nodiscard]] const VkExtent2D& GetExtent() const { return m_extent; }
@@ -39,4 +40,5 @@ private:
 
     std::vector<VkImage> m_images;
     std::vector<VkImageView> m_imageViews;
+    std::vector<VkImageLayout> m_imageLayouts;
 };

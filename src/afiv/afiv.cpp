@@ -29,34 +29,17 @@ std::unique_ptr<Texture> g_texture;
 
 void Render( void*, WaylandWindow* window )
 {
-    auto& cmdbuf = window->BeginFrame();
+    auto& cmdbuf = window->BeginFrame( true );
 
-    VkRenderingAttachmentInfo attachmentInfo = {
-        .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-        .imageView = window->GetImageView(),
-        .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-        .clearValue = {{{ 0.25f, 0.25f, 0.25f, 1.0f }}}
-    };
+    g_texture->TransitionLayout( cmdbuf, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_ACCESS_TRANSFER_READ_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT );
 
-    VkRenderingInfo renderingInfo = {
-        .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
-        .renderArea = { { 0, 0 }, window->GetExtent() },
-        .layerCount = 1,
-        .colorAttachmentCount = 1,
-        .pColorAttachments = &attachmentInfo
-    };
-
-    vkCmdBeginRendering( cmdbuf, &renderingInfo );
     VkImageBlit region = {
         .srcSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 },
         .srcOffsets = { { 0, 0, 0 }, { int32_t( g_bitmap->Width() ), int32_t( g_bitmap->Height() ), 1 } },
         .dstSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 },
         .dstOffsets = { { 0, 0, 0 }, { int32_t( window->GetExtent().width ), int32_t( window->GetExtent().height ), 1 } }
     };
-    vkCmdBlitImage( cmdbuf, *g_texture, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, g_waylandWindow->GetImage(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 1, &region, VK_FILTER_NEAREST );
-    vkCmdEndRendering( cmdbuf );
+    vkCmdBlitImage( cmdbuf, *g_texture, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, g_waylandWindow->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region, VK_FILTER_NEAREST );
 
     window->EndFrame();
 }

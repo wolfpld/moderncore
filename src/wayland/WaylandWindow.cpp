@@ -227,7 +227,11 @@ void WaylandWindow::XdgSurfaceConfigure( struct xdg_surface *xdg_surface, uint32
 {
     xdg_surface_ack_configure( xdg_surface, serial );
     if( m_stageWidth == 0 || m_stageHeight == 0 ) return;
-    Invoke( OnResize, this, m_stageWidth, m_stageHeight );
+    auto& extent = m_swapchain->GetExtent();
+    if( extent.width != m_stageWidth || extent.height != m_stageHeight )
+    {
+        Invoke( OnResize, this, m_stageWidth, m_stageHeight );
+    }
     m_stageWidth = m_stageHeight = 0;
 }
 

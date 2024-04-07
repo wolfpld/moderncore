@@ -36,7 +36,7 @@ Bitmap* LoadImage( const char* filename )
     FileWrapper file( path.c_str(), "rb" );
     if( !file )
     {
-        mclog( LogLevel::Error, "Background image %s does not exist.", path.c_str() );
+        mclog( LogLevel::Error, "Image %s does not exist.", path.c_str() );
         return nullptr;
     }
 

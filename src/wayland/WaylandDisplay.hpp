@@ -21,6 +21,7 @@ public:
     NoCopy( WaylandDisplay );
 
     void Connect();
+    void Stop() { m_keepRunning = false; }
 
     [[nodiscard]] wl_display* Display() { return m_dpy; }
     [[nodiscard]] wl_compositor* Compositor() { return m_compositor; }
@@ -46,4 +47,6 @@ private:
     wp_fractional_scale_manager_v1* m_fractionalScaleManager = nullptr;
     wp_viewporter* m_viewporter = nullptr;
     wp_cursor_shape_manager_v1* m_cursorShapeManager = nullptr;
+
+    bool m_keepRunning = true;
 };

@@ -20,8 +20,6 @@ std::unique_ptr<WaylandDisplay> g_waylandDisplay;
 std::unique_ptr<WaylandWindow> g_waylandWindow;
 std::shared_ptr<VlkDevice> g_vkDevice;
 
-bool g_keepRunning = true;
-
 
 int main( int argc, char** argv )
 {
@@ -75,7 +73,7 @@ int main( int argc, char** argv )
     vulkanThread.join();
 
     static constexpr WaylandWindow::Listener listener = {
-        .OnClose = [] (void*, WaylandWindow*) { g_keepRunning = false; },
+        .OnClose = [] (void*, WaylandWindow*) { g_waylandDisplay->Stop(); },
     };
 
     // Sync is being performed in InitPhysicalDevices

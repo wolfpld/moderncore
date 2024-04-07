@@ -190,6 +190,8 @@ void WaylandWindow::SetListener( const Listener* listener, void* listenerPtr )
 
 void WaylandWindow::SetDevice( std::shared_ptr<VlkDevice> device, const VkExtent2D& extent )
 {
+    CheckPanic( !m_vkDevice, "Vulkan device already set" );
+
     m_swapchain = std::make_unique<VlkSwapchain>( *device, m_vkSurface, extent );
 
     const auto imageViews = m_swapchain->GetImageViews();

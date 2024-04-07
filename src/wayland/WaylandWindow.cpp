@@ -101,6 +101,9 @@ void WaylandWindow::Commit()
 {
     CheckPanic( m_listener, "Listener not set" );
     CheckPanic( m_vkDevice, "Vulkan device not set" );
+
+    Invoke( OnRender, this );
+
     wl_surface_commit( m_surface );
 }
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <vector>
 #include <vulkan/vulkan.h>
 
@@ -24,13 +25,11 @@ public:
 
     [[nodiscard]] bool IsPresentSupported( VkSurfaceKHR surface ) const;
 
-    [[nodiscard]] auto& Device() { return m_device; }
     [[nodiscard]] auto& Device() const { return m_device; }
-
     [[nodiscard]] auto& Connectors() const { return m_connectors; }
 
 private:
-    VlkDevice m_device;
+    std::shared_ptr<VlkDevice> m_device;
 
     std::vector<std::shared_ptr<Connector>> m_connectors;
 };

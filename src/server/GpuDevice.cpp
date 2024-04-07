@@ -10,21 +10,21 @@
 #include "vulkan/VlkPhysicalDevice.hpp"
 
 GpuDevice::GpuDevice( VlkInstance& instance, const std::shared_ptr<VlkPhysicalDevice>& physDev )
-    : m_device( instance, physDev, VlkDevice::RequireGraphic | VlkDevice::RequirePresent )
+    : m_device( std::make_shared<VlkDevice>( instance, physDev, VlkDevice::RequireGraphic | VlkDevice::RequirePresent ) )
 {
     PrintPhysicalDeviceInfo( *physDev );
-    PrintQueueConfig( m_device );
+    PrintQueueConfig( *m_device );
 }
 
 GpuDevice::~GpuDevice()
 {
-    vkDeviceWaitIdle( m_device );
+    vkDeviceWaitIdle( *m_device );
 }
 
 void GpuDevice::Render()
 {
     ZoneScoped;
-    ZoneVkDevice( m_device.GetPhysicalDevice() );
+    ZoneVkDevice( m_device->GetPhysicalDevice() );
 
     for( auto& c : m_connectors ) c->Render();
 }
@@ -43,8 +43,8 @@ void GpuDevice::RemoveConnector( const std::shared_ptr<Connector>& connector )
 
 bool GpuDevice::IsPresentSupported( VkSurfaceKHR surface ) const
 {
-    auto queueIdx = m_device.GetQueueInfo( QueueType::Graphic ).idx;
+    auto queueIdx = m_device->GetQueueInfo( QueueType::Graphic ).idx;
     VkBool32 presentSupport = VK_FALSE;
-    vkGetPhysicalDeviceSurfaceSupportKHR( m_device, queueIdx, surface, &presentSupport );
+    vkGetPhysicalDeviceSurfaceSupportKHR( *m_device, queueIdx, surface, &presentSupport );
     return presentSupport == VK_TRUE;
 }

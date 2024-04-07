@@ -3,19 +3,14 @@
 #include <functional>
 #include <memory>
 #include <stdint.h>
-#include <vector>
-#include <wayland-client.h>
 
 #include "backend/Backend.hpp"
 #include "util/NoCopy.hpp"
-#include "util/RobinHood.hpp"
-#include "wayland/WaylandDisplay.hpp"
 
-class WaylandBackendWindow;
-class WaylandOutput;
+class WaylandDisplay;
 class WaylandWindow;
 
-class BackendWayland : public Backend, public WaylandDisplay
+class BackendWayland : public Backend
 {
 public:
     BackendWayland();
@@ -30,23 +25,14 @@ public:
 
     void PointerMotion( double x, double y );
 
-    [[nodiscard]] const auto& OutputMap() const { return m_outputMap; }
-
 private:
-    void RegistryGlobal( wl_registry* reg, uint32_t name, const char* interface, uint32_t version ) override;
-    void RegistryGlobalRemove( wl_registry* reg, uint32_t name ) override;
-
-    void XdgWmPing( xdg_wm_base* shell, uint32_t serial );
-
     void OpenWindow( int physDev, uint32_t width, uint32_t height );
 
     void Close( WaylandWindow* );
     void Render( WaylandWindow* );
 
-    std::vector<std::unique_ptr<WaylandBackendWindow>> m_windows;
-    unordered_flat_map<uint32_t, std::unique_ptr<WaylandOutput>> m_outputMap;
-
-    bool m_keepRunning = true;
+    std::unique_ptr<WaylandDisplay> m_dpy;
+    std::vector<std::unique_ptr<WaylandWindow>> m_windows;
 
     std::function<void()> m_render;
 };

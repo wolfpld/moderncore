@@ -36,7 +36,7 @@ std::shared_ptr<GpuDevice> GetGpuDeviceForPhysicalDevice( VlkPhysicalDevice& dev
     auto& gpus = Server::Instance().Gpus();
     for( auto& gpu : gpus )
     {
-        if( *gpu->Device().GetPhysicalDevice() == dev )
+        if( *gpu->Device()->GetPhysicalDevice() == dev )
         {
             return gpu;
         }

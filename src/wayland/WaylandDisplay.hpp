@@ -17,7 +17,7 @@ class WaylandDisplay
 {
 public:
     WaylandDisplay();
-    virtual ~WaylandDisplay();
+    ~WaylandDisplay();
     NoCopy( WaylandDisplay );
 
     void Connect();
@@ -32,8 +32,8 @@ public:
     [[nodiscard]] wp_viewporter* Viewporter() { return m_viewporter; }
 
 protected:
-    virtual void RegistryGlobal( wl_registry* reg, uint32_t name, const char* interface, uint32_t version );
-    virtual void RegistryGlobalRemove( wl_registry* reg, uint32_t name );
+    void RegistryGlobal( wl_registry* reg, uint32_t name, const char* interface, uint32_t version );
+    void RegistryGlobalRemove( wl_registry* reg, uint32_t name );
 
 private:
     void RegistryGlobalShim( wl_registry* reg, uint32_t name, const char* interface, uint32_t version );

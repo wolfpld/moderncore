@@ -110,7 +110,7 @@ void WaylandWindow::Commit()
     wl_surface_commit( m_surface );
 }
 
-VlkCommandBuffer& WaylandWindow::BeginFrame( uint32_t& imageIdx )
+VlkCommandBuffer& WaylandWindow::BeginFrame()
 {
     auto& frame = m_frameData[m_frameIdx];
 
@@ -118,7 +118,6 @@ VlkCommandBuffer& WaylandWindow::BeginFrame( uint32_t& imageIdx )
     frame.fence->Reset();
 
     auto res = vkAcquireNextImageKHR( *m_vkDevice, *m_swapchain, UINT64_MAX, *frame.imageAvailable, VK_NULL_HANDLE, &m_imageIdx );
-    imageIdx = m_imageIdx;
 
     frame.commandBuffer->Reset();
     frame.commandBuffer->Begin( VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT );
@@ -168,6 +167,11 @@ void WaylandWindow::EndFrame()
     VkVerify( vkQueuePresentKHR( m_vkDevice->GetQueue( QueueType::Present ), &presentInfo ) );
 
     m_frameIdx = ( m_frameIdx + 1 ) % m_frameData.size();
+}
+
+VkImageView WaylandWindow::GetImageView()
+{
+    return m_swapchain->GetImageViews()[m_imageIdx];
 }
 
 void WaylandWindow::SetListener( const Listener* listener, void* listenerPtr )

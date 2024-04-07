@@ -96,7 +96,7 @@ DrmBuffer::DrmBuffer( DrmDevice& device, const drmModeModeInfo& mode, const std:
     imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
-    auto& dev = device.Gpu()->Device();
+    auto& dev = *device.Gpu()->Device();
     VkVerify( vkCreateImage( dev, &imageInfo, nullptr, &m_image ) );
 
     VkMemoryFdPropertiesKHR memFdProps = { VK_STRUCTURE_TYPE_MEMORY_FD_PROPERTIES_KHR };
@@ -145,7 +145,7 @@ DrmBuffer::DrmBuffer( DrmDevice& device, const drmModeModeInfo& mode, const std:
 
 DrmBuffer::~DrmBuffer()
 {
-    auto& dev = m_device.Gpu()->Device();
+    auto& dev = *m_device.Gpu()->Device();
     vkFreeMemory( dev, m_memory, nullptr );
     vkDestroyImage( dev, m_image, nullptr );
     drmModeRmFB( m_device.Descriptor(), m_kmsFb );
@@ -154,7 +154,7 @@ DrmBuffer::~DrmBuffer()
 
 int DrmBuffer::FindMemoryType( uint32_t typeBits, VkMemoryPropertyFlags properties )
 {
-    const auto& memProps = m_device.Gpu()->Device().GetPhysicalDevice()->MemoryProperties();
+    const auto& memProps = m_device.Gpu()->Device()->GetPhysicalDevice()->MemoryProperties();
     for( uint32_t i=0; i<memProps.memoryTypeCount; i++ )
     {
         if( (typeBits & (1 << i)) && (memProps.memoryTypes[i].propertyFlags & properties) == properties )

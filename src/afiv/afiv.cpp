@@ -23,8 +23,7 @@ std::shared_ptr<VlkDevice> g_vkDevice;
 
 void Render( void*, WaylandWindow* window )
 {
-    uint32_t imageIdx;
-    window->BeginFrame( imageIdx );
+    window->BeginFrame();
     window->EndFrame();
 }
 

@@ -172,7 +172,7 @@ bool DrmConnector::SetModeVulkan()
     for( auto mod : modifiers )
     {
         modInfo.drmFormatModifier = mod;
-        auto res = vkGetPhysicalDeviceImageFormatProperties2( m_device.Gpu()->Device(), &formatInfo, &prop );
+        auto res = vkGetPhysicalDeviceImageFormatProperties2( *m_device.Gpu()->Device(), &formatInfo, &prop );
         if( res == VK_ERROR_FORMAT_NOT_SUPPORTED ) continue;
         VkVerify( res );
         if( extProp.externalMemoryProperties.externalMemoryFeatures & VK_EXTERNAL_MEMORY_FEATURE_IMPORTABLE_BIT )

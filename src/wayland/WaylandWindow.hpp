@@ -38,7 +38,7 @@ public:
     };
 
     WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance );
-    virtual ~WaylandWindow();
+    ~WaylandWindow();
 
     NoCopy( WaylandWindow );
 
@@ -46,8 +46,10 @@ public:
     void SetTitle( const char* title );
     void Commit();
 
-    VlkCommandBuffer& BeginFrame( uint32_t& imageIdx );
+    VlkCommandBuffer& BeginFrame();
     void EndFrame();
+
+    VkImageView GetImageView();
 
     void SetListener( const Listener* listener, void* listenerPtr );
     void SetDevice( std::shared_ptr<VlkDevice> device, const VkExtent2D& extent );
@@ -55,9 +57,7 @@ public:
     [[nodiscard]] wl_surface* Surface() { return m_surface; }
     [[nodiscard]] xdg_toplevel* XdgToplevel() { return m_xdgToplevel; }
     [[nodiscard]] VkSurfaceKHR VkSurface() { return m_vkSurface; }
-
-protected:
-    [[nodiscard]] wp_fractional_scale_v1* FractionalScale() { return m_fractionalScale; }
+    [[nodiscard]] VlkDevice& Device() { return *m_vkDevice; }
 
 private:
     void XdgSurfaceConfigure( struct xdg_surface *xdg_surface, uint32_t serial );

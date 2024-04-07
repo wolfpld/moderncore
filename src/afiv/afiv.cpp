@@ -78,10 +78,13 @@ int main( int argc, char** argv )
         .OnClose = [] (void*, WaylandWindow*) { g_keepRunning = false; },
     };
 
-    g_waylandWindow = std::make_unique<WaylandWindow>( *g_waylandDisplay, *g_vkInstance );
-    g_waylandWindow->SetListener( &listener, nullptr );
-    g_waylandWindow->SetTitle( "AFIV" );
-    g_waylandWindow->SetAppId( "afiv" );
+    // Sync is being performed in InitPhysicalDevices
+    g_dispatch->Queue( [] {
+        g_waylandWindow = std::make_unique<WaylandWindow>( *g_waylandDisplay, *g_vkInstance );
+        g_waylandWindow->SetListener( &listener, nullptr );
+        g_waylandWindow->SetTitle( "AFIV" );
+        g_waylandWindow->SetAppId( "afiv" );
+    } );
 
     g_vkInstance->InitPhysicalDevices( *g_dispatch );
     const auto& devices = g_vkInstance->QueryPhysicalDevices();

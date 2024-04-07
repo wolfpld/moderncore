@@ -118,6 +118,8 @@ int main( int argc, char** argv )
         g_waylandWindow->SetListener( &listener, nullptr );
         g_waylandWindow->SetTitle( "AFIV" );
         g_waylandWindow->SetAppId( "afiv" );
+        g_waylandWindow->Commit();
+        g_waylandDisplay->Roundtrip();
     } );
 
     g_vkInstance->InitPhysicalDevices( *g_dispatch );

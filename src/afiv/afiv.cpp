@@ -95,5 +95,8 @@ int main( int argc, char** argv )
     g_vkDevice = std::make_shared<VlkDevice>( *g_vkInstance, best, VlkDevice::RequireGraphic | VlkDevice::RequirePresent, g_waylandWindow->VkSurface() );
     g_waylandWindow->SetDevice( g_vkDevice, VkExtent2D( 100, 100 ) );
 
+    g_waylandWindow->Commit();
+    g_waylandDisplay->Run();
+
     return 0;
 }

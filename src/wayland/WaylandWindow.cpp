@@ -243,8 +243,8 @@ void WaylandWindow::XdgSurfaceConfigure( struct xdg_surface *xdg_surface, uint32
 void WaylandWindow::XdgToplevelConfigure( struct xdg_toplevel* toplevel, int32_t width, int32_t height, struct wl_array* states )
 {
     if( width == 0 || height == 0 ) return;
-    m_stageWidth = width;
-    m_stageHeight = height;
+    m_stageWidth = width * m_scale / 120;
+    m_stageHeight = height * m_scale / 120;
 }
 
 void WaylandWindow::XdgToplevelClose( struct xdg_toplevel* toplevel )

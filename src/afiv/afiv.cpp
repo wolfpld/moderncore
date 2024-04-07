@@ -27,9 +27,9 @@ std::unique_ptr<Bitmap> g_bitmap;
 std::unique_ptr<Texture> g_texture;
 
 
-void Render( void*, WaylandWindow* window )
+void Render()
 {
-    auto& cmdbuf = window->BeginFrame( true );
+    auto& cmdbuf = g_waylandWindow->BeginFrame( true );
 
     g_texture->TransitionLayout( cmdbuf, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_ACCESS_TRANSFER_READ_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT );
 
@@ -37,11 +37,11 @@ void Render( void*, WaylandWindow* window )
         .srcSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 },
         .srcOffsets = { { 0, 0, 0 }, { int32_t( g_bitmap->Width() ), int32_t( g_bitmap->Height() ), 1 } },
         .dstSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 },
-        .dstOffsets = { { 0, 0, 0 }, { int32_t( window->GetExtent().width ), int32_t( window->GetExtent().height ), 1 } }
+        .dstOffsets = { { 0, 0, 0 }, { int32_t( g_waylandWindow->GetExtent().width ), int32_t( g_waylandWindow->GetExtent().height ), 1 } }
     };
     vkCmdBlitImage( cmdbuf, *g_texture, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, g_waylandWindow->GetImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region, VK_FILTER_NEAREST );
 
-    window->EndFrame();
+    g_waylandWindow->EndFrame();
 }
 
 int main( int argc, char** argv )
@@ -108,8 +108,7 @@ int main( int argc, char** argv )
 
     static constexpr WaylandWindow::Listener listener = {
         .OnClose = [] (void*, WaylandWindow*) { g_waylandDisplay->Stop(); },
-        .OnRender = Render,
-        .OnResize = [] (void*, WaylandWindow*, uint32_t width, uint32_t height) { g_waylandWindow->Resize( width, height ); }
+        .OnResize = [] (void*, WaylandWindow*, uint32_t width, uint32_t height) { g_waylandWindow->Resize( width, height ); Render(); }
     };
 
     // Sync is being performed in InitPhysicalDevices
@@ -136,7 +135,8 @@ int main( int argc, char** argv )
 
     g_texture = std::make_unique<Texture>( *g_vkDevice, *g_bitmap, VK_FORMAT_R8G8B8A8_SRGB );
 
-    g_waylandWindow->Commit( true );
+    Render();
+    g_waylandWindow->Commit();
     g_waylandDisplay->Run();
 
     return 0;

@@ -6,6 +6,7 @@
 #include <wayland-client.h>
 
 #include "util/NoCopy.hpp"
+#include "vulkan/VlkSwapchain.hpp"
 
 #include "xdg-decoration-unstable-v1-client-protocol.h"
 #include "xdg-shell-client-protocol.h"
@@ -17,7 +18,6 @@ class VlkDevice;
 class VlkFence;
 class VlkInstance;
 class VlkSemaphore;
-class VlkSwapchain;
 class WaylandDisplay;
 
 class WaylandWindow
@@ -55,6 +55,8 @@ public:
 
     void SetListener( const Listener* listener, void* listenerPtr );
     void SetDevice( std::shared_ptr<VlkDevice> device, const VkExtent2D& extent );
+
+    [[nodiscard]] const VkExtent2D& GetExtent() const { return m_swapchain->GetExtent(); }
 
     [[nodiscard]] wl_surface* Surface() { return m_surface; }
     [[nodiscard]] xdg_toplevel* XdgToplevel() { return m_xdgToplevel; }

@@ -22,19 +22,16 @@ WaylandWindow::WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance )
     m_surface = wl_compositor_create_surface( display.Compositor() );
     CheckPanic( m_surface, "Failed to create Wayland surface" );
 
-    if( display.FractionalScaleManager() && display.Viewporter() )
-    {
-        static constexpr wp_fractional_scale_v1_listener listener = {
-            .preferred_scale = Method( FractionalScalePreferredScale )
-        };
+    static constexpr wp_fractional_scale_v1_listener listener = {
+        .preferred_scale = Method( FractionalScalePreferredScale )
+    };
 
-        m_fractionalScale = wp_fractional_scale_manager_v1_get_fractional_scale( display.FractionalScaleManager(), m_surface );
-        CheckPanic( m_fractionalScale, "Failed to create Wayland fractional scale" );
-        wp_fractional_scale_v1_add_listener( m_fractionalScale, &listener, this );
+    m_fractionalScale = wp_fractional_scale_manager_v1_get_fractional_scale( display.FractionalScaleManager(), m_surface );
+    CheckPanic( m_fractionalScale, "Failed to create Wayland fractional scale" );
+    wp_fractional_scale_v1_add_listener( m_fractionalScale, &listener, this );
 
-        m_viewport = wp_viewporter_get_viewport( display.Viewporter(), m_surface );
-        CheckPanic( m_viewport, "Failed to create Wayland viewport" );
-    }
+    m_viewport = wp_viewporter_get_viewport( display.Viewporter(), m_surface );
+    CheckPanic( m_viewport, "Failed to create Wayland viewport" );
 
     static constexpr xdg_surface_listener xdgSurfaceListener = {
         .configure = Method( XdgSurfaceConfigure )
@@ -82,8 +79,8 @@ WaylandWindow::~WaylandWindow()
 {
     if( m_swapchain ) m_swapchain.reset();
     vkDestroySurfaceKHR( m_vkInstance, m_vkSurface, nullptr );
-    if( m_viewport ) wp_viewport_destroy( m_viewport );
-    if( m_fractionalScale ) wp_fractional_scale_v1_destroy( m_fractionalScale );
+    wp_viewport_destroy( m_viewport );
+    wp_fractional_scale_v1_destroy( m_fractionalScale );
     if( m_xdgToplevelDecoration ) zxdg_toplevel_decoration_v1_destroy( m_xdgToplevelDecoration );
     xdg_toplevel_destroy( m_xdgToplevel );
     xdg_surface_destroy( m_xdgSurface );

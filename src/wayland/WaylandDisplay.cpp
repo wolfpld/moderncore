@@ -41,6 +41,8 @@ void WaylandDisplay::Connect()
     CheckPanic( m_compositor, "Failed to create Wayland compositor" );
     CheckPanic( m_xdgWmBase, "Failed to create Wayland xdg_wm_base" );
     CheckPanic( m_seat, "Failed to create Wayland seat" );
+    CheckPanic( m_viewporter, "Failed to create Wayland viewporter" );
+    CheckPanic( m_fractionalScaleManager, "Failed to create Wayland fractional scale manager" );
 }
 
 void WaylandDisplay::Run()

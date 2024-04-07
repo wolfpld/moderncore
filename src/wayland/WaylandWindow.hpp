@@ -35,6 +35,7 @@ public:
     {
         void (*OnClose)( void* ptr, WaylandWindow* window );
         void (*OnRender)( void* ptr, WaylandWindow* window );
+        void (*OnScale)( void* ptr, WaylandWindow* window, uint32_t scale );
     };
 
     WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance );
@@ -89,4 +90,7 @@ private:
     std::vector<FrameData> m_frameData;
     uint32_t m_frameIdx = 0;
     uint32_t m_imageIdx;
+
+    uint32_t m_scale = 120;
+    uint32_t m_prevScale = 120;
 };

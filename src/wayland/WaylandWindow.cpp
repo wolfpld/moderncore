@@ -112,6 +112,14 @@ void WaylandWindow::Commit()
 
 VlkCommandBuffer& WaylandWindow::BeginFrame()
 {
+    if( m_scale != m_prevScale )
+    {
+        m_prevScale = m_scale;
+        const auto& extent = m_swapchain->GetExtent();
+        wp_viewport_set_source( m_viewport, 0, 0, wl_fixed_from_double( extent.width * m_scale / 120. ), wl_fixed_from_double( extent.height * m_scale / 120. ) );
+        wp_viewport_set_destination( m_viewport, extent.width, extent.height );
+    }
+
     auto& frame = m_frameData[m_frameIdx];
 
     frame.fence->Wait();
@@ -219,9 +227,9 @@ void WaylandWindow::DecorationConfigure( zxdg_toplevel_decoration_v1* tldec, uin
 
 void WaylandWindow::FractionalScalePreferredScale( wp_fractional_scale_v1* scale, uint32_t scaleValue )
 {
-    //mclog( LogLevel::Info, "Window %i scale: %g", m_id, scaleValue / 120.f );
-    wp_viewport_set_source( m_viewport, 0, 0, wl_fixed_from_int( 1650 ), wl_fixed_from_int( 1050 ) );
-    wp_viewport_set_destination( m_viewport, 1650 * 120 / scaleValue, 1050 * 120 / scaleValue );
+    if( m_scale == scaleValue ) return;
+    m_scale = scaleValue;
+    Invoke( OnScale, this, scaleValue );
 }
 
 void WaylandWindow::FrameDone( struct wl_callback* cb, uint32_t time )

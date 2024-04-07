@@ -99,6 +99,8 @@ void WaylandWindow::SetTitle( const char* title )
 
 void WaylandWindow::Commit()
 {
+    CheckPanic( m_listener, "Listener not set" );
+    CheckPanic( m_vkDevice, "Vulkan device not set" );
     wl_surface_commit( m_surface );
 }
 

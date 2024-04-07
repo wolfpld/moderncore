@@ -7,6 +7,7 @@
 #include "util/Logs.hpp"
 #include "util/Panic.hpp"
 #include "util/TaskDispatch.hpp"
+#include "vulkan/VlkCommandBuffer.hpp"
 #include "vulkan/VlkDevice.hpp"
 #include "vulkan/VlkInstance.hpp"
 #include "vulkan/ext/PhysDevSel.hpp"
@@ -23,7 +24,28 @@ std::shared_ptr<VlkDevice> g_vkDevice;
 
 void Render( void*, WaylandWindow* window )
 {
-    window->BeginFrame();
+    auto& cmdbuf = window->BeginFrame();
+
+    VkRenderingAttachmentInfo attachmentInfo = {
+        .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+        .imageView = window->GetImageView(),
+        .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+        .clearValue = {{{ 0.25f, 0.25f, 0.25f, 1.0f }}}
+    };
+
+    VkRenderingInfo renderingInfo = {
+        .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+        .renderArea = { { 0, 0 }, { 100, 100 } },
+        .layerCount = 1,
+        .colorAttachmentCount = 1,
+        .pColorAttachments = &attachmentInfo
+    };
+
+    vkCmdBeginRendering( cmdbuf, &renderingInfo );
+    vkCmdEndRendering( cmdbuf );
+
     window->EndFrame();
 }
 

@@ -301,6 +301,6 @@ executable('afiv',
     afiv_src,
     link_with: [mcoreutil, mcorevulkan, mcorewayland],
     include_directories: incdir,
-    dependencies: tracy,
+    dependencies: [tracy, vulkan],
     install: true
 )

@@ -102,7 +102,8 @@ int main( int argc, char** argv )
 
     static constexpr WaylandWindow::Listener listener = {
         .OnClose = [] (void*, WaylandWindow*) { g_waylandDisplay->Stop(); },
-        .OnRender = Render
+        .OnRender = Render,
+        .OnResize = [] (void*, WaylandWindow*, uint32_t width, uint32_t height) { g_waylandWindow->Resize( width, height ); }
     };
 
     // Sync is being performed in InitPhysicalDevices

@@ -11,6 +11,8 @@
 #include "vulkan/VlkFence.hpp"
 
 Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format )
+    : m_layout( VK_IMAGE_LAYOUT_UNDEFINED )
+    , m_access( VK_ACCESS_NONE )
 {
     VkImageCreateInfo imageInfo = { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
     imageInfo.imageType = VK_IMAGE_TYPE_2D;
@@ -56,18 +58,7 @@ Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format )
     if( tracyCtx ) ZoneVkNew( tracyCtx, tracyScope, *cmdBuf, "Texture upload", true );
 #endif
 
-    VkImageMemoryBarrier barrier = { VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
-    barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    barrier.image = *m_image;
-    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    barrier.subresourceRange.levelCount = 1;
-    barrier.subresourceRange.layerCount = 1;
-    barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-
-    vkCmdPipelineBarrier( *cmdBuf, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier );
+    TransitionLayout( *cmdBuf, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT );
 
     VkBufferImageCopy region = {};
     region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -78,12 +69,7 @@ Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format )
 
     vkCmdCopyBufferToImage( *cmdBuf, *stagingBuffer, *m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region );
 
-    barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-    barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-    barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-    vkCmdPipelineBarrier( *cmdBuf, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier );
+    TransitionLayout( *cmdBuf, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT );
 
 #ifdef TRACY_ENABLE
     delete tracyScope;
@@ -94,4 +80,26 @@ Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format )
     VlkFence fence( device );
     device.Submit( *cmdBuf, fence );
     fence.Wait();
+}
+
+void Texture::TransitionLayout( VkCommandBuffer cmdBuf, VkImageLayout layout, VkAccessFlagBits access, VkPipelineStageFlagBits src, VkPipelineStageFlagBits dst )
+{
+    if( m_layout == layout && m_access == access ) return;
+
+    VkImageMemoryBarrier barrier = { VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER };
+    barrier.oldLayout = m_layout;
+    barrier.newLayout = layout;
+    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.image = *m_image;
+    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    barrier.subresourceRange.levelCount = 1;
+    barrier.subresourceRange.layerCount = 1;
+    barrier.srcAccessMask = m_access;
+    barrier.dstAccessMask = access;
+
+    vkCmdPipelineBarrier( cmdBuf, src, dst, 0, 0, nullptr, 0, nullptr, 1, &barrier );
+
+    m_layout = layout;
+    m_access = access;
 }

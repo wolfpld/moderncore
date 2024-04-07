@@ -52,6 +52,7 @@ public:
     VlkCommandBuffer& BeginFrame();
     void EndFrame();
 
+    VkImage GetImage();
     VkImageView GetImageView();
 
     void SetListener( const Listener* listener, void* listenerPtr );

@@ -17,6 +17,7 @@ public:
 
     NoCopy( Texture );
 
+    operator VkImage() const { return *m_image; }
     operator VkImageView() const { return *m_imageView; }
 
 private:

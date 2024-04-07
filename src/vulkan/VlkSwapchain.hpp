@@ -22,6 +22,7 @@ public:
 
     [[nodiscard]] VkFormat GetFormat() const { return m_format.format; }
     [[nodiscard]] const VkExtent2D& GetExtent() const { return m_extent; }
+    [[nodiscard]] const std::vector<VkImage>& GetImages() const { return m_images; }
     [[nodiscard]] const std::vector<VkImageView>& GetImageViews() const { return m_imageViews; }
 
     operator VkSwapchainKHR() const { return m_swapchain; }

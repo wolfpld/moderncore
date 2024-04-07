@@ -182,6 +182,11 @@ void WaylandWindow::EndFrame()
     m_frameIdx = ( m_frameIdx + 1 ) % m_frameData.size();
 }
 
+VkImage WaylandWindow::GetImage()
+{
+    return m_swapchain->GetImages()[m_imageIdx];
+}
+
 VkImageView WaylandWindow::GetImageView()
 {
     return m_swapchain->GetImageViews()[m_imageIdx];

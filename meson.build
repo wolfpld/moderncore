@@ -112,6 +112,7 @@ mcoreutil = library('mcoreutil',
 
 mcoreimage_src = [
     'src/image/bcdec.c',
+    'src/image/DdsLoader.cpp',
     'src/image/HeifLoader.cpp',
     'src/image/ImageLoader.cpp',
     'src/image/JpgLoader.cpp',

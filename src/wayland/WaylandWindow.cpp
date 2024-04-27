@@ -78,6 +78,7 @@ WaylandWindow::WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance )
 
 WaylandWindow::~WaylandWindow()
 {
+    for( auto& frame : m_frameData ) frame.fence->Wait();
     if( m_swapchain ) m_swapchain.reset();
     vkDestroySurfaceKHR( m_vkInstance, m_vkSurface, nullptr );
     wp_viewport_destroy( m_viewport );

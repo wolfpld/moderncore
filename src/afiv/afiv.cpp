@@ -142,5 +142,7 @@ int main( int argc, char** argv )
     g_waylandWindow->Commit();
     g_waylandDisplay->Run();
 
+    g_waylandWindow.reset();
+
     return 0;
 }

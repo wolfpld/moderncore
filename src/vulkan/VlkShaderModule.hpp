@@ -2,10 +2,11 @@
 
 #include <vulkan/vulkan.h>
 
+#include "VlkBase.hpp"
 #include "util/DataContainer.hpp"
 #include "util/NoCopy.hpp"
 
-class VlkShaderModule
+class VlkShaderModule : public VlkBase
 {
 public:
     template<DataContainer T>

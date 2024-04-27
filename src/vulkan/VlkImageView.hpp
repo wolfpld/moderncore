@@ -2,9 +2,10 @@
 
 #include <vulkan/vulkan.h>
 
+#include "VlkBase.hpp"
 #include "util/NoCopy.hpp"
 
-class VlkImageView
+class VlkImageView : public VlkBase
 {
 public:
     VlkImageView( VkDevice device, const VkImageViewCreateInfo& createInfo );

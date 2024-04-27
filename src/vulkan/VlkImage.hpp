@@ -2,10 +2,11 @@
 
 #include <vulkan/vulkan.h>
 
+#include "VlkBase.hpp"
 #include "contrib/vk_mem_alloc.h"
 #include "util/NoCopy.hpp"
 
-class VlkImage
+class VlkImage : public VlkBase
 {
 public:
     VlkImage( VmaAllocator allocator, const VkImageCreateInfo& createInfo );

@@ -2,10 +2,11 @@
 
 #include <vulkan/vulkan.h>
 
+#include "VlkBase.hpp"
 #include "contrib/vk_mem_alloc.h"
 #include "util/NoCopy.hpp"
 
-class VlkBuffer
+class VlkBuffer : public VlkBase
 {
 public:
     enum Flags

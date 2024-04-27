@@ -2,10 +2,11 @@
 
 #include <vulkan/vulkan.h>
 
+#include "VlkBase.hpp"
 #include "VlkCommandPool.hpp"
 #include "util/NoCopy.hpp"
 
-class VlkCommandBuffer
+class VlkCommandBuffer : public VlkBase
 {
 public:
     explicit VlkCommandBuffer( const VlkCommandPool& pool, bool primary = true );

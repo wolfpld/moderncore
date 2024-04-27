@@ -2,9 +2,10 @@
 
 #include <vulkan/vulkan.h>
 
+#include "VlkBase.hpp"
 #include "util/NoCopy.hpp"
 
-class VlkPipeline
+class VlkPipeline : public VlkBase
 {
 public:
     VlkPipeline( VkDevice device, const VkGraphicsPipelineCreateInfo& createInfo );

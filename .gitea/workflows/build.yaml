@@ -4,10 +4,14 @@ on: [push]
 
 jobs:
   build:
-    runs-on: arch-latest
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:base-devel
     steps:
     - name: Install dependencies
-      run: pacman -Syu --noconfirm && pacman -S --noconfirm --needed nodejs git clang meson shaderc vulkan-validation-layers vulkan-utility-libraries wayland wayland-protocols libxkbcommon glm libpng libjpeg-turbo libjxl libwebp libheif systemd-libs libdrm libdisplay-info mesa gtest cmake
+      run: |
+        pacman -Syu --noconfirm
+        pacman -S --noconfirm --needed nodejs git clang meson shaderc vulkan-validation-layers vulkan-utility-libraries wayland wayland-protocols libxkbcommon glm libpng libjpeg-turbo libjxl libwebp libheif systemd-libs libdrm libdisplay-info mesa gtest cmake
     - uses: actions/checkout@v3
     - run: meson setup --buildtype release build
       env:

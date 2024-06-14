@@ -26,7 +26,7 @@ public:
     void PointerMotion( double x, double y );
 
 private:
-    void OpenWindow( int physDev, uint32_t width, uint32_t height );
+    void OpenWindow( int physDev, uint32_t width, uint32_t height, const char* title );
 
     void Close( WaylandWindow* );
     void Render( WaylandWindow* );

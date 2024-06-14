@@ -42,7 +42,7 @@ void BackendWayland::VulkanInit()
             if( !config.GetOpt( section.c_str(), "PhysicalDevice", physDev ) ) break;
             width = config.Get( section.c_str(), "Width", 1650u );
             height = config.Get( section.c_str(), "Height", 1050u );
-            OpenWindow( physDev, width, height );
+            OpenWindow( physDev, width, height, section.c_str() );
             windowAdded = true;
             idx++;
         }
@@ -50,7 +50,7 @@ void BackendWayland::VulkanInit()
     }
     else
     {
-        OpenWindow( -1, 1650, 1050 );
+        OpenWindow( -1, 1650, 1050, "ModernCore" );
     }
 }
 
@@ -75,7 +75,7 @@ void BackendWayland::PointerMotion( double x, double y )
     //m_window->PointerMotion( x * m_scale, y * m_scale );
 }
 
-void BackendWayland::OpenWindow( int physDev, uint32_t width, uint32_t height )
+void BackendWayland::OpenWindow( int physDev, uint32_t width, uint32_t height, const char* title )
 {
     auto& server = Server::Instance();
     auto& vkInstance = server.VkInstance();
@@ -115,6 +115,7 @@ void BackendWayland::OpenWindow( int physDev, uint32_t width, uint32_t height )
 
     window->SetListener( &listener, this );
     window->SetDevice( gpu->Device(), VkExtent2D{ width, height } );
+    window->SetTitle( title );
     m_windows.emplace_back( std::move( window ) );
 }
 

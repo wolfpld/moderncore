@@ -52,6 +52,8 @@ void BackendWayland::VulkanInit()
     {
         OpenWindow( -1, 1650, 1050, "ModernCore" );
     }
+
+    m_dpy->Roundtrip();
 }
 
 void BackendWayland::Run()

@@ -58,6 +58,7 @@ void BackendWayland::VulkanInit()
 
 void BackendWayland::Run()
 {
+    for( auto& window : m_windows ) window->InvokeRender();
     m_dpy->Run();
 }
 

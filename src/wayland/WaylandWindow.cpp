@@ -217,6 +217,11 @@ void WaylandWindow::SetDevice( std::shared_ptr<VlkDevice> device, const VkExtent
     CreateSwapchain( extent );
 }
 
+void WaylandWindow::InvokeRender()
+{
+    Invoke( OnRender, this );
+}
+
 void WaylandWindow::CreateSwapchain( const VkExtent2D& extent )
 {
     m_swapchain.reset();

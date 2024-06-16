@@ -58,6 +58,8 @@ public:
     void SetListener( const Listener* listener, void* listenerPtr );
     void SetDevice( std::shared_ptr<VlkDevice> device, const VkExtent2D& extent );
 
+    void InvokeRender();
+
     [[nodiscard]] const VkExtent2D& GetExtent() const { return m_swapchain->GetExtent(); }
 
     [[nodiscard]] wl_surface* Surface() { return m_surface; }

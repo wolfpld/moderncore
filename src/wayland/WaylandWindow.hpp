@@ -61,6 +61,7 @@ public:
     void InvokeRender();
 
     [[nodiscard]] const VkExtent2D& GetExtent() const { return m_swapchain->GetExtent(); }
+    [[nodiscard]] const char* GetTitle() const { return m_title.c_str(); }
 
     [[nodiscard]] wl_surface* Surface() { return m_surface; }
     [[nodiscard]] xdg_toplevel* XdgToplevel() { return m_xdgToplevel; }
@@ -105,4 +106,6 @@ private:
 
     uint32_t m_stageWidth = 0;
     uint32_t m_stageHeight = 0;
+
+    std::string m_title;
 };

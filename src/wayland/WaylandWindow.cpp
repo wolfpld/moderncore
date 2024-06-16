@@ -96,6 +96,7 @@ void WaylandWindow::SetAppId( const char* appId )
 
 void WaylandWindow::SetTitle( const char* title )
 {
+    m_title = title;
     xdg_toplevel_set_title( m_xdgToplevel, title );
 }
 

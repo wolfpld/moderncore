@@ -31,8 +31,6 @@ public:
     [[nodiscard]] auto& Renderables() const { return m_renderables; }
 
 private:
-    void Render();
-
     void SetupGpus( bool skipSoftware );
     void InitConnectorsInRenderables();
 

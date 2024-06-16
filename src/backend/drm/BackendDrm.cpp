@@ -194,7 +194,7 @@ void BackendDrm::VulkanInit()
     }
 }
 
-void BackendDrm::Run( const std::function<void()>& render )
+void BackendDrm::Run()
 {
 }
 

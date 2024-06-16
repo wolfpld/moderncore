@@ -54,14 +54,8 @@ void BackendWayland::VulkanInit()
     }
 }
 
-void BackendWayland::Run( const std::function<void()>& render )
+void BackendWayland::Run()
 {
-    m_render = render;
-    for( auto& window : m_windows )
-    {
-        m_render();
-        window->Commit();
-    }
     m_dpy->Run();
 }
 

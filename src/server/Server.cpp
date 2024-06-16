@@ -95,13 +95,7 @@ Server& Server::Instance()
 
 void Server::Run()
 {
-    m_backend->Run( [this]{ Render(); } );
-}
-
-void Server::Render()
-{
-    ZoneScoped;
-    for( auto& gpu : m_gpus ) gpu->Render();
+    m_backend->Run();
 }
 
 void Server::SetupGpus( bool skipSoftware )

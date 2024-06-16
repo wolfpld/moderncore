@@ -20,7 +20,7 @@ public:
 
     void VulkanInit() override;
 
-    void Run( const std::function<void()>& render ) override;
+    void Run() override;
     void Stop() override;
 
 private:

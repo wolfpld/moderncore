@@ -1,6 +1,5 @@
 #pragma once
 
-#include <functional>
 #include <memory>
 #include <stdint.h>
 
@@ -20,7 +19,7 @@ public:
 
     void VulkanInit() override;
 
-    void Run( const std::function<void()>& render ) override;
+    void Run() override;
     void Stop() override;
 
     void PointerMotion( double x, double y );
@@ -33,6 +32,4 @@ private:
 
     std::unique_ptr<WaylandDisplay> m_dpy;
     std::vector<std::unique_ptr<WaylandWindow>> m_windows;
-
-    std::function<void()> m_render;
 };

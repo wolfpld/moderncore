@@ -128,6 +128,8 @@ void BackendWayland::Render( WaylandWindow* window )
 {
     auto& cmdbuf = window->BeginFrame();
 
+    const auto& extent = window->GetExtent();
+
     VkRenderingAttachmentInfo attachmentInfo = {
         .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
         .imageView = window->GetImageView(),
@@ -137,10 +139,9 @@ void BackendWayland::Render( WaylandWindow* window )
         .clearValue = {{{ 0.25f, 0.25f, 0.25f, 1.0f }}}
     };
 
-    // TODO
     VkRenderingInfo renderingInfo = {
         .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
-        .renderArea = { { 0, 0 }, { 1680, 1050 } },
+        .renderArea = { { 0, 0 }, extent },
         .layerCount = 1,
         .colorAttachmentCount = 1,
         .pColorAttachments = &attachmentInfo

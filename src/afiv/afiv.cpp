@@ -139,7 +139,6 @@ int main( int argc, char** argv )
 
     g_ready = true;
     Render();
-    g_waylandWindow->Commit();
     g_waylandDisplay->Run();
 
     g_waylandWindow.reset();

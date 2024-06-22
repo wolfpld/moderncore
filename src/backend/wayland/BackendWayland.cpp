@@ -114,6 +114,7 @@ void BackendWayland::OpenWindow( int physDev, uint32_t width, uint32_t height, c
     window->SetDevice( gpu->Device(), VkExtent2D{ width, height } );
     window->SetTitle( title );
     window->SetAppId( "ModernCore" );
+    window->LockSize();
     window->Commit();
     m_windows.emplace_back( std::move( window ) );
 }

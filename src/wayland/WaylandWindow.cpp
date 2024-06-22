@@ -108,6 +108,15 @@ void WaylandWindow::Resize( uint32_t width, uint32_t height )
     m_prevScale = 0;
 }
 
+void WaylandWindow::LockSize()
+{
+    CheckPanic( m_swapchain, "Swapchain not created" );
+
+    const auto& extent = m_swapchain->GetExtent();
+    xdg_toplevel_set_min_size( m_xdgToplevel, extent.width, extent.height );
+    xdg_toplevel_set_max_size( m_xdgToplevel, extent.width, extent.height );
+}
+
 void WaylandWindow::Commit( bool render )
 {
     if( render )

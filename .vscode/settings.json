@@ -1,3 +1,7 @@
 {
-    "mesonbuild.configureOnOpen": true
+    "cmake.configureOnOpen": true,
+    "cmake.options.advanced": {
+        "folder": { "statusBarVisibility": "visible" },
+        "variant": { "statusBarVisibility": "compact" }
+    }
 }

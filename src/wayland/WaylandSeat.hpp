@@ -5,7 +5,7 @@
 
 #include "util/NoCopy.hpp"
 
-#include "cursor-shape-v1-client-protocol.h"
+#include "wayland-cursor-shape-client-protocol.h"
 
 class WaylandDisplay;
 class WaylandKeyboard;

@@ -2,7 +2,7 @@
     "recommendations": [
         "llvm-vs-code-extensions.vscode-clangd",
         "vadimcn.vscode-lldb",
-        "mesonbuild.mesonbuild",
-        "slevesque.shader"
+        "slevesque.shader",
+        "ms-vscode.cmake-tools"
     ]
 }

@@ -1,22 +1,14 @@
 {
-    // Użyj funkcji IntelliSense, aby uzyskać informacje o możliwych atrybutach.
-    // Najedź kursorem, aby wyświetlić opisy istniejących atrybutów.
-    // Aby uzyskać więcej informacji, odwiedź stronę: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Launch",
             "type": "lldb",
             "request": "launch",
-            "name": "Debug",
-            "envFile": "${workspaceFolder}/${config:mesonbuild.buildFolder}/meson-vscode.env",
-            "program": "${workspaceFolder}/${config:mesonbuild.buildFolder}/mcore",
-            "cwd": "${workspaceFolder}/${config:mesonbuild.buildFolder}",
+            "program": "${command:cmake.launchTargetPath}",
             "args": ["-ds"],
-            "preLaunchTask": "Meson: Build all targets",
-            "env": {
-                //"WAYLAND_DISPLAY": "wayland-0"
-            },
-            "postDebugTask": "postdebugKillTerminal"
+            "cwd": "${config:cmake.buildDirectory}",
+            "terminal": "console"
         }
     ]
 }

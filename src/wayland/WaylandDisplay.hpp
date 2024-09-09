@@ -5,11 +5,11 @@
 
 #include "util/NoCopy.hpp"
 
-#include "cursor-shape-v1-client-protocol.h"
-#include "fractional-scale-v1-client-protocol.h"
-#include "viewporter-client-protocol.h"
-#include "xdg-decoration-unstable-v1-client-protocol.h"
-#include "xdg-shell-client-protocol.h"
+#include "wayland-cursor-shape-client-protocol.h"
+#include "wayland-fractional-scale-client-protocol.h"
+#include "wayland-viewporter-client-protocol.h"
+#include "wayland-xdg-decoration-client-protocol.h"
+#include "wayland-xdg-shell-client-protocol.h"
 
 class WaylandSeat;
 

@@ -19,6 +19,7 @@ CPMAddPackage(
     NAME tracy
     GITHUB_REPOSITORY wolfpld/tracy
     GIT_TAG master
+    EXCLUDE_FROM_ALL TRUE
 )
 
 find_program(GLSLC glslc)

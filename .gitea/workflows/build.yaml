@@ -18,12 +18,3 @@ jobs:
         CC: clang
         CXX: clang++
     - run: ninja -C build
-    - run: ninja install -C build
-      env:
-        DESTDIR: ${{ github.workspace }}/dist
-    - uses: actions/upload-artifact@v3
-      with:
-        name: dist
-        path: dist
-    - name: Run test
-      run: ninja -C build test

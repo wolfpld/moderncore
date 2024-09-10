@@ -1,5 +1,6 @@
 #include <getopt.h>
 
+#include "GitRef.hpp"
 #include "server/Server.hpp"
 #include "util/Ansi.hpp"
 #include "util/ArgParser.hpp"
@@ -73,6 +74,7 @@ int main( int argc, char** argv )
     }
 
     printf( "Starting " ANSI_BOLD ANSI_ITALIC "Modern Core" ANSI_RESET "…\n\n" );
+    printf( "Build id: %s\n\n", GitRef );
 
     Server server( enableValidation );
     server.Run();

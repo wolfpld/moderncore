@@ -1,9 +1,9 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
+#include <vk_mem_alloc.h>
 
 #include "VlkBase.hpp"
-#include "contrib/vk_mem_alloc.h"
 #include "util/NoCopy.hpp"
 
 class VlkImage : public VlkBase

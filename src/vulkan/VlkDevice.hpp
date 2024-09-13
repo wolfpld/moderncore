@@ -5,10 +5,10 @@
 #include <stdexcept>
 #include <vulkan/vulkan.h>
 #include <tracy/TracyVulkan.hpp>
+#include <vk_mem_alloc.h>
 
 #include "VlkPhysicalDevice.hpp"
 #include "VlkQueueType.hpp"
-#include "contrib/vk_mem_alloc.h"
 #include "util/NoCopy.hpp"
 #include "util/Panic.hpp"
 

@@ -22,6 +22,13 @@ CPMAddPackage(
     EXCLUDE_FROM_ALL TRUE
 )
 
+CPMAddPackage(
+    NAME vma
+    GITHUB_REPOSITORY GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
+    GIT_TAG v3.1.0
+    EXCLUDE_FROM_ALL TRUE
+)
+
 find_program(GLSLC glslc)
 
 pkg_check_modules(DISPLAYINFO REQUIRED libdisplay-info)
@@ -145,6 +152,7 @@ target_link_libraries(mcorevulkan PRIVATE
 )
 target_link_libraries(mcorevulkan PUBLIC
     ${VULKAN_LIBRARIES}
+    GPUOpen::VulkanMemoryAllocator
 )
 target_include_directories(mcorevulkan PUBLIC
     ${VULKAN_INCLUDE_DIRS}

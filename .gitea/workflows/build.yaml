@@ -11,7 +11,7 @@ jobs:
     - name: Install dependencies
       run: |
         pacman -Syu --noconfirm
-        pacman -S --noconfirm --needed nodejs git clang cmake ninja shaderc vulkan-validation-layers vulkan-utility-libraries wayland wayland-protocols libxkbcommon glm libpng libjpeg-turbo libjxl libwebp libheif systemd-libs libdrm libdisplay-info mesa python
+        pacman -S --noconfirm --needed nodejs git clang cmake ninja shaderc vulkan-validation-layers vulkan-utility-libraries wayland wayland-protocols libxkbcommon glm libpng libjpeg-turbo libjxl libwebp libheif systemd-libs libdrm libdisplay-info mesa python mold
     - uses: actions/checkout@v3
     - run: cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Release
       env:

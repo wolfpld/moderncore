@@ -9,7 +9,6 @@
 #include "backend/wayland/BackendWayland.hpp"
 #include "dbus/DbusSession.hpp"
 #include "plumbing/Display.hpp"
-#include "render/Background.hpp"
 #include "util/Logs.hpp"
 #include "util/Panic.hpp"
 #include "util/TaskDispatch.hpp"
@@ -76,10 +75,6 @@ Server::Server( bool enableValidation )
 
     m_dpy = std::make_unique<Display>();
     setenv( "WAYLAND_DISPLAY", m_dpy->Socket(), 1 );
-
-    m_renderables.emplace_back( std::make_shared<Background>() );
-
-    InitConnectorsInRenderables();
 }
 
 Server::~Server()
@@ -143,21 +138,4 @@ void Server::SetupGpus( bool skipSoftware )
             mclog( LogLevel::Info, "Skipping software device: %s", props.deviceName );
         }
     }
-}
-
-void Server::InitConnectorsInRenderables()
-{
-    for( auto& renderable : m_renderables )
-    {
-        for( auto& gpu : m_gpus )
-        {
-            for( auto& connector : gpu->Connectors() )
-            {
-                m_dispatch->Queue( [renderable, connector] {
-                    renderable->AddConnector( *connector );
-                } );
-            }
-        }
-    }
-    m_dispatch->Sync();
 }

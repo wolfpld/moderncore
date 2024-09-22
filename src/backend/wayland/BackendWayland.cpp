@@ -4,7 +4,6 @@
 
 #include "BackendWayland.hpp"
 #include "server/GpuDevice.hpp"
-#include "server/Renderable.hpp"
 #include "server/Server.hpp"
 #include "util/Config.hpp"
 #include "util/Invoke.hpp"

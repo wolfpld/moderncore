@@ -50,8 +50,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_LIST_DIR} ${CMAK
 
 if(TRACY_ENABLE)
     add_definitions(-DTRACY_ENABLE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O3 -fno-omit-frame-pointer")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O3 -fno-omit-frame-pointer")
+    add_compile_options(-g -O3 -fno-omit-frame-pointer)
 endif()
 
 add_custom_target(git-ref

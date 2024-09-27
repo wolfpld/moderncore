@@ -9,3 +9,5 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
         add_compile_options(-fno-eliminate-unused-debug-types)
     endif()
 endif()
+
+set(CMAKE_COLOR_DIAGNOSTICS ON)

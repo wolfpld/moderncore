@@ -5,14 +5,14 @@ option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
 set(CMAKE_CXX_STANDARD 20)
 
+project(ModernCore
+    LANGUAGES C CXX
+)
+
 include(FindPkgConfig)
 include(cmake/config.cmake)
 include(cmake/CPM.cmake)
 include(cmake/FindWaylandScanner.cmake)
-
-project(ModernCore
-    LANGUAGES C CXX
-)
 
 CPMAddPackage(
     NAME tracy

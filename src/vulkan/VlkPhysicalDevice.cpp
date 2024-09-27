@@ -65,6 +65,11 @@ bool VlkPhysicalDevice::HasCalibratedTimestamps() const
     return IsExtensionAvailable( VK_EXT_CALIBRATED_TIMESTAMPS_EXTENSION_NAME );
 }
 
+bool VlkPhysicalDevice::HasPciBusInfo() const
+{
+    return IsExtensionAvailable( VK_EXT_PCI_BUS_INFO_EXTENSION_NAME );
+}
+
 bool VlkPhysicalDevice::IsExtensionAvailable( const char* extensionName ) const
 {
     ZoneScoped;

@@ -23,6 +23,7 @@ public:
     [[nodiscard]] bool HasPushDescriptor() const;
     [[nodiscard]] bool HasDynamicRendering() const;
     [[nodiscard]] bool HasCalibratedTimestamps() const;
+    [[nodiscard]] bool HasPciBusInfo() const;
 
     operator VkPhysicalDevice() const { return m_physDev; }
 

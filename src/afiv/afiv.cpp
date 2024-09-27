@@ -9,7 +9,6 @@
 #include "util/Callstack.hpp"
 #include "util/Logs.hpp"
 #include "util/Panic.hpp"
-#include "util/TaskDispatch.hpp"
 #include "vulkan/VlkCommandBuffer.hpp"
 #include "vulkan/VlkDevice.hpp"
 #include "vulkan/VlkInstance.hpp"
@@ -18,7 +17,6 @@
 #include "wayland/WaylandWindow.hpp"
 
 
-std::unique_ptr<TaskDispatch> g_dispatch;
 std::unique_ptr<VlkInstance> g_vkInstance;
 std::unique_ptr<WaylandDisplay> g_waylandDisplay;
 std::unique_ptr<WaylandWindow> g_waylandWindow;
@@ -92,10 +90,6 @@ int main( int argc, char** argv )
     auto vulkanThread = std::thread( [enableValidation] {
         g_vkInstance = std::make_unique<VlkInstance>( VlkInstanceType::Wayland, enableValidation );
     } );
-    auto dispatchThread = std::thread( [] {
-        const auto cpus = std::thread::hardware_concurrency();
-        g_dispatch = std::make_unique<TaskDispatch>( cpus == 0 ? 0 : cpus - 1, "Worker" );
-    } );
     auto imageThread = std::thread( [imageFile] {
         g_bitmap.reset( LoadImage( imageFile ) );
         CheckPanic( g_bitmap, "Failed to load image" );
@@ -104,7 +98,6 @@ int main( int argc, char** argv )
     g_waylandDisplay = std::make_unique<WaylandDisplay>();
     g_waylandDisplay->Connect();
 
-    dispatchThread.join();
     vulkanThread.join();
 
     static constexpr WaylandWindow::Listener listener = {
@@ -114,7 +107,7 @@ int main( int argc, char** argv )
     };
 
     // Sync is being performed in InitPhysicalDevices
-    g_dispatch->Queue( [] {
+    auto windowThread = std::thread( [] {
         g_waylandWindow = std::make_unique<WaylandWindow>( *g_waylandDisplay, *g_vkInstance );
         g_waylandWindow->SetListener( &listener, nullptr );
         g_waylandWindow->SetTitle( "AFIV" );
@@ -123,11 +116,12 @@ int main( int argc, char** argv )
         g_waylandDisplay->Roundtrip();
     } );
 
-    g_vkInstance->InitPhysicalDevices( *g_dispatch );
+    g_vkInstance->InitPhysicalDevices();
     const auto& devices = g_vkInstance->QueryPhysicalDevices();
     CheckPanic( !devices.empty(), "No physical devices found" );
     mclog( LogLevel::Info, "Found %d physical devices", devices.size() );
 
+    windowThread.join();
     auto best = PhysDevSel::PickBest( g_vkInstance->QueryPhysicalDevices(), g_waylandWindow->VkSurface(), PhysDevSel::RequireGraphic );
     CheckPanic( best, "Failed to find suitable physical device" );
 

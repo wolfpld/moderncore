@@ -11,7 +11,6 @@
 #include "plumbing/Display.hpp"
 #include "util/Logs.hpp"
 #include "util/Panic.hpp"
-#include "util/TaskDispatch.hpp"
 #include "vulkan/VlkInstance.hpp"
 #include "vulkan/VlkPhysicalDevice.hpp"
 
@@ -56,20 +55,12 @@ Server::Server( bool enableValidation )
         m_backend = std::make_unique<BackendDrm>();
     }
 
-    auto dispatchThread = std::thread( [this] {
-        const auto cpus = std::thread::hardware_concurrency();
-        m_dispatch = std::make_unique<TaskDispatch>( cpus == 0 ? 0 : cpus - 1, "Worker" );
-    } );
-
     m_dbusSession = std::make_unique<DbusSession>();
-
-    dispatchThread.join();
     vulkanThread.join();
 
-    m_vkInstance->InitPhysicalDevices( *m_dispatch );
+    m_vkInstance->InitPhysicalDevices();
 
     SetupGpus( !waylandDpy );
-    m_dispatch->Sync();
 
     m_backend->VulkanInit();
 
@@ -119,18 +110,14 @@ void Server::SetupGpus( bool skipSoftware )
         auto& props = dev->Properties();
         if( !skipSoftware || IsDeviceHardware( props ) )
         {
-            m_dispatch->Queue( [this, dev, idx] {
-                LogBlockBegin();
-                try
-                {
-                    m_gpus[idx] = std::make_shared<GpuDevice>( *m_vkInstance, dev );
-                }
-                catch( const std::exception& e )
-                {
-                    mclog( LogLevel::Fatal, "Failed to initialize GPU: %s", e.what() );
-                }
-                LogBlockEnd();
-            } );
+            try
+            {
+                m_gpus[idx] = std::make_shared<GpuDevice>( *m_vkInstance, dev );
+            }
+            catch( const std::exception& e )
+            {
+                mclog( LogLevel::Fatal, "Failed to initialize GPU: %s", e.what() );
+            }
             idx++;
         }
         else

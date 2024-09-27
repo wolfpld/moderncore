@@ -6,7 +6,6 @@
 
 #include "util/NoCopy.hpp"
 
-class TaskDispatch;
 class VlkPhysicalDevice;
 
 enum class VlkInstanceType
@@ -23,7 +22,7 @@ public:
 
     NoCopy( VlkInstance );
 
-    void InitPhysicalDevices( TaskDispatch& dispatch );
+    void InitPhysicalDevices();
 
     [[nodiscard]] auto& QueryPhysicalDevices() const { return m_physicalDevices; }
     [[nodiscard]] auto Type() const { return m_instanceType; }

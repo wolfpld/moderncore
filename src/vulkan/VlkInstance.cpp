@@ -136,7 +136,7 @@ VlkInstance::~VlkInstance()
     vkDestroyInstance( m_instance, nullptr );
 }
 
-void VlkInstance::InitPhysicalDevices( TaskDispatch& dispatch )
+void VlkInstance::InitPhysicalDevices()
 {
     ZoneScoped;
 
@@ -146,17 +146,12 @@ void VlkInstance::InitPhysicalDevices( TaskDispatch& dispatch )
     phys.resize( cnt );
     vkEnumeratePhysicalDevices( m_instance, &cnt, phys.data() );
 
-    m_physicalDevices.resize( phys.size() );
+    m_physicalDevices.reserve( phys.size() );
     size_t i = 0;
     for( auto& p : phys )
     {
-        dispatch.Queue( [this, p, i] {
-            m_physicalDevices[i] = std::make_shared<VlkPhysicalDevice>( p );
-        } );
-        i++;
+        m_physicalDevices.emplace_back( std::make_shared<VlkPhysicalDevice>( p ) );
     }
-
-    dispatch.Sync();
 
     auto it = m_physicalDevices.begin();
     while( it != m_physicalDevices.end() )

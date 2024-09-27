@@ -295,3 +295,17 @@ target_link_libraries(afiv PRIVATE
     mcorewayland
     Tracy::TracyClient
 )
+
+
+# install
+
+set(CMAKE_INSTALL_PREFIX /)
+install(TARGETS
+    mcore
+    afiv
+    mcoreutil
+    mcoreimage
+    mcorevulkan
+    mcorewayland
+    TracyClient
+DESTINATION .)

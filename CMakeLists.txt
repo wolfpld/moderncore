@@ -46,7 +46,7 @@ pkg_check_modules(WEBP REQUIRED libwebp)
 
 pkg_get_variable(WAYLAND_PROTOCOLS_PKGDATADIR wayland-protocols pkgdatadir)
 
-include_directories(${CMAKE_CURRENT_BINARY_DIR} . src)
+include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/src)
 
 if(TRACY_ENABLE)
     add_definitions(-DTRACY_ENABLE)

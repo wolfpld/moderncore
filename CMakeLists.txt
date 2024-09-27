@@ -3,19 +3,16 @@ cmake_minimum_required(VERSION 3.29)
 option(TRACY_ENABLE "Enable Tracy" OFF)
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
-file(GENERATE OUTPUT .gitignore CONTENT "*")
-
 set(CMAKE_CXX_STANDARD 20)
 
 include(FindPkgConfig)
+include(cmake/config.cmake)
 include(cmake/CPM.cmake)
 include(cmake/FindWaylandScanner.cmake)
 
 project(ModernCore
     LANGUAGES C CXX
 )
-
-include(cmake/Linker.cmake)
 
 CPMAddPackage(
     NAME tracy

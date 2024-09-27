@@ -12,9 +12,15 @@ jobs:
       run: |
         pacman -Syu --noconfirm
         pacman -S --noconfirm --needed nodejs git clang cmake ninja shaderc vulkan-validation-layers vulkan-utility-libraries wayland wayland-protocols libxkbcommon glm libpng libjpeg-turbo libjxl libwebp libheif systemd-libs libdrm libdisplay-info mesa python mold
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - run: cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Release
       env:
         CC: clang
         CXX: clang++
-    - run: ninja -C build
+    - run: ninja -C build install
+      env:
+        DESTDIR: ${{ github.workspace }}/install
+    - run: strip ${{ github.workspace }}/install/*
+    - uses: actions/upload-artifact@v3
+      with:
+        path: install

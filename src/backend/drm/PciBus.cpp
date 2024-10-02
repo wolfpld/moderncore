@@ -13,6 +13,8 @@ std::shared_ptr<VlkPhysicalDevice> GetPhysicalDeviceForPciBus( uint16_t domain, 
     auto& devices = Server::Instance().VkInstance().QueryPhysicalDevices();
     for( auto& device : devices )
     {
+        if( !device->HasPciBusInfo() ) continue;
+
         VkPhysicalDevicePCIBusInfoPropertiesEXT pciBusInfo = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PCI_BUS_INFO_PROPERTIES_EXT };
 
         VkPhysicalDeviceProperties2 props = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2 };

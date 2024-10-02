@@ -279,7 +279,6 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
     }
     else
     {
-        deviceExtensions.emplace_back( VK_EXT_PCI_BUS_INFO_EXTENSION_NAME );
         deviceExtensions.emplace_back( VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME );
         deviceExtensions.emplace_back( VK_EXT_EXTERNAL_MEMORY_DMA_BUF_EXTENSION_NAME );
         deviceExtensions.emplace_back( VK_EXT_IMAGE_DRM_FORMAT_MODIFIER_EXTENSION_NAME );

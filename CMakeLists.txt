@@ -220,7 +220,6 @@ set(MCORE_SRC
     src/cursor/XCursor.cpp
     src/dbus/DbusMessage.cpp
     src/dbus/DbusSession.cpp
-    src/backend/Backend.cpp
     src/backend/GpuDevice.cpp
     src/backend/drm/BackendDrm.cpp
     src/backend/drm/DrmBuffer.cpp

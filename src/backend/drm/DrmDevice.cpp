@@ -147,22 +147,21 @@ DrmDevice::~DrmDevice()
     }
 }
 
-bool DrmDevice::ResolveGpuDevice( const std::vector<std::shared_ptr<GpuDevice>>& gpus)
+std::shared_ptr<VlkPhysicalDevice> DrmDevice::MatchPhysicalDevice()
 {
     ZoneScoped;
 
     auto physDev = GetPhysicalDeviceForPciBus( m_pci.domain, m_pci.bus, m_pci.dev, m_pci.func );
-    if( !physDev ) return false;
+    if( !physDev ) return {};
 
     auto& properties = physDev->Properties();
     mclog( LogLevel::Info, "DRM device '%s' matched to Vulkan device '%s'", m_name.c_str(), properties.deviceName );
 
-    m_gpu = GetGpuDeviceForPhysicalDevice( *physDev, gpus );
-    if( !m_gpu ) return false;
+    return physDev;
+}
 
-    for( auto& conn : m_connectors )
-    {
-        if( conn->IsConnected() ) conn->SetModeVulkan();
-    }
-    return true;
+void DrmDevice::SetGpuDevice( const std::shared_ptr<GpuDevice>& gpu )
+{
+    CheckPanic( !m_gpu, "GPU device already set" );
+    m_gpu = gpu;
 }

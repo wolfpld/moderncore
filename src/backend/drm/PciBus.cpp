@@ -1,7 +1,6 @@
 #include <tracy/Tracy.hpp>
 
 #include "PciBus.hpp"
-#include "backend/GpuDevice.hpp"
 #include "server/Server.hpp"
 #include "vulkan/VlkInstance.hpp"
 #include "vulkan/VlkPhysicalDevice.hpp"
@@ -28,19 +27,5 @@ std::shared_ptr<VlkPhysicalDevice> GetPhysicalDeviceForPciBus( uint16_t domain, 
         }
     }
 
-    return {};
-}
-
-std::shared_ptr<GpuDevice> GetGpuDeviceForPhysicalDevice( VlkPhysicalDevice& dev, const std::vector<std::shared_ptr<GpuDevice>>& gpus )
-{
-    ZoneScoped;
-
-    for( auto& gpu : gpus )
-    {
-        if( *gpu->Device()->GetPhysicalDevice() == dev )
-        {
-            return gpu;
-        }
-    }
     return {};
 }

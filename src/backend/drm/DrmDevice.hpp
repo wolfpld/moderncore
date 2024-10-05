@@ -17,6 +17,7 @@ class DrmConnector;
 class DrmCrtc;
 class DrmPlane;
 class GpuDevice;
+class VlkPhysicalDevice;
 
 class DrmDevice
 {
@@ -39,7 +40,8 @@ public:
 
     operator gbm_device*() const { return m_gbm; }
 
-    bool ResolveGpuDevice( const std::vector<std::shared_ptr<GpuDevice>>& gpus );
+    std::shared_ptr<VlkPhysicalDevice> MatchPhysicalDevice();
+    void SetGpuDevice( const std::shared_ptr<GpuDevice>& gpu );
 
 private:
     struct PciBus

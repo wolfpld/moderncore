@@ -23,7 +23,5 @@ public:
 protected:
     Backend() = default;
 
-    void SetupGpuDevices( VlkInstance& instance, bool skipSoftware );
-
     std::vector<std::shared_ptr<GpuDevice>> m_gpus;
 };

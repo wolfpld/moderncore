@@ -8,9 +8,11 @@
 #include "BackendDrm.hpp"
 #include "DbusLoginPaths.hpp"
 #include "DrmDevice.hpp"
+#include "backend/GpuDevice.hpp"
 #include "dbus/DbusSession.hpp"
 #include "server/Server.hpp"
 #include "util/Panic.hpp"
+#include "vulkan/VlkInstance.hpp"
 
 #define DbusCallback( func ) [this] ( DbusMessage msg ) { return func( std::move( msg ) ); }
 
@@ -180,19 +182,30 @@ void BackendDrm::VulkanInit()
 {
     ZoneScoped;
 
-    SetupGpuDevices( Server::Instance().VkInstance(), true );
-
     auto it = m_drmDevices.begin();
     while( it != m_drmDevices.end() )
     {
-        if( !(*it)->ResolveGpuDevice( m_gpus ) )
+        auto& drmDev = *it;
+        auto physDev = drmDev->MatchPhysicalDevice();
+        if( !physDev )
         {
-            mclog( LogLevel::Warning, "Failed to resolve Vulkan device for DRM device '%s'", (*it)->Name().c_str() );
+            mclog( LogLevel::Warning, "Failed to resolve Vulkan device for DRM device '%s'", drmDev->Name().c_str() );
             it = m_drmDevices.erase( it );
         }
         else
         {
-            ++it;
+            try
+            {
+                auto gpu = std::make_shared<GpuDevice>( Server::Instance().VkInstance(), physDev );
+                drmDev->SetGpuDevice( gpu );
+                m_gpus.emplace_back( std::move( gpu ) );
+                ++it;
+            }
+            catch( const std::exception& e )
+            {
+                mclog( LogLevel::Fatal, "Failed to initialize GPU: %s", e.what() );
+                it = m_drmDevices.erase( it );
+            }
         }
     }
 }

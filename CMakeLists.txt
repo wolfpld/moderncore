@@ -28,7 +28,7 @@ CPMAddPackage(
     EXCLUDE_FROM_ALL TRUE
 )
 
-find_program(GLSLC glslc)
+find_program(GLSLC glslc REQUIRED)
 
 pkg_check_modules(DISPLAYINFO REQUIRED libdisplay-info)
 pkg_check_modules(DRM REQUIRED libdrm)

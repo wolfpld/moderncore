@@ -15,7 +15,6 @@
 #include "DrmPlane.hpp"
 #include "PciBus.hpp"
 #include "dbus/DbusSession.hpp"
-#include "server/GpuDevice.hpp"
 #include "util/Logs.hpp"
 #include "util/Panic.hpp"
 #include "vulkan/VlkPhysicalDevice.hpp"
@@ -148,7 +147,7 @@ DrmDevice::~DrmDevice()
     }
 }
 
-bool DrmDevice::ResolveGpuDevice()
+bool DrmDevice::ResolveGpuDevice( const std::vector<std::shared_ptr<GpuDevice>>& gpus)
 {
     ZoneScoped;
 
@@ -158,7 +157,7 @@ bool DrmDevice::ResolveGpuDevice()
     auto& properties = physDev->Properties();
     mclog( LogLevel::Info, "DRM device '%s' matched to Vulkan device '%s'", m_name.c_str(), properties.deviceName );
 
-    m_gpu = GetGpuDeviceForPhysicalDevice( *physDev );
+    m_gpu = GetGpuDeviceForPhysicalDevice( *physDev, gpus );
     if( !m_gpu ) return false;
 
     for( auto& conn : m_connectors )

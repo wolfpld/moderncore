@@ -3,7 +3,6 @@
 #include <thread>
 #include <unistd.h>
 
-#include "GpuDevice.hpp"
 #include "Server.hpp"
 #include "backend/drm/BackendDrm.hpp"
 #include "backend/wayland/BackendWayland.hpp"
@@ -50,8 +49,6 @@ Server::Server( bool enableValidation )
     m_dbusSession = std::make_unique<DbusSession>();
     vulkanThread.join();
 
-    SetupGpus( !waylandDpy );
-
     m_backend->VulkanInit();
 
     m_dpy = std::make_unique<Display>();
@@ -72,47 +69,4 @@ Server& Server::Instance()
 void Server::Run()
 {
     m_backend->Run();
-}
-
-void Server::SetupGpus( bool skipSoftware )
-{
-    ZoneScoped;
-
-    const auto& devices = m_vkInstance->QueryPhysicalDevices();
-    CheckPanic( !devices.empty(), "No physical devices found" );
-
-    mclog( LogLevel::Info, "Found %d physical devices", devices.size() );
-    int idx = 0;
-    int hw = 0;
-    for( const auto& dev : devices )
-    {
-        auto& props = dev->Properties();
-        mclog( LogLevel::Info, "  %d: %s", idx, props.deviceName );
-        if( dev->IsDeviceHardware() ) hw++;
-        idx++;
-    }
-
-    const auto num = skipSoftware ? hw : devices.size();
-    m_gpus.resize( num );
-    idx = 0;
-    for( const auto& dev : devices )
-    {
-        auto& props = dev->Properties();
-        if( !skipSoftware || dev->IsDeviceHardware() )
-        {
-            try
-            {
-                m_gpus[idx] = std::make_shared<GpuDevice>( *m_vkInstance, dev );
-            }
-            catch( const std::exception& e )
-            {
-                mclog( LogLevel::Fatal, "Failed to initialize GPU: %s", e.what() );
-            }
-            idx++;
-        }
-        else
-        {
-            mclog( LogLevel::Info, "Skipping software device: %s", props.deviceName );
-        }
-    }
 }

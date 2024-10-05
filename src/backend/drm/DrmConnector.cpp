@@ -14,7 +14,7 @@ extern "C" {
 #include "DrmCrtc.hpp"
 #include "DrmPlane.hpp"
 #include "DrmProperties.hpp"
-#include "server/GpuDevice.hpp"
+#include "backend/GpuDevice.hpp"
 #include "util/Ansi.hpp"
 #include "util/Logs.hpp"
 #include "util/Panic.hpp"

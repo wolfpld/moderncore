@@ -3,7 +3,7 @@
 #include <tracy/Tracy.hpp>
 
 #include "BackendWayland.hpp"
-#include "server/GpuDevice.hpp"
+#include "backend/GpuDevice.hpp"
 #include "server/Server.hpp"
 #include "util/Config.hpp"
 #include "util/Invoke.hpp"
@@ -28,6 +28,8 @@ BackendWayland::~BackendWayland()
 
 void BackendWayland::VulkanInit()
 {
+    SetupGpuDevices( Server::Instance().VkInstance(), false );
+
     Config config( "backend-wayland.ini" );
     if( config )
     {
@@ -78,9 +80,7 @@ void BackendWayland::OpenWindow( int physDev, uint32_t width, uint32_t height, c
 
     auto window = std::make_unique<WaylandWindow>( *m_dpy, vkInstance );
 
-    auto& gpuList = server.Gpus();
     std::shared_ptr<GpuDevice> gpu;
-
     if( physDev < 0 )
     {
         const auto& physicalDevices = vkInstance.QueryPhysicalDevices();
@@ -89,16 +89,16 @@ void BackendWayland::OpenWindow( int physDev, uint32_t width, uint32_t height, c
         CheckPanic( device_, "Failed to find suitable physical device" );
         auto device = (VkPhysicalDevice)*device_;
 
-        auto it = std::find_if( gpuList.begin(), gpuList.end(), [device]( const auto& v ) { return *v->Device() == device; } );
-        CheckPanic( it != gpuList.end(), "Selected physical device has valid index, but not found in list of GPUs (?)" );
+        auto it = std::find_if( m_gpus.begin(), m_gpus.end(), [device]( const auto& v ) { return *v->Device() == device; } );
+        CheckPanic( it != m_gpus.end(), "Selected physical device has valid index, but not found in list of GPUs (?)" );
 
-        mclog( LogLevel::Info, "Selected physical device: %i", it - gpuList.begin() );
+        mclog( LogLevel::Info, "Selected physical device: %i", it - m_gpus.begin() );
         gpu = *it;
     }
     else
     {
-        CheckPanic( physDev < gpuList.size(), "Invalid physical device index set in backend-wayland.ini. Value: %i, max: %zu.", physDev, gpuList.size() - 1 );
-        gpu = gpuList[physDev];
+        CheckPanic( physDev < m_gpus.size(), "Invalid physical device index set in backend-wayland.ini. Value: %i, max: %zu.", physDev, m_gpus.size() - 1 );
+        gpu = m_gpus[physDev];
         CheckPanic( gpu->IsPresentSupported( window->VkSurface() ), "Selected physical device does not support presentation to Wayland surface" );
     }
 

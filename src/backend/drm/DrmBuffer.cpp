@@ -6,7 +6,7 @@
 
 #include "DrmBuffer.hpp"
 #include "DrmDevice.hpp"
-#include "server/GpuDevice.hpp"
+#include "backend/GpuDevice.hpp"
 #include "util/Logs.hpp"
 #include "util/Panic.hpp"
 #include "vulkan/VlkDevice.hpp"

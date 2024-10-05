@@ -39,7 +39,7 @@ public:
 
     operator gbm_device*() const { return m_gbm; }
 
-    bool ResolveGpuDevice();
+    bool ResolveGpuDevice( const std::vector<std::shared_ptr<GpuDevice>>& gpus );
 
 private:
     struct PciBus

@@ -1,12 +1,12 @@
 #pragma once
 
-#include <functional>
-#include <vulkan/vulkan.h>
+#include <memory>
+#include <vector>
 
 #include "util/NoCopy.hpp"
 
-class VlkDevice;
-class VlkSwapchain;
+class GpuDevice;
+class VlkInstance;
 
 class Backend
 {
@@ -22,4 +22,8 @@ public:
 
 protected:
     Backend() = default;
+
+    void SetupGpuDevices( VlkInstance& instance, bool skipSoftware );
+
+    std::vector<std::shared_ptr<GpuDevice>> m_gpus;
 };

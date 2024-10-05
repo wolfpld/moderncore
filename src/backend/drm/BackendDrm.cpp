@@ -9,6 +9,7 @@
 #include "DbusLoginPaths.hpp"
 #include "DrmDevice.hpp"
 #include "dbus/DbusSession.hpp"
+#include "server/Server.hpp"
 #include "util/Panic.hpp"
 
 #define DbusCallback( func ) [this] ( DbusMessage msg ) { return func( std::move( msg ) ); }
@@ -179,10 +180,12 @@ void BackendDrm::VulkanInit()
 {
     ZoneScoped;
 
+    SetupGpuDevices( Server::Instance().VkInstance(), true );
+
     auto it = m_drmDevices.begin();
     while( it != m_drmDevices.end() )
     {
-        if( !(*it)->ResolveGpuDevice() )
+        if( !(*it)->ResolveGpuDevice( m_gpus ) )
         {
             mclog( LogLevel::Warning, "Failed to resolve Vulkan device for DRM device '%s'", (*it)->Name().c_str() );
             it = m_drmDevices.erase( it );

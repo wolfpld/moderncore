@@ -1,10 +1,4 @@
-#include <algorithm>
-#include <tracy/Tracy.hpp>
-
-#include "Connector.hpp"
 #include "GpuDevice.hpp"
-#include "util/Panic.hpp"
-#include "util/Tracy.hpp"
 #include "vulkan/ext/DeviceInfo.hpp"
 #include "vulkan/VlkInstance.hpp"
 #include "vulkan/VlkPhysicalDevice.hpp"
@@ -19,26 +13,6 @@ GpuDevice::GpuDevice( VlkInstance& instance, const std::shared_ptr<VlkPhysicalDe
 GpuDevice::~GpuDevice()
 {
     vkDeviceWaitIdle( *m_device );
-}
-
-void GpuDevice::Render()
-{
-    ZoneScoped;
-    ZoneVkDevice( m_device->GetPhysicalDevice() );
-
-    for( auto& c : m_connectors ) c->Render();
-}
-
-void GpuDevice::AddConnector( std::shared_ptr<Connector> connector )
-{
-    m_connectors.emplace_back( std::move( connector ) );
-}
-
-void GpuDevice::RemoveConnector( const std::shared_ptr<Connector>& connector )
-{
-    auto it = std::find( m_connectors.begin(), m_connectors.end(), connector );
-    CheckPanic( it != m_connectors.end(), "Connector not found" );
-    m_connectors.erase( it );
 }
 
 bool GpuDevice::IsPresentSupported( VkSurfaceKHR surface ) const

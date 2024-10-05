@@ -11,3 +11,5 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 endif()
 
 set(CMAKE_COLOR_DIAGNOSTICS ON)
+
+add_compile_definitions($<$<CONFIG:Debug>:DEBUG>)

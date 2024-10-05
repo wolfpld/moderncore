@@ -98,30 +98,25 @@ int main( int argc, char** argv )
     g_waylandDisplay = std::make_unique<WaylandDisplay>();
     g_waylandDisplay->Connect();
 
-    vulkanThread.join();
-
     static constexpr WaylandWindow::Listener listener = {
         .OnClose = [] (void*, WaylandWindow*) { g_waylandDisplay->Stop(); },
         .OnScale = [] (void*, WaylandWindow*, uint32_t) { if( g_ready ) Render(); },
         .OnResize = [] (void*, WaylandWindow*, uint32_t width, uint32_t height) { g_waylandWindow->Resize( width, height ); Render(); }
     };
 
-    // Sync is being performed in InitPhysicalDevices
-    auto windowThread = std::thread( [] {
-        g_waylandWindow = std::make_unique<WaylandWindow>( *g_waylandDisplay, *g_vkInstance );
-        g_waylandWindow->SetListener( &listener, nullptr );
-        g_waylandWindow->SetTitle( "AFIV" );
-        g_waylandWindow->SetAppId( "afiv" );
-        g_waylandWindow->Commit();
-        g_waylandDisplay->Roundtrip();
-    } );
+    vulkanThread.join();
 
-    g_vkInstance->InitPhysicalDevices();
+    g_waylandWindow = std::make_unique<WaylandWindow>( *g_waylandDisplay, *g_vkInstance );
+    g_waylandWindow->SetListener( &listener, nullptr );
+    g_waylandWindow->SetTitle( "AFIV" );
+    g_waylandWindow->SetAppId( "afiv" );
+    g_waylandWindow->Commit();
+    g_waylandDisplay->Roundtrip();
+
     const auto& devices = g_vkInstance->QueryPhysicalDevices();
     CheckPanic( !devices.empty(), "No physical devices found" );
     mclog( LogLevel::Info, "Found %d physical devices", devices.size() );
 
-    windowThread.join();
     auto best = PhysDevSel::PickBest( g_vkInstance->QueryPhysicalDevices(), g_waylandWindow->VkSurface(), PhysDevSel::RequireGraphic );
     CheckPanic( best, "Failed to find suitable physical device" );
 

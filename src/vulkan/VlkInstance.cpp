@@ -128,6 +128,8 @@ VlkInstance::VlkInstance( VlkInstanceType instanceType, bool enableValidation )
     if( hasValidationLayers ) VkVerify( CreateDebugUtilsMessengerEXT( m_instance, &dbgInfo, nullptr, &m_debugMessenger ) );
 
     VkVerify( LoadVulkanExtensions( *this ) );
+
+    InitPhysicalDevices();
 }
 
 VlkInstance::~VlkInstance()

@@ -22,8 +22,6 @@ public:
 
     NoCopy( VlkInstance );
 
-    void InitPhysicalDevices();
-
     [[nodiscard]] auto& QueryPhysicalDevices() const { return m_physicalDevices; }
     [[nodiscard]] auto Type() const { return m_instanceType; }
     [[nodiscard]] auto ApiVersion() const { return VK_API_VERSION_1_3; }
@@ -31,6 +29,8 @@ public:
     operator VkInstance() const { return m_instance; }
 
 private:
+    void InitPhysicalDevices();
+
     VkInstance m_instance;
     VkDebugUtilsMessengerEXT m_debugMessenger;
 

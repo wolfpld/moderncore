@@ -58,8 +58,6 @@ Server::Server( bool enableValidation )
     m_dbusSession = std::make_unique<DbusSession>();
     vulkanThread.join();
 
-    m_vkInstance->InitPhysicalDevices();
-
     SetupGpus( !waylandDpy );
 
     m_backend->VulkanInit();

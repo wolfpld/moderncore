@@ -28,7 +28,30 @@ BackendWayland::~BackendWayland()
 
 void BackendWayland::VulkanInit()
 {
-    SetupGpuDevices( Server::Instance().VkInstance(), false );
+    ZoneScoped;
+
+    auto& vkInstance = Server::Instance().VkInstance();
+    const auto& devices = vkInstance.QueryPhysicalDevices();
+    CheckPanic( !devices.empty(), "No physical devices found" );
+    mclog( LogLevel::Info, "Found %d physical devices", devices.size() );
+
+    for( int idx = 0; const auto& dev : devices )
+    {
+        mclog( LogLevel::Info, "  %d: %s", idx++, dev->Properties().deviceName );
+    }
+
+    m_gpus.reserve( devices.size() );
+    for( auto& dev : devices )
+    {
+        try
+        {
+            m_gpus.emplace_back( std::make_shared<GpuDevice>( vkInstance, dev ) );
+        }
+        catch( const std::exception& e )
+        {
+            mclog( LogLevel::Fatal, "Failed to initialize GPU: %s", e.what() );
+        }
+    }
 
     Config config( "backend-wayland.ini" );
     if( config )

@@ -25,6 +25,8 @@ public:
     [[nodiscard]] bool HasCalibratedTimestamps() const;
     [[nodiscard]] bool HasPciBusInfo() const;
 
+    [[nodiscard]] bool IsDeviceHardware() const;
+
     operator VkPhysicalDevice() const { return m_physDev; }
 
 private:

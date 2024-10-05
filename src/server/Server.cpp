@@ -14,14 +14,6 @@
 #include "vulkan/VlkInstance.hpp"
 #include "vulkan/VlkPhysicalDevice.hpp"
 
-namespace
-{
-bool IsDeviceHardware( const VkPhysicalDeviceProperties& properties )
-{
-    return properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU ||
-           properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU;
-}
-}
 
 namespace
 {
@@ -96,7 +88,7 @@ void Server::SetupGpus( bool skipSoftware )
     {
         auto& props = dev->Properties();
         mclog( LogLevel::Info, "  %d: %s", idx, props.deviceName );
-        if( IsDeviceHardware( props ) ) hw++;
+        if( dev->IsDeviceHardware() ) hw++;
         idx++;
     }
 
@@ -106,7 +98,7 @@ void Server::SetupGpus( bool skipSoftware )
     for( const auto& dev : devices )
     {
         auto& props = dev->Properties();
-        if( !skipSoftware || IsDeviceHardware( props ) )
+        if( !skipSoftware || dev->IsDeviceHardware() )
         {
             try
             {

@@ -70,6 +70,12 @@ bool VlkPhysicalDevice::HasPciBusInfo() const
     return IsExtensionAvailable( VK_EXT_PCI_BUS_INFO_EXTENSION_NAME );
 }
 
+bool VlkPhysicalDevice::IsDeviceHardware() const
+{
+    return m_properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU ||
+           m_properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU;
+}
+
 bool VlkPhysicalDevice::IsExtensionAvailable( const char* extensionName ) const
 {
     ZoneScoped;

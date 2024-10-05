@@ -39,7 +39,7 @@ void PrintPhysicalDeviceInfo( const VlkPhysicalDevice& physDev )
     }
     memSize /= 1024 * 1024;
 
-    mclog( LogLevel::Info, "Using Vulkan physical device '%s'", properties.deviceName );
+    mclog( LogLevel::Info, "Vulkan physical device '%s'", properties.deviceName );
     mclog( LogLevel::Info, "  API: %" PRIu32 ".%" PRIu32 ".%" PRIu32 ", driver: %" PRIu32 ".%" PRIu32 ".%" PRIu32 ", type: %s, mem: %zu MB, max tex: %" PRIu32 ", queue families: %zu",
         VK_API_VERSION_MAJOR( properties.apiVersion ), VK_API_VERSION_MINOR( properties.apiVersion ), VK_API_VERSION_PATCH( properties.apiVersion ),
         VK_API_VERSION_MAJOR( properties.driverVersion ), VK_API_VERSION_MINOR( properties.driverVersion ), VK_API_VERSION_PATCH( properties.driverVersion ),

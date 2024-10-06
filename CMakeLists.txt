@@ -230,7 +230,6 @@ set(MCORE_SRC
     src/backend/drm/DrmProperties.cpp
     src/backend/drm/PciBus.cpp
     src/backend/wayland/BackendWayland.cpp
-    src/backend/wayland/WaylandOutput.cpp
     src/plumbing/Display.cpp
     src/render/SoftwareCursor.cpp
     src/render/Texture.cpp

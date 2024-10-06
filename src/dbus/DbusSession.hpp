@@ -1,8 +1,6 @@
 #pragma once
 
 #include <functional>
-#include <memory>
-#include <vector>
 
 #include "DbusMessage.hpp"
 #include "util/NoCopy.hpp"

@@ -1,3 +1,4 @@
+#include <memory>
 #include <systemd/sd-bus.h>
 #include <tracy/Tracy.hpp>
 #include <unistd.h>

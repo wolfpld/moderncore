@@ -10,6 +10,7 @@
 #include "util/Panic.hpp"
 #include "util/Tracy.hpp"
 #include "vulkan/VlkCommandBuffer.hpp"
+#include "vulkan/VlkDevice.hpp"
 #include "vulkan/VlkInstance.hpp"
 #include "vulkan/ext/PhysDevSel.hpp"
 #include "wayland/WaylandDisplay.hpp"

@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <tracy/Tracy.hpp>
 #include <thread>
-#include <unistd.h>
 
 #include "Server.hpp"
 #include "backend/drm/BackendDrm.hpp"
@@ -11,7 +10,6 @@
 #include "util/Logs.hpp"
 #include "util/Panic.hpp"
 #include "vulkan/VlkInstance.hpp"
-#include "vulkan/VlkPhysicalDevice.hpp"
 
 
 namespace

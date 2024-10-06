@@ -18,6 +18,7 @@ extern "C" {
 #include "util/Ansi.hpp"
 #include "util/Logs.hpp"
 #include "util/Panic.hpp"
+#include "vulkan/VlkDevice.hpp"
 #include "vulkan/VlkError.hpp"
 
 constexpr static int BufferNum = 3;

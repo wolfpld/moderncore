@@ -4,9 +4,10 @@
 #include <vulkan/vulkan.h>
 
 #include "util/NoCopy.hpp"
-#include "vulkan/VlkDevice.hpp"
 
+class VlkDevice;
 class VlkInstance;
+class VlkPhysicalDevice;
 
 class GpuDevice
 {

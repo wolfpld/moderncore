@@ -1,7 +1,6 @@
 #include "GpuDevice.hpp"
 #include "vulkan/ext/DeviceInfo.hpp"
-#include "vulkan/VlkInstance.hpp"
-#include "vulkan/VlkPhysicalDevice.hpp"
+#include "vulkan/VlkDevice.hpp"
 
 GpuDevice::GpuDevice( VlkInstance& instance, const std::shared_ptr<VlkPhysicalDevice>& physDev )
     : m_device( std::make_shared<VlkDevice>( instance, physDev, VlkDevice::RequireGraphic | VlkDevice::RequirePresent ) )

@@ -1,5 +1,6 @@
 #include <inttypes.h>
 #include <vector>
+#include <vulkan/vulkan.h>
 
 #include "DeviceInfo.hpp"
 #include "util/Logs.hpp"

@@ -1,5 +1,6 @@
 #include <array>
 #include <stdlib.h>
+#include <string>
 #include <string.h>
 
 #include "ArgParser.hpp"
@@ -7,8 +8,14 @@
 
 struct Argument
 {
+    constexpr Argument( const char* name, bool value )
+        : name( name ), value( value ), length( std::char_traits<char>::length( name ) )
+    {
+    }
+
     const char* name;
     bool value;
+    int length;
 };
 
 constexpr std::array arguments = {
@@ -34,9 +41,10 @@ constexpr std::array arguments = {
 
 bool ParseBoolean( const char* str )
 {
+    const auto length = strlen( str );
     for( const auto& arg : arguments )
     {
-        if( strcmp( str, arg.name ) == 0 ) return arg.value;
+        if( length == arg.length && strcmp( str, arg.name ) == 0 ) return arg.value;
     }
     mclog( LogLevel::Error, "Argument '%s' is not a valid boolean", str );
     exit( 1 );

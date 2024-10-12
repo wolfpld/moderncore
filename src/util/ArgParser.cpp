@@ -16,6 +16,8 @@ constexpr std::array arguments = {
     Argument { "off", false },
     Argument { "true", true },
     Argument { "false", false },
+    Argument { "t", true },
+    Argument { "f", false },
     Argument { "1", true },
     Argument { "0", false },
     Argument { "yes", true },

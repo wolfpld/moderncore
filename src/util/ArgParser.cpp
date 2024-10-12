@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <array>
 #include <stdlib.h>
 #include <string>
@@ -41,10 +42,14 @@ constexpr std::array arguments = {
 
 bool ParseBoolean( const char* str )
 {
+    constexpr auto maxLength = std::max_element( arguments.begin(), arguments.end(), []( const auto& lhs, const auto& rhs ) { return lhs.length < rhs.length; } )->length;
     const auto length = strlen( str );
-    for( const auto& arg : arguments )
+    if( length <= maxLength )
     {
-        if( length == arg.length && strcmp( str, arg.name ) == 0 ) return arg.value;
+        for( const auto& arg : arguments )
+        {
+            if( length == arg.length && strcmp( str, arg.name ) == 0 ) return arg.value;
+        }
     }
     mclog( LogLevel::Error, "Argument '%s' is not a valid boolean", str );
     exit( 1 );

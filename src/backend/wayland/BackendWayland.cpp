@@ -116,7 +116,8 @@ void BackendWayland::OpenWindow( int physDev, uint32_t width, uint32_t height, c
         auto it = std::find_if( m_gpus.begin(), m_gpus.end(), [device]( const auto& v ) { return *v->Device() == device; } );
         CheckPanic( it != m_gpus.end(), "Selected physical device has valid index, but not found in list of GPUs (?)" );
 
-        mclog( LogLevel::Info, "Selected physical device: %i", it - m_gpus.begin() );
+        physDev = it - m_gpus.begin();
+        mclog( LogLevel::Info, "Auto-selected best physical device: %i", physDev );
         gpu = *it;
     }
     else

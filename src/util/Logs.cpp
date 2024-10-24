@@ -84,11 +84,11 @@ void PrintSourceLocation( FILE* f, const char* fileName, size_t len, size_t line
     constexpr int FnLen = 20;
     if( len > FnLen )
     {
-        fprintf( f, "…%s:%-4zu| ", fileName + len - FnLen - 1, line );
+        fprintf( f, "…%s:%-4zu│ ", fileName + len - FnLen - 1, line );
     }
     else
     {
-        fprintf( f, "%*s:%-4zu%*s| ", FnLen, fileName, line, int( FnLen - len + 2 ), "" );
+        fprintf( f, "%*s:%-4zu%*s│ ", FnLen, fileName, line, int( FnLen - len + 2 ), "" );
     }
 }
 }

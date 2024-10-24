@@ -33,9 +33,7 @@ VlkSwapchain::VlkSwapchain( const VlkDevice& device, VkSurfaceKHR surface, const
     , m_presentMode( VK_PRESENT_MODE_FIFO_KHR )
     , m_device( device )
 {
-#ifdef DEBUG
-    PrintSwapchainProperties( m_properties );
-#endif
+    if( GetLogLevel() <= LogLevel::Debug ) PrintSwapchainProperties( m_properties );
 
     for( auto& format: m_properties.GetFormats() )
     {

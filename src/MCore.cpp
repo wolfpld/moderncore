@@ -27,10 +27,10 @@ int main( int argc, char** argv )
     SetLogLevel( LogLevel::Error );
 #endif
 
-#ifdef DEBUG
-    bool enableValidation = true;
-#else
+#ifdef NDEBUG
     bool enableValidation = false;
+#else
+    bool enableValidation = true;
 #endif
 
     enum { OptHelp };

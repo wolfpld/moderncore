@@ -33,6 +33,13 @@ CPMAddPackage(
     EXCLUDE_FROM_ALL TRUE
 )
 
+CPMAddPackage(
+    NAME stb
+    GITHUB_REPOSITORY nothings/stb
+    GIT_TAG 2e2bef463a5b53ddf8bb788e25da6b8506314c08
+    DOWNLOAD_ONLY TRUE
+)
+
 find_program(GLSLC glslc REQUIRED)
 
 pkg_check_modules(DISPLAYINFO REQUIRED libdisplay-info)
@@ -83,12 +90,14 @@ set(MCOREUTIL_SRC
     src/util/Home.cpp
     src/util/Logs.cpp
     src/util/TaskDispatch.cpp
+    src/util/stb_image_resize_impl.cpp
 )
 
 add_library(mcoreutil ${MCOREUTIL_SRC})
 target_link_libraries(mcoreutil PRIVATE
     Tracy::TracyClient
 )
+target_include_directories(mcoreutil PRIVATE ${stb_SOURCE_DIR})
 
 # mcoreimage
 

@@ -287,7 +287,7 @@ target_include_directories(mcore PRIVATE
 # afiv
 
 set(AFIV_SRC
-    src/afiv/afiv.cpp
+    src/tools/afiv/afiv.cpp
     src/render/Texture.cpp
 )
 

@@ -6,13 +6,16 @@
 
 #include "Callstack.hpp"
 #include "Logs.hpp"
-#include "contrib/libbacktrace/backtrace.h"
 
 namespace {
 int callstackIdx;
 bool callstackExternal;
 bool callstackShowExternal = false;
 }
+
+#ifndef DISABLE_CALLSTACK
+
+#include "contrib/libbacktrace/backtrace.h"
 
 constexpr const char* TypesList[] = {
     "bool ", "char ", "double ", "float ", "int ", "long ", "short ",
@@ -265,6 +268,14 @@ void PrintCallstack( const CallstackData& data, int skip )
         backtrace_pcinfo( state, (uintptr_t)data.addr[i], CallstackCallback, CallstackError, nullptr );
     }
 }
+
+#else
+
+void PrintCallstack( const CallstackData& data, int skip )
+{
+}
+
+#endif
 
 void ShowExternalCallstacks( bool show )
 {

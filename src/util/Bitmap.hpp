@@ -13,6 +13,7 @@ public:
     Bitmap& operator=( const Bitmap& ) = delete;
     Bitmap& operator=( Bitmap&& other ) noexcept;
 
+    void Resize( uint32_t width, uint32_t height );
     void FlipVertical();
 
     [[nodiscard]] uint32_t Width() const { return m_width; }

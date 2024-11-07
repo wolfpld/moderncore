@@ -14,10 +14,15 @@ include(cmake/config.cmake)
 include(cmake/CPM.cmake)
 include(cmake/FindWaylandScanner.cmake)
 
+if(NOT TRACY_ENABLE)
+    set(TRACY_OPTIONS "TRACY_STATIC ON")
+endif()
+
 CPMAddPackage(
     NAME tracy
     GITHUB_REPOSITORY wolfpld/tracy
     GIT_TAG master
+    OPTIONS ${TRACY_OPTIONS}
     EXCLUDE_FROM_ALL TRUE
 )
 

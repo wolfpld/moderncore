@@ -1,5 +1,6 @@
 #include <getopt.h>
 #include <memory>
+#include <sys/ioctl.h>
 
 #include "image/ImageLoader.hpp"
 #include "util/Bitmap.hpp"
@@ -38,6 +39,10 @@ int main( int argc, char** argv )
         mclog( LogLevel::Error, "Image file name must be provided" );
         return 1;
     }
+
+    struct winsize ws;
+    ioctl( 0, TIOCGWINSZ, &ws );
+    mclog( LogLevel::Info, "Terminal size: %dx%d", ws.ws_col, ws.ws_row );
 
     const char* imageFile = argv[optind];
     auto bitmap = std::unique_ptr<Bitmap>( LoadImage( imageFile ) );

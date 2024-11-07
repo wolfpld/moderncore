@@ -493,8 +493,8 @@ DdsLoader::DdsLoader( FileWrapper& file )
         fseek( m_file, 32*4, SEEK_SET );
         fread( &m_format, 1, 4, m_file );
         m_valid =
-            m_format == 77 ||   // BC4
-            m_format == 85 ||   // BC5
+            m_format == 80 ||   // BC4
+            m_format == 83 ||   // BC5
             m_format == 98;     // BC7
         m_offset = 148;
         break;
@@ -535,10 +535,10 @@ Bitmap* DdsLoader::Load()
     case 0x35545844:
         DecodeBc3( (uint32_t*)bmp->Data(), (const uint64_t*)(buf.data() + m_offset), width, height );
         break;
-    case 77:
+    case 80:
         DecodeBc4( (uint32_t*)bmp->Data(), (const uint64_t*)(buf.data() + m_offset), width, height );
         break;
-    case 85:
+    case 83:
         DecodeBc5( (uint32_t*)bmp->Data(), (const uint64_t*)(buf.data() + m_offset), width, height );
         break;
     case 98:

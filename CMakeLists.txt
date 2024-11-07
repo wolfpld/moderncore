@@ -300,6 +300,19 @@ target_link_libraries(afiv PRIVATE
     Tracy::TracyClient
 )
 
+# vv
+
+set(VV_SRC
+    src/tools/vv/vv.cpp
+)
+
+add_executable(vv ${VV_SRC})
+target_link_libraries(vv PRIVATE
+    mcoreutil
+    mcoreimage
+    Tracy::TracyClient
+)
+
 
 # install
 
@@ -307,6 +320,7 @@ set(CMAKE_INSTALL_PREFIX /)
 install(TARGETS
     mcore
     afiv
+    vv
     mcoreutil
     mcoreimage
     mcorevulkan

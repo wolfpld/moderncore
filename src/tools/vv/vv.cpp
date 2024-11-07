@@ -50,7 +50,7 @@ int main( int argc, char** argv )
     mclog( LogLevel::Info, "Image loaded: %ux%u", bitmap->Width(), bitmap->Height() );
 
     uint32_t col = ws.ws_col;
-    uint32_t row = ws.ws_row * 2;
+    uint32_t row = std::max<uint16_t>( 1, ws.ws_row - 1 ) * 2;
 
     mclog( LogLevel::Info, "Virtual pixels: %ux%u", col, row );
 

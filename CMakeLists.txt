@@ -315,6 +315,7 @@ target_link_libraries(afiv PRIVATE
 
 set(VV_SRC
     src/tools/vv/vv.cpp
+    src/tools/vv/Terminal.cpp
 )
 
 add_executable(vv ${VV_SRC})

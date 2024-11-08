@@ -3,6 +3,7 @@
 #include <thread>
 #include <sys/ioctl.h>
 
+#include "Terminal.hpp"
 #include "image/ImageLoader.hpp"
 #include "util/Bitmap.hpp"
 #include "util/Callstack.hpp"
@@ -76,6 +77,31 @@ int main( int argc, char** argv )
     struct winsize ws;
     ioctl( 0, TIOCGWINSZ, &ws );
     mclog( LogLevel::Info, "Terminal size: %dx%d", ws.ws_col, ws.ws_row );
+
+    int cw, ch;
+    if( !blockMode )
+    {
+        if( !OpenTerminal() )
+        {
+            mclog( LogLevel::Error, "Failed to open terminal" );
+            blockMode = true;
+        }
+        else
+        {
+            const auto charSizeResp = QueryTerminal( "\033[16t" );
+            if( sscanf( charSizeResp.c_str(), "\033[6;%d;%dt", &ch, &cw ) != 2 )
+            {
+                mclog( LogLevel::Error, "Failed to query terminal character size" );
+                blockMode = true;
+            }
+            else
+            {
+                mclog( LogLevel::Info, "Terminal char size: %dx%d", cw, ch );
+            }
+
+            CloseTerminal();
+        }
+    }
 
     imageThread.join();
 

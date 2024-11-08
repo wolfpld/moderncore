@@ -40,6 +40,19 @@ CPMAddPackage(
     DOWNLOAD_ONLY TRUE
 )
 
+set(BUILD_SHARED_LIBS_SAVE ${BUILD_SHARED_LIBS})
+set(BUILD_SHARED_LIBS OFF)
+CPMAddPackage(
+    NAME base64
+    GITHUB_REPOSITORY aklomp/base64
+    GIT_TAG v0.5.2
+    OPTIONS
+        "BASE64_BUILD_CLI OFF"
+        "BASE64_WITH_OpenMP OFF"
+    EXCLUDE_FROM_ALL TRUE
+)
+set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_SAVE})
+
 find_program(GLSLC glslc REQUIRED)
 
 pkg_check_modules(DISPLAYINFO REQUIRED libdisplay-info)
@@ -323,6 +336,7 @@ target_link_libraries(vv PRIVATE
     mcoreutil
     mcoreimage
     Tracy::TracyClient
+    base64
 )
 
 

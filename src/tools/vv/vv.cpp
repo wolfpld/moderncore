@@ -1,6 +1,9 @@
+#include <libbase64.h>
+#include <format>
 #include <getopt.h>
 #include <memory>
 #include <thread>
+#include <stdio.h>
 #include <sys/ioctl.h>
 
 #include "Terminal.hpp"
@@ -159,6 +162,58 @@ int main( int argc, char** argv )
     }
     else
     {
+        uint32_t col = ws.ws_col * cw;
+        uint32_t row = std::max<uint16_t>( 1, ws.ws_row - 1 ) * ch;
+
+        mclog( LogLevel::Info, "Pixels available: %ux%u", col, row );
+        AdjustBitmap( *bitmap, col, row );
+
+        size_t bmpSize = bitmap->Width() * bitmap->Height() * 4;
+        size_t b64Size = ( ( 4 * bmpSize / 3 ) + 3 ) & ~3;
+        char* b64Data = new char[b64Size+1];
+        b64Data[b64Size] = 0;
+        size_t outSize;
+        base64_encode( (const char*)bitmap->Data(), bmpSize, b64Data, &outSize, 0 );
+        CheckPanic( outSize == b64Size, "Base64 encoding failed" );
+        mclog( LogLevel::Info, "Base64 size: %zu", b64Size );
+
+        if( b64Size <= 4096 )
+        {
+            std::string payload = std::format( "\033_Gf=32,s={},v={},a=T;{}\033\\", bitmap->Width(), bitmap->Height(), b64Data );
+            write( STDOUT_FILENO, payload.c_str(), payload.size() );
+        }
+        else
+        {
+            auto ptr = b64Data;
+            while( b64Size > 0 )
+            {
+                size_t chunkSize = std::min<size_t>( 4096, b64Size );
+                b64Size -= chunkSize;
+
+                std::string payload;
+                if( ptr == b64Data )
+                {
+                    payload = std::format( "\033_Gf=32,s={},v={},a=T,m=1;", bitmap->Width(), bitmap->Height() );
+                }
+                else if( b64Size > 0 )
+                {
+                    payload = "\033_Gm=1;";
+                }
+                else
+                {
+                    payload = "\033_Gm=0;";
+                }
+                payload.append( ptr, chunkSize );
+                payload.append( "\033\\" );
+                write( STDOUT_FILENO, payload.c_str(), payload.size() );
+
+                ptr += chunkSize;
+            }
+        }
+
+        if( bitmap->Width() < col ) printf( "\n" );
+
+        delete[] b64Data;
     }
 
     return 0;

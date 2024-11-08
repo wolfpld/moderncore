@@ -110,6 +110,7 @@ set(MCOREIMAGE_SRC
     src/image/JxlLoader.cpp
     src/image/PngLoader.cpp
     src/image/PvrLoader.cpp
+    src/image/StbImageLoader.cpp
     src/image/WebpLoader.cpp
 )
 
@@ -129,6 +130,7 @@ target_include_directories(mcoreimage PRIVATE
     ${JXL_INCLUDE_DIRS}
     ${PNG_INCLUDE_DIRS}
     ${WEBP_INCLUDE_DIRS}
+    ${stb_SOURCE_DIR}
 )
 
 # mcorevulkan

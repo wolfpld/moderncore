@@ -9,19 +9,37 @@
 #include "util/Logs.hpp"
 #include "util/Panic.hpp"
 
+namespace {
+void PrintHelp()
+{
+    printf( "Usage: vv [options]\n" );
+    printf( "Options:\n" );
+    printf( "  -d, --debug                  Enable debug logging\n" );
+    printf( "  -e, --external               Show external callstacks\n" );
+    printf( "  -b, --block                  Use text-only block mode\n" );
+    printf( "  --help                       Print this help\n" );
+}
+}
+
 int main( int argc, char** argv )
 {
 #ifdef NDEBUG
     SetLogLevel( LogLevel::Error );
 #endif
 
+    enum { OptHelp };
+
     struct option longOptions[] = {
         { "debug", no_argument, nullptr, 'd' },
         { "external", no_argument, nullptr, 'e' },
+        { "block", no_argument, nullptr, 'b' },
+        { "help", no_argument, nullptr, OptHelp },
     };
 
+    bool blockMode = false;
+
     int opt;
-    while( ( opt = getopt_long( argc, argv, "de", longOptions, nullptr ) ) != -1 )
+    while( ( opt = getopt_long( argc, argv, "deb", longOptions, nullptr ) ) != -1 )
     {
         switch (opt)
         {
@@ -31,6 +49,12 @@ int main( int argc, char** argv )
         case 'e':
             ShowExternalCallstacks( true );
             break;
+        case 'b':
+            blockMode = true;
+            break;
+        case OptHelp:
+            PrintHelp();
+            return 0;
         default:
             break;
         }
@@ -55,50 +79,56 @@ int main( int argc, char** argv )
 
     imageThread.join();
 
-    uint32_t col = ws.ws_col;
-    uint32_t row = std::max<uint16_t>( 1, ws.ws_row - 1 ) * 2;
-
-    mclog( LogLevel::Info, "Virtual pixels: %ux%u", col, row );
-
-    if( bitmap->Width() > col || bitmap->Height() > row )
+    if( blockMode )
     {
-        const auto ratio = std::min( float( col ) / bitmap->Width(), float( row ) / bitmap->Height() );
-        bitmap->Resize( bitmap->Width() * ratio, bitmap->Height() * ratio );
-        mclog( LogLevel::Info, "Image resized: %ux%u", bitmap->Width(), bitmap->Height() );
-    }
+        uint32_t col = ws.ws_col;
+        uint32_t row = std::max<uint16_t>( 1, ws.ws_row - 1 ) * 2;
 
-    auto px0 = (uint32_t*)bitmap->Data();
-    auto px1 = px0 + bitmap->Width();
+        mclog( LogLevel::Info, "Virtual pixels: %ux%u", col, row );
 
-    for( int y=0; y<bitmap->Height() / 2; y++ )
-    {
-        for( int x=0; x<bitmap->Width(); x++ )
+        if( bitmap->Width() > col || bitmap->Height() > row )
         {
-            auto c0 = *px0++;
-            auto c1 = *px1++;
-            auto r0 = ( c0       ) & 0xFF;
-            auto g0 = ( c0 >> 8  ) & 0xFF;
-            auto b0 = ( c0 >> 16 ) & 0xFF;
-            auto r1 = ( c1       ) & 0xFF;
-            auto g1 = ( c1 >> 8  ) & 0xFF;
-            auto b1 = ( c1 >> 16 ) & 0xFF;
-            printf( "\033[38;2;%d;%d;%dm\033[48;2;%d;%d;%dm▀", r0, g0, b0, r1, g1, b1 );
+            const auto ratio = std::min( float( col ) / bitmap->Width(), float( row ) / bitmap->Height() );
+            bitmap->Resize( bitmap->Width() * ratio, bitmap->Height() * ratio );
+            mclog( LogLevel::Info, "Image resized: %ux%u", bitmap->Width(), bitmap->Height() );
         }
-        printf( "\033[0m\n" );
-        px0 += bitmap->Width();
-        px1 += bitmap->Width();
-    }
-    if( ( bitmap->Height() & 1 ) != 0 )
-    {
-        for( int x=0; x<bitmap->Width(); x++ )
+
+        auto px0 = (uint32_t*)bitmap->Data();
+        auto px1 = px0 + bitmap->Width();
+
+        for( int y=0; y<bitmap->Height() / 2; y++ )
         {
-            auto c0 = *px0++;
-            auto r0 = ( c0       ) & 0xFF;
-            auto g0 = ( c0 >> 8  ) & 0xFF;
-            auto b0 = ( c0 >> 16 ) & 0xFF;
-            printf( "\033[38;2;%d;%d;%dm▀", r0, g0, b0 );
+            for( int x=0; x<bitmap->Width(); x++ )
+            {
+                auto c0 = *px0++;
+                auto c1 = *px1++;
+                auto r0 = ( c0       ) & 0xFF;
+                auto g0 = ( c0 >> 8  ) & 0xFF;
+                auto b0 = ( c0 >> 16 ) & 0xFF;
+                auto r1 = ( c1       ) & 0xFF;
+                auto g1 = ( c1 >> 8  ) & 0xFF;
+                auto b1 = ( c1 >> 16 ) & 0xFF;
+                printf( "\033[38;2;%d;%d;%dm\033[48;2;%d;%d;%dm▀", r0, g0, b0, r1, g1, b1 );
+            }
+            printf( "\033[0m\n" );
+            px0 += bitmap->Width();
+            px1 += bitmap->Width();
         }
-        printf( "\033[0m\n" );
+        if( ( bitmap->Height() & 1 ) != 0 )
+        {
+            for( int x=0; x<bitmap->Width(); x++ )
+            {
+                auto c0 = *px0++;
+                auto r0 = ( c0       ) & 0xFF;
+                auto g0 = ( c0 >> 8  ) & 0xFF;
+                auto b0 = ( c0 >> 16 ) & 0xFF;
+                printf( "\033[38;2;%d;%d;%dm▀", r0, g0, b0 );
+            }
+            printf( "\033[0m\n" );
+        }
+    }
+    else
+    {
     }
 
     return 0;

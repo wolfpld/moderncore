@@ -68,6 +68,7 @@ pkg_check_modules(WAYLAND_CLIENT REQUIRED wayland-client)
 pkg_check_modules(WAYLAND_PROTOCOLS REQUIRED wayland-protocols)
 pkg_check_modules(WAYLAND_SERVER REQUIRED wayland-server)
 pkg_check_modules(WEBP REQUIRED libwebp)
+pkg_check_modules(ZLIB REQUIRED zlib)
 
 pkg_get_variable(WAYLAND_PROTOCOLS_PKGDATADIR wayland-protocols pkgdatadir)
 
@@ -337,6 +338,7 @@ target_link_libraries(vv PRIVATE
     mcoreimage
     Tracy::TracyClient
     base64
+    ${ZLIB_LIBRARIES}
 )
 
 

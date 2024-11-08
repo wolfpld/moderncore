@@ -5,6 +5,8 @@
 #include <thread>
 #include <stdio.h>
 #include <sys/ioctl.h>
+#include <vector>
+#include <zlib.h>
 
 #include "Terminal.hpp"
 #include "image/ImageLoader.hpp"
@@ -111,7 +113,7 @@ int main( int argc, char** argv )
             {
                 mclog( LogLevel::Info, "Terminal char size: %dx%d", cw, ch );
 
-                const auto kittyQuery = QueryTerminal( "\033_Gi=1,s=1,v=1,a=q,t=d,f=24;AAAA\033\\\033[c" );
+                const auto kittyQuery = QueryTerminal( "\033_Gi=1,s=1,v=1,a=q,t=d,o=z,f=24;AAAA\033\\\033[c" );
                 if( !kittyQuery.starts_with( "\033_Gi=1;OK\033\\" ) )
                 {
                     mclog( LogLevel::Warning, "Terminal does not support kitty graphics protocol" );
@@ -174,20 +176,33 @@ int main( int argc, char** argv )
 
         mclog( LogLevel::Info, "Pixels available: %ux%u", col, row );
         AdjustBitmap( *bitmap, col, row );
+        const auto bmpSize = bitmap->Width() * bitmap->Height() * 4;
 
-        size_t bmpSize = bitmap->Width() * bitmap->Height() * 4;
-        size_t b64Size = ( ( 4 * bmpSize / 3 ) + 3 ) & ~3;
+        z_stream strm = {};
+        deflateInit( &strm, Z_BEST_SPEED );
+        strm.avail_in = bmpSize;
+        strm.next_in = bitmap->Data();
+
+        std::vector<uint8_t> zdata;
+        zdata.resize( deflateBound( &strm, bmpSize ) );
+        strm.avail_out = zdata.size();
+        strm.next_out = zdata.data();
+        auto res = deflate( &strm, Z_FINISH );
+        CheckPanic( res == Z_STREAM_END, "Deflate failed" );
+        const auto zsize = zdata.size() - strm.avail_out;
+
+        size_t b64Size = ( ( 4 * zsize / 3 ) + 3 ) & ~3;
         char* b64Data = new char[b64Size+1];
         b64Data[b64Size] = 0;
         size_t outSize;
-        base64_encode( (const char*)bitmap->Data(), bmpSize, b64Data, &outSize, 0 );
+        base64_encode( (const char*)zdata.data(), zsize, b64Data, &outSize, 0 );
         CheckPanic( outSize == b64Size, "Base64 encoding failed" );
         mclog( LogLevel::Info, "Base64 size: %zu", b64Size );
 
         std::string payload;
         if( b64Size <= 4096 )
         {
-            payload = std::format( "\033_Gf=32,s={},v={},a=T;{}\033\\", bitmap->Width(), bitmap->Height(), b64Data );
+            payload = std::format( "\033_Gf=32,s={},v={},a=T,o=z;{}\033\\", bitmap->Width(), bitmap->Height(), b64Data );
         }
         else
         {
@@ -199,7 +214,7 @@ int main( int argc, char** argv )
 
                 if( ptr == b64Data )
                 {
-                    payload.append( std::format( "\033_Gf=32,s={},v={},a=T,m=1;", bitmap->Width(), bitmap->Height() ) );
+                    payload.append( std::format( "\033_Gf=32,s={},v={},a=T,o=z,m=1;", bitmap->Width(), bitmap->Height() ) );
                 }
                 else if( b64Size > 0 )
                 {

@@ -184,10 +184,10 @@ int main( int argc, char** argv )
         CheckPanic( outSize == b64Size, "Base64 encoding failed" );
         mclog( LogLevel::Info, "Base64 size: %zu", b64Size );
 
+        std::string payload;
         if( b64Size <= 4096 )
         {
-            std::string payload = std::format( "\033_Gf=32,s={},v={},a=T;{}\033\\", bitmap->Width(), bitmap->Height(), b64Data );
-            write( STDOUT_FILENO, payload.c_str(), payload.size() );
+            payload = std::format( "\033_Gf=32,s={},v={},a=T;{}\033\\", bitmap->Width(), bitmap->Height(), b64Data );
         }
         else
         {
@@ -197,25 +197,37 @@ int main( int argc, char** argv )
                 size_t chunkSize = std::min<size_t>( 4096, b64Size );
                 b64Size -= chunkSize;
 
-                std::string payload;
                 if( ptr == b64Data )
                 {
-                    payload = std::format( "\033_Gf=32,s={},v={},a=T,m=1;", bitmap->Width(), bitmap->Height() );
+                    payload.append( std::format( "\033_Gf=32,s={},v={},a=T,m=1;", bitmap->Width(), bitmap->Height() ) );
                 }
                 else if( b64Size > 0 )
                 {
-                    payload = "\033_Gm=1;";
+                    payload.append( "\033_Gm=1;" );
                 }
                 else
                 {
-                    payload = "\033_Gm=0;";
+                    payload.append( "\033_Gm=0;" );
                 }
                 payload.append( ptr, chunkSize );
                 payload.append( "\033\\" );
-                write( STDOUT_FILENO, payload.c_str(), payload.size() );
 
                 ptr += chunkSize;
             }
+        }
+
+        auto sz = payload.size();
+        auto ptr = payload.c_str();
+        while( sz > 0 )
+        {
+            auto wr = write( STDOUT_FILENO, ptr, sz );
+            if( wr < 0 )
+            {
+                mclog( LogLevel::Error, "Failed to write to terminal" );
+                return 1;
+            }
+            sz -= wr;
+            ptr += wr;
         }
 
         if( bitmap->Width() < col ) printf( "\n" );

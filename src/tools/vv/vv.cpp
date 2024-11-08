@@ -20,6 +20,16 @@ void PrintHelp()
     printf( "  -b, --block                  Use text-only block mode\n" );
     printf( "  --help                       Print this help\n" );
 }
+
+void AdjustBitmap( Bitmap& bitmap, uint32_t col, uint32_t row )
+{
+    if( bitmap.Width() > col || bitmap.Height() > row )
+    {
+        const auto ratio = std::min( float( col ) / bitmap.Width(), float( row ) / bitmap.Height() );
+        bitmap.Resize( bitmap.Width() * ratio, bitmap.Height() * ratio );
+        mclog( LogLevel::Info, "Image resized: %ux%u", bitmap.Width(), bitmap.Height() );
+    }
+}
 }
 
 int main( int argc, char** argv )
@@ -111,13 +121,7 @@ int main( int argc, char** argv )
         uint32_t row = std::max<uint16_t>( 1, ws.ws_row - 1 ) * 2;
 
         mclog( LogLevel::Info, "Virtual pixels: %ux%u", col, row );
-
-        if( bitmap->Width() > col || bitmap->Height() > row )
-        {
-            const auto ratio = std::min( float( col ) / bitmap->Width(), float( row ) / bitmap->Height() );
-            bitmap->Resize( bitmap->Width() * ratio, bitmap->Height() * ratio );
-            mclog( LogLevel::Info, "Image resized: %ux%u", bitmap->Width(), bitmap->Height() );
-        }
+        AdjustBitmap( *bitmap, col, row );
 
         auto px0 = (uint32_t*)bitmap->Data();
         auto px1 = px0 + bitmap->Width();

@@ -104,7 +104,7 @@ int main( int argc, char** argv )
             const auto charSizeResp = QueryTerminal( "\033[16t" );
             if( sscanf( charSizeResp.c_str(), "\033[6;%d;%dt", &ch, &cw ) != 2 )
             {
-                mclog( LogLevel::Error, "Failed to query terminal character size" );
+                mclog( LogLevel::Warning, "Failed to query terminal character size" );
                 blockMode = true;
             }
             else

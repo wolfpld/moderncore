@@ -1,5 +1,6 @@
 #include <getopt.h>
 #include <memory>
+#include <thread>
 #include <sys/ioctl.h>
 
 #include "image/ImageLoader.hpp"
@@ -40,14 +41,19 @@ int main( int argc, char** argv )
         return 1;
     }
 
+    const char* imageFile = argv[optind];
+    std::unique_ptr<Bitmap> bitmap;
+    auto imageThread = std::thread( [&bitmap, imageFile] {
+        bitmap.reset( LoadImage( imageFile ) );
+        CheckPanic( bitmap, "Failed to load image" );
+        mclog( LogLevel::Info, "Image loaded: %ux%u", bitmap->Width(), bitmap->Height() );
+    } );
+
     struct winsize ws;
     ioctl( 0, TIOCGWINSZ, &ws );
     mclog( LogLevel::Info, "Terminal size: %dx%d", ws.ws_col, ws.ws_row );
 
-    const char* imageFile = argv[optind];
-    auto bitmap = std::unique_ptr<Bitmap>( LoadImage( imageFile ) );
-    CheckPanic( bitmap, "Failed to load image" );
-    mclog( LogLevel::Info, "Image loaded: %ux%u", bitmap->Width(), bitmap->Height() );
+    imageThread.join();
 
     uint32_t col = ws.ws_col;
     uint32_t row = std::max<uint16_t>( 1, ws.ws_row - 1 ) * 2;

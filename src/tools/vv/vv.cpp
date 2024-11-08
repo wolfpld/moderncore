@@ -111,8 +111,8 @@ int main( int argc, char** argv )
             {
                 mclog( LogLevel::Info, "Terminal char size: %dx%d", cw, ch );
 
-                const auto kittyQuery = QueryTerminal( "\033_Gi=1,s=1,v=1,a=q,t=d,f=24;AAAA\033\\" );
-                if( kittyQuery != "\033_Gi=1;OK\033\\" )
+                const auto kittyQuery = QueryTerminal( "\033_Gi=1,s=1,v=1,a=q,t=d,f=24;AAAA\033\\\033[c" );
+                if( !kittyQuery.starts_with( "\033_Gi=1;OK\033\\" ) )
                 {
                     mclog( LogLevel::Warning, "Terminal does not support kitty graphics protocol" );
                     blockMode = true;

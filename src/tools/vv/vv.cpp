@@ -215,6 +215,7 @@ int main( int argc, char** argv )
         CheckPanic( res == Z_STREAM_END, "Deflate failed" );
         const auto zsize = zdata.size() - strm.avail_out;
         deflateEnd( &strm );
+        mclog( LogLevel::Info, "Compression %zu -> %zu", bmpSize, zsize );
 
         size_t b64Size = ( ( 4 * zsize / 3 ) + 3 ) & ~3;
         char* b64Data = new char[b64Size+1];

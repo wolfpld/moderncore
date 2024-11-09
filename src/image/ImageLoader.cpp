@@ -55,8 +55,8 @@ Bitmap* LoadImage( const char* filename )
     if( auto img = LoadImage<PvrLoader>( file ); img ) return img;
     if( auto img = LoadImage<DdsLoader>( file ); img ) return img;
     if( auto img = LoadImage<StbImageLoader>( file ); img ) return img;
-    if( auto img = LoadImage<TiffLoader>( file ); img ) return img;
     if( auto img = LoadImage<RawLoader>( file ); img ) return img;
+    if( auto img = LoadImage<TiffLoader>( file ); img ) return img;
 
     mclog( LogLevel::Error, "Failed to load image %s", path.c_str() );
     return nullptr;

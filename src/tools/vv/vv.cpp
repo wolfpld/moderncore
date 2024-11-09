@@ -110,8 +110,7 @@ int main( int argc, char** argv )
     std::unique_ptr<Bitmap> bitmap;
     auto imageThread = std::thread( [&bitmap, imageFile] {
         bitmap.reset( LoadImage( imageFile ) );
-        CheckPanic( bitmap, "Failed to load image" );
-        mclog( LogLevel::Info, "Image loaded: %ux%u", bitmap->Width(), bitmap->Height() );
+        if( bitmap ) mclog( LogLevel::Info, "Image loaded: %ux%u", bitmap->Width(), bitmap->Height() );
     } );
 
     struct winsize ws;
@@ -151,6 +150,7 @@ int main( int argc, char** argv )
     }
 
     imageThread.join();
+    if( !bitmap ) return 1;
 
     if( blockMode )
     {

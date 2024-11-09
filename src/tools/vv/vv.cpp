@@ -20,8 +20,6 @@ void PrintHelp()
 {
     printf( "Usage: vv [options] <image>\n" );
     printf( "Options:\n" );
-    printf( "  -d, --debug                  Enable debug logging\n" );
-    printf( "  -e, --external               Show external callstacks\n" );
     printf( "  -b, --block                  Use text-only block mode\n" );
     printf( "  -s, --scale                  Try to scale up image to 2x\n" );
     printf( "  -f, --fit                    Fit image to terminal size\n" );

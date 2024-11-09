@@ -18,7 +18,7 @@
 namespace {
 void PrintHelp()
 {
-    printf( "Usage: vv [options]\n" );
+    printf( "Usage: vv [options] <image>\n" );
     printf( "Options:\n" );
     printf( "  -d, --debug                  Enable debug logging\n" );
     printf( "  -e, --external               Show external callstacks\n" );

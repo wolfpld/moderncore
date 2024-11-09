@@ -88,6 +88,8 @@ int main( int argc, char** argv )
     }
     if (optind == argc)
     {
+        PrintHelp();
+        printf( "\n" );
         mclog( LogLevel::Error, "Image file name must be provided" );
         return 1;
     }

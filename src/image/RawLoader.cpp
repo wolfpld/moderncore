@@ -32,30 +32,39 @@ Bitmap* RawLoader::Load()
 
     auto bmp = new Bitmap( img->width, img->height );
     auto src = img->data;
-    auto dst = bmp->Data();
+    auto dst = (uint32_t*)bmp->Data();
     auto sz = img->width * img->height;
+
     switch( img->colors )
     {
     case 1:
         do
         {
             const auto v = *src++;
-            *dst++ = v;
-            *dst++ = v;
-            *dst++ = v;
-            *dst++ = 255;
+            *dst++ = v | (v << 8) | (v << 16) | 0xff000000;
         }
         while( --sz );
         break;
     case 3:
-        do
         {
-            *dst++ = *src++;
-            *dst++ = *src++;
-            *dst++ = *src++;
-            *dst++ = 255;
+            if( sz > 1 )
+            {
+                sz--;
+                do
+                {
+                    uint32_t v;
+                    memcpy( &v, src, 4 );
+                    *dst++ = v | 0xff000000;
+                    src += 3;
+                }
+                while( --sz );
+            }
+
+            const auto r = *src++;
+            const auto g = *src++;
+            const auto b = *src;
+            *dst = r | (g << 8) | (b << 16) | 0xff000000;
         }
-        while( --sz );
         break;
     default:
         break;

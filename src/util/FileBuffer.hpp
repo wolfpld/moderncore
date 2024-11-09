@@ -12,6 +12,7 @@ public:
     struct FileException : public std::runtime_error { explicit FileException( const std::string& msg ) : std::runtime_error( msg ) {} };
 
     explicit FileBuffer( const char* fn );
+    explicit FileBuffer( FILE* file );
     ~FileBuffer();
 
     NoCopy( FileBuffer );

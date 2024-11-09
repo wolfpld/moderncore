@@ -23,16 +23,22 @@ void PrintHelp()
     printf( "  -d, --debug                  Enable debug logging\n" );
     printf( "  -e, --external               Show external callstacks\n" );
     printf( "  -b, --block                  Use text-only block mode\n" );
+    printf( "  -s, --scale                  Try to scale up image to 2x\n" );
     printf( "  --help                       Print this help\n" );
 }
 
-void AdjustBitmap( Bitmap& bitmap, uint32_t col, uint32_t row )
+void AdjustBitmap( Bitmap& bitmap, uint32_t col, uint32_t row, bool upscale )
 {
     if( bitmap.Width() > col || bitmap.Height() > row )
     {
         const auto ratio = std::min( float( col ) / bitmap.Width(), float( row ) / bitmap.Height() );
         bitmap.Resize( bitmap.Width() * ratio, bitmap.Height() * ratio );
         mclog( LogLevel::Info, "Image resized: %ux%u", bitmap.Width(), bitmap.Height() );
+    }
+    else if( upscale && bitmap.Width() * 2 <= col && bitmap.Height() * 2 <= row )
+    {
+        bitmap.Resize( bitmap.Width() * 2, bitmap.Height() * 2 );
+        mclog( LogLevel::Info, "Image upscaled: %ux%u", bitmap.Width(), bitmap.Height() );
     }
 }
 }
@@ -49,13 +55,15 @@ int main( int argc, char** argv )
         { "debug", no_argument, nullptr, 'd' },
         { "external", no_argument, nullptr, 'e' },
         { "block", no_argument, nullptr, 'b' },
+        { "scale", no_argument, nullptr, 's' },
         { "help", no_argument, nullptr, OptHelp },
     };
 
     bool blockMode = false;
+    bool upscale = false;
 
     int opt;
-    while( ( opt = getopt_long( argc, argv, "deb", longOptions, nullptr ) ) != -1 )
+    while( ( opt = getopt_long( argc, argv, "debs", longOptions, nullptr ) ) != -1 )
     {
         switch (opt)
         {
@@ -67,6 +75,9 @@ int main( int argc, char** argv )
             break;
         case 'b':
             blockMode = true;
+            break;
+        case 's':
+            upscale = true;
             break;
         case OptHelp:
             PrintHelp();
@@ -133,7 +144,7 @@ int main( int argc, char** argv )
         uint32_t row = std::max<uint16_t>( 1, ws.ws_row - 1 ) * 2;
 
         mclog( LogLevel::Info, "Virtual pixels: %ux%u", col, row );
-        AdjustBitmap( *bitmap, col, row );
+        AdjustBitmap( *bitmap, col, row, upscale );
 
         auto px0 = (uint32_t*)bitmap->Data();
         auto px1 = px0 + bitmap->Width();
@@ -175,7 +186,7 @@ int main( int argc, char** argv )
         uint32_t row = std::max<uint16_t>( 1, ws.ws_row - 1 ) * ch;
 
         mclog( LogLevel::Info, "Pixels available: %ux%u", col, row );
-        AdjustBitmap( *bitmap, col, row );
+        AdjustBitmap( *bitmap, col, row, upscale );
         const auto bmpSize = bitmap->Width() * bitmap->Height() * 4;
 
         z_stream strm = {};

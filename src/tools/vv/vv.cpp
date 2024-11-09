@@ -187,9 +187,11 @@ int main( int argc, char** argv )
         zdata.resize( deflateBound( &strm, bmpSize ) );
         strm.avail_out = zdata.size();
         strm.next_out = zdata.data();
+
         auto res = deflate( &strm, Z_FINISH );
         CheckPanic( res == Z_STREAM_END, "Deflate failed" );
         const auto zsize = zdata.size() - strm.avail_out;
+        deflateEnd( &strm );
 
         size_t b64Size = ( ( 4 * zsize / 3 ) + 3 ) & ~3;
         char* b64Data = new char[b64Size+1];

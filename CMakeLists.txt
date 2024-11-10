@@ -58,6 +58,7 @@ find_program(GLSLC glslc REQUIRED)
 pkg_check_modules(DISPLAYINFO REQUIRED libdisplay-info)
 pkg_check_modules(DRM REQUIRED libdrm)
 pkg_check_modules(GBM REQUIRED gbm)
+pkg_check_modules(EXR REQUIRED OpenEXR)
 pkg_check_modules(HEIF REQUIRED libheif)
 pkg_check_modules(JPEG REQUIRED libjpeg)
 pkg_check_modules(JXL REQUIRED libjxl libjxl_threads)
@@ -120,6 +121,7 @@ target_include_directories(mcoreutil PRIVATE ${stb_SOURCE_DIR})
 set(MCOREIMAGE_SRC
     src/image/bcdec.c
     src/image/DdsLoader.cpp
+    src/image/ExrLoader.cpp
     src/image/HeifLoader.cpp
     src/image/ImageLoader.cpp
     src/image/JpgLoader.cpp
@@ -136,6 +138,7 @@ add_library(mcoreimage ${MCOREIMAGE_SRC})
 target_link_libraries(mcoreimage PRIVATE
     mcoreutil
     Tracy::TracyClient
+    ${EXR_LIBRARIES}
     ${HEIF_LIBRARIES}
     ${JPEG_LIBRARIES}
     ${JXL_LIBRARIES}
@@ -145,6 +148,7 @@ target_link_libraries(mcoreimage PRIVATE
     ${WEBP_LIBRARIES}
 )
 target_include_directories(mcoreimage PRIVATE
+    ${EXR_INCLUDE_DIRS}
     ${HEIF_INCLUDE_DIRS}
     ${JPEG_INCLUDE_DIRS}
     ${JXL_INCLUDE_DIRS}

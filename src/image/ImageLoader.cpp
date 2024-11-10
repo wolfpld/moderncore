@@ -2,6 +2,7 @@
 #include <tracy/Tracy.hpp>
 
 #include "DdsLoader.hpp"
+#include "ExrLoader.hpp"
 #include "HeifLoader.hpp"
 #include "ImageLoader.hpp"
 #include "JpgLoader.hpp"
@@ -57,6 +58,7 @@ Bitmap* LoadImage( const char* filename )
     if( auto img = LoadImage<StbImageLoader>( file ); img ) return img;
     if( auto img = LoadImage<RawLoader>( file ); img ) return img;
     if( auto img = LoadImage<TiffLoader>( file ); img ) return img;
+    if( auto img = LoadImage<ExrLoader>( file ); img ) return img;
 
     mclog( LogLevel::Error, "Failed to load image %s", path.c_str() );
     return nullptr;

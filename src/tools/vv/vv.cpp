@@ -165,8 +165,10 @@ int main( int argc, char** argv )
                             gfxQuery.find( ";4;" ) != std::string::npos ||
                             gfxQuery.find( ";4c" ) != std::string::npos
                           )
+#if 0
                         ) || (
                           gfxQuery == "\033[?1;2;4c"    // fucking tmux can't read the specs
+#endif
                         )
                       )
                     {

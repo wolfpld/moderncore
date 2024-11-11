@@ -21,6 +21,7 @@ void PrintHelp()
     printf( "Usage: vv [options] <image>\n" );
     printf( "Options:\n" );
     printf( "  -b, --block                  Use text-only block mode\n" );
+    printf( "  -6, --sixel                  Use sixel graphics mode\n" );
     printf( "  -s, --scale                  Try to scale up image to 2x\n" );
     printf( "  -f, --fit                    Fit image to terminal size\n" );
     printf( "  --help                       Print this help\n" );
@@ -63,12 +64,14 @@ int main( int argc, char** argv )
         { "block", no_argument, nullptr, 'b' },
         { "scale", no_argument, nullptr, 's' },
         { "fit", no_argument, nullptr, 'f' },
+        { "sixel", no_argument, nullptr, '6' },
         { "help", no_argument, nullptr, OptHelp },
     };
 
     enum class GfxMode
     {
         Kitty,
+        Sixel,
         Block
     };
 
@@ -76,7 +79,7 @@ int main( int argc, char** argv )
     ScaleMode scale = ScaleMode::None;
 
     int opt;
-    while( ( opt = getopt_long( argc, argv, "debsf", longOptions, nullptr ) ) != -1 )
+    while( ( opt = getopt_long( argc, argv, "debsf6", longOptions, nullptr ) ) != -1 )
     {
         switch (opt)
         {
@@ -94,6 +97,9 @@ int main( int argc, char** argv )
             break;
         case 'f':
             scale = ScaleMode::Fit;
+            break;
+        case '6':
+            gfxMode = GfxMode::Sixel;
             break;
         default:
             printf( "\n" );

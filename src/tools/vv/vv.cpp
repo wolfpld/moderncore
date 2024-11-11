@@ -66,7 +66,13 @@ int main( int argc, char** argv )
         { "help", no_argument, nullptr, OptHelp },
     };
 
-    bool blockMode = false;
+    enum class GfxMode
+    {
+        Kitty,
+        Block
+    };
+
+    GfxMode gfxMode = GfxMode::Kitty;
     ScaleMode scale = ScaleMode::None;
 
     int opt;
@@ -81,7 +87,7 @@ int main( int argc, char** argv )
             ShowExternalCallstacks( true );
             break;
         case 'b':
-            blockMode = true;
+            gfxMode = GfxMode::Block;
             break;
         case 's':
             scale = ScaleMode::Scale2x;
@@ -116,12 +122,12 @@ int main( int argc, char** argv )
     mclog( LogLevel::Info, "Terminal size: %dx%d", ws.ws_col, ws.ws_row );
 
     int cw, ch;
-    if( !blockMode )
+    if( gfxMode != GfxMode::Block )
     {
         if( !OpenTerminal() )
         {
             mclog( LogLevel::Error, "Failed to open terminal" );
-            blockMode = true;
+            gfxMode = GfxMode::Block;
         }
         else
         {
@@ -129,7 +135,7 @@ int main( int argc, char** argv )
             if( sscanf( charSizeResp.c_str(), "\033[6;%d;%dt", &ch, &cw ) != 2 )
             {
                 mclog( LogLevel::Warning, "Failed to query terminal character size" );
-                blockMode = true;
+                gfxMode = GfxMode::Block;
             }
             else
             {
@@ -139,7 +145,7 @@ int main( int argc, char** argv )
                 if( !kittyQuery.starts_with( "\033_Gi=1;OK\033\\" ) )
                 {
                     mclog( LogLevel::Warning, "Terminal does not support kitty graphics protocol" );
-                    blockMode = true;
+                    gfxMode = GfxMode::Block;
                 }
             }
 
@@ -150,7 +156,7 @@ int main( int argc, char** argv )
     imageThread.join();
     if( !bitmap ) return 1;
 
-    if( blockMode )
+    if( gfxMode == GfxMode::Block )
     {
         uint32_t col = ws.ws_col;
         uint32_t row = std::max<uint16_t>( 1, ws.ws_row - 1 ) * 2;

@@ -95,11 +95,12 @@ int main( int argc, char** argv )
         case 'f':
             scale = ScaleMode::Fit;
             break;
+        default:
+            printf( "\n" );
+            [[fallthrough]];
         case OptHelp:
             PrintHelp();
             return 0;
-        default:
-            break;
         }
     }
     if (optind == argc)

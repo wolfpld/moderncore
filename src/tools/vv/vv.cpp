@@ -3,6 +3,7 @@
 #include <getopt.h>
 #include <memory>
 #include <thread>
+#include <sixel.h>
 #include <stdio.h>
 #include <sys/ioctl.h>
 #include <vector>
@@ -232,7 +233,29 @@ int main( int argc, char** argv )
             printf( "\033[0m\n" );
         }
     }
-    else
+    else if( gfxMode == GfxMode::Sixel )
+    {
+        uint32_t col = ws.ws_col * cw;
+        uint32_t row = std::max<uint16_t>( 1, ws.ws_row - 1 ) * ch;
+
+        mclog( LogLevel::Info, "Pixels available: %ux%u", col, row );
+        AdjustBitmap( *bitmap, col, row, scale );
+
+        sixel_dither_t* dither;
+        sixel_dither_new( &dither, -1, nullptr );
+        sixel_dither_initialize( dither, bitmap->Data(), bitmap->Width(), bitmap->Height(), SIXEL_PIXELFORMAT_RGBA8888, SIXEL_LARGE_AUTO, SIXEL_REP_AUTO, SIXEL_QUALITY_HIGHCOLOR );
+
+        sixel_output_t* output;
+        sixel_output_new( &output, []( char* data, int size, void* ) -> int {
+            return write( STDOUT_FILENO, data, size );
+        }, nullptr, nullptr );
+
+        sixel_encode( bitmap->Data(), bitmap->Width(), bitmap->Height(), -1, dither, output );
+
+        sixel_output_destroy( output );
+        sixel_dither_destroy( dither );
+    }
+    else if( gfxMode == GfxMode::Kitty )
     {
         uint32_t col = ws.ws_col * cw;
         uint32_t row = std::max<uint16_t>( 1, ws.ws_row - 1 ) * ch;
@@ -314,6 +337,10 @@ int main( int argc, char** argv )
         if( bitmap->Width() < col ) printf( "\n" );
 
         delete[] b64Data;
+    }
+    else
+    {
+        CheckPanic( false, "Invalid graphics mode" );
     }
 
     return 0;

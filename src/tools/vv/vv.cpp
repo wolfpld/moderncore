@@ -148,11 +148,36 @@ int main( int argc, char** argv )
             {
                 mclog( LogLevel::Info, "Terminal char size: %dx%d", cw, ch );
 
-                const auto kittyQuery = QueryTerminal( "\033_Gi=1,s=1,v=1,a=q,t=d,f=24;AAAA\033\\\033[c" );
-                if( !kittyQuery.starts_with( "\033_Gi=1;OK\033\\" ) )
+                const auto gfxQuery = QueryTerminal( "\033_Gi=1,s=1,v=1,a=q,t=d,f=24;AAAA\033\\\033[c" );
+                if( !gfxQuery.starts_with( "\033_Gi=1;OK\033\\" ) )
                 {
-                    mclog( LogLevel::Warning, "Terminal does not support kitty graphics protocol" );
-                    gfxMode = GfxMode::Block;
+                    mclog( LogLevel::Info, "Terminal does not support kitty graphics protocol" );
+
+                    // See https://invisible-island.net/xterm/ctlseqs/ctlseqs.pdf, page 12
+                    if( (
+                          (
+                            gfxQuery.starts_with( "\033[?12;" ) ||
+                            gfxQuery.starts_with( "\033[?62;" ) ||
+                            gfxQuery.starts_with( "\033[?63;" ) ||
+                            gfxQuery.starts_with( "\033[?64;" ) ||
+                            gfxQuery.starts_with( "\033[?65;" )
+                          ) && (
+                            gfxQuery.find( ";4;" ) != std::string::npos ||
+                            gfxQuery.find( ";4c" ) != std::string::npos
+                          )
+                        ) || (
+                          gfxQuery == "\033[?1;2;4c"    // fucking tmux can't read the specs
+                        )
+                      )
+                    {
+                        mclog( LogLevel::Info, "Fallback to sixel graphics protocol" );
+                        gfxMode = GfxMode::Sixel;
+                    }
+                    else
+                    {
+                        mclog( LogLevel::Warning, "Terminal does not support sixel graphics protocol" );
+                        gfxMode = GfxMode::Block;
+                    }
                 }
             }
 

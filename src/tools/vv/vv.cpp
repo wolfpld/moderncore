@@ -26,6 +26,7 @@ void PrintHelp()
     printf( "  -s, --scale                  Try to scale up image to 2x\n" );
     printf( "  -f, --fit                    Fit image to terminal size\n" );
     printf( "  -G, --background [color]     Set background color to RRGGBB in hex\n" );
+    printf( "  -g, --checkerboard           Use checkerboard background\n" );
     printf( "  --help                       Print this help\n" );
 }
 
@@ -82,6 +83,49 @@ void FillBackground( Bitmap& bitmap, uint32_t bg )
         px++;
     }
 }
+
+void FillCheckerboard( Bitmap& bitmap )
+{
+    constexpr auto dist = 32;
+    constexpr auto bg0 = 128 + dist;
+    constexpr auto bg1 = 128 - dist;
+
+    auto px = (uint32_t*)bitmap.Data();
+    const auto bw = bitmap.Width();
+    const auto bh = bitmap.Height();
+
+    for( uint32_t h = 0; h<bh; h++ )
+    {
+        for( uint32_t w = 0; w<bw; w++ )
+        {
+            const auto a = *px >> 24;
+
+            if( a != 255 )
+            {
+                const auto sel = ( w/8 + h/8 ) & 1;
+                const auto bg = sel ? bg0 : bg1;
+
+                if( a == 0 )
+                {
+                    *px = bg | (bg << 8 ) | (bg << 16) | 0xFF000000;
+                }
+                else
+                {
+                    const auto r = ( *px       ) & 0xFF;
+                    const auto g = ( *px >> 8  ) & 0xFF;
+                    const auto b = ( *px >> 16 ) & 0xFF;
+
+                    const auto ro = bg + a * ( r - bg ) / 255;
+                    const auto go = bg + a * ( g - bg ) / 255;
+                    const auto bo = bg + a * ( b - bg ) / 255;
+
+                    *px = ( bo << 16 ) | ( go << 8 ) | ro | 0xFF000000;
+                }
+            }
+
+            px++;
+        }
+    }}
 }
 
 int main( int argc, char** argv )
@@ -100,6 +144,7 @@ int main( int argc, char** argv )
         { "fit", no_argument, nullptr, 'f' },
         { "sixel", no_argument, nullptr, '6' },
         { "background", required_argument, nullptr, 'G' },
+        { "checkerboard", no_argument, nullptr, 'g' },
         { "help", no_argument, nullptr, OptHelp },
     };
 
@@ -112,10 +157,10 @@ int main( int argc, char** argv )
 
     GfxMode gfxMode = GfxMode::Kitty;
     ScaleMode scale = ScaleMode::None;
-    int bg = -1;
+    int bg = -2;
 
     int opt;
-    while( ( opt = getopt_long( argc, argv, "debsf6G:", longOptions, nullptr ) ) != -1 )
+    while( ( opt = getopt_long( argc, argv, "debsf6G:g", longOptions, nullptr ) ) != -1 )
     {
         switch (opt)
         {
@@ -140,6 +185,9 @@ int main( int argc, char** argv )
         case 'G':
             bg = strtol( optarg, nullptr, 16 );
             bg = ( bg & 0xFF ) << 16 | ( bg & 0xFF00 ) | ( bg >> 16 );
+            break;
+        case 'g':
+            bg = -1;
             break;
         default:
             printf( "\n" );
@@ -239,6 +287,7 @@ int main( int argc, char** argv )
         AdjustBitmap( *bitmap, col, row, scale );
 
         if( bg >= 0 ) FillBackground( *bitmap, bg );
+        else if( bg == -1 ) FillCheckerboard( *bitmap );
 
         auto px0 = (uint32_t*)bitmap->Data();
         auto px1 = px0 + bitmap->Width();
@@ -283,6 +332,7 @@ int main( int argc, char** argv )
         AdjustBitmap( *bitmap, col, row, scale );
 
         if( bg >= 0 ) FillBackground( *bitmap, bg );
+        else if( bg == -1 ) FillCheckerboard( *bitmap );
 
         sixel_dither_t* dither;
         sixel_dither_new( &dither, -1, nullptr );
@@ -308,6 +358,7 @@ int main( int argc, char** argv )
         const auto bmpSize = bitmap->Width() * bitmap->Height() * 4;
 
         if( bg >= 0 ) FillBackground( *bitmap, bg );
+        else if( bg == -1 ) FillCheckerboard( *bitmap );
 
         z_stream strm = {};
         deflateInit( &strm, Z_BEST_SPEED );

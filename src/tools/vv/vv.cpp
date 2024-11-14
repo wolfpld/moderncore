@@ -25,6 +25,7 @@ void PrintHelp()
     printf( "  -6, --sixel                  Use sixel graphics mode\n" );
     printf( "  -s, --scale                  Try to scale up image to 2x\n" );
     printf( "  -f, --fit                    Fit image to terminal size\n" );
+    printf( "  -G, --background [color]     Set background color to RRGGBB in hex\n" );
     printf( "  --help                       Print this help\n" );
 }
 
@@ -49,6 +50,38 @@ void AdjustBitmap( Bitmap& bitmap, uint32_t col, uint32_t row, ScaleMode scale )
         mclog( LogLevel::Info, "Image upscaled: %ux%u", bitmap.Width(), bitmap.Height() );
     }
 }
+
+void FillBackground( Bitmap& bitmap, uint32_t bg )
+{
+    const auto bgc = bg | 0xFF000000;
+    const auto bgr = ( bg       ) & 0xFF;
+    const auto bgg = ( bg >> 8  ) & 0xFF;
+    const auto bgb = ( bg >> 16 ) & 0xFF;
+
+    auto px = (uint32_t*)bitmap.Data();
+    auto sz = bitmap.Width() * bitmap.Height();
+    while( sz-- )
+    {
+        const auto a = *px >> 24;
+        if( a == 0 )
+        {
+            *px = bgc;
+        }
+        else if( a != 255 )
+        {
+            const auto r = ( *px       ) & 0xFF;
+            const auto g = ( *px >> 8  ) & 0xFF;
+            const auto b = ( *px >> 16 ) & 0xFF;
+
+            const auto ro = bgr + a * ( r - bgr ) / 255;
+            const auto go = bgg + a * ( g - bgg ) / 255;
+            const auto bo = bgb + a * ( b - bgb ) / 255;
+
+            *px = ( bo << 16 ) | ( go << 8 ) | ro | 0xFF000000;
+        }
+        px++;
+    }
+}
 }
 
 int main( int argc, char** argv )
@@ -66,6 +99,7 @@ int main( int argc, char** argv )
         { "scale", no_argument, nullptr, 's' },
         { "fit", no_argument, nullptr, 'f' },
         { "sixel", no_argument, nullptr, '6' },
+        { "background", required_argument, nullptr, 'G' },
         { "help", no_argument, nullptr, OptHelp },
     };
 
@@ -78,9 +112,10 @@ int main( int argc, char** argv )
 
     GfxMode gfxMode = GfxMode::Kitty;
     ScaleMode scale = ScaleMode::None;
+    int bg = -1;
 
     int opt;
-    while( ( opt = getopt_long( argc, argv, "debsf6", longOptions, nullptr ) ) != -1 )
+    while( ( opt = getopt_long( argc, argv, "debsf6G:", longOptions, nullptr ) ) != -1 )
     {
         switch (opt)
         {
@@ -101,6 +136,10 @@ int main( int argc, char** argv )
             break;
         case '6':
             gfxMode = GfxMode::Sixel;
+            break;
+        case 'G':
+            bg = strtol( optarg, nullptr, 16 );
+            bg = ( bg & 0xFF ) << 16 | ( bg & 0xFF00 ) | ( bg >> 16 );
             break;
         default:
             printf( "\n" );
@@ -199,6 +238,8 @@ int main( int argc, char** argv )
         mclog( LogLevel::Info, "Virtual pixels: %ux%u", col, row );
         AdjustBitmap( *bitmap, col, row, scale );
 
+        if( bg >= 0 ) FillBackground( *bitmap, bg );
+
         auto px0 = (uint32_t*)bitmap->Data();
         auto px1 = px0 + bitmap->Width();
 
@@ -241,6 +282,8 @@ int main( int argc, char** argv )
         mclog( LogLevel::Info, "Pixels available: %ux%u", col, row );
         AdjustBitmap( *bitmap, col, row, scale );
 
+        if( bg >= 0 ) FillBackground( *bitmap, bg );
+
         sixel_dither_t* dither;
         sixel_dither_new( &dither, -1, nullptr );
         sixel_dither_initialize( dither, bitmap->Data(), bitmap->Width(), bitmap->Height(), SIXEL_PIXELFORMAT_RGBA8888, SIXEL_LARGE_AUTO, SIXEL_REP_AUTO, SIXEL_QUALITY_HIGHCOLOR );
@@ -263,6 +306,8 @@ int main( int argc, char** argv )
         mclog( LogLevel::Info, "Pixels available: %ux%u", col, row );
         AdjustBitmap( *bitmap, col, row, scale );
         const auto bmpSize = bitmap->Width() * bitmap->Height() * 4;
+
+        if( bg >= 0 ) FillBackground( *bitmap, bg );
 
         z_stream strm = {};
         deflateInit( &strm, Z_BEST_SPEED );

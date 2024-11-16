@@ -140,14 +140,14 @@ add_library(mcoreimage ${MCOREIMAGE_SRC})
 target_link_libraries(mcoreimage PRIVATE
     mcoreutil
     Tracy::TracyClient
-    ${EXR_LIBRARIES}
-    ${HEIF_LIBRARIES}
-    ${JPEG_LIBRARIES}
-    ${JXL_LIBRARIES}
-    ${PNG_LIBRARIES}
-    ${RAW_LIBRARIES}
-    ${TIFF_LIBRARIES}
-    ${WEBP_LIBRARIES}
+    ${EXR_LINK_LIBRARIES}
+    ${HEIF_LINK_LIBRARIES}
+    ${JPEG_LINK_LIBRARIES}
+    ${JXL_LINK_LIBRARIES}
+    ${PNG_LINK_LIBRARIES}
+    ${RAW_LINK_LIBRARIES}
+    ${TIFF_LINK_LIBRARIES}
+    ${WEBP_LINK_LIBRARIES}
 )
 target_include_directories(mcoreimage PRIVATE
     ${EXR_INCLUDE_DIRS}
@@ -193,7 +193,7 @@ target_link_libraries(mcorevulkan PRIVATE
     Tracy::TracyClient
 )
 target_link_libraries(mcorevulkan PUBLIC
-    ${VULKAN_LIBRARIES}
+    ${VULKAN_LINK_LIBRARIES}
     GPUOpen::VulkanMemoryAllocator
 )
 target_include_directories(mcorevulkan PUBLIC
@@ -247,7 +247,7 @@ target_link_libraries(mcorewayland PRIVATE
     Tracy::TracyClient
 )
 target_link_libraries(mcorewayland PUBLIC
-    ${WAYLAND_CLIENT_LIBRARIES}
+    ${WAYLAND_CLIENT_LINK_LIBRARIES}
 )
 target_include_directories(mcorewayland PUBLIC
     ${WAYLAND_CLIENT_INCLUDE_DIRS}
@@ -355,8 +355,8 @@ target_link_libraries(vv PRIVATE
     mcoreimage
     Tracy::TracyClient
     base64
-    ${SIXEL_LIBRARIES}
-    ${ZLIB_LIBRARIES}
+    ${SIXEL_LINK_LIBRARIES}
+    ${ZLIB_LINK_LIBRARIES}
 )
 
 

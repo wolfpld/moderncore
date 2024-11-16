@@ -1,4 +1,3 @@
-#include <alloca.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string>
@@ -7,6 +6,7 @@
 
 #include "CursorType.hpp"
 #include "WinCursor.hpp"
+#include "util/Alloca.h"
 #include "util/Bitmap.hpp"
 #include "util/Config.hpp"
 #include "util/FileWrapper.hpp"

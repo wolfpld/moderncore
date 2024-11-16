@@ -9,6 +9,7 @@
 #include "util/Callstack.hpp"
 #include "util/Logs.hpp"
 #include "util/Panic.hpp"
+#include "util/VectorImage.hpp"
 #include "vulkan/VlkCommandBuffer.hpp"
 #include "vulkan/VlkDevice.hpp"
 #include "vulkan/VlkInstance.hpp"
@@ -92,6 +93,21 @@ int main( int argc, char** argv )
     } );
     auto imageThread = std::thread( [imageFile] {
         g_bitmap.reset( LoadImage( imageFile ) );
+        if( !g_bitmap )
+        {
+            auto vector = std::unique_ptr<VectorImage>( LoadVectorImage( imageFile ) );
+            if( vector )
+            {
+                auto w = vector->Width();
+                auto h = vector->Height();
+                if( w < 0 || h < 0 )
+                {
+                    w = 512;
+                    h = 512;
+                }
+                g_bitmap.reset( vector->Rasterize( w, h ) );
+            }
+        }
         CheckPanic( g_bitmap, "Failed to load image" );
     } );
 

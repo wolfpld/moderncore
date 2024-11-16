@@ -62,6 +62,6 @@ Bitmap* LoadImage( const char* filename )
     if( auto img = LoadImage<ExrLoader>( file ); img ) return img;
     if( auto img = LoadImage<PcxLoader>( file ); img ) return img;
 
-    mclog( LogLevel::Error, "Failed to load image %s", path.c_str() );
+    mclog( LogLevel::Info, "Failed to load image %s", path.c_str() );
     return nullptr;
 }

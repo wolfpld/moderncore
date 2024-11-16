@@ -277,7 +277,11 @@ int main( int argc, char** argv )
     }
 
     imageThread.join();
-    if( !bitmap ) return 1;
+    if( !bitmap )
+    {
+        mclog( LogLevel::Error, "Failed to load image %s", imageFile );
+        return 1;
+    }
 
     if( gfxMode == GfxMode::Block )
     {

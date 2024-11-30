@@ -104,6 +104,7 @@ set(MCOREUTIL_SRC
     contrib/libbacktrace/state.c
     src/util/ArgParser.cpp
     src/util/Bitmap.cpp
+    src/util/BitmapAnim.cpp
     src/util/Callstack.cpp
     src/util/Config.cpp
     src/util/FileBuffer.cpp

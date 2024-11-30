@@ -3,6 +3,7 @@
 
 #include "WebpLoader.hpp"
 #include "util/Bitmap.hpp"
+#include "util/BitmapAnim.hpp"
 #include "util/FileBuffer.hpp"
 #include "util/Panic.hpp"
 
@@ -50,6 +51,30 @@ std::unique_ptr<Bitmap> WebpLoader::Load()
     memcpy( bmp->Data(), out, info.canvas_width * info.canvas_height * 4 );
 
     return bmp;
+}
+
+std::unique_ptr<BitmapAnim> WebpLoader::LoadAnim()
+{
+    if( !m_dec ) Open();
+
+    WebPAnimInfo info;
+    WebPAnimDecoderGetInfo( m_dec, &info );
+    CheckPanic( info.frame_count > 1, "Not an animated WebP file" );
+
+    auto anim = std::make_unique<BitmapAnim>( info.frame_count );
+    for( int i=0; i<info.frame_count; i++ )
+    {
+        int delay;
+        uint8_t* out;
+        if( !WebPAnimDecoderGetNext( m_dec, &out, &delay ) ) break;
+
+        auto bmp = std::make_shared<Bitmap>( info.canvas_width, info.canvas_height );
+        memcpy( bmp->Data(), out, info.canvas_width * info.canvas_height * 4 );
+
+        anim->AddFrame( std::move( bmp ), delay );
+    }
+
+    return anim;
 }
 
 void WebpLoader::Open()

@@ -24,6 +24,7 @@ public:
     [[nodiscard]] bool IsAnimated() override;
 
     [[nodiscard]] std::unique_ptr<Bitmap> Load() override;
+    [[nodiscard]] std::unique_ptr<BitmapAnim> LoadAnim() override;
 
 private:
     void Open();

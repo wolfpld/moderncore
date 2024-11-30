@@ -5,6 +5,7 @@
 #include <thread>
 #include <sixel.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <vector>
@@ -282,6 +283,8 @@ int main( int argc, char** argv )
         }
         else
         {
+            atexit( CloseTerminal );
+
             const auto charSizeResp = QueryTerminal( "\033[16t" );
             if( sscanf( charSizeResp.c_str(), "\033[6;%d;%dt", &ch, &cw ) != 2 )
             {
@@ -326,8 +329,6 @@ int main( int argc, char** argv )
                     }
                 }
             }
-
-            CloseTerminal();
         }
     }
 

@@ -4,6 +4,7 @@
 
 #include <OpenEXRConfig.h>
 
+#include "ImageLoader.hpp"
 #include "util/FileWrapper.hpp"
 #include "util/NoCopy.hpp"
 
@@ -12,16 +13,16 @@ class ExrStream;
 
 namespace OPENEXR_IMF_INTERNAL_NAMESPACE { class RgbaInputFile; }
 
-class ExrLoader
+class ExrLoader : public ImageLoader
 {
 public:
     explicit ExrLoader( FileWrapper& file );
-    ~ExrLoader();
+    ~ExrLoader() override;
 
     NoCopy( ExrLoader );
 
-    [[nodiscard]] bool IsValid() const;
-    [[nodiscard]] Bitmap* Load();
+    [[nodiscard]] bool IsValid() const override;
+    [[nodiscard]] Bitmap* Load() override;
 
 private:
     std::unique_ptr<ExrStream> m_stream;

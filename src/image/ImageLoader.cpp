@@ -22,13 +22,13 @@
 #include "vector/SvgImage.hpp"
 
 template<typename T>
-concept ImageLoader = requires( T loader, FileWrapper& file )
+concept ImageLoaderConcept = requires( T loader, FileWrapper& file )
 {
     { loader.IsValid() } -> std::convertible_to<bool>;
     { loader.Load() } -> std::convertible_to<Bitmap*>;
 };
 
-template<ImageLoader T>
+template<ImageLoaderConcept T>
 static inline Bitmap* LoadImage( FileWrapper& file )
 {
     T loader( file );

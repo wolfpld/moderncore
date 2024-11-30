@@ -6,6 +6,7 @@
 #include <sixel.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <vector>
@@ -241,7 +242,7 @@ void PrintBitmapBlock( Bitmap& bitmap )
     }
 }
 
-bool UploadKittyImage( Bitmap& bitmap, const char* queryPart )
+bool UploadKittyImage( Bitmap& bitmap, const char* queryPart, bool anim = false )
 {
     const auto bmpSize = bitmap.Width() * bitmap.Height() * 4;
 
@@ -286,14 +287,19 @@ bool UploadKittyImage( Bitmap& bitmap, const char* queryPart )
             {
                 payload.append( std::format( "\033_Gf=32,s={},v={},{},o=z,m=1;", bitmap.Width(), bitmap.Height(), queryPart ) );
             }
-            else if( b64Size > 0 )
-            {
-                payload.append( "\033_Gm=1;" );
-            }
             else
             {
-                payload.append( "\033_Gm=0;" );
+                int m = b64Size > 0 ? 1 : 0;
+                if( anim )
+                {
+                    payload.append( std::format( "\033_Gm={},a=f;", m ) );
+                }
+                else
+                {
+                    payload.append( std::format( "\033_Gm={};", m ) );
+                }
             }
+
             payload.append( ptr, chunkSize );
             payload.append( "\033\\" );
 
@@ -598,9 +604,46 @@ int main( int argc, char** argv )
             else if( bg == -1 ) FillCheckerboard( *bitmap );
         }
 
-        UploadKittyImage( *bitmap, "a=T" );
+        if( anim )
+        {
+            int id = -1;
+            for( size_t i=0; i<anim->FrameCount(); i++ )
+            {
+                const auto& frame = anim->GetFrame( i );
+                const auto delay_ms = std::max<uint32_t>( frame.delay_us / 1000, 1 );
+                std::string query;
+                if( i == 0 )
+                {
+                    query = std::format( "I=1,z={}", delay_ms );
+                    if( !UploadKittyImage( *anim->GetFrame( i ).bmp, query.c_str() ) ) return 1;
 
-        if( bitmap->Width() < col ) printf( "\n" );
+                    auto res = QueryTerminal();
+                    if( !res.ends_with( ";OK\033\\" ) )
+                    {
+                        mclog( LogLevel::Error, "Failed to upload image: %s", res.c_str() + 1 );
+                        return 1;
+                    }
+
+                    sscanf( res.c_str(), "\033_Gi=%i;OK\033\\", &id );
+                    mclog( LogLevel::Info, "Image ID: %i", id );
+                }
+                else
+                {
+                    query = std::format( "a=f,i={},z={}", id, delay_ms );
+                    if( !UploadKittyImage( *anim->GetFrame( i ).bmp, query.c_str(), true ) ) return 1;
+                }
+            }
+
+            auto query = std::format( "\033_Ga=p,i={},q=1\033\\\033_Ga=a,i={},s=3,v=1,q=1\033\\", id, id );
+            write( STDOUT_FILENO, query.c_str(), query.size() );
+
+            if( anim->GetFrame( 0 ).bmp->Width() < col ) printf( "\n" );
+        }
+        else
+        {
+            if( !UploadKittyImage( *bitmap, "a=T" ) ) return 1;
+            if( bitmap->Width() < col ) printf( "\n" );
+        }
     }
     else
     {

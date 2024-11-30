@@ -439,10 +439,36 @@ int main( int argc, char** argv )
         mclog( LogLevel::Info, "Virtual pixels: %ux%u", col, row );
         AdjustBitmap( bitmap, anim, vectorImage, col, row, scale );
 
-        if( bg >= 0 ) FillBackground( *bitmap, bg );
-        else if( bg == -1 ) FillCheckerboard( *bitmap );
+        if( anim )
+        {
+            if( bg >= 0 ) FillBackground( *anim, bg );
+            else if( bg == -1 ) FillCheckerboard( *anim );
+        }
+        else
+        {
+            if( bg >= 0 ) FillBackground( *bitmap, bg );
+            else if( bg == -1 ) FillCheckerboard( *bitmap );
+        }
 
-        PrintBitmapBlock( *bitmap );
+        if( anim )
+        {
+            printf( "\033c" );
+            for(;;)
+            {
+                for( size_t i=0; i<anim->FrameCount(); i++ )
+                {
+                    printf( "\033[s" );
+                    const auto& frame = anim->GetFrame( i );
+                    PrintBitmapBlock( *frame.bmp );
+                    usleep( frame.delay_us );
+                    printf( "\033[u" );
+                }
+            }
+        }
+        else
+        {
+            PrintBitmapBlock( *bitmap );
+        }
     }
     else if( gfxMode == GfxMode::Sixel )
     {

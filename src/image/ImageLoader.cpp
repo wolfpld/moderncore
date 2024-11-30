@@ -29,14 +29,14 @@ concept ImageLoaderConcept = requires( T loader, const std::shared_ptr<FileWrapp
 };
 
 template<ImageLoaderConcept T>
-static inline std::unique_ptr<Bitmap> LoadImage( const std::shared_ptr<FileWrapper>& file )
+static inline std::unique_ptr<ImageLoader> CheckImageLoader( const std::shared_ptr<FileWrapper>& file )
 {
-    T loader( file );
-    if( !loader.IsValid() ) return nullptr;
-    return loader.Load();
+    auto loader = std::make_unique<T>( file );
+    if( loader->IsValid() ) return loader;
+    return nullptr;
 }
 
-std::unique_ptr<Bitmap> LoadImage( const char* filename )
+std::unique_ptr<ImageLoader> GetImageLoader( const char* filename )
 {
     ZoneScoped;
 
@@ -48,22 +48,30 @@ std::unique_ptr<Bitmap> LoadImage( const char* filename )
         return nullptr;
     }
 
-    mclog( LogLevel::Info, "Loading image %s", path.c_str() );
+    if( auto loader = CheckImageLoader<PngLoader>( file ); loader ) return loader;
+    if( auto loader = CheckImageLoader<JpgLoader>( file ); loader ) return loader;
+    if( auto loader = CheckImageLoader<JxlLoader>( file ); loader ) return loader;
+    if( auto loader = CheckImageLoader<WebpLoader>( file ); loader ) return loader;
+    if( auto loader = CheckImageLoader<HeifLoader>( file ); loader ) return loader;
+    if( auto loader = CheckImageLoader<PvrLoader>( file ); loader ) return loader;
+    if( auto loader = CheckImageLoader<DdsLoader>( file ); loader ) return loader;
+    if( auto loader = CheckImageLoader<StbImageLoader>( file ); loader ) return loader;
+    if( auto loader = CheckImageLoader<RawLoader>( file ); loader ) return loader;
+    if( auto loader = CheckImageLoader<TiffLoader>( file ); loader ) return loader;
+    if( auto loader = CheckImageLoader<ExrLoader>( file ); loader ) return loader;
+    if( auto loader = CheckImageLoader<PcxLoader>( file ); loader ) return loader;
 
-    if( auto img = LoadImage<PngLoader>( file ); img ) return img;
-    if( auto img = LoadImage<JpgLoader>( file ); img ) return img;
-    if( auto img = LoadImage<JxlLoader>( file ); img ) return img;
-    if( auto img = LoadImage<WebpLoader>( file ); img ) return img;
-    if( auto img = LoadImage<HeifLoader>( file ); img ) return img;
-    if( auto img = LoadImage<PvrLoader>( file ); img ) return img;
-    if( auto img = LoadImage<DdsLoader>( file ); img ) return img;
-    if( auto img = LoadImage<StbImageLoader>( file ); img ) return img;
-    if( auto img = LoadImage<RawLoader>( file ); img ) return img;
-    if( auto img = LoadImage<TiffLoader>( file ); img ) return img;
-    if( auto img = LoadImage<ExrLoader>( file ); img ) return img;
-    if( auto img = LoadImage<PcxLoader>( file ); img ) return img;
+    mclog( LogLevel::Info, "Raster image loaders can't open %s", path.c_str() );
+    return nullptr;
+}
 
-    mclog( LogLevel::Info, "Raster loaders can't open %s", path.c_str() );
+std::unique_ptr<Bitmap> LoadImage( const char* filename )
+{
+    ZoneScoped;
+    mclog( LogLevel::Info, "Loading image %s", filename );
+
+    auto loader = GetImageLoader( filename );
+    if( loader ) return loader->Load();
     return nullptr;
 }
 

@@ -185,7 +185,24 @@ void FillCheckerboard( Bitmap& bitmap )
 
             px++;
         }
-    }}
+    }
+}
+
+void FillBackground( BitmapAnim& anim, uint32_t bg )
+{
+    for( size_t i=0; i<anim.FrameCount(); i++ )
+    {
+        FillBackground( *anim.GetFrame( i ).bmp, bg );
+    }
+}
+
+void FillCheckerboard( BitmapAnim& anim )
+{
+    for( size_t i=0; i<anim.FrameCount(); i++ )
+    {
+        FillCheckerboard( *anim.GetFrame( i ).bmp );
+    }
+}
 }
 
 int main( int argc, char** argv )

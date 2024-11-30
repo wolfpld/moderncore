@@ -510,8 +510,16 @@ int main( int argc, char** argv )
         AdjustBitmap( bitmap, anim, vectorImage, col, row, scale );
         const auto bmpSize = bitmap->Width() * bitmap->Height() * 4;
 
-        if( bg >= 0 ) FillBackground( *bitmap, bg );
-        else if( bg == -1 ) FillCheckerboard( *bitmap );
+        if( anim )
+        {
+            if( bg >= 0 ) FillBackground( *anim, bg );
+            else if( bg == -1 ) FillCheckerboard( *anim );
+        }
+        else
+        {
+            if( bg >= 0 ) FillBackground( *bitmap, bg );
+            else if( bg == -1 ) FillCheckerboard( *bitmap );
+        }
 
         z_stream strm = {};
         deflateInit( &strm, Z_BEST_SPEED );

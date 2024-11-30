@@ -5,6 +5,7 @@
 #include "util/NoCopy.hpp"
 
 class Bitmap;
+class BitmapAnim;
 class FileWrapper;
 class VectorImage;
 
@@ -20,6 +21,7 @@ public:
     [[nodiscard]] virtual bool IsAnimated() { return false; }
 
     [[nodiscard]] virtual std::unique_ptr<Bitmap> Load() = 0;
+    [[nodiscard]] virtual std::unique_ptr<BitmapAnim> LoadAnim() { return nullptr; }
 
 protected:
     std::shared_ptr<FileWrapper> m_file;

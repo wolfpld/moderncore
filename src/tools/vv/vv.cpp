@@ -472,6 +472,12 @@ int main( int argc, char** argv )
     }
     else if( gfxMode == GfxMode::Sixel )
     {
+        if( anim )
+        {
+            mclog( LogLevel::Error, "Animation is not supported in sixel graphics mode" );
+            return 1;
+        }
+
         uint32_t col = ws.ws_col * cw;
         uint32_t row = std::max<uint16_t>( 1, ws.ws_row - 1 ) * ch;
 

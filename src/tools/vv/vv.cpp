@@ -14,6 +14,7 @@
 #include "Terminal.hpp"
 #include "image/ImageLoader.hpp"
 #include "util/Bitmap.hpp"
+#include "util/BitmapAnim.hpp"
 #include "util/Callstack.hpp"
 #include "util/Logs.hpp"
 #include "util/Panic.hpp"
@@ -251,11 +252,28 @@ int main( int argc, char** argv )
 
     const char* imageFile = argv[optind];
     std::unique_ptr<Bitmap> bitmap;
+    std::unique_ptr<BitmapAnim> anim;
     std::unique_ptr<VectorImage> vectorImage;
 
-    auto imageThread = std::thread( [&bitmap, &vectorImage, imageFile] {
-        bitmap = LoadImage( imageFile );
-        if( bitmap )
+    auto imageThread = std::thread( [&bitmap, &anim, &vectorImage, imageFile, disableAnimation] {
+        auto loader = GetImageLoader( imageFile );
+        if( loader )
+        {
+            if( !disableAnimation && loader->IsAnimated() )
+            {
+                anim = loader->LoadAnim();
+            }
+            else
+            {
+                bitmap = loader->Load();
+            }
+        }
+        if( anim )
+        {
+            mclog( LogLevel::Info, "Animated image with %zu frames", anim->FrameCount() );
+            anim->NormalizeSize();
+        }
+        else if( bitmap )
         {
             mclog( LogLevel::Info, "Image loaded: %ux%u", bitmap->Width(), bitmap->Height() );
         }
@@ -333,7 +351,7 @@ int main( int argc, char** argv )
     }
 
     imageThread.join();
-    if( !bitmap && !vectorImage )
+    if( !bitmap && !anim && !vectorImage )
     {
         mclog( LogLevel::Error, "Failed to load image %s", imageFile );
         return 1;

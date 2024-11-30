@@ -17,6 +17,8 @@ public:
     NoCopy( ImageLoader );
 
     [[nodiscard]] virtual bool IsValid() const = 0;
+    [[nodiscard]] virtual bool IsAnimated() { return false; }
+
     [[nodiscard]] virtual std::unique_ptr<Bitmap> Load() = 0;
 
 protected:

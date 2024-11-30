@@ -240,6 +240,84 @@ void PrintBitmapBlock( Bitmap& bitmap )
         printf( "\033[0m\n" );
     }
 }
+
+bool UploadKittyImage( Bitmap& bitmap, const char* queryPart )
+{
+    const auto bmpSize = bitmap.Width() * bitmap.Height() * 4;
+
+    z_stream strm = {};
+    deflateInit( &strm, Z_BEST_SPEED );
+    strm.avail_in = bmpSize;
+    strm.next_in = bitmap.Data();
+
+    std::vector<uint8_t> zdata;
+    zdata.resize( deflateBound( &strm, bmpSize ) );
+    strm.avail_out = zdata.size();
+    strm.next_out = zdata.data();
+
+    auto res = deflate( &strm, Z_FINISH );
+    CheckPanic( res == Z_STREAM_END, "Deflate failed" );
+    const auto zsize = zdata.size() - strm.avail_out;
+    deflateEnd( &strm );
+    mclog( LogLevel::Info, "Compression %zu -> %zu", bmpSize, zsize );
+
+    size_t b64Size = ( ( 4 * zsize / 3 ) + 3 ) & ~3;
+    char* b64Data = new char[b64Size+1];
+    b64Data[b64Size] = 0;
+    size_t outSize;
+    base64_encode( (const char*)zdata.data(), zsize, b64Data, &outSize, 0 );
+    CheckPanic( outSize == b64Size, "Base64 encoding failed" );
+    mclog( LogLevel::Info, "Base64 size: %zu", b64Size );
+
+    std::string payload;
+    if( b64Size <= 4096 )
+    {
+        payload = std::format( "\033_Gf=32,s={},v={},{},o=z;{}\033\\", bitmap.Width(), bitmap.Height(), queryPart, b64Data );
+    }
+    else
+    {
+        auto ptr = b64Data;
+        while( b64Size > 0 )
+        {
+            size_t chunkSize = std::min<size_t>( 4096, b64Size );
+            b64Size -= chunkSize;
+
+            if( ptr == b64Data )
+            {
+                payload.append( std::format( "\033_Gf=32,s={},v={},{},o=z,m=1;", bitmap.Width(), bitmap.Height(), queryPart ) );
+            }
+            else if( b64Size > 0 )
+            {
+                payload.append( "\033_Gm=1;" );
+            }
+            else
+            {
+                payload.append( "\033_Gm=0;" );
+            }
+            payload.append( ptr, chunkSize );
+            payload.append( "\033\\" );
+
+            ptr += chunkSize;
+        }
+    }
+    delete[] b64Data;
+
+    auto sz = payload.size();
+    auto ptr = payload.c_str();
+    while( sz > 0 )
+    {
+        auto wr = write( STDOUT_FILENO, ptr, sz );
+        if( wr < 0 )
+        {
+            mclog( LogLevel::Error, "Failed to write to terminal" );
+            return false;
+        }
+        sz -= wr;
+        ptr += wr;
+    }
+
+    return true;
+}
 }
 
 int main( int argc, char** argv )
@@ -508,7 +586,6 @@ int main( int argc, char** argv )
 
         mclog( LogLevel::Info, "Pixels available: %ux%u", col, row );
         AdjustBitmap( bitmap, anim, vectorImage, col, row, scale );
-        const auto bmpSize = bitmap->Width() * bitmap->Height() * 4;
 
         if( anim )
         {
@@ -521,79 +598,9 @@ int main( int argc, char** argv )
             else if( bg == -1 ) FillCheckerboard( *bitmap );
         }
 
-        z_stream strm = {};
-        deflateInit( &strm, Z_BEST_SPEED );
-        strm.avail_in = bmpSize;
-        strm.next_in = bitmap->Data();
-
-        std::vector<uint8_t> zdata;
-        zdata.resize( deflateBound( &strm, bmpSize ) );
-        strm.avail_out = zdata.size();
-        strm.next_out = zdata.data();
-
-        auto res = deflate( &strm, Z_FINISH );
-        CheckPanic( res == Z_STREAM_END, "Deflate failed" );
-        const auto zsize = zdata.size() - strm.avail_out;
-        deflateEnd( &strm );
-        mclog( LogLevel::Info, "Compression %zu -> %zu", bmpSize, zsize );
-
-        size_t b64Size = ( ( 4 * zsize / 3 ) + 3 ) & ~3;
-        char* b64Data = new char[b64Size+1];
-        b64Data[b64Size] = 0;
-        size_t outSize;
-        base64_encode( (const char*)zdata.data(), zsize, b64Data, &outSize, 0 );
-        CheckPanic( outSize == b64Size, "Base64 encoding failed" );
-        mclog( LogLevel::Info, "Base64 size: %zu", b64Size );
-
-        std::string payload;
-        if( b64Size <= 4096 )
-        {
-            payload = std::format( "\033_Gf=32,s={},v={},a=T,o=z;{}\033\\", bitmap->Width(), bitmap->Height(), b64Data );
-        }
-        else
-        {
-            auto ptr = b64Data;
-            while( b64Size > 0 )
-            {
-                size_t chunkSize = std::min<size_t>( 4096, b64Size );
-                b64Size -= chunkSize;
-
-                if( ptr == b64Data )
-                {
-                    payload.append( std::format( "\033_Gf=32,s={},v={},a=T,o=z,m=1;", bitmap->Width(), bitmap->Height() ) );
-                }
-                else if( b64Size > 0 )
-                {
-                    payload.append( "\033_Gm=1;" );
-                }
-                else
-                {
-                    payload.append( "\033_Gm=0;" );
-                }
-                payload.append( ptr, chunkSize );
-                payload.append( "\033\\" );
-
-                ptr += chunkSize;
-            }
-        }
-
-        auto sz = payload.size();
-        auto ptr = payload.c_str();
-        while( sz > 0 )
-        {
-            auto wr = write( STDOUT_FILENO, ptr, sz );
-            if( wr < 0 )
-            {
-                mclog( LogLevel::Error, "Failed to write to terminal" );
-                return 1;
-            }
-            sz -= wr;
-            ptr += wr;
-        }
+        UploadKittyImage( *bitmap, "a=T" );
 
         if( bitmap->Width() < col ) printf( "\n" );
-
-        delete[] b64Data;
     }
     else
     {

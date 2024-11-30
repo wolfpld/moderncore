@@ -29,6 +29,7 @@ void PrintHelp()
     printf( "  -f, --fit                    Fit image to terminal size\n" );
     printf( "  -G, --background [color]     Set background color to RRGGBB in hex\n" );
     printf( "  -g, --checkerboard           Use checkerboard background\n" );
+    printf( "  -A, --noanim                 Disable animation\n" );
     printf( "  --help                       Print this help\n" );
 }
 
@@ -182,6 +183,7 @@ int main( int argc, char** argv )
         { "sixel", no_argument, nullptr, '6' },
         { "background", required_argument, nullptr, 'G' },
         { "checkerboard", no_argument, nullptr, 'g' },
+        { "noanim", no_argument, nullptr, 'A' },
         { "help", no_argument, nullptr, OptHelp },
     };
 
@@ -195,9 +197,10 @@ int main( int argc, char** argv )
     GfxMode gfxMode = GfxMode::Kitty;
     ScaleMode scale = ScaleMode::None;
     int bg = -2;
+    bool disableAnimation = false;
 
     int opt;
-    while( ( opt = getopt_long( argc, argv, "debsf6G:g", longOptions, nullptr ) ) != -1 )
+    while( ( opt = getopt_long( argc, argv, "debsf6G:gA", longOptions, nullptr ) ) != -1 )
     {
         switch (opt)
         {
@@ -225,6 +228,9 @@ int main( int argc, char** argv )
             break;
         case 'g':
             bg = -1;
+            break;
+        case 'A':
+            disableAnimation = true;
             break;
         default:
             printf( "\n" );

@@ -203,6 +203,43 @@ void FillCheckerboard( BitmapAnim& anim )
         FillCheckerboard( *anim.GetFrame( i ).bmp );
     }
 }
+
+void PrintBitmapBlock( Bitmap& bitmap )
+{
+    auto px0 = (uint32_t*)bitmap.Data();
+    auto px1 = px0 + bitmap.Width();
+
+    for( int y=0; y<bitmap.Height() / 2; y++ )
+    {
+        for( int x=0; x<bitmap.Width(); x++ )
+        {
+            auto c0 = *px0++;
+            auto c1 = *px1++;
+            auto r0 = ( c0       ) & 0xFF;
+            auto g0 = ( c0 >> 8  ) & 0xFF;
+            auto b0 = ( c0 >> 16 ) & 0xFF;
+            auto r1 = ( c1       ) & 0xFF;
+            auto g1 = ( c1 >> 8  ) & 0xFF;
+            auto b1 = ( c1 >> 16 ) & 0xFF;
+            printf( "\033[38;2;%d;%d;%dm\033[48;2;%d;%d;%dm▀", r0, g0, b0, r1, g1, b1 );
+        }
+        printf( "\033[0m\n" );
+        px0 += bitmap.Width();
+        px1 += bitmap.Width();
+    }
+    if( ( bitmap.Height() & 1 ) != 0 )
+    {
+        for( int x=0; x<bitmap.Width(); x++ )
+        {
+            auto c0 = *px0++;
+            auto r0 = ( c0       ) & 0xFF;
+            auto g0 = ( c0 >> 8  ) & 0xFF;
+            auto b0 = ( c0 >> 16 ) & 0xFF;
+            printf( "\033[38;2;%d;%d;%dm▀", r0, g0, b0 );
+        }
+        printf( "\033[0m\n" );
+    }
+}
 }
 
 int main( int argc, char** argv )
@@ -405,39 +442,7 @@ int main( int argc, char** argv )
         if( bg >= 0 ) FillBackground( *bitmap, bg );
         else if( bg == -1 ) FillCheckerboard( *bitmap );
 
-        auto px0 = (uint32_t*)bitmap->Data();
-        auto px1 = px0 + bitmap->Width();
-
-        for( int y=0; y<bitmap->Height() / 2; y++ )
-        {
-            for( int x=0; x<bitmap->Width(); x++ )
-            {
-                auto c0 = *px0++;
-                auto c1 = *px1++;
-                auto r0 = ( c0       ) & 0xFF;
-                auto g0 = ( c0 >> 8  ) & 0xFF;
-                auto b0 = ( c0 >> 16 ) & 0xFF;
-                auto r1 = ( c1       ) & 0xFF;
-                auto g1 = ( c1 >> 8  ) & 0xFF;
-                auto b1 = ( c1 >> 16 ) & 0xFF;
-                printf( "\033[38;2;%d;%d;%dm\033[48;2;%d;%d;%dm▀", r0, g0, b0, r1, g1, b1 );
-            }
-            printf( "\033[0m\n" );
-            px0 += bitmap->Width();
-            px1 += bitmap->Width();
-        }
-        if( ( bitmap->Height() & 1 ) != 0 )
-        {
-            for( int x=0; x<bitmap->Width(); x++ )
-            {
-                auto c0 = *px0++;
-                auto r0 = ( c0       ) & 0xFF;
-                auto g0 = ( c0 >> 8  ) & 0xFF;
-                auto b0 = ( c0 >> 16 ) & 0xFF;
-                printf( "\033[38;2;%d;%d;%dm▀", r0, g0, b0 );
-            }
-            printf( "\033[0m\n" );
-        }
+        PrintBitmapBlock( *bitmap );
     }
     else if( gfxMode == GfxMode::Sixel )
     {

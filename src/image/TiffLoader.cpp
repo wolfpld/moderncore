@@ -4,16 +4,17 @@
 #include "TiffLoader.hpp"
 #include "util/Bitmap.hpp"
 
-TiffLoader::TiffLoader( FileWrapper& file )
-    : m_tiff( nullptr )
+TiffLoader::TiffLoader( std::shared_ptr<FileWrapper> file )
+    : ImageLoader( std::move( file ) )
+    , m_tiff( nullptr )
 {
-    fseek( file, 0, SEEK_SET );
+    fseek( *m_file, 0, SEEK_SET );
     uint8_t hdr[4];
-    if( fread( hdr, 1, 4, file ) == 4 && ( memcmp( hdr, "II*\0", 4 ) == 0 || memcmp( hdr, "MM\0*", 4 ) == 0 ) )
+    if( fread( hdr, 1, 4, *m_file ) == 4 && ( memcmp( hdr, "II*\0", 4 ) == 0 || memcmp( hdr, "MM\0*", 4 ) == 0 ) )
     {
-        fseek( file, 0, SEEK_SET );
-        fflush( file );
-        m_tiff = TIFFFdOpen( fileno( file ), "<unknown>", "r" );
+        fseek( *m_file, 0, SEEK_SET );
+        fflush( *m_file );
+        m_tiff = TIFFFdOpen( fileno( *m_file ), "<unknown>", "r" );
     }
 }
 

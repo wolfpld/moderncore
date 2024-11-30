@@ -10,7 +10,7 @@ struct tiff;
 class TiffLoader : public ImageLoader
 {
 public:
-    explicit TiffLoader( FileWrapper& file );
+    explicit TiffLoader( std::shared_ptr<FileWrapper> file );
     ~TiffLoader() override;
 
     NoCopy( TiffLoader );

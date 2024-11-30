@@ -13,7 +13,7 @@ class LibRaw;
 class RawLoader : public ImageLoader
 {
 public:
-    explicit RawLoader( FileWrapper& file );
+    explicit RawLoader( std::shared_ptr<FileWrapper> file );
     ~RawLoader() override;
 
     NoCopy( RawLoader );

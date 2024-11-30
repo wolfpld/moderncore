@@ -6,13 +6,13 @@
 #include "util/FileBuffer.hpp"
 #include "util/Panic.hpp"
 
-HeifLoader::HeifLoader( FileWrapper& file )
-    : m_file( file )
+HeifLoader::HeifLoader( std::shared_ptr<FileWrapper> file )
+    : ImageLoader( std::move( file ) )
     , m_valid( false )
 {
-    fseek( m_file, 0, SEEK_SET );
+    fseek( *m_file, 0, SEEK_SET );
     uint8_t hdr[12];
-    if( fread( hdr, 1, 12, m_file ) == 12 )
+    if( fread( hdr, 1, 12, *m_file ) == 12 )
     {
         const auto res = heif_check_filetype( hdr, 12 );
         m_valid = res == heif_filetype_yes_supported || res == heif_filetype_maybe;

@@ -9,7 +9,7 @@ class Bitmap;
 class StbImageLoader : public ImageLoader
 {
 public:
-    explicit StbImageLoader( FileWrapper& file );
+    explicit StbImageLoader( std::shared_ptr<FileWrapper> file );
 
     NoCopy( StbImageLoader );
 
@@ -17,6 +17,5 @@ public:
     [[nodiscard]] std::unique_ptr<Bitmap> Load() override;
 
 private:
-    FileWrapper& m_file;
     bool m_valid;
 };

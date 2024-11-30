@@ -836,16 +836,16 @@ static void DecodeRg( uint32_t* dst, const uint64_t* src, uint32_t width, uint32
     }
 }
 
-PvrLoader::PvrLoader( FileWrapper& file )
-    : m_file( file )
+PvrLoader::PvrLoader( std::shared_ptr<FileWrapper> file )
+    : ImageLoader( std::move( file ) )
 {
-    fseek( m_file, 0, SEEK_SET );
+    fseek( *m_file, 0, SEEK_SET );
     uint32_t magic;
-    m_valid = fread( &magic, 1, 4, m_file ) == 4 && magic == 0x03525650;
+    m_valid = fread( &magic, 1, 4, *m_file ) == 4 && magic == 0x03525650;
     if( !m_valid ) return;
 
-    fseek( m_file, 4*2, SEEK_SET );
-    fread( &m_format, 1, 4, m_file );
+    fseek( *m_file, 4*2, SEEK_SET );
+    fread( &m_format, 1, 4, *m_file );
 
     m_valid =
         m_format == 6  ||       // ETC1

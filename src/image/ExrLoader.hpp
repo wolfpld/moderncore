@@ -16,7 +16,7 @@ namespace OPENEXR_IMF_INTERNAL_NAMESPACE { class RgbaInputFile; }
 class ExrLoader : public ImageLoader
 {
 public:
-    explicit ExrLoader( FileWrapper& file );
+    explicit ExrLoader( std::shared_ptr<FileWrapper> file );
     ~ExrLoader() override;
 
     NoCopy( ExrLoader );

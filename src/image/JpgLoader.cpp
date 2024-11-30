@@ -7,12 +7,12 @@
 #include "util/Bitmap.hpp"
 #include "util/Panic.hpp"
 
-JpgLoader::JpgLoader( FileWrapper& file )
-    : m_file( file )
+JpgLoader::JpgLoader( std::shared_ptr<FileWrapper> file )
+    : ImageLoader( std::move( file ) )
 {
-    fseek( m_file, 0, SEEK_SET );
+    fseek( *m_file, 0, SEEK_SET );
     uint8_t hdr[2];
-    m_valid = fread( hdr, 1, 2, m_file ) == 2 && hdr[0] == 0xFF && hdr[1] == 0xD8;
+    m_valid = fread( hdr, 1, 2, *m_file ) == 2 && hdr[0] == 0xFF && hdr[1] == 0xD8;
 }
 
 bool JpgLoader::IsValid() const
@@ -29,7 +29,7 @@ struct JpgErrorMgr
 std::unique_ptr<Bitmap> JpgLoader::Load()
 {
     CheckPanic( m_valid, "Invalid JPEG file" );
-    fseek( m_file, 0, SEEK_SET );
+    fseek( *m_file, 0, SEEK_SET );
 
     jpeg_decompress_struct cinfo;
     JpgErrorMgr jerr;
@@ -43,7 +43,7 @@ std::unique_ptr<Bitmap> JpgLoader::Load()
     }
 
     jpeg_create_decompress( &cinfo );
-    jpeg_stdio_src( &cinfo, m_file );
+    jpeg_stdio_src( &cinfo, *m_file );
     jpeg_read_header( &cinfo, TRUE );
     cinfo.out_color_space = JCS_EXT_RGBA;
     jpeg_start_decompress( &cinfo );

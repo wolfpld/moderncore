@@ -9,7 +9,7 @@ class Bitmap;
 class WebpLoader : public ImageLoader
 {
 public:
-    explicit WebpLoader( FileWrapper& file );
+    explicit WebpLoader( std::shared_ptr<FileWrapper> file );
 
     NoCopy( WebpLoader );
 
@@ -17,6 +17,5 @@ public:
     [[nodiscard]] std::unique_ptr<Bitmap> Load() override;
 
 private:
-    FileWrapper& m_file;
     bool m_valid;
 };

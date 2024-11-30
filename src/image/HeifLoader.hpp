@@ -9,7 +9,7 @@ class Bitmap;
 class HeifLoader : public ImageLoader
 {
 public:
-    explicit HeifLoader( FileWrapper& file );
+    explicit HeifLoader( std::shared_ptr<FileWrapper> file );
 
     NoCopy( HeifLoader );
 
@@ -17,6 +17,5 @@ public:
     [[nodiscard]] std::unique_ptr<Bitmap> Load() override;
 
 private:
-    FileWrapper& m_file;
     bool m_valid;
 };

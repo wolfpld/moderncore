@@ -27,11 +27,12 @@ private:
     FILE* m_file;
 };
 
-ExrLoader::ExrLoader( FileWrapper& file )
+ExrLoader::ExrLoader( std::shared_ptr<FileWrapper> file )
+    : ImageLoader( std::move( file ) )
 {
     try
     {
-        m_stream = std::make_unique<ExrStream>( file );
+        m_stream = std::make_unique<ExrStream>( *m_file );
         m_exr = std::make_unique<Imf::RgbaInputFile>( *m_stream );
         m_valid = true;
     }

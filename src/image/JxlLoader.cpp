@@ -6,12 +6,12 @@
 #include "util/FileBuffer.hpp"
 #include "util/Panic.hpp"
 
-JxlLoader::JxlLoader( FileWrapper& file )
-    : m_file( file )
+JxlLoader::JxlLoader( std::shared_ptr<FileWrapper> file )
+    : ImageLoader( std::move( file ) )
 {
-    fseek( m_file, 0, SEEK_SET );
+    fseek( *m_file, 0, SEEK_SET );
     uint8_t hdr[12];
-    const auto read = fread( hdr, 1, 12, m_file );
+    const auto read = fread( hdr, 1, 12, *m_file );
     const auto res = JxlSignatureCheck( hdr, read );
     m_valid = res == JXL_SIG_CODESTREAM || res == JXL_SIG_CONTAINER;
 }

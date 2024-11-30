@@ -9,7 +9,7 @@ class Bitmap;
 class JxlLoader : public ImageLoader
 {
 public:
-    explicit JxlLoader( FileWrapper& file );
+    explicit JxlLoader( std::shared_ptr<FileWrapper> file );
 
     NoCopy( JxlLoader );
 
@@ -17,6 +17,5 @@ public:
     [[nodiscard]] std::unique_ptr<Bitmap> Load() override;
 
 private:
-    FileWrapper& m_file;
     bool m_valid;
 };

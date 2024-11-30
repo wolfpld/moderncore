@@ -9,7 +9,7 @@ class Bitmap;
 class JpgLoader : public ImageLoader
 {
 public:
-    explicit JpgLoader( FileWrapper& file );
+    explicit JpgLoader( std::shared_ptr<FileWrapper> file );
 
     NoCopy( JpgLoader );
 
@@ -17,6 +17,5 @@ public:
     [[nodiscard]] std::unique_ptr<Bitmap> Load() override;
 
 private:
-    FileWrapper& m_file;
     bool m_valid;
 };

@@ -22,14 +22,14 @@
 #include "vector/SvgImage.hpp"
 
 template<typename T>
-concept ImageLoaderConcept = requires( T loader, FileWrapper& file )
+concept ImageLoaderConcept = requires( T loader, const std::shared_ptr<FileWrapper>& file )
 {
     { loader.IsValid() } -> std::convertible_to<bool>;
     { loader.Load() } -> std::convertible_to<std::unique_ptr<Bitmap>>;
 };
 
 template<ImageLoaderConcept T>
-static inline std::unique_ptr<Bitmap> LoadImage( FileWrapper& file )
+static inline std::unique_ptr<Bitmap> LoadImage( const std::shared_ptr<FileWrapper>& file )
 {
     T loader( file );
     if( !loader.IsValid() ) return nullptr;
@@ -41,8 +41,7 @@ std::unique_ptr<Bitmap> LoadImage( const char* filename )
     ZoneScoped;
 
     auto path = ExpandHome( filename );
-
-    FileWrapper file( path.c_str(), "rb" );
+    auto file = std::make_shared<FileWrapper>( path.c_str(), "rb" );
     if( !file )
     {
         mclog( LogLevel::Error, "Image %s does not exist.", path.c_str() );

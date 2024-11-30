@@ -9,7 +9,7 @@ class Bitmap;
 class PcxLoader : public ImageLoader
 {
 public:
-    explicit PcxLoader( FileWrapper& file );
+    explicit PcxLoader( std::shared_ptr<FileWrapper> file );
 
     NoCopy( PcxLoader );
 
@@ -17,6 +17,5 @@ public:
     [[nodiscard]] std::unique_ptr<Bitmap> Load() override;
 
 private:
-    FileWrapper& m_file;
     bool m_valid;
 };

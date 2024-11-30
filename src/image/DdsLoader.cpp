@@ -472,16 +472,16 @@ static void DecodeBc7( uint32_t* dst, const uint64_t* src, uint32_t width, uint3
     }
 }
 
-DdsLoader::DdsLoader( FileWrapper& file )
-    : m_file( file )
+DdsLoader::DdsLoader( std::shared_ptr<FileWrapper> file )
+    : ImageLoader( std::move( file ) )
 {
-    fseek( m_file, 0, SEEK_SET );
+    fseek( *m_file, 0, SEEK_SET );
     uint32_t magic;
-    m_valid = fread( &magic, 1, 4, m_file ) == 4 && magic == 0x20534444;
+    m_valid = fread( &magic, 1, 4, *m_file ) == 4 && magic == 0x20534444;
     if( !m_valid ) return;
 
-    fseek( m_file, 21*4, SEEK_SET );
-    fread( &m_format, 1, 4, m_file );
+    fseek( *m_file, 21*4, SEEK_SET );
+    fread( &m_format, 1, 4, *m_file );
     switch( m_format )
     {
     case 0x31545844:    // BC1
@@ -494,8 +494,8 @@ DdsLoader::DdsLoader( FileWrapper& file )
         m_offset = 128;
         break;
     case 0x30315844:    // DX10
-        fseek( m_file, 32*4, SEEK_SET );
-        fread( &m_format, 1, 4, m_file );
+        fseek( *m_file, 32*4, SEEK_SET );
+        fread( &m_format, 1, 4, *m_file );
         m_valid =
             m_format == 80 ||   // BC4
             m_format == 83 ||   // BC5

@@ -11,7 +11,7 @@ class Bitmap;
 class PvrLoader : public ImageLoader
 {
 public:
-    explicit PvrLoader( FileWrapper& file );
+    explicit PvrLoader( std::shared_ptr<FileWrapper> file );
 
     NoCopy( PvrLoader );
 
@@ -19,7 +19,6 @@ public:
     [[nodiscard]] std::unique_ptr<Bitmap> Load() override;
 
 private:
-    FileWrapper& m_file;
     bool m_valid;
 
     uint32_t m_format;

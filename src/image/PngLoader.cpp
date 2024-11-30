@@ -6,12 +6,12 @@
 #include "util/Bitmap.hpp"
 #include "util/Panic.hpp"
 
-PngLoader::PngLoader( FileWrapper& file )
-    : m_file( file )
+PngLoader::PngLoader( std::shared_ptr<FileWrapper> file )
+    : ImageLoader( std::move( file ) )
 {
-    fseek( m_file, 0, SEEK_SET );
+    fseek( *m_file, 0, SEEK_SET );
     char hdr[8];
-    m_valid = fread( hdr, 1, 8, m_file ) == 8 && png_sig_cmp( (png_const_bytep)hdr, 0, 8 ) == 0;
+    m_valid = fread( hdr, 1, 8, *m_file ) == 8 && png_sig_cmp( (png_const_bytep)hdr, 0, 8 ) == 0;
 }
 
 bool PngLoader::IsValid() const
@@ -44,7 +44,7 @@ std::unique_ptr<Bitmap> PngLoader::Load()
         return nullptr;
     }
 
-    png_init_io( png, m_file );
+    png_init_io( png, *m_file );
     png_set_sig_bytes( png, 8 );
 
     png_read_info( png, info );

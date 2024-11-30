@@ -9,7 +9,7 @@ class Bitmap;
 class PngLoader : public ImageLoader
 {
 public:
-    explicit PngLoader( FileWrapper& file );
+    explicit PngLoader( std::shared_ptr<FileWrapper> file );
 
     NoCopy( PngLoader );
 
@@ -17,6 +17,5 @@ public:
     [[nodiscard]] std::unique_ptr<Bitmap> Load() override;
 
 private:
-    FileWrapper& m_file;
     bool m_valid;
 };

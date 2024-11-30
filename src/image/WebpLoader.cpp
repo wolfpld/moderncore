@@ -6,12 +6,12 @@
 #include "util/FileBuffer.hpp"
 #include "util/Panic.hpp"
 
-WebpLoader::WebpLoader( FileWrapper& file )
-    : m_file( file )
+WebpLoader::WebpLoader( std::shared_ptr<FileWrapper> file )
+    : ImageLoader( std::move( file ) )
 {
-    fseek( m_file, 0, SEEK_SET );
+    fseek( *m_file, 0, SEEK_SET );
     uint8_t hdr[12];
-    m_valid = fread( hdr, 1, 12, m_file ) == 12 && memcmp( hdr, "RIFF", 4 ) == 0 && memcmp( hdr + 8, "WEBP", 4 ) == 0;
+    m_valid = fread( hdr, 1, 12, *m_file ) == 12 && memcmp( hdr, "RIFF", 4 ) == 0 && memcmp( hdr + 8, "WEBP", 4 ) == 0;
 }
 
 bool WebpLoader::IsValid() const

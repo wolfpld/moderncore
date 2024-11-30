@@ -254,7 +254,7 @@ int main( int argc, char** argv )
         }
         else
         {
-            vectorImage.reset( LoadVectorImage( imageFile ) );
+            vectorImage = LoadVectorImage( imageFile );
             if( vectorImage )
             {
                 mclog( LogLevel::Info, "Vector image loaded: %ix%i", vectorImage->Width(), vectorImage->Height() );

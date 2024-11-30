@@ -20,4 +20,4 @@ public:
 };
 
 std::unique_ptr<Bitmap> LoadImage( const char* filename );
-VectorImage* LoadVectorImage( const char* filename );
+std::unique_ptr<VectorImage> LoadVectorImage( const char* filename );

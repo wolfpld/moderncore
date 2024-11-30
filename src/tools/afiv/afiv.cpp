@@ -95,7 +95,7 @@ int main( int argc, char** argv )
         g_bitmap = LoadImage( imageFile );
         if( !g_bitmap )
         {
-            auto vector = std::unique_ptr<VectorImage>( LoadVectorImage( imageFile ) );
+            auto vector = LoadVectorImage( imageFile );
             if( vector )
             {
                 auto w = vector->Width();

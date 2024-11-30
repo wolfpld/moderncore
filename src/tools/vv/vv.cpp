@@ -74,15 +74,15 @@ void AdjustBitmap( std::unique_ptr<Bitmap>& bitmap, const std::unique_ptr<Vector
         if( scale == ScaleMode::Fit || w > col || h > row )
         {
             const auto ratio = std::min( float( col ) / w, float( row ) / h );
-            bitmap.reset( vector->Rasterize( w * ratio, h * ratio ) );
+            bitmap = vector->Rasterize( w * ratio, h * ratio );
         }
         else if( scale == ScaleMode::Scale2x && w * 2 <= col && h * 2 <= row )
         {
-            bitmap.reset( vector->Rasterize( w * 2, h * 2 ) );
+            bitmap = vector->Rasterize( w * 2, h * 2 );
         }
         else
         {
-            bitmap.reset( vector->Rasterize( w, h ) );
+            bitmap = vector->Rasterize( w, h );
         }
 
         mclog( LogLevel::Info, "Image rasterized: %ux%u", bitmap->Width(), bitmap->Height() );

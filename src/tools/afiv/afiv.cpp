@@ -105,7 +105,7 @@ int main( int argc, char** argv )
                     w = 512;
                     h = 512;
                 }
-                g_bitmap.reset( vector->Rasterize( w, h ) );
+                g_bitmap = vector->Rasterize( w, h );
             }
         }
         CheckPanic( g_bitmap, "Failed to load image" );

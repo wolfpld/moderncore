@@ -19,7 +19,7 @@ public:
     NoCopy( RawLoader );
 
     [[nodiscard]] bool IsValid() const override;
-    [[nodiscard]] Bitmap* Load() override;
+    [[nodiscard]] std::unique_ptr<Bitmap> Load() override;
 
 private:
     std::unique_ptr<LibRaw> m_raw;

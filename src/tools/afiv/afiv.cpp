@@ -92,7 +92,7 @@ int main( int argc, char** argv )
         g_vkInstance = std::make_unique<VlkInstance>( VlkInstanceType::Wayland, enableValidation );
     } );
     auto imageThread = std::thread( [imageFile] {
-        g_bitmap.reset( LoadImage( imageFile ) );
+        g_bitmap = LoadImage( imageFile );
         if( !g_bitmap )
         {
             auto vector = std::unique_ptr<VectorImage>( LoadVectorImage( imageFile ) );

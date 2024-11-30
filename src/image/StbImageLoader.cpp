@@ -22,7 +22,7 @@ bool StbImageLoader::IsValid() const
     return m_valid;
 }
 
-Bitmap* StbImageLoader::Load()
+std::unique_ptr<Bitmap> StbImageLoader::Load()
 {
     CheckPanic( m_valid, "Invalid stb_image file" );
 
@@ -32,7 +32,7 @@ Bitmap* StbImageLoader::Load()
     auto data = stbi_load_from_file( m_file, &w, &h, &comp, 4 );
     if( data == nullptr ) return nullptr;
 
-    auto bmp = new Bitmap( w, h );
+    auto bmp = std::make_unique<Bitmap>( w, h );
     memcpy( bmp->Data(), data, w * h * 4 );
 
     stbi_image_free( data );

@@ -27,17 +27,16 @@ bool TiffLoader::IsValid() const
     return m_tiff != nullptr;
 }
 
-Bitmap* TiffLoader::Load()
+std::unique_ptr<Bitmap> TiffLoader::Load()
 {
     uint32_t width, height;
     TIFFGetField( m_tiff, TIFFTAG_IMAGEWIDTH, &width );
     TIFFGetField( m_tiff, TIFFTAG_IMAGELENGTH, &height );
 
-    auto bmp = new Bitmap( width, height );
+    auto bmp = std::make_unique<Bitmap>( width, height );
 
     if( TIFFReadRGBAImageOriented( m_tiff, width, height, (uint32_t*)bmp->Data(), ORIENTATION_TOPLEFT ) == 0 )
     {
-        delete bmp;
         return nullptr;
     }
 

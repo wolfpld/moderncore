@@ -16,7 +16,7 @@ public:
     NoCopy( TiffLoader );
 
     [[nodiscard]] bool IsValid() const override;
-    [[nodiscard]] Bitmap* Load() override;
+    [[nodiscard]] std::unique_ptr<Bitmap> Load() override;
 
 private:
     struct tiff* m_tiff;

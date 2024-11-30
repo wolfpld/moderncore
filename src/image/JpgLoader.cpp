@@ -26,21 +26,19 @@ struct JpgErrorMgr
     jmp_buf setjmp_buffer;
 };
 
-Bitmap* JpgLoader::Load()
+std::unique_ptr<Bitmap> JpgLoader::Load()
 {
     CheckPanic( m_valid, "Invalid JPEG file" );
     fseek( m_file, 0, SEEK_SET );
 
     jpeg_decompress_struct cinfo;
     JpgErrorMgr jerr;
-    Bitmap* bmp = nullptr;
 
     cinfo.err = jpeg_std_error( &jerr.pub );
     jerr.pub.error_exit = []( j_common_ptr cinfo ) { longjmp( ((JpgErrorMgr*)cinfo->err)->setjmp_buffer, 1 ); };
     if( setjmp( jerr.setjmp_buffer ) )
     {
         jpeg_destroy_decompress( &cinfo );
-        delete bmp;
         return nullptr;
     }
 
@@ -50,7 +48,7 @@ Bitmap* JpgLoader::Load()
     cinfo.out_color_space = JCS_EXT_RGBA;
     jpeg_start_decompress( &cinfo );
 
-    bmp = new Bitmap( cinfo.output_width, cinfo.output_height );
+    auto bmp = std::make_unique<Bitmap>( cinfo.output_width, cinfo.output_height );
     auto ptr = bmp->Data();
     while( cinfo.output_scanline < cinfo.output_height )
     {

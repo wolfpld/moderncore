@@ -99,7 +99,7 @@ uint32_t Tonemap( const Imf::Rgba& hdr )
 }
 }
 
-Bitmap* ExrLoader::Load()
+std::unique_ptr<Bitmap> ExrLoader::Load()
 {
     CheckPanic( m_exr, "Invalid EXR file" );
 
@@ -113,7 +113,7 @@ Bitmap* ExrLoader::Load()
     m_exr->setFrameBuffer( hdr.data(), 1, width );
     m_exr->readPixels( dw.min.y, dw.max.y );
 
-    auto bmp = new Bitmap( width, height );
+    auto bmp = std::make_unique<Bitmap>( width, height );
     auto dst = (uint32_t*)bmp->Data();
     auto src = hdr.data();
     auto sz = width * height;

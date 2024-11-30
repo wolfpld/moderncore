@@ -19,7 +19,7 @@ bool WebpLoader::IsValid() const
     return m_valid;
 }
 
-Bitmap* WebpLoader::Load()
+std::unique_ptr<Bitmap> WebpLoader::Load()
 {
     CheckPanic( m_valid, "Invalid WebP file" );
 
@@ -48,7 +48,7 @@ Bitmap* WebpLoader::Load()
         return nullptr;
     }
 
-    auto bmp = new Bitmap( info.canvas_width, info.canvas_height );
+    auto bmp = std::make_unique<Bitmap>( info.canvas_width, info.canvas_height );
     memcpy( bmp->Data(), out, info.canvas_width * info.canvas_height * 4 );
 
     WebPAnimDecoderDelete( dec );

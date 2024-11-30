@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include "util/NoCopy.hpp"
 
 class Bitmap;
@@ -14,8 +16,8 @@ public:
     NoCopy( ImageLoader );
 
     [[nodiscard]] virtual bool IsValid() const = 0;
-    [[nodiscard]] virtual Bitmap* Load() = 0;
+    [[nodiscard]] virtual std::unique_ptr<Bitmap> Load() = 0;
 };
 
-Bitmap* LoadImage( const char* filename );
+std::unique_ptr<Bitmap> LoadImage( const char* filename );
 VectorImage* LoadVectorImage( const char* filename );

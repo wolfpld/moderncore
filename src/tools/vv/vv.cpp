@@ -247,7 +247,7 @@ int main( int argc, char** argv )
     std::unique_ptr<VectorImage> vectorImage;
 
     auto imageThread = std::thread( [&bitmap, &vectorImage, imageFile] {
-        bitmap.reset( LoadImage( imageFile ) );
+        bitmap = LoadImage( imageFile );
         if( bitmap )
         {
             mclog( LogLevel::Info, "Image loaded: %ux%u", bitmap->Width(), bitmap->Height() );

@@ -24,7 +24,7 @@ bool HeifLoader::IsValid() const
     return m_valid;
 }
 
-Bitmap* HeifLoader::Load()
+std::unique_ptr<Bitmap> HeifLoader::Load()
 {
     CheckPanic( m_valid, "Invalid HEIF file" );
 
@@ -68,7 +68,7 @@ Bitmap* HeifLoader::Load()
         return nullptr;
     }
 
-    auto bmp = new Bitmap( w, h );
+    auto bmp = std::make_unique<Bitmap>( w, h );
     if( stride == w * 4 )
     {
         memcpy( bmp->Data(), src, w * h * 4 );

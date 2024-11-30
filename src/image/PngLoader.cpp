@@ -19,7 +19,7 @@ bool PngLoader::IsValid() const
     return m_valid;
 }
 
-Bitmap* PngLoader::Load()
+std::unique_ptr<Bitmap> PngLoader::Load()
 {
     CheckPanic( m_valid, "Invalid PNG file" );
 
@@ -38,12 +38,9 @@ Bitmap* PngLoader::Load()
         return nullptr;
     }
 
-    Bitmap* bmp = nullptr;
-
     if( setjmp( png_jmpbuf( png ) ) )
     {
         png_destroy_read_struct( &png, &info, &end );
-        delete bmp;
         return nullptr;
     }
 
@@ -87,7 +84,7 @@ Bitmap* PngLoader::Load()
         break;
     }
 
-    bmp = new Bitmap( width, height );
+    auto bmp = std::make_unique<Bitmap>( width, height );
 
     auto rowPtrs = new png_bytep[height];
     auto ptr = bmp->Data();

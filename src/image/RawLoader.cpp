@@ -22,7 +22,7 @@ bool RawLoader::IsValid() const
     return m_valid;
 }
 
-Bitmap* RawLoader::Load()
+std::unique_ptr<Bitmap> RawLoader::Load()
 {
     CheckPanic( m_valid, "Invalid RAW file" );
 
@@ -30,7 +30,7 @@ Bitmap* RawLoader::Load()
     m_raw->dcraw_process();
     auto img = m_raw->dcraw_make_mem_image();
 
-    auto bmp = new Bitmap( img->width, img->height );
+    auto bmp = std::make_unique<Bitmap>( img->width, img->height );
     auto src = img->data;
     auto dst = (uint32_t*)bmp->Data();
     auto sz = img->width * img->height;

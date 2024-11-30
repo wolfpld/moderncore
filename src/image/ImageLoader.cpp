@@ -25,18 +25,18 @@ template<typename T>
 concept ImageLoaderConcept = requires( T loader, FileWrapper& file )
 {
     { loader.IsValid() } -> std::convertible_to<bool>;
-    { loader.Load() } -> std::convertible_to<Bitmap*>;
+    { loader.Load() } -> std::convertible_to<std::unique_ptr<Bitmap>>;
 };
 
 template<ImageLoaderConcept T>
-static inline Bitmap* LoadImage( FileWrapper& file )
+static inline std::unique_ptr<Bitmap> LoadImage( FileWrapper& file )
 {
     T loader( file );
     if( !loader.IsValid() ) return nullptr;
     return loader.Load();
 }
 
-Bitmap* LoadImage( const char* filename )
+std::unique_ptr<Bitmap> LoadImage( const char* filename )
 {
     ZoneScoped;
 

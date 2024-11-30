@@ -35,7 +35,7 @@ bool PcxLoader::IsValid() const
     return m_valid;
 }
 
-Bitmap* PcxLoader::Load()
+std::unique_ptr<Bitmap> PcxLoader::Load()
 {
     CheckPanic( m_valid, "Invalid PCX file" );
 
@@ -45,7 +45,7 @@ Bitmap* PcxLoader::Load()
     auto data = drpcx_load( []( void* f, void* out, size_t sz ) { return fread( out, 1, sz, (FILE*)f ); }, (FILE*)m_file, false, &w, &h, &comp, 4 );
     if( data == nullptr ) return nullptr;
 
-    auto bmp = new Bitmap( w, h );
+    auto bmp = std::make_unique<Bitmap>( w, h );
     memcpy( bmp->Data(), data, w * h * 4 );
 
     drpcx_free( data );

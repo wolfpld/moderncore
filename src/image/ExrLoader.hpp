@@ -22,7 +22,7 @@ public:
     NoCopy( ExrLoader );
 
     [[nodiscard]] bool IsValid() const override;
-    [[nodiscard]] Bitmap* Load() override;
+    [[nodiscard]] std::unique_ptr<Bitmap> Load() override;
 
 private:
     std::unique_ptr<ExrStream> m_stream;

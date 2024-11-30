@@ -513,7 +513,7 @@ bool DdsLoader::IsValid() const
     return m_valid;
 }
 
-Bitmap* DdsLoader::Load()
+std::unique_ptr<Bitmap> DdsLoader::Load()
 {
     CheckPanic( m_valid, "Invalid DDS file" );
 
@@ -523,7 +523,7 @@ Bitmap* DdsLoader::Load()
     uint32_t width = ptr[4];
     uint32_t height = ptr[3];
 
-    auto bmp = new Bitmap( width, height );
+    auto bmp = std::make_unique<Bitmap>( width, height );
 
     switch( m_format )
     {

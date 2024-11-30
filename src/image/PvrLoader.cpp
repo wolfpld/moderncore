@@ -860,7 +860,7 @@ bool PvrLoader::IsValid() const
     return m_valid;
 }
 
-Bitmap* PvrLoader::Load()
+std::unique_ptr<Bitmap> PvrLoader::Load()
 {
     CheckPanic( m_valid, "Invalid PVR file" );
 
@@ -870,7 +870,7 @@ Bitmap* PvrLoader::Load()
     uint32_t width = *(ptr+7);
     uint32_t height = *(ptr+6);
 
-    auto bmp = new Bitmap( width, height );
+    auto bmp = std::make_unique<Bitmap>( width, height );
 
     const auto offset = 52 + *(ptr+12);
 

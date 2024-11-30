@@ -42,9 +42,29 @@ enum class ScaleMode
     Scale2x,
 };
 
-void AdjustBitmap( std::unique_ptr<Bitmap>& bitmap, const std::unique_ptr<VectorImage>& vector, uint32_t col, uint32_t row, ScaleMode scale )
+void AdjustBitmap( std::unique_ptr<Bitmap>& bitmap, std::unique_ptr<BitmapAnim>& anim, const std::unique_ptr<VectorImage>& vector, uint32_t col, uint32_t row, ScaleMode scale )
 {
-    if( bitmap )
+    if( anim )
+    {
+        const auto& bmp = anim->GetFrame( 0 ).bmp;
+        const auto w = bmp->Width();
+        const auto h = bmp->Height();
+
+        if( scale == ScaleMode::Fit || w > col || h > row )
+        {
+            const auto ratio = std::min( float( col ) / w, float( row ) / h );
+            const auto rw = uint32_t( w * ratio );
+            const auto rh = uint32_t( h * ratio );
+            anim->Resize( rw, rh );
+            mclog( LogLevel::Info, "Animation resized: %ux%u", rw, rh );
+        }
+        else if( scale == ScaleMode::Scale2x && w * 2 <= col && h * 2 <= row )
+        {
+            anim->Resize( w * 2, h * 2 );
+            mclog( LogLevel::Info, "Animation upscaled: %ux%u", w * 2, h * 2 );
+        }
+    }
+    else if( bitmap )
     {
         const auto w = bitmap->Width();
         const auto h = bitmap->Height();
@@ -363,7 +383,7 @@ int main( int argc, char** argv )
         uint32_t row = std::max<uint16_t>( 1, ws.ws_row - 1 ) * 2;
 
         mclog( LogLevel::Info, "Virtual pixels: %ux%u", col, row );
-        AdjustBitmap( bitmap, vectorImage, col, row, scale );
+        AdjustBitmap( bitmap, anim, vectorImage, col, row, scale );
 
         if( bg >= 0 ) FillBackground( *bitmap, bg );
         else if( bg == -1 ) FillCheckerboard( *bitmap );
@@ -408,7 +428,7 @@ int main( int argc, char** argv )
         uint32_t row = std::max<uint16_t>( 1, ws.ws_row - 1 ) * ch;
 
         mclog( LogLevel::Info, "Pixels available: %ux%u", col, row );
-        AdjustBitmap( bitmap, vectorImage, col, row, scale );
+        AdjustBitmap( bitmap, anim, vectorImage, col, row, scale );
 
         if( bg >= 0 ) FillBackground( *bitmap, bg );
         else if( bg == -1 ) FillCheckerboard( *bitmap );
@@ -433,7 +453,7 @@ int main( int argc, char** argv )
         uint32_t row = std::max<uint16_t>( 1, ws.ws_row - 1 ) * ch;
 
         mclog( LogLevel::Info, "Pixels available: %ux%u", col, row );
-        AdjustBitmap( bitmap, vectorImage, col, row, scale );
+        AdjustBitmap( bitmap, anim, vectorImage, col, row, scale );
         const auto bmpSize = bitmap->Width() * bitmap->Height() * 4;
 
         if( bg >= 0 ) FillBackground( *bitmap, bg );

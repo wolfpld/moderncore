@@ -61,6 +61,7 @@ std::unique_ptr<BitmapAnim> WebpLoader::LoadAnim()
     WebPAnimDecoderGetInfo( m_dec, &info );
     CheckPanic( info.frame_count > 1, "Not an animated WebP file" );
 
+    int prevDelay = 0;
     auto anim = std::make_unique<BitmapAnim>( info.frame_count );
     for( int i=0; i<info.frame_count; i++ )
     {
@@ -71,7 +72,8 @@ std::unique_ptr<BitmapAnim> WebpLoader::LoadAnim()
         auto bmp = std::make_shared<Bitmap>( info.canvas_width, info.canvas_height );
         memcpy( bmp->Data(), out, info.canvas_width * info.canvas_height * 4 );
 
-        anim->AddFrame( std::move( bmp ), delay );
+        anim->AddFrame( std::move( bmp ), ( delay - prevDelay ) * 1000 );
+        prevDelay = delay;
     }
 
     return anim;

@@ -6,6 +6,7 @@
 
 #include "ExrLoader.hpp"
 #include "util/Bitmap.hpp"
+#include "util/BitmapHdr.hpp"
 #include "util/Panic.hpp"
 
 class ExrStream : public Imf::IStream
@@ -121,6 +122,37 @@ std::unique_ptr<Bitmap> ExrLoader::Load()
     do
     {
         *dst++ = Tonemap( *src++ );
+    }
+    while( --sz );
+
+    return bmp;
+}
+
+std::unique_ptr<BitmapHdr> ExrLoader::LoadHdr()
+{
+    CheckPanic( m_exr, "Invalid EXR file" );
+
+    auto dw = m_exr->dataWindow();
+    auto width = dw.max.x - dw.min.x + 1;
+    auto height = dw.max.y - dw.min.y + 1;
+
+    std::vector<Imf::Rgba> hdr;
+    hdr.resize( width * height );
+
+    m_exr->setFrameBuffer( hdr.data(), 1, width );
+    m_exr->readPixels( dw.min.y, dw.max.y );
+
+    auto bmp = std::make_unique<BitmapHdr>( width, height );
+    auto dst = bmp->Data();
+    auto src = hdr.data();
+    auto sz = width * height;
+    do
+    {
+        *dst++ = src->r;
+        *dst++ = src->g;
+        *dst++ = src->b;
+        *dst++ = src->a;
+        src++;
     }
     while( --sz );
 

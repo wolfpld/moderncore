@@ -14,8 +14,11 @@ public:
     NoCopy( StbImageLoader );
 
     [[nodiscard]] bool IsValid() const override;
+    [[nodiscard]] bool IsHdr() override;
+
     [[nodiscard]] std::unique_ptr<Bitmap> Load() override;
 
 private:
     bool m_valid;
+    bool m_hdr;
 };

@@ -22,6 +22,8 @@ public:
     NoCopy( ExrLoader );
 
     [[nodiscard]] bool IsValid() const override;
+    [[nodiscard]] bool IsHdr() override { return true; }
+
     [[nodiscard]] std::unique_ptr<Bitmap> Load() override;
 
 private:

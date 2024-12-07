@@ -63,6 +63,7 @@ pkg_check_modules(EXR REQUIRED OpenEXR)
 pkg_check_modules(HEIF REQUIRED libheif)
 pkg_check_modules(JPEG REQUIRED libjpeg)
 pkg_check_modules(JXL REQUIRED libjxl libjxl_threads)
+pkg_check_modules(LCMS REQUIRED lcms2)
 pkg_check_modules(PNG REQUIRED libpng)
 pkg_check_modules(RAW REQUIRED libraw)
 pkg_check_modules(RSVG REQUIRED librsvg-2.0)
@@ -151,6 +152,7 @@ target_link_libraries(mcoreimage PRIVATE
     ${HEIF_LINK_LIBRARIES}
     ${JPEG_LINK_LIBRARIES}
     ${JXL_LINK_LIBRARIES}
+    ${LCMS_LINK_LIBRARIES}
     ${PNG_LINK_LIBRARIES}
     ${RAW_LINK_LIBRARIES}
     ${RSVG_LINK_LIBRARIES}
@@ -163,6 +165,7 @@ target_include_directories(mcoreimage PRIVATE
     ${HEIF_INCLUDE_DIRS}
     ${JPEG_INCLUDE_DIRS}
     ${JXL_INCLUDE_DIRS}
+    ${LCMS_INCLUDE_DIRS}
     ${PNG_INCLUDE_DIRS}
     ${RAW_INCLUDE_DIRS}
     ${RSVG_INCLUDE_DIRS}

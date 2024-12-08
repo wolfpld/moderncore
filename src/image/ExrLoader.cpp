@@ -99,7 +99,7 @@ std::unique_ptr<BitmapHdr> ExrLoader::LoadHdr()
 
         auto profileIn = cmsCreateRGBProfile( &white, &primaries, linear3 );
         auto profileOut = cmsCreateRGBProfile( &white709, &primaries709, linear3 );
-        auto transform = cmsCreateTransform( profileIn, TYPE_RGBA_HALF_FLT, profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA );
+        auto transform = cmsCreateTransform( profileIn, TYPE_RGBA_HALF_FLT, profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, 0 );
 
         cmsDoTransform( transform, hdr.data(), bmp->Data(), width * height );
 
@@ -107,6 +107,15 @@ std::unique_ptr<BitmapHdr> ExrLoader::LoadHdr()
         cmsFreeToneCurve( linear );
         cmsCloseProfile( profileIn );
         cmsCloseProfile( profileOut );
+
+        auto ptr = bmp->Data() + 3;
+        auto sz = width * height;
+        do
+        {
+            *ptr = 1;
+            ptr += 4;
+        }
+        while( --sz );
     }
     else
     {
@@ -118,7 +127,7 @@ std::unique_ptr<BitmapHdr> ExrLoader::LoadHdr()
             *dst++ = src->r;
             *dst++ = src->g;
             *dst++ = src->b;
-            *dst++ = src->a;
+            *dst++ = 1;
             src++;
         }
         while( --sz );

@@ -6,6 +6,7 @@
 
 #include "JxlLoader.hpp"
 #include "util/Bitmap.hpp"
+#include "util/BitmapHdr.hpp"
 #include "util/FileBuffer.hpp"
 #include "util/Panic.hpp"
 
@@ -16,6 +17,14 @@ constexpr JxlColorEncoding srgb = {
     .white_point = JXL_WHITE_POINT_D65,
     .primaries = JXL_PRIMARIES_SRGB,
     .transfer_function = JXL_TRANSFER_FUNCTION_SRGB,
+    .rendering_intent = JXL_RENDERING_INTENT_PERCEPTUAL
+};
+
+constexpr JxlColorEncoding linear = {
+    .color_space = JXL_COLOR_SPACE_RGB,
+    .white_point = JXL_WHITE_POINT_D65,
+    .primaries = JXL_PRIMARIES_SRGB,
+    .transfer_function = JXL_TRANSFER_FUNCTION_LINEAR,
     .rendering_intent = JXL_RENDERING_INTENT_PERCEPTUAL
 };
 
@@ -94,6 +103,12 @@ bool JxlLoader::IsValid() const
     return m_valid;
 }
 
+bool JxlLoader::IsHdr()
+{
+    if( !m_dec ) Open();
+    return m_info.bits_per_sample > 8;
+}
+
 std::unique_ptr<Bitmap> JxlLoader::Load()
 {
     if( !m_dec ) Open();
@@ -111,6 +126,29 @@ std::unique_ptr<Bitmap> JxlLoader::Load()
         if( res == JXL_DEC_COLOR_ENCODING )
         {
             JxlDecoderSetOutputColorProfile( m_dec, &srgb, nullptr, 0 );
+        }
+    }
+
+    return bmp;
+}
+
+std::unique_ptr<BitmapHdr> JxlLoader::LoadHdr()
+{
+    if( !m_dec ) Open();
+
+    auto bmp = std::make_unique<BitmapHdr>( m_info.xsize, m_info.ysize );
+
+    JxlPixelFormat format = { 4, JXL_TYPE_FLOAT, JXL_LITTLE_ENDIAN, 0 };
+    if( JxlDecoderSetImageOutBuffer( m_dec, &format, bmp->Data(), bmp->Width() * bmp->Height() * 4 * sizeof( float ) ) != JXL_DEC_SUCCESS ) return nullptr;
+
+    for(;;)
+    {
+        const auto res = JxlDecoderProcessInput( m_dec );
+        if( res == JXL_DEC_ERROR || res == JXL_DEC_NEED_MORE_INPUT || res == JXL_DEC_BASIC_INFO ) return nullptr;
+        if( res == JXL_DEC_SUCCESS || res == JXL_DEC_FULL_IMAGE ) break;
+        if( res == JXL_DEC_COLOR_ENCODING )
+        {
+            JxlDecoderSetOutputColorProfile( m_dec, &linear, nullptr, 0 );
         }
     }
 

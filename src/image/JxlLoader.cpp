@@ -3,7 +3,6 @@
 #include <jxl/decode.h>
 #include <jxl/resizable_parallel_runner.h>
 #include <lcms2.h>
-#include <vector>
 
 #include "JxlLoader.hpp"
 #include "util/Bitmap.hpp"
@@ -20,19 +19,9 @@ constexpr JxlColorEncoding srgb = {
     .rendering_intent = JXL_RENDERING_INTENT_PERCEPTUAL
 };
 
-struct CmsData
-{
-    std::vector<float*> srcBuf;
-    std::vector<float*> dstBuf;
-
-    cmsHPROFILE profileIn;
-    cmsHPROFILE profileOut;
-    cmsHTRANSFORM transform;
-};
-
 void* CmsInit( void* data, size_t num_threads, size_t pixels_per_thread, const JxlColorProfile* input_profile, const JxlColorProfile* output_profile, float intensity_target )
 {
-    auto cms = (CmsData*)data;
+    auto cms = (JxlLoader::CmsData*)data;
 
     cms->srcBuf.resize( num_threads );
     cms->dstBuf.resize( num_threads );
@@ -52,26 +41,26 @@ void* CmsInit( void* data, size_t num_threads, size_t pixels_per_thread, const J
 
 float* CmsGetSrcBuffer( void* data, size_t thread )
 {
-    auto cms = (CmsData*)data;
+    auto cms = (JxlLoader::CmsData*)data;
     return cms->srcBuf[thread];
 }
 
 float* CmsGetDstBuffer( void* data, size_t thread )
 {
-    auto cms = (CmsData*)data;
+    auto cms = (JxlLoader::CmsData*)data;
     return cms->dstBuf[thread];
 }
 
 JXL_BOOL CmsRun( void* data, size_t thread, const float* input, float* output, size_t num_pixels )
 {
-    auto cms = (CmsData*)data;
+    auto cms = (JxlLoader::CmsData*)data;
     cmsDoTransform( cms->transform, input, output, num_pixels );
     return true;
 }
 
 void CmsDestroy( void* data )
 {
-    auto cms = (CmsData*)data;
+    auto cms = (JxlLoader::CmsData*)data;
 
     cmsDeleteTransform( cms->transform );
     cmsCloseProfile( cms->profileOut );
@@ -84,12 +73,20 @@ void CmsDestroy( void* data )
 
 JxlLoader::JxlLoader( std::shared_ptr<FileWrapper> file )
     : ImageLoader( std::move( file ) )
+    , m_runner( nullptr )
+    , m_dec( nullptr )
 {
     fseek( *m_file, 0, SEEK_SET );
     uint8_t hdr[12];
     const auto read = fread( hdr, 1, 12, *m_file );
     const auto res = JxlSignatureCheck( hdr, read );
     m_valid = res == JXL_SIG_CODESTREAM || res == JXL_SIG_CONTAINER;
+}
+
+JxlLoader::~JxlLoader()
+{
+    if( m_dec ) JxlDecoderDestroy( m_dec );
+    if( m_runner ) JxlResizableParallelRunnerDestroy( m_runner );
 }
 
 bool JxlLoader::IsValid() const
@@ -99,65 +96,63 @@ bool JxlLoader::IsValid() const
 
 std::unique_ptr<Bitmap> JxlLoader::Load()
 {
-    CheckPanic( m_valid, "Invalid JPEG XL file" );
+    if( !m_dec ) Open();
 
-    FileBuffer buf( m_file );
+    auto bmp = std::make_unique<Bitmap>( m_info.xsize, m_info.ysize );
 
-    auto runner = JxlResizableParallelRunnerCreate( nullptr );
+    JxlPixelFormat format = { 4, JXL_TYPE_UINT8, JXL_LITTLE_ENDIAN, 0 };
+    if( JxlDecoderSetImageOutBuffer( m_dec, &format, bmp->Data(), bmp->Width() * bmp->Height() * 4 ) != JXL_DEC_SUCCESS ) return nullptr;
 
-    auto dec = JxlDecoderCreate( nullptr );
-    JxlDecoderSubscribeEvents( dec, JXL_DEC_BASIC_INFO | JXL_DEC_COLOR_ENCODING | JXL_DEC_FULL_IMAGE );
-    JxlDecoderSetParallelRunner( dec, JxlResizableParallelRunner, runner );
-
-    JxlDecoderSetInput( dec, (const uint8_t*)buf.data(), buf.size() );
-    JxlDecoderCloseInput( dec );
-
-    CmsData cmsData = {};
-    const JxlCmsInterface cmsInterface
-    {
-        .init_data = &cmsData,
-        .init = CmsInit,
-        .get_src_buf = CmsGetSrcBuffer,
-        .get_dst_buf = CmsGetDstBuffer,
-        .run = CmsRun,
-        .destroy = CmsDestroy
-    };
-    JxlDecoderSetCms( dec, cmsInterface );
-
-    std::unique_ptr<Bitmap> bmp;
     for(;;)
     {
-        const auto res = JxlDecoderProcessInput( dec );
-        if( res == JXL_DEC_ERROR || res == JXL_DEC_NEED_MORE_INPUT )
-        {
-            JxlDecoderDestroy( dec );
-            JxlResizableParallelRunnerDestroy( runner );
-            return nullptr;
-        }
+        const auto res = JxlDecoderProcessInput( m_dec );
+        if( res == JXL_DEC_ERROR || res == JXL_DEC_NEED_MORE_INPUT || res == JXL_DEC_BASIC_INFO ) return nullptr;
         if( res == JXL_DEC_SUCCESS || res == JXL_DEC_FULL_IMAGE ) break;
-        if( res == JXL_DEC_BASIC_INFO )
+        if( res == JXL_DEC_COLOR_ENCODING )
         {
-            JxlBasicInfo info;
-            JxlDecoderGetBasicInfo( dec, &info );
-            JxlResizableParallelRunnerSetThreads( runner, JxlResizableParallelRunnerSuggestThreads( info.xsize, info.ysize ) );
-
-            bmp = std::make_unique<Bitmap>( info.xsize, info.ysize );
-
-            JxlPixelFormat format = { 4, JXL_TYPE_UINT8, JXL_LITTLE_ENDIAN, 0 };
-            if( JxlDecoderSetImageOutBuffer( dec, &format, bmp->Data(), bmp->Width() * bmp->Height() * 4 ) != JXL_DEC_SUCCESS )
-            {
-                JxlDecoderDestroy( dec );
-                JxlResizableParallelRunnerDestroy( runner );
-                return nullptr;
-            }
-        }
-        else if( res == JXL_DEC_COLOR_ENCODING )
-        {
-            JxlDecoderSetOutputColorProfile( dec, &srgb, nullptr, 0 );
+            JxlDecoderSetOutputColorProfile( m_dec, &srgb, nullptr, 0 );
         }
     }
 
-    JxlDecoderDestroy( dec );
-    JxlResizableParallelRunnerDestroy( runner );
     return bmp;
+}
+
+bool JxlLoader::Open()
+{
+    CheckPanic( m_valid, "Invalid JPEG XL file" );
+    CheckPanic( !m_buf && !m_runner && !m_dec, "Already opened" );
+
+    m_buf = std::make_unique<FileBuffer>( m_file );
+    m_runner = JxlResizableParallelRunnerCreate( nullptr );
+
+    m_dec = JxlDecoderCreate( nullptr );
+    JxlDecoderSubscribeEvents( m_dec, JXL_DEC_BASIC_INFO | JXL_DEC_COLOR_ENCODING | JXL_DEC_FULL_IMAGE );
+    JxlDecoderSetParallelRunner( m_dec, JxlResizableParallelRunner, m_runner );
+
+    JxlDecoderSetInput( m_dec, (const uint8_t*)m_buf->data(), m_buf->size() );
+    JxlDecoderCloseInput( m_dec );
+
+    for(;;)
+    {
+        const auto res = JxlDecoderProcessInput( m_dec );
+        if( res == JXL_DEC_ERROR || res == JXL_DEC_NEED_MORE_INPUT || res == JXL_DEC_SUCCESS || res == JXL_DEC_FULL_IMAGE ) return false;
+        if( res == JXL_DEC_BASIC_INFO )
+        {
+            JxlDecoderGetBasicInfo( m_dec, &m_info );
+            JxlResizableParallelRunnerSetThreads( m_runner, JxlResizableParallelRunnerSuggestThreads( m_info.xsize, m_info.ysize ) );
+
+            const JxlCmsInterface cmsInterface
+            {
+                .init_data = &m_cms,
+                .init = CmsInit,
+                .get_src_buf = CmsGetSrcBuffer,
+                .get_dst_buf = CmsGetDstBuffer,
+                .run = CmsRun,
+                .destroy = CmsDestroy
+            };
+            JxlDecoderSetCms( m_dec, cmsInterface );
+
+            return true;
+        }
+    }
 }

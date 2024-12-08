@@ -1,15 +1,35 @@
 #pragma once
 
+#include <jxl/codestream_header.h>
+#include <memory>
+#include <vector>
+
 #include "ImageLoader.hpp"
 #include "util/FileWrapper.hpp"
 #include "util/NoCopy.hpp"
 
 class Bitmap;
+class BitmapHdr;
+class FileBuffer;
+typedef struct JxlDecoderStruct JxlDecoder;
+typedef void* cmsHPROFILE;
+typedef void* cmsHTRANSFORM;
 
 class JxlLoader : public ImageLoader
 {
 public:
+    struct CmsData
+    {
+        std::vector<float*> srcBuf;
+        std::vector<float*> dstBuf;
+
+        cmsHPROFILE profileIn;
+        cmsHPROFILE profileOut;
+        cmsHTRANSFORM transform;
+    };
+
     explicit JxlLoader( std::shared_ptr<FileWrapper> file );
+    ~JxlLoader() override;
 
     NoCopy( JxlLoader );
 
@@ -17,5 +37,13 @@ public:
     [[nodiscard]] std::unique_ptr<Bitmap> Load() override;
 
 private:
+    bool Open();
+
     bool m_valid;
+    std::unique_ptr<FileBuffer> m_buf;
+
+    void* m_runner;
+    JxlDecoder* m_dec;
+    JxlBasicInfo m_info;
+    CmsData m_cms;
 };

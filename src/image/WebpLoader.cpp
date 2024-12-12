@@ -5,6 +5,7 @@
 #include "util/Bitmap.hpp"
 #include "util/BitmapAnim.hpp"
 #include "util/FileBuffer.hpp"
+#include "util/FileWrapper.hpp"
 #include "util/Panic.hpp"
 
 WebpLoader::WebpLoader( std::shared_ptr<FileWrapper> file )

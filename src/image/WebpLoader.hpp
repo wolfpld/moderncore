@@ -4,7 +4,6 @@
 #include <stdint.h>
 
 #include "ImageLoader.hpp"
-#include "util/FileWrapper.hpp"
 #include "util/NoCopy.hpp"
 
 class Bitmap;

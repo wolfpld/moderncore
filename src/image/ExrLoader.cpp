@@ -8,6 +8,7 @@
 #include "ExrLoader.hpp"
 #include "util/Bitmap.hpp"
 #include "util/BitmapHdr.hpp"
+#include "util/FileWrapper.hpp"
 #include "util/Panic.hpp"
 
 class ExrStream : public Imf::IStream

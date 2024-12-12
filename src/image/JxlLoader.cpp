@@ -8,6 +8,7 @@
 #include "util/Bitmap.hpp"
 #include "util/BitmapHdr.hpp"
 #include "util/FileBuffer.hpp"
+#include "util/FileWrapper.hpp"
 #include "util/Panic.hpp"
 
 namespace

@@ -29,7 +29,7 @@ bool WebpLoader::IsValid() const
 
 bool WebpLoader::IsAnimated()
 {
-    if( !m_dec ) Open();
+    if( !m_dec && !Open() ) return false;
 
     WebPAnimInfo info;
     WebPAnimDecoderGetInfo( m_dec, &info );
@@ -39,7 +39,7 @@ bool WebpLoader::IsAnimated()
 
 std::unique_ptr<Bitmap> WebpLoader::Load()
 {
-    if( !m_dec ) Open();
+    if( !m_dec && !Open() ) return nullptr;
 
     WebPAnimInfo info;
     WebPAnimDecoderGetInfo( m_dec, &info );
@@ -56,7 +56,7 @@ std::unique_ptr<Bitmap> WebpLoader::Load()
 
 std::unique_ptr<BitmapAnim> WebpLoader::LoadAnim()
 {
-    if( !m_dec ) Open();
+    if( !m_dec && !Open() ) return nullptr;
 
     WebPAnimInfo info;
     WebPAnimDecoderGetInfo( m_dec, &info );
@@ -80,7 +80,7 @@ std::unique_ptr<BitmapAnim> WebpLoader::LoadAnim()
     return anim;
 }
 
-void WebpLoader::Open()
+bool WebpLoader::Open()
 {
     CheckPanic( m_valid, "Invalid WebP file" );
     CheckPanic( !m_buf && !m_dec, "Already opened" );
@@ -98,5 +98,5 @@ void WebpLoader::Open()
     opts.use_threads = 1;
 
     m_dec = WebPAnimDecoderNew( &data, &opts );
-    CheckPanic( m_dec, "Failed to open WebP file" );
+    return m_dec != nullptr;
 }

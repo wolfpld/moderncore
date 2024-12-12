@@ -106,13 +106,13 @@ bool JxlLoader::IsValid() const
 
 bool JxlLoader::IsHdr()
 {
-    if( !m_dec ) Open();
+    if( !m_dec && !Open() ) return false;
     return m_info.bits_per_sample > 8;
 }
 
 std::unique_ptr<Bitmap> JxlLoader::Load()
 {
-    if( !m_dec ) Open();
+    if( !m_dec && !Open() ) return nullptr;
 
     auto bmp = std::make_unique<Bitmap>( m_info.xsize, m_info.ysize );
 
@@ -135,7 +135,7 @@ std::unique_ptr<Bitmap> JxlLoader::Load()
 
 std::unique_ptr<BitmapHdr> JxlLoader::LoadHdr()
 {
-    if( !m_dec ) Open();
+    if( !m_dec && !Open() ) return nullptr;
 
     auto bmp = std::make_unique<BitmapHdr>( m_info.xsize, m_info.ysize );
 

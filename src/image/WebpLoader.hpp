@@ -26,7 +26,7 @@ public:
     [[nodiscard]] std::unique_ptr<BitmapAnim> LoadAnim() override;
 
 private:
-    void Open();
+    bool Open();
 
     bool m_valid;
 

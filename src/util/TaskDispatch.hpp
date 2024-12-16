@@ -17,6 +17,8 @@ public:
 
     NoCopy( TaskDispatch );
 
+    void WaitInit();
+
     void Queue( const std::function<void(void)>& f );
     void Queue( std::function<void(void)>&& f );
 
@@ -33,4 +35,8 @@ private:
     size_t m_jobs;
 
     std::vector<std::thread> m_workers;
+
+    std::thread m_init;
+    std::mutex m_initLock;
+    std::atomic<bool> m_initDone;
 };

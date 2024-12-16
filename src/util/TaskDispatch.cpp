@@ -7,20 +7,25 @@
 TaskDispatch::TaskDispatch( size_t workers, const char* name )
     : m_exit( false )
     , m_jobs( 0 )
+    , m_initDone( false )
 {
     ZoneScoped;
 
-    mclog( LogLevel::Info, "Creating %zu worker threads named '%s'", workers, name );
+    m_init = std::thread( [this, workers, name] {
+        mclog( LogLevel::Info, "Creating %zu worker threads named '%s'", workers, name );
 
-    m_workers.reserve( workers );
-    for( size_t i=0; i<workers; i++ )
-    {
-        m_workers.emplace_back( [this, name, i]{ SetName( name, i ); Worker(); } );
-    }
+        m_workers.reserve( workers );
+        for( size_t i=0; i<workers; i++ )
+        {
+            m_workers.emplace_back( [this, name, i]{ SetName( name, i ); Worker(); } );
+        }
+    } );
 }
 
 TaskDispatch::~TaskDispatch()
 {
+    WaitInit();
+
     m_exit.store( true, std::memory_order_release );
     m_queueLock.lock();
     m_cvWork.notify_all();
@@ -29,6 +34,18 @@ TaskDispatch::~TaskDispatch()
     for( auto& worker : m_workers )
     {
         worker.join();
+    }
+}
+
+void TaskDispatch::WaitInit()
+{
+    if( m_initDone.load( std::memory_order_relaxed ) ) return;
+
+    std::lock_guard lock( m_initLock );
+    if( !m_initDone.load( std::memory_order_acquire ) )
+    {
+        m_init.join();
+        m_initDone.store( true, std::memory_order_release );
     }
 }
 

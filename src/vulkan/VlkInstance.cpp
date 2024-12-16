@@ -11,7 +11,6 @@
 #include "VlkProxy.hpp"
 #include "util/Logs.hpp"
 #include "util/Panic.hpp"
-#include "util/TaskDispatch.hpp"
 #include "vulkan/VlkPhysicalDevice.hpp"
 
 constexpr std::array validationLayers = { "VK_LAYER_KHRONOS_validation" };

@@ -64,7 +64,7 @@ std::unique_ptr<ImageLoader> GetImageLoader( const char* filename, TaskDispatch*
     if( auto loader = CheckImageLoader<JpgLoader>( file ); loader ) return loader;
     if( auto loader = CheckImageLoader<JxlLoader>( file ); loader ) return loader;
     if( auto loader = CheckImageLoader<WebpLoader>( file ); loader ) return loader;
-    if( auto loader = CheckImageLoader<HeifLoader>( file ); loader ) return loader;
+    if( auto loader = CheckImageLoader<HeifLoader>( file, td ); loader ) return loader;
     if( auto loader = CheckImageLoader<PvrLoader>( file ); loader ) return loader;
     if( auto loader = CheckImageLoader<DdsLoader>( file ); loader ) return loader;
     if( auto loader = CheckImageLoader<StbImageLoader>( file ); loader ) return loader;

@@ -8,6 +8,8 @@
 class Bitmap;
 class BitmapHdr;
 class FileBuffer;
+class TaskDispatch;
+
 struct heif_context;
 struct heif_image_handle;
 struct heif_color_profile_nclx;
@@ -15,7 +17,7 @@ struct heif_color_profile_nclx;
 class HeifLoader : public ImageLoader
 {
 public:
-    explicit HeifLoader( std::shared_ptr<FileWrapper> file );
+    explicit HeifLoader( std::shared_ptr<FileWrapper> file, TaskDispatch* td );
     ~HeifLoader() override;
 
     NoCopy( HeifLoader );
@@ -51,4 +53,6 @@ private:
 
     size_t m_iccSize;
     char* m_iccData;
+
+    TaskDispatch* m_td;
 };

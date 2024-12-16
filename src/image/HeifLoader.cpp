@@ -10,6 +10,7 @@
 #include "util/FileBuffer.hpp"
 #include "util/FileWrapper.hpp"
 #include "util/Panic.hpp"
+#include "util/TaskDispatch.hpp"
 
 namespace
 {
@@ -45,13 +46,14 @@ float Hlg( float E, float Y )
 }
 }
 
-HeifLoader::HeifLoader( std::shared_ptr<FileWrapper> file )
+HeifLoader::HeifLoader( std::shared_ptr<FileWrapper> file, TaskDispatch* td )
     : ImageLoader( std::move( file ) )
     , m_valid( false )
     , m_ctx( nullptr )
     , m_handle( nullptr )
     , m_nclx( nullptr )
     , m_iccData( nullptr )
+    , m_td( td )
 {
     fseek( *m_file, 0, SEEK_SET );
     uint8_t hdr[12];
@@ -202,7 +204,27 @@ std::unique_ptr<Bitmap> HeifLoader::LoadWithIccProfile()
     auto transform = cmsCreateTransform( profileIn, TYPE_RGBA_FLT, profileOut, TYPE_RGBA_8, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA );
 
     auto bmp = std::make_unique<Bitmap>( m_width, m_height );
-    cmsDoTransform( transform, tmp->Data(), bmp->Data(), m_width * m_height );
+    if( m_td )
+    {
+        auto src = tmp->Data();
+        auto dst = bmp->Data();
+        auto sz = m_width * m_height;
+        while( sz > 0 )
+        {
+            auto chunk = std::min<size_t>( sz, 16 * 1024 );
+            m_td->Queue( [src, dst, chunk, transform] {
+                cmsDoTransform( transform, src, dst, chunk );
+            } );
+            src += chunk * 4;
+            dst += chunk * 4;
+            sz -= chunk;
+        }
+        m_td->Sync();
+    }
+    else
+    {
+        cmsDoTransform( transform, tmp->Data(), bmp->Data(), m_width * m_height );
+    }
 
     cmsDeleteTransform( transform );
     cmsCloseProfile( profileOut );
@@ -236,7 +258,27 @@ std::unique_ptr<BitmapHdr> HeifLoader::LoadHdrNoProfile()
         auto transform = cmsCreateTransform( profileIn, TYPE_RGBA_FLT, profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA );
 
         auto corrected = std::make_unique<BitmapHdr>( m_width, m_height );
-        cmsDoTransform( transform, bmp->Data(), corrected->Data(), m_width * m_height );
+        if( m_td )
+        {
+            auto src = bmp->Data();
+            auto dst = corrected->Data();
+            auto sz = m_width * m_height;
+            while( sz > 0 )
+            {
+                auto chunk = std::min<size_t>( sz, 16 * 1024 );
+                m_td->Queue( [src, dst, chunk, transform] {
+                    cmsDoTransform( transform, src, dst, chunk );
+                } );
+                src += chunk * 4;
+                dst += chunk * 4;
+                sz -= chunk;
+            }
+            m_td->Sync();
+        }
+        else
+        {
+            cmsDoTransform( transform, bmp->Data(), corrected->Data(), m_width * m_height );
+        }
         std::swap( bmp, corrected );
 
         cmsDeleteTransform( transform );
@@ -265,7 +307,27 @@ std::unique_ptr<BitmapHdr> HeifLoader::LoadHdrWithIccProfile()
     auto transform = cmsCreateTransform( profileIn, TYPE_RGBA_FLT, profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA );
 
     auto corrected = std::make_unique<BitmapHdr>( m_width, m_height );
-    cmsDoTransform( transform, bmp->Data(), corrected->Data(), m_width * m_height );
+    if( m_td )
+    {
+        auto src = bmp->Data();
+        auto dst = corrected->Data();
+        auto sz = m_width * m_height;
+        while( sz > 0 )
+        {
+            auto chunk = std::min<size_t>( sz, 16 * 1024 );
+            m_td->Queue( [src, dst, chunk, transform] {
+                cmsDoTransform( transform, src, dst, chunk );
+            } );
+            src += chunk * 4;
+            dst += chunk * 4;
+            sz -= chunk;
+        }
+        m_td->Sync();
+    }
+    else
+    {
+        cmsDoTransform( transform, bmp->Data(), corrected->Data(), m_width * m_height );
+    }
 
     cmsDeleteTransform( transform );
     cmsCloseProfile( profileOut );

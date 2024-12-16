@@ -20,6 +20,7 @@
 #include "util/Callstack.hpp"
 #include "util/Logs.hpp"
 #include "util/Panic.hpp"
+#include "util/TaskDispatch.hpp"
 #include "util/VectorImage.hpp"
 
 namespace {
@@ -409,13 +410,16 @@ int main( int argc, char** argv )
         return 1;
     }
 
+    const auto workerThreads = std::max( 1u, std::thread::hardware_concurrency() - 1 );
+    TaskDispatch td( workerThreads, "Worker" );
+
     const char* imageFile = argv[optind];
     std::unique_ptr<Bitmap> bitmap;
     std::unique_ptr<BitmapAnim> anim;
     std::unique_ptr<VectorImage> vectorImage;
 
-    auto imageThread = std::thread( [&bitmap, &anim, &vectorImage, imageFile, disableAnimation] {
-        auto loader = GetImageLoader( imageFile );
+    auto imageThread = std::thread( [&bitmap, &anim, &vectorImage, imageFile, disableAnimation, &td] {
+        auto loader = GetImageLoader( imageFile, &td );
         if( loader )
         {
             if( !disableAnimation && loader->IsAnimated() )

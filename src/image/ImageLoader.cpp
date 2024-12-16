@@ -70,7 +70,7 @@ std::unique_ptr<ImageLoader> GetImageLoader( const char* filename, TaskDispatch*
     if( auto loader = CheckImageLoader<StbImageLoader>( file ); loader ) return loader;
     if( auto loader = CheckImageLoader<RawLoader>( file ); loader ) return loader;
     if( auto loader = CheckImageLoader<TiffLoader>( file ); loader ) return loader;
-    if( auto loader = CheckImageLoader<ExrLoader>( file ); loader ) return loader;
+    if( auto loader = CheckImageLoader<ExrLoader>( file, td ); loader ) return loader;
     if( auto loader = CheckImageLoader<PcxLoader>( file ); loader ) return loader;
 
     mclog( LogLevel::Info, "Raster image loaders can't open %s", path.c_str() );

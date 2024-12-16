@@ -30,10 +30,10 @@ concept ImageLoaderConcept = requires( T loader, const std::shared_ptr<FileWrapp
     { loader.Load() } -> std::convertible_to<std::unique_ptr<Bitmap>>;
 };
 
-template<ImageLoaderConcept T>
-static inline std::unique_ptr<ImageLoader> CheckImageLoader( const std::shared_ptr<FileWrapper>& file )
+template<ImageLoaderConcept T, typename... Args>
+static inline std::unique_ptr<ImageLoader> CheckImageLoader( const std::shared_ptr<FileWrapper>& file, Args&&... args )
 {
-    auto loader = std::make_unique<T>( file );
+    auto loader = std::make_unique<T>( file, std::forward<Args>( args )... );
     if( loader->IsValid() ) return loader;
     return nullptr;
 }
@@ -48,7 +48,7 @@ std::unique_ptr<BitmapHdr> ImageLoader::LoadHdr()
     return nullptr;
 }
 
-std::unique_ptr<ImageLoader> GetImageLoader( const char* filename )
+std::unique_ptr<ImageLoader> GetImageLoader( const char* filename, TaskDispatch* td )
 {
     ZoneScoped;
 

@@ -8,6 +8,7 @@ class Bitmap;
 class BitmapAnim;
 class BitmapHdr;
 class FileWrapper;
+class TaskDispatch;
 class VectorImage;
 
 class ImageLoader
@@ -30,6 +31,6 @@ protected:
     std::shared_ptr<FileWrapper> m_file;
 };
 
-std::unique_ptr<ImageLoader> GetImageLoader( const char* filename );
+std::unique_ptr<ImageLoader> GetImageLoader( const char* filename, TaskDispatch* td = nullptr );
 std::unique_ptr<Bitmap> LoadImage( const char* filename );
 std::unique_ptr<VectorImage> LoadVectorImage( const char* filename );

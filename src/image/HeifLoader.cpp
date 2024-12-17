@@ -44,6 +44,18 @@ float Hlg( float E, float Y )
 
     return std::pow( Y * invalpha, g ) * E * invalpha;
 }
+
+void LinearizePq( float* ptr, int sz )
+{
+    for( int i=0; i<sz; i++ )
+    {
+        ptr[0] = Pq( ptr[0] );
+        ptr[1] = Pq( ptr[1] );
+        ptr[2] = Pq( ptr[2] );
+
+        ptr += 4;
+    }
+}
 }
 
 HeifLoader::HeifLoader( std::shared_ptr<FileWrapper> file, TaskDispatch* td )
@@ -626,15 +638,7 @@ void HeifLoader::ApplyTransfer( const std::unique_ptr<BitmapHdr>& bmp )
     {
     case heif_transfer_characteristic_ITU_R_BT_2100_0_PQ:
         mclog( LogLevel::Info, "HEIF: Applying PQ transfer function" );
-        do
-        {
-            ptr[0] = Pq( ptr[0] );
-            ptr[1] = Pq( ptr[1] );
-            ptr[2] = Pq( ptr[2] );
-
-            ptr += 4;
-        }
-        while( --sz );
+        LinearizePq( ptr, sz );
         break;
     case heif_transfer_characteristic_ITU_R_BT_2100_0_HLG:
         mclog( LogLevel::Info, "HEIF: Applying HLG transfer function" );

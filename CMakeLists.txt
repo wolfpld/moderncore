@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.29)
 
 option(TRACY_ENABLE "Enable Tracy" OFF)
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
+option(MARCH_NATIVE "Enable -march=native" ON)
 
 set(CMAKE_CXX_STANDARD 20)
 
@@ -9,6 +10,7 @@ project(ModernCore
     LANGUAGES C CXX
 )
 
+include(CheckCompilerFlag)
 include(FindPkgConfig)
 include(cmake/config.cmake)
 include(cmake/CPM.cmake)
@@ -84,6 +86,13 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_LIST_DIR} ${CMAK
 if(TRACY_ENABLE)
     add_definitions(-DTRACY_ENABLE)
     add_compile_options(-g -O3 -fno-omit-frame-pointer)
+endif()
+
+if(MARCH_NATIVE)
+    check_compiler_flag(CXX "-march=native" HAS_MARCH_NATIVE)
+    if(HAS_MARCH_NATIVE)
+        add_compile_options(-march=native)
+    endif()
 endif()
 
 add_custom_target(git-ref

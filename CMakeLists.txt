@@ -128,8 +128,12 @@ set(MCOREUTIL_SRC
 add_library(mcoreutil ${MCOREUTIL_SRC})
 target_link_libraries(mcoreutil PRIVATE
     Tracy::TracyClient
+    ${PNG_LINK_LIBRARIES}
 )
-target_include_directories(mcoreutil PRIVATE ${stb_SOURCE_DIR})
+target_include_directories(mcoreutil PRIVATE
+    ${stb_SOURCE_DIR}
+    ${PNG_INCLUDE_DIRS}
+)
 
 # mcoreimage
 

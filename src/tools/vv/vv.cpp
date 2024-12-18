@@ -35,6 +35,7 @@ void PrintHelp()
     printf( "  -G, --background [color]     Set background color to RRGGBB in hex\n" );
     printf( "  -g, --checkerboard           Use checkerboard background\n" );
     printf( "  -A, --noanim                 Disable animation\n" );
+    printf( "  -w, --write [file.png]       Write output to file\n" );
     printf( "  --help                       Print this help\n" );
 }
 
@@ -346,6 +347,7 @@ int main( int argc, char** argv )
         { "background", required_argument, nullptr, 'G' },
         { "checkerboard", no_argument, nullptr, 'g' },
         { "noanim", no_argument, nullptr, 'A' },
+        { "write", required_argument, nullptr, 'w' },
         { "help", no_argument, nullptr, OptHelp },
     };
 
@@ -353,16 +355,18 @@ int main( int argc, char** argv )
     {
         Kitty,
         Sixel,
-        Block
+        Block,
+        WriteFile
     };
 
     GfxMode gfxMode = GfxMode::Kitty;
     ScaleMode scale = ScaleMode::None;
     int bg = -2;
     bool disableAnimation = false;
+    const char* writeFn = nullptr;
 
     int opt;
-    while( ( opt = getopt_long( argc, argv, "debsf6G:gA", longOptions, nullptr ) ) != -1 )
+    while( ( opt = getopt_long( argc, argv, "debsf6G:gAw:", longOptions, nullptr ) ) != -1 )
     {
         switch (opt)
         {
@@ -393,6 +397,10 @@ int main( int argc, char** argv )
             break;
         case 'A':
             disableAnimation = true;
+            break;
+        case 'w':
+            writeFn = optarg;
+            gfxMode = GfxMode::WriteFile;
             break;
         default:
             printf( "\n" );
@@ -460,7 +468,7 @@ int main( int argc, char** argv )
     mclog( LogLevel::Info, "Terminal size: %dx%d", ws.ws_col, ws.ws_row );
 
     int cw, ch;
-    if( gfxMode != GfxMode::Block )
+    if( gfxMode != GfxMode::Block && gfxMode != GfxMode::WriteFile )
     {
         if( !OpenTerminal() )
         {
@@ -654,6 +662,28 @@ int main( int argc, char** argv )
             if( !UploadKittyImage( *bitmap, "a=T" ) ) return 1;
             if( bitmap->Width() < col ) printf( "\n" );
         }
+    }
+    else if( gfxMode == GfxMode::WriteFile )
+    {
+        std::shared_ptr<Bitmap> img;
+        if( anim )
+        {
+            img = anim->GetFrame( 0 ).bmp;
+        }
+        else if( bitmap )
+        {
+            img.reset( bitmap.release() );
+        }
+        else
+        {
+            CheckPanic( vectorImage, "No image data" );
+            img = vectorImage->Rasterize( vectorImage->Width(), vectorImage->Height() );
+        }
+
+        if( bg >= 0 ) FillBackground( *img, bg );
+        else if( bg == -1 ) FillCheckerboard( *img );
+
+        img->SavePng( writeFn );
     }
     else
     {

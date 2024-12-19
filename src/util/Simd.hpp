@@ -13,8 +13,8 @@ static inline __m128 _mm_log_ps( __m128 x )
     __m128i e0 = _mm_castps_si128( x );
     __m128i e1 = _mm_srai_epi32( e0, 23 );
     __m128i e2 = _mm_sub_epi32( e1, _mm_set1_epi32( 127 ) );
-    __m128i e3 = _mm_and_epi32( e0, _mm_set1_epi32( 0x007fffff ) );
-    __m128i e4 = _mm_or_epi32 ( e3, _mm_set1_epi32( 0x3f800000 ) );
+    __m128i e3 = _mm_and_si128( e0, _mm_set1_epi32( 0x007fffff ) );
+    __m128i e4 = _mm_or_si128 ( e3, _mm_set1_epi32( 0x3f800000 ) );
     __m128 e5 = _mm_castsi128_ps( e4 );
     __m128 f = _mm_sub_ps( e5, _mm_set1_ps( 1.f ) );
     __m128 f2 = _mm_mul_ps( f, f );
@@ -62,8 +62,8 @@ static inline __m256 _mm256_log_ps( __m256 x )
     __m256i e0 = _mm256_castps_si256( x );
     __m256i e1 = _mm256_srai_epi32( e0, 23 );
     __m256i e2 = _mm256_sub_epi32( e1, _mm256_set1_epi32( 127 ) );
-    __m256i e3 = _mm256_and_epi32( e0, _mm256_set1_epi32( 0x007fffff ) );
-    __m256i e4 = _mm256_or_epi32 ( e3, _mm256_set1_epi32( 0x3f800000 ) );
+    __m256i e3 = _mm256_and_si256( e0, _mm256_set1_epi32( 0x007fffff ) );
+    __m256i e4 = _mm256_or_si256 ( e3, _mm256_set1_epi32( 0x3f800000 ) );
     __m256 e5 = _mm256_castsi256_ps( e4 );
     __m256 f = _mm256_sub_ps( e5, _mm256_set1_ps( 1.f ) );
     __m256 f2 = _mm256_mul_ps( f, f );

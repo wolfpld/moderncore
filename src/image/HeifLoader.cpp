@@ -10,7 +10,12 @@
 #include "util/FileBuffer.hpp"
 #include "util/FileWrapper.hpp"
 #include "util/Panic.hpp"
+#include "util/Simd.hpp"
 #include "util/TaskDispatch.hpp"
+
+#ifdef __SSE4_1__
+#  include <x86intrin.h>
+#endif
 
 namespace
 {
@@ -45,6 +50,131 @@ float Hlg( float E, float Y )
     return std::pow( Y * invalpha, g ) * E * invalpha;
 }
 
+#if defined __SSE4_1__ && defined __FMA__
+void LinearizePq128( float* ptr, int sz )
+{
+    while( sz > 0 )
+    {
+        __m128 px0 = _mm_loadu_ps( ptr );
+        __m128 px1 = _mm_max_ps( px0, _mm_setzero_ps() );
+        __m128 Nm2 = _mm_pow_ps( px1, _mm_set1_ps( 1.f / 78.84375f ) );
+
+        __m128 px2 = _mm_sub_ps( Nm2, _mm_set1_ps( 0.8359375f ) );
+        __m128 px3 = _mm_max_ps( px2, _mm_setzero_ps() );
+
+        __m128 px4 = _mm_fnmadd_ps( _mm_set1_ps( 18.6875f ), Nm2, _mm_set1_ps( 18.8515625f ) );
+        __m128 px5 = _mm_div_ps( px3, px4 );
+
+        __m128 px6 = _mm_pow_ps( px5, _mm_set1_ps( 1.f / 0.1593017578125f ) );
+        __m128 ret = _mm_mul_ps( px6, _mm_set1_ps( 10000.f / 255.f ) );
+
+        __m128 b = _mm_blend_ps( ret, px0, 0x8 );
+        _mm_storeu_ps( ptr, b );
+
+        ptr += 4;
+        sz--;
+    }
+}
+
+#  if defined __AVX2__
+void LinearizePq256( float* ptr, int sz )
+{
+    while( sz > 1 )
+    {
+        __m256 px0 = _mm256_loadu_ps( ptr );
+        __m256 px1 = _mm256_max_ps( px0, _mm256_setzero_ps() );
+        __m256 Nm2 = _mm256_pow_ps( px1, _mm256_set1_ps( 1.f / 78.84375f ) );
+
+        __m256 px2 = _mm256_sub_ps( Nm2, _mm256_set1_ps( 0.8359375f ) );
+        __m256 px3 = _mm256_max_ps( px2, _mm256_setzero_ps() );
+
+        __m256 px4 = _mm256_fnmadd_ps( _mm256_set1_ps( 18.6875f ), Nm2, _mm256_set1_ps( 18.8515625f ) );
+        __m256 px5 = _mm256_div_ps( px3, px4 );
+
+        __m256 px6 = _mm256_pow_ps( px5, _mm256_set1_ps( 1.f / 0.1593017578125f ) );
+        __m256 ret = _mm256_mul_ps( px6, _mm256_set1_ps( 10000.f / 255.f ) );
+
+        __m256 b = _mm256_blend_ps( ret, px0, 0x88 );
+        _mm256_storeu_ps( ptr, b );
+
+        ptr += 8;
+        sz -= 2;
+    }
+}
+#  endif
+
+#  if defined __AVX512F__
+void LinearizePq512( float* ptr, int sz )
+{
+    while( sz > 3 )
+    {
+        __m512 px0 = _mm512_loadu_ps( ptr );
+        __m512 px1 = _mm512_max_ps( px0, _mm512_setzero_ps() );
+        __m512 Nm2 = _mm512_pow_ps( px1, _mm512_set1_ps( 1.f / 78.84375f ) );
+
+        __m512 px2 = _mm512_sub_ps( Nm2, _mm512_set1_ps( 0.8359375f ) );
+        __m512 px3 = _mm512_max_ps( px2, _mm512_setzero_ps() );
+
+        __m512 px4 = _mm512_fnmadd_ps( _mm512_set1_ps( 18.6875f ), Nm2, _mm512_set1_ps( 18.8515625f ) );
+        __m512 px5 = _mm512_div_ps( px3, px4 );
+
+        __m512 px6 = _mm512_pow_ps( px5, _mm512_set1_ps( 1.f / 0.1593017578125f ) );
+        __m512 ret = _mm512_mul_ps( px6, _mm512_set1_ps( 10000.f / 255.f ) );
+
+        __m512 b = _mm512_mask_blend_ps( 0x8888, ret, px0 );
+        _mm512_storeu_ps( ptr, b );
+
+        ptr += 16;
+        sz -= 4;
+    }
+}
+#  endif
+
+void LinearizePq( float* ptr, int sz, TaskDispatch* td )
+{
+    if( td )
+    {
+        while( sz > 0 )
+        {
+            auto chunk = std::min<int>( sz, 16 * 1024 );
+            td->Queue( [ptr, chunk] () mutable {
+#  ifdef __AVX512F__
+                LinearizePq512( ptr, chunk );
+                if( (chunk & 3) == 0 ) return;
+                ptr += ( chunk & ~3 ) * 4;
+                chunk &= 3;
+#  endif
+#  ifdef __AVX2__
+                LinearizePq256( ptr, chunk );
+                if( (chunk & 1) == 0 ) return;
+                ptr += ( chunk & ~1 ) * 4;
+                chunk &= 1;
+#  endif
+                LinearizePq128( ptr, chunk );
+            } );
+            ptr += chunk * 4;
+            sz -= chunk;
+        }
+        td->Sync();
+    }
+    else
+    {
+#  ifdef __AVX512F__
+        LinearizePq512( ptr, sz );
+        if( (sz & 3) == 0 ) return;
+        ptr += ( sz & ~3 ) * 4;
+        sz &= 3;
+#  endif
+#  ifdef __AVX2__
+        LinearizePq256( ptr, sz );
+        if( (sz & 1) == 0 ) return;
+        ptr += ( sz & ~1 ) * 4;
+        sz &= 1;
+#  endif
+        LinearizePq128( ptr, sz );
+    }
+}
+#else
 void LinearizePq( float* ptr, int sz )
 {
     for( int i=0; i<sz; i++ )
@@ -56,6 +186,7 @@ void LinearizePq( float* ptr, int sz )
         ptr += 4;
     }
 }
+#endif
 }
 
 HeifLoader::HeifLoader( std::shared_ptr<FileWrapper> file, TaskDispatch* td )
@@ -638,7 +769,7 @@ void HeifLoader::ApplyTransfer( const std::unique_ptr<BitmapHdr>& bmp )
     {
     case heif_transfer_characteristic_ITU_R_BT_2100_0_PQ:
         mclog( LogLevel::Info, "HEIF: Applying PQ transfer function" );
-        LinearizePq( ptr, sz );
+        LinearizePq( ptr, sz, m_td );
         break;
     case heif_transfer_characteristic_ITU_R_BT_2100_0_HLG:
         mclog( LogLevel::Info, "HEIF: Applying HLG transfer function" );

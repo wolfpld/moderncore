@@ -14,10 +14,6 @@
 #include "util/TaskDispatch.hpp"
 #include "util/Tonemapper.hpp"
 
-#ifdef __SSE4_1__
-#  include <x86intrin.h>
-#endif
-
 namespace
 {
 constexpr cmsCIExyY white709 = { 0.3127f, 0.329f, 1 };

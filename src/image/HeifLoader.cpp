@@ -246,10 +246,29 @@ std::unique_ptr<BitmapHdr> HeifLoader::LoadHdr()
     if( !SetupDecode( true ) ) return nullptr;
 
     auto bmp = LoadYCbCr();
-
-    ConvertYCbCrToRGB( bmp->Data(), m_width * m_height );
-    if( m_transform ) cmsDoTransform( m_transform, bmp->Data(), bmp->Data(), m_width * m_height );
-    ApplyTransfer( bmp->Data(), m_width * m_height );
+    if( m_td )
+    {
+        auto ptr = bmp->Data();
+        size_t sz = m_width * m_height;
+        while( sz > 0 )
+        {
+            const auto chunk = std::min( sz, size_t( 16 * 1024 ) );
+            m_td->Queue( [this, ptr, chunk] {
+                ConvertYCbCrToRGB( ptr, chunk );
+                if( m_transform ) cmsDoTransform( m_transform, ptr, ptr, chunk );
+                ApplyTransfer( ptr, chunk );
+            } );
+            ptr += chunk * 4;
+            sz -= chunk;
+        }
+        m_td->Sync();
+    }
+    else
+    {
+        ConvertYCbCrToRGB( bmp->Data(), m_width * m_height );
+        if( m_transform ) cmsDoTransform( m_transform, bmp->Data(), bmp->Data(), m_width * m_height );
+        ApplyTransfer( bmp->Data(), m_width * m_height );
+    }
 
     return bmp;
 }
@@ -641,11 +660,11 @@ void HeifLoader::ApplyTransfer( float* ptr, size_t sz )
     switch( m_nclx->transfer_characteristics )
     {
     case heif_transfer_characteristic_ITU_R_BT_2100_0_PQ:
-        mclog( LogLevel::Info, "HEIF: Applying PQ transfer function" );
+        //mclog( LogLevel::Info, "HEIF: Applying PQ transfer function" );
         LinearizePq( ptr, sz, m_td );
         break;
     case heif_transfer_characteristic_ITU_R_BT_2100_0_HLG:
-        mclog( LogLevel::Info, "HEIF: Applying HLG transfer function" );
+        //mclog( LogLevel::Info, "HEIF: Applying HLG transfer function" );
         do
         {
             const auto r = ptr[0];

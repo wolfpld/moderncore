@@ -122,6 +122,7 @@ set(MCOREUTIL_SRC
     src/util/Home.cpp
     src/util/Logs.cpp
     src/util/TaskDispatch.cpp
+    src/util/Tonemapper.cpp
     src/util/stb_image_resize_impl.cpp
 )
 

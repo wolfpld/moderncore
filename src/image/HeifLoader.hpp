@@ -43,12 +43,7 @@ private:
     bool SetupDecode( bool hdr );
 
     [[nodiscard]] std::unique_ptr<Bitmap> LoadNoProfile();
-    [[nodiscard]] std::unique_ptr<Bitmap> LoadWithIccProfile();
-
-    [[nodiscard]] std::unique_ptr<BitmapHdr> LoadHdrNoProfile();
-    [[nodiscard]] std::unique_ptr<BitmapHdr> LoadHdrWithIccProfile();
-
-    [[nodiscard]] std::unique_ptr<BitmapHdr> LoadYCbCr( bool hdr);
+    [[nodiscard]] std::unique_ptr<BitmapHdr> LoadYCbCr();
 
     void ConvertYCbCrToRGB( const std::unique_ptr<BitmapHdr>& bmp );
     void ApplyTransfer( const std::unique_ptr<BitmapHdr>& bmp );

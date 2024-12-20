@@ -223,7 +223,14 @@ std::unique_ptr<Bitmap> HeifLoader::Load()
         }
         else
         {
-            return LoadWithIccProfile();
+            if( !SetupDecode( false ) ) return nullptr;
+            auto tmp = LoadYCbCr();
+            ConvertYCbCrToRGB( tmp );
+
+            auto bmp = std::make_unique<Bitmap>( m_width, m_height );
+            cmsDoTransform( m_transform, tmp->Data(), bmp->Data(), m_width * m_height );
+
+            return bmp;
         }
     }
     else
@@ -236,15 +243,20 @@ std::unique_ptr<Bitmap> HeifLoader::Load()
 std::unique_ptr<BitmapHdr> HeifLoader::LoadHdr()
 {
     if( !m_buf && !Open() ) return nullptr;
+    if( !SetupDecode( true ) ) return nullptr;
 
-    if( !m_iccData )
+    auto bmp = LoadYCbCr();
+    ConvertYCbCrToRGB( bmp );
+
+    if( m_transform )
     {
-        return LoadHdrNoProfile();
+        auto corrected = std::make_unique<BitmapHdr>( m_width, m_height );
+        cmsDoTransform( m_transform, bmp->Data(), corrected->Data(), m_width * m_height );
+        std::swap( bmp, corrected );
     }
-    else
-    {
-        return LoadHdrWithIccProfile();
-    }
+
+    ApplyTransfer( bmp );
+    return bmp;
 }
 
 bool HeifLoader::Open()
@@ -424,56 +436,8 @@ std::unique_ptr<Bitmap> HeifLoader::LoadNoProfile()
     return bmp;
 }
 
-std::unique_ptr<Bitmap> HeifLoader::LoadWithIccProfile()
+std::unique_ptr<BitmapHdr> HeifLoader::LoadYCbCr()
 {
-    auto tmp = LoadYCbCr( false );
-    if( !tmp ) return nullptr;
-    ConvertYCbCrToRGB( tmp );
-
-    auto bmp = std::make_unique<Bitmap>( m_width, m_height );
-    cmsDoTransform( m_transform, tmp->Data(), bmp->Data(), m_width * m_height );
-
-    return bmp;
-}
-
-std::unique_ptr<BitmapHdr> HeifLoader::LoadHdrNoProfile()
-{
-    CheckPanic( m_nclx, "No nclx color profile found" );
-
-    auto bmp = LoadYCbCr( true );
-    if( !bmp ) return nullptr;
-    ConvertYCbCrToRGB( bmp );
-
-    if( m_transform )
-    {
-        auto corrected = std::make_unique<BitmapHdr>( m_width, m_height );
-        cmsDoTransform( m_transform, bmp->Data(), corrected->Data(), m_width * m_height );
-        std::swap( bmp, corrected );
-    }
-
-    ApplyTransfer( bmp );
-    return bmp;
-}
-
-std::unique_ptr<BitmapHdr> HeifLoader::LoadHdrWithIccProfile()
-{
-    CheckPanic( m_nclx, "No nclx color profile found" );
-
-    auto bmp = LoadYCbCr( true );
-    if( !bmp ) return nullptr;
-    ConvertYCbCrToRGB( bmp );
-
-    auto corrected = std::make_unique<BitmapHdr>( m_width, m_height );
-    cmsDoTransform( m_transform, bmp->Data(), corrected->Data(), m_width * m_height );
-
-    ApplyTransfer( corrected );
-    return corrected;
-}
-
-std::unique_ptr<BitmapHdr> HeifLoader::LoadYCbCr( bool hdr )
-{
-    if( !SetupDecode( hdr ) ) return nullptr;
-
     const auto div = m_bppDiv;
     const auto gap = m_stride - m_width;
 

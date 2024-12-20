@@ -12,6 +12,7 @@
 #include "util/Panic.hpp"
 #include "util/Simd.hpp"
 #include "util/TaskDispatch.hpp"
+#include "util/Tonemapper.hpp"
 
 #ifdef __SSE4_1__
 #  include <x86intrin.h>
@@ -235,8 +236,38 @@ std::unique_ptr<Bitmap> HeifLoader::Load()
     }
     else
     {
-        std::unique_ptr<BitmapHdr> hdr = LoadHdr();
-        return hdr->Tonemap();
+        if( m_td )
+        {
+            if( !SetupDecode( true ) ) return nullptr;
+
+            auto bmp = std::make_unique<Bitmap>( m_width, m_height );
+            auto out = bmp->Data();
+
+            auto tmp = LoadYCbCr();
+            auto ptr = tmp->Data();
+
+            size_t sz = m_width * m_height;
+            while( sz > 0 )
+            {
+                const auto chunk = std::min( sz, size_t( 16 * 1024 ) );
+                m_td->Queue( [this, ptr, out, chunk] {
+                    ConvertYCbCrToRGB( ptr, chunk );
+                    if( m_transform ) cmsDoTransform( m_transform, ptr, ptr, chunk );
+                    ApplyTransfer( ptr, chunk );
+                    ToneMap::PbrNeutral( (uint32_t*)out, ptr, chunk );
+                } );
+                ptr += chunk * 4;
+                out += chunk * 4;
+                sz -= chunk;
+            }
+            m_td->Sync();
+            return bmp;
+        }
+        else
+        {
+            std::unique_ptr<BitmapHdr> hdr = LoadHdr();
+            return hdr->Tonemap();
+        }
     }
 }
 

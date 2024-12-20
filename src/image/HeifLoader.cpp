@@ -246,16 +246,11 @@ std::unique_ptr<BitmapHdr> HeifLoader::LoadHdr()
     if( !SetupDecode( true ) ) return nullptr;
 
     auto bmp = LoadYCbCr();
+
     ConvertYCbCrToRGB( bmp );
-
-    if( m_transform )
-    {
-        auto corrected = std::make_unique<BitmapHdr>( m_width, m_height );
-        cmsDoTransform( m_transform, bmp->Data(), corrected->Data(), m_width * m_height );
-        std::swap( bmp, corrected );
-    }
-
+    if( m_transform ) cmsDoTransform( m_transform, bmp->Data(), bmp->Data(), m_width * m_height );
     ApplyTransfer( bmp );
+
     return bmp;
 }
 

@@ -132,47 +132,19 @@ void LinearizePq512( float* ptr, int sz )
 
 void LinearizePq( float* ptr, int sz, TaskDispatch* td )
 {
-    if( td )
-    {
-        while( sz > 0 )
-        {
-            auto chunk = std::min<int>( sz, 16 * 1024 );
-            td->Queue( [ptr, chunk] () mutable {
 #  ifdef __AVX512F__
-                LinearizePq512( ptr, chunk );
-                if( (chunk & 3) == 0 ) return;
-                ptr += ( chunk & ~3 ) * 4;
-                chunk &= 3;
+    LinearizePq512( ptr, sz );
+    if( (sz & 3) == 0 ) return;
+    ptr += ( sz & ~3 ) * 4;
+    sz &= 3;
 #  endif
 #  ifdef __AVX2__
-                LinearizePq256( ptr, chunk );
-                if( (chunk & 1) == 0 ) return;
-                ptr += ( chunk & ~1 ) * 4;
-                chunk &= 1;
+    LinearizePq256( ptr, sz );
+    if( (sz & 1) == 0 ) return;
+    ptr += ( sz & ~1 ) * 4;
+    sz &= 1;
 #  endif
-                LinearizePq128( ptr, chunk );
-            } );
-            ptr += chunk * 4;
-            sz -= chunk;
-        }
-        td->Sync();
-    }
-    else
-    {
-#  ifdef __AVX512F__
-        LinearizePq512( ptr, sz );
-        if( (sz & 3) == 0 ) return;
-        ptr += ( sz & ~3 ) * 4;
-        sz &= 3;
-#  endif
-#  ifdef __AVX2__
-        LinearizePq256( ptr, sz );
-        if( (sz & 1) == 0 ) return;
-        ptr += ( sz & ~1 ) * 4;
-        sz &= 1;
-#  endif
-        LinearizePq128( ptr, sz );
-    }
+    LinearizePq128( ptr, sz );
 }
 #else
 void LinearizePq( float* ptr, int sz )
@@ -347,27 +319,7 @@ std::unique_ptr<Bitmap> HeifLoader::LoadWithIccProfile()
     auto transform = cmsCreateTransform( profileIn, TYPE_RGBA_FLT, profileOut, TYPE_RGBA_8, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA );
 
     auto bmp = std::make_unique<Bitmap>( m_width, m_height );
-    if( m_td )
-    {
-        auto src = tmp->Data();
-        auto dst = bmp->Data();
-        auto sz = m_width * m_height;
-        while( sz > 0 )
-        {
-            auto chunk = std::min<size_t>( sz, 16 * 1024 );
-            m_td->Queue( [src, dst, chunk, transform] {
-                cmsDoTransform( transform, src, dst, chunk );
-            } );
-            src += chunk * 4;
-            dst += chunk * 4;
-            sz -= chunk;
-        }
-        m_td->Sync();
-    }
-    else
-    {
-        cmsDoTransform( transform, tmp->Data(), bmp->Data(), m_width * m_height );
-    }
+    cmsDoTransform( transform, tmp->Data(), bmp->Data(), m_width * m_height );
 
     cmsDeleteTransform( transform );
     cmsCloseProfile( profileOut );
@@ -401,27 +353,7 @@ std::unique_ptr<BitmapHdr> HeifLoader::LoadHdrNoProfile()
         auto transform = cmsCreateTransform( profileIn, TYPE_RGBA_FLT, profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA );
 
         auto corrected = std::make_unique<BitmapHdr>( m_width, m_height );
-        if( m_td )
-        {
-            auto src = bmp->Data();
-            auto dst = corrected->Data();
-            auto sz = m_width * m_height;
-            while( sz > 0 )
-            {
-                auto chunk = std::min<size_t>( sz, 16 * 1024 );
-                m_td->Queue( [src, dst, chunk, transform] {
-                    cmsDoTransform( transform, src, dst, chunk );
-                } );
-                src += chunk * 4;
-                dst += chunk * 4;
-                sz -= chunk;
-            }
-            m_td->Sync();
-        }
-        else
-        {
-            cmsDoTransform( transform, bmp->Data(), corrected->Data(), m_width * m_height );
-        }
+        cmsDoTransform( transform, bmp->Data(), corrected->Data(), m_width * m_height );
         std::swap( bmp, corrected );
 
         cmsDeleteTransform( transform );
@@ -450,27 +382,7 @@ std::unique_ptr<BitmapHdr> HeifLoader::LoadHdrWithIccProfile()
     auto transform = cmsCreateTransform( profileIn, TYPE_RGBA_FLT, profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA );
 
     auto corrected = std::make_unique<BitmapHdr>( m_width, m_height );
-    if( m_td )
-    {
-        auto src = bmp->Data();
-        auto dst = corrected->Data();
-        auto sz = m_width * m_height;
-        while( sz > 0 )
-        {
-            auto chunk = std::min<size_t>( sz, 16 * 1024 );
-            m_td->Queue( [src, dst, chunk, transform] {
-                cmsDoTransform( transform, src, dst, chunk );
-            } );
-            src += chunk * 4;
-            dst += chunk * 4;
-            sz -= chunk;
-        }
-        m_td->Sync();
-    }
-    else
-    {
-        cmsDoTransform( transform, bmp->Data(), corrected->Data(), m_width * m_height );
-    }
+    cmsDoTransform( transform, bmp->Data(), corrected->Data(), m_width * m_height );
 
     cmsDeleteTransform( transform );
     cmsCloseProfile( profileOut );

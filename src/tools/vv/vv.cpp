@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <libbase64.h>
 #include <format>
 #include <getopt.h>
@@ -21,6 +22,7 @@
 #include "util/Logs.hpp"
 #include "util/Panic.hpp"
 #include "util/TaskDispatch.hpp"
+#include "util/Tonemapper.hpp"
 #include "util/VectorImage.hpp"
 
 namespace {
@@ -437,7 +439,22 @@ int main( int argc, char** argv )
             else if( loader->IsHdr() )
             {
                 auto hdr = loader->LoadHdr();
-                bitmap = hdr->Tonemap();
+                bitmap = std::make_unique<Bitmap>( hdr->Width(), hdr->Height() );
+
+                auto src = hdr->Data();
+                auto dst = bitmap->Data();
+                size_t sz = hdr->Width() * hdr->Height();
+                while( sz > 0 )
+                {
+                    const auto chunk = std::min( sz, size_t( 16 * 1024 ) );
+                    td.Queue( [src, dst, chunk] {
+                        ToneMap::PbrNeutral( (uint32_t*)dst, src, chunk );
+                    } );
+                    src += chunk * 4;
+                    dst += chunk * 4;
+                    sz -= chunk;
+                }
+                td.Sync();
             }
             else
             {

@@ -308,6 +308,36 @@ bool HeifLoader::SetupDecode()
 
     if( bppY > 8 ) m_stride /= 2;
 
+    m_matrix = Conversion::BT601;
+    if( m_nclx )
+    {
+        switch( m_nclx->matrix_coefficients )
+        {
+        case heif_matrix_coefficients_RGB_GBR:
+            m_matrix = Conversion::GBR;
+            mclog( LogLevel::Info, "HEIF: Matrix coefficients GBR" );
+            break;
+        case heif_matrix_coefficients_ITU_R_BT_709_5:
+            m_matrix = Conversion::BT709;
+            mclog( LogLevel::Info, "HEIF: Matrix coefficients BT.709" );
+            break;
+        case heif_matrix_coefficients_unspecified:      // see https://github.com/AOMediaCodec/libavif/wiki/CICP
+        case heif_matrix_coefficients_ITU_R_BT_470_6_System_B_G:
+        case heif_matrix_coefficients_ITU_R_BT_601_6:
+            m_matrix = Conversion::BT601;
+            mclog( LogLevel::Info, "HEIF: Matrix coefficients BT.601" );
+            break;
+        case heif_matrix_coefficients_ITU_R_BT_2020_2_non_constant_luminance:
+        case heif_matrix_coefficients_ITU_R_BT_2020_2_constant_luminance:
+            m_matrix = Conversion::BT2020;
+            mclog( LogLevel::Info, "HEIF: Matrix coefficients BT.2020" );
+            break;
+        default:
+            mclog( LogLevel::Error, "HEIF: Matrix coefficients %d not implemented, defaulting to BT.601", m_nclx->matrix_coefficients );
+            break;
+        }
+    }
+
     return true;
 }
 
@@ -571,45 +601,7 @@ std::unique_ptr<BitmapHdr> HeifLoader::LoadYCbCr()
 
 void HeifLoader::ConvertYCbCrToRGB( const std::unique_ptr<BitmapHdr>& bmp )
 {
-    enum class Conversion
-    {
-        GBR,
-        BT601,
-        BT709,
-        BT2020
-    };
-
-    auto cs = Conversion::BT601;
-    if( m_nclx )
-    {
-        switch( m_nclx->matrix_coefficients )
-        {
-        case heif_matrix_coefficients_RGB_GBR:
-            cs = Conversion::GBR;
-            mclog( LogLevel::Info, "HEIF: Matrix coefficients GBR" );
-            break;
-        case heif_matrix_coefficients_ITU_R_BT_709_5:
-            cs = Conversion::BT709;
-            mclog( LogLevel::Info, "HEIF: Matrix coefficients BT.709" );
-            break;
-        case heif_matrix_coefficients_unspecified:      // see https://github.com/AOMediaCodec/libavif/wiki/CICP
-        case heif_matrix_coefficients_ITU_R_BT_470_6_System_B_G:
-        case heif_matrix_coefficients_ITU_R_BT_601_6:
-            cs = Conversion::BT601;
-            mclog( LogLevel::Info, "HEIF: Matrix coefficients BT.601" );
-            break;
-        case heif_matrix_coefficients_ITU_R_BT_2020_2_non_constant_luminance:
-        case heif_matrix_coefficients_ITU_R_BT_2020_2_constant_luminance:
-            cs = Conversion::BT2020;
-            mclog( LogLevel::Info, "HEIF: Matrix coefficients BT.2020" );
-            break;
-        default:
-            mclog( LogLevel::Error, "HEIF: Matrix coefficients %d not implemented, defaulting to BT.601", m_nclx->matrix_coefficients );
-            break;
-        }
-    }
-
-    if( cs == Conversion::GBR )
+    if( m_matrix == Conversion::GBR )
     {
         auto ptr = bmp->Data();
         auto sz = bmp->Width() * bmp->Height();
@@ -630,7 +622,7 @@ void HeifLoader::ConvertYCbCrToRGB( const std::unique_ptr<BitmapHdr>& bmp )
     else
     {
         float a, b, c, d;
-        switch( cs )
+        switch( m_matrix )
         {
         case Conversion::BT601:
             a = 1.402f;

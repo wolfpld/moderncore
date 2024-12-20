@@ -17,6 +17,14 @@ struct heif_color_profile_nclx;
 
 class HeifLoader : public ImageLoader
 {
+    enum class Conversion
+    {
+        GBR,
+        BT601,
+        BT709,
+        BT2020
+    };
+
 public:
     explicit HeifLoader( std::shared_ptr<FileWrapper> file, TaskDispatch* td );
     ~HeifLoader() override;
@@ -56,6 +64,8 @@ private:
     int m_width, m_height;
     int m_stride, m_bpp;
     float m_bppDiv;
+
+    Conversion m_matrix;
 
     size_t m_iccSize;
     char* m_iccData;

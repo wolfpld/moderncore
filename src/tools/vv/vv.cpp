@@ -436,7 +436,7 @@ int main( int argc, char** argv )
             {
                 anim = loader->LoadAnim();
             }
-            else if( loader->IsHdr() )
+            else if( loader->IsHdr() && loader->PreferHdr() )
             {
                 auto hdr = loader->LoadHdr();
                 bitmap = std::make_unique<Bitmap>( hdr->Width(), hdr->Height() );

@@ -22,6 +22,7 @@ public:
     [[nodiscard]] virtual bool IsValid() const = 0;
     [[nodiscard]] virtual bool IsAnimated() { return false; }
     [[nodiscard]] virtual bool IsHdr() { return false; }
+    [[nodiscard]] virtual bool PreferHdr() { return false; }
 
     [[nodiscard]] virtual std::unique_ptr<Bitmap> Load() = 0;
     [[nodiscard]] virtual std::unique_ptr<BitmapAnim> LoadAnim();

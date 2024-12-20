@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cmath>
 
+#include "Simd.hpp"
 #include "Tonemapper.hpp"
 
 namespace ToneMap
@@ -13,6 +14,7 @@ struct HdrColor
     float r;
     float g;
     float b;
+    float a;
 };
 
 HdrColor PbrNeutral( const HdrColor& hdr )
@@ -52,6 +54,32 @@ float LinearToSrgb( float x )
 
 void PbrNeutral( uint32_t* dst, float* src, size_t sz )
 {
+#ifdef __SSE4_1__
+    do
+    {
+        const auto color = PbrNeutral( { src[0], src[1], src[2] } );
+
+        __m128 s0 = _mm_loadu_ps( src );
+        __m128 v0 = _mm_loadu_ps( &color.r );
+        __m128 v1 = _mm_cmple_ps( v0, _mm_set1_ps( 0.0031308f ) );
+        __m128 v2 = _mm_mul_ps( v0, _mm_set1_ps( 12.92f ) );
+        __m128 v3 = _mm_pow_ps( v0, _mm_set1_ps( 1.0f / 2.4f ) );
+        __m128 v4 = _mm_mul_ps( v3, _mm_set1_ps( 1.055f ) );
+        __m128 v5 = _mm_sub_ps( v4, _mm_set1_ps( 0.055f ) );
+        __m128 v6 = _mm_blendv_ps( v5, v2, v1 );
+        __m128 v7 = _mm_blend_ps( v6, s0, 0x8 );
+        __m128 v8 = _mm_min_ps( v7, _mm_set1_ps( 1.0f ) );
+        __m128 v9 = _mm_max_ps( v8, _mm_set1_ps( 0.0f ) );
+        __m128 v10 = _mm_mul_ps( v9, _mm_set1_ps( 255.0f ) );
+        __m128i v11 = _mm_cvtps_epi32( v10 );
+        __m128i v12 = _mm_packus_epi32( v11, v11 );
+        __m128i v13 = _mm_packus_epi16( v12, v12 );
+        *dst++ = _mm_cvtsi128_si32( v13 );
+
+        src += 4;
+    }
+    while( --sz );
+#else
     do
     {
         const auto color = PbrNeutral( { src[0], src[1], src[2] } );
@@ -69,6 +97,7 @@ void PbrNeutral( uint32_t* dst, float* src, size_t sz )
         src += 4;
     }
     while( --sz );
+#endif
 }
 
 }

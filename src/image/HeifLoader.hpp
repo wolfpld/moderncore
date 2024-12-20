@@ -45,8 +45,8 @@ private:
     [[nodiscard]] std::unique_ptr<Bitmap> LoadNoProfile();
     [[nodiscard]] std::unique_ptr<BitmapHdr> LoadYCbCr();
 
-    void ConvertYCbCrToRGB( const std::unique_ptr<BitmapHdr>& bmp );
-    void ApplyTransfer( const std::unique_ptr<BitmapHdr>& bmp );
+    void ConvertYCbCrToRGB( float* ptr, size_t sz );
+    void ApplyTransfer( float* ptr, size_t sz );
 
     bool m_valid;
     std::unique_ptr<FileBuffer> m_buf;

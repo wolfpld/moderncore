@@ -225,7 +225,7 @@ std::unique_ptr<Bitmap> HeifLoader::Load()
         {
             if( !SetupDecode( false ) ) return nullptr;
             auto tmp = LoadYCbCr();
-            ConvertYCbCrToRGB( tmp );
+            ConvertYCbCrToRGB( tmp->Data(), m_width * m_height );
 
             auto bmp = std::make_unique<Bitmap>( m_width, m_height );
             cmsDoTransform( m_transform, tmp->Data(), bmp->Data(), m_width * m_height );
@@ -247,9 +247,9 @@ std::unique_ptr<BitmapHdr> HeifLoader::LoadHdr()
 
     auto bmp = LoadYCbCr();
 
-    ConvertYCbCrToRGB( bmp );
+    ConvertYCbCrToRGB( bmp->Data(), m_width * m_height );
     if( m_transform ) cmsDoTransform( m_transform, bmp->Data(), bmp->Data(), m_width * m_height );
-    ApplyTransfer( bmp );
+    ApplyTransfer( bmp->Data(), m_width * m_height );
 
     return bmp;
 }
@@ -568,12 +568,10 @@ std::unique_ptr<BitmapHdr> HeifLoader::LoadYCbCr()
     return bmp;
 }
 
-void HeifLoader::ConvertYCbCrToRGB( const std::unique_ptr<BitmapHdr>& bmp )
+void HeifLoader::ConvertYCbCrToRGB( float* ptr, size_t sz )
 {
     if( m_matrix == Conversion::GBR )
     {
-        auto ptr = bmp->Data();
-        auto sz = bmp->Width() * bmp->Height();
         do
         {
             const auto g = ptr[0];
@@ -616,8 +614,6 @@ void HeifLoader::ConvertYCbCrToRGB( const std::unique_ptr<BitmapHdr>& bmp )
             break;
         }
 
-        auto ptr = bmp->Data();
-        auto sz = bmp->Width() * bmp->Height();
         do
         {
             const auto Y = ptr[0];
@@ -638,12 +634,9 @@ void HeifLoader::ConvertYCbCrToRGB( const std::unique_ptr<BitmapHdr>& bmp )
     }
 }
 
-void HeifLoader::ApplyTransfer( const std::unique_ptr<BitmapHdr>& bmp )
+void HeifLoader::ApplyTransfer( float* ptr, size_t sz )
 {
     CheckPanic( m_nclx, "No nclx color profile found" );
-
-    auto ptr = bmp->Data();
-    auto sz = bmp->Width() * bmp->Height();
 
     switch( m_nclx->transfer_characteristics )
     {

@@ -166,6 +166,7 @@ HeifLoader::HeifLoader( std::shared_ptr<FileWrapper> file, TaskDispatch* td )
     , m_valid( false )
     , m_ctx( nullptr )
     , m_handle( nullptr )
+    , m_image( nullptr )
     , m_nclx( nullptr )
     , m_iccData( nullptr )
     , m_td( td )
@@ -182,6 +183,7 @@ HeifLoader::HeifLoader( std::shared_ptr<FileWrapper> file, TaskDispatch* td )
 HeifLoader::~HeifLoader()
 {
     if( m_iccData ) delete[] m_iccData;
+    if( m_image ) heif_image_release( m_image );
     if( m_handle ) heif_image_handle_release( m_handle );
     if( m_ctx ) heif_context_free( m_ctx );
 }
@@ -270,6 +272,41 @@ bool HeifLoader::Open()
 
     m_width = heif_image_handle_get_width( m_handle );
     m_height = heif_image_handle_get_height( m_handle );
+
+    return true;
+}
+
+bool HeifLoader::SetupDecode()
+{
+    auto err = heif_decode_image( m_handle, &m_image, heif_colorspace_YCbCr, heif_chroma_444, nullptr );
+    if( err.code != heif_error_Ok ) return false;
+
+    if( !m_nclx )
+    {
+        auto err = heif_image_get_nclx_color_profile( m_image, &m_nclx );
+        if( err.code == heif_error_Color_profile_does_not_exist ) mclog( LogLevel::Info, "HEIF: No image-level nclx color profile found" );
+    }
+
+    int strideY, strideCb, strideCr, strideA;
+    m_planeY  = heif_image_get_plane_readonly( m_image, heif_channel_Y, &strideY );
+    m_planeCb = heif_image_get_plane_readonly( m_image, heif_channel_Cb, &strideCb );
+    m_planeCr = heif_image_get_plane_readonly( m_image, heif_channel_Cr, &strideCr );
+    m_planeA  = heif_image_get_plane_readonly( m_image, heif_channel_Alpha, &strideA );
+    CheckPanic( strideY == strideCb && strideY == strideCr, "Decoded output is not 444" );
+    m_stride = strideY;
+
+    if( !m_planeY || !m_planeCb || !m_planeCr ) return false;
+
+    const auto bppY = heif_image_get_bits_per_pixel_range( m_image, heif_channel_Y );
+    const auto bppCb = heif_image_get_bits_per_pixel_range( m_image, heif_channel_Cb );
+    const auto bppCr = heif_image_get_bits_per_pixel_range( m_image, heif_channel_Cr );
+    CheckPanic( bppY == bppCb && bppY == bppCr, "Decoded output has mixed bit width" );
+
+    m_bpp = bppY;
+    m_bppDiv = 1.f / ( ( 1 << bppY ) - 1 );
+    mclog( LogLevel::Info, "HEIF: %d bpp", bppY );
+
+    if( bppY > 8 ) m_stride /= 2;
 
     return true;
 }
@@ -395,52 +432,26 @@ std::unique_ptr<BitmapHdr> HeifLoader::LoadHdrWithIccProfile()
 
 std::unique_ptr<BitmapHdr> HeifLoader::LoadYCbCr()
 {
-    heif_image* img;
-    auto err = heif_decode_image( m_handle, &img, heif_colorspace_YCbCr, heif_chroma_444, nullptr );
-    if( err.code != heif_error_Ok ) return nullptr;
+    if( !SetupDecode() ) return nullptr;
 
-    if( !m_nclx )
-    {
-        auto err = heif_image_get_nclx_color_profile( img, &m_nclx );
-        if( err.code == heif_error_Color_profile_does_not_exist ) mclog( LogLevel::Info, "HEIF: No image-level nclx color profile found" );
-    }
+    const auto div = m_bppDiv;
+    const auto gap = m_stride - m_width;
 
-    int strideY, strideCb, strideCr, strideA;
-    auto srcY = heif_image_get_plane_readonly( img, heif_channel_Y, &strideY );
-    auto srcCb = heif_image_get_plane_readonly( img, heif_channel_Cb, &strideCb );
-    auto srcCr = heif_image_get_plane_readonly( img, heif_channel_Cr, &strideCr );
-    auto srcA = heif_image_get_plane_readonly( img, heif_channel_Alpha, &strideA );
-    CheckPanic( strideY == strideCb && strideY == strideCr, "Decoded output is not 444" );
-
-    if( !srcY || !srcCb || !srcCr )
-    {
-        heif_image_release( img );
-        return nullptr;
-    }
-
-    const auto bppY = heif_image_get_bits_per_pixel_range( img, heif_channel_Y );
-    const auto bppCb = heif_image_get_bits_per_pixel_range( img, heif_channel_Cb );
-    const auto bppCr = heif_image_get_bits_per_pixel_range( img, heif_channel_Cr );
-    CheckPanic( bppY == bppCb && bppY == bppCr, "Decoded output has mixed bit width" );
-
-    const float div = 1.f / ( ( 1 << bppY ) - 1 );
-    mclog( LogLevel::Info, "HEIF: %d bpp", bppY );
+    auto srcY = m_planeY;
+    auto srcCb = m_planeCb;
+    auto srcCr = m_planeCr;
+    auto srcA = m_planeA;
 
     auto bmp = std::make_unique<BitmapHdr>( m_width, m_height );
     auto dst = bmp->Data();
-    if( srcA )
+    if( m_planeA )
     {
-        if( bppY > 8 )
+        if( m_bpp > 8 )
         {
             auto srcY16 = (uint16_t*)srcY;
             auto srcCb16 = (uint16_t*)srcCb;
             auto srcCr16 = (uint16_t*)srcCr;
             auto srcA16 = (uint16_t*)srcA;
-
-            strideY /= 2;
-            strideCb /= 2;
-            strideCr /= 2;
-            strideA /= 2;
 
             for( int i=0; i<m_height; i++ )
             {
@@ -457,10 +468,10 @@ std::unique_ptr<BitmapHdr> HeifLoader::LoadYCbCr()
                     *dst++ = a;
                 }
 
-                srcY16 += strideY - m_width;
-                srcCb16 += strideCb - m_width;
-                srcCr16 += strideCr - m_width;
-                srcA16 += strideA - m_width;
+                srcY16 += gap;
+                srcCb16 += gap;
+                srcCr16 += gap;
+                srcA16 += gap;
             }
         }
         else
@@ -480,24 +491,20 @@ std::unique_ptr<BitmapHdr> HeifLoader::LoadYCbCr()
                     *dst++ = a;
                 }
 
-                srcY += strideY - m_width;
-                srcCb += strideCb - m_width;
-                srcCr += strideCr - m_width;
-                srcA += strideA - m_width;
+                srcY += gap;
+                srcCb += gap;
+                srcCr += gap;
+                srcA += gap;
             }
         }
     }
     else
     {
-        if( bppY > 8 )
+        if( m_bpp > 8 )
         {
             auto srcY16 = (uint16_t*)srcY;
             auto srcCb16 = (uint16_t*)srcCb;
             auto srcCr16 = (uint16_t*)srcCr;
-
-            strideY /= 2;
-            strideCb /= 2;
-            strideCr /= 2;
 
             for( int i=0; i<m_height; i++ )
             {
@@ -513,9 +520,9 @@ std::unique_ptr<BitmapHdr> HeifLoader::LoadYCbCr()
                     *dst++ = 1.f;
                 }
 
-                srcY16 += strideY - m_width;
-                srcCb16 += strideCb - m_width;
-                srcCr16 += strideCr - m_width;
+                srcY16 += gap;
+                srcCb16 += gap;
+                srcCr16 += gap;
             }
         }
         else
@@ -534,9 +541,9 @@ std::unique_ptr<BitmapHdr> HeifLoader::LoadYCbCr()
                     *dst++ = 1.f;
                 }
 
-                srcY += strideY - m_width;
-                srcCb += strideCb - m_width;
-                srcCr += strideCr - m_width;
+                srcY += gap;
+                srcCb += gap;
+                srcCr += gap;
             }
         }
     }

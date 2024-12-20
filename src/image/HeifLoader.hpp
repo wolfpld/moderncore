@@ -11,6 +11,7 @@ class FileBuffer;
 class TaskDispatch;
 
 struct heif_context;
+struct heif_image;
 struct heif_image_handle;
 struct heif_color_profile_nclx;
 
@@ -31,6 +32,8 @@ public:
 private:
     bool Open();
 
+    bool SetupDecode();
+
     [[nodiscard]] std::unique_ptr<Bitmap> LoadNoProfile();
     [[nodiscard]] std::unique_ptr<Bitmap> LoadWithIccProfile();
 
@@ -47,12 +50,20 @@ private:
 
     heif_context* m_ctx;
     heif_image_handle* m_handle;
+    heif_image* m_image;
     heif_color_profile_nclx* m_nclx;
 
     int m_width, m_height;
+    int m_stride, m_bpp;
+    float m_bppDiv;
 
     size_t m_iccSize;
     char* m_iccData;
+
+    const uint8_t* m_planeY;
+    const uint8_t* m_planeCb;
+    const uint8_t* m_planeCr;
+    const uint8_t* m_planeA;
 
     TaskDispatch* m_td;
 };

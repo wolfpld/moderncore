@@ -169,6 +169,9 @@ HeifLoader::HeifLoader( std::shared_ptr<FileWrapper> file, TaskDispatch* td )
     , m_image( nullptr )
     , m_nclx( nullptr )
     , m_iccData( nullptr )
+    , m_profileIn( nullptr )
+    , m_profileOut( nullptr )
+    , m_transform( nullptr )
     , m_td( td )
 {
     fseek( *m_file, 0, SEEK_SET );
@@ -182,6 +185,9 @@ HeifLoader::HeifLoader( std::shared_ptr<FileWrapper> file, TaskDispatch* td )
 
 HeifLoader::~HeifLoader()
 {
+    if( m_transform ) cmsDeleteTransform( m_transform );
+    if( m_profileOut ) cmsCloseProfile( m_profileOut );
+    if( m_profileIn ) cmsCloseProfile( m_profileIn );
     if( m_iccData ) delete[] m_iccData;
     if( m_image ) heif_image_release( m_image );
     if( m_handle ) heif_image_handle_release( m_handle );
@@ -276,7 +282,7 @@ bool HeifLoader::Open()
     return true;
 }
 
-bool HeifLoader::SetupDecode()
+bool HeifLoader::SetupDecode( bool hdr )
 {
     auto err = heif_decode_image( m_handle, &m_image, heif_colorspace_YCbCr, heif_chroma_444, nullptr );
     if( err.code != heif_error_Ok ) return false;
@@ -338,6 +344,49 @@ bool HeifLoader::SetupDecode()
         }
     }
 
+    if( m_iccData )
+    {
+        m_profileIn = cmsOpenProfileFromMem( m_iccData, m_iccSize );
+        int outType;
+        if( hdr )
+        {
+            cmsToneCurve* linear = cmsBuildGamma( nullptr, 1 );
+            cmsToneCurve* linear3[3] = { linear, linear, linear };
+            m_profileOut = cmsCreateRGBProfile( &white709, &primaries709, linear3 );
+            outType = TYPE_RGBA_FLT;
+            cmsFreeToneCurve( linear );
+        }
+        else
+        {
+            m_profileOut = cmsCreate_sRGBProfile();
+            outType = TYPE_RGBA_8;
+        }
+        m_transform = cmsCreateTransform( m_profileIn, TYPE_RGBA_FLT, m_profileOut, outType, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA );
+    }
+    else
+    {
+        CheckPanic( m_nclx, "No color profile code path should be taken." );
+        CheckPanic( hdr, "No color profile code path should be taken." );
+
+        if( m_nclx->color_primaries != heif_color_primaries_ITU_R_BT_709_5 )
+        {
+            cmsToneCurve* linear = cmsBuildGamma( nullptr, 1 );
+            cmsToneCurve* linear3[3] = { linear, linear, linear };
+
+            const cmsCIExyY white = { m_nclx->color_primary_white_x, m_nclx->color_primary_white_y, 1 };
+            const cmsCIExyYTRIPLE primaries = {
+                { m_nclx->color_primary_red_x, m_nclx->color_primary_red_y, 1 },
+                { m_nclx->color_primary_green_x, m_nclx->color_primary_green_y, 1 },
+                { m_nclx->color_primary_blue_x, m_nclx->color_primary_blue_y, 1 }
+            };
+
+            m_profileIn = cmsCreateRGBProfile( &white, &primaries, linear3 );
+            m_profileOut = cmsCreateRGBProfile( &white709, &primaries709, linear3 );
+            cmsFreeToneCurve( linear );
+            m_transform = cmsCreateTransform( m_profileIn, TYPE_RGBA_FLT, m_profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA );
+        }
+    }
+
     return true;
 }
 
@@ -377,20 +426,12 @@ std::unique_ptr<Bitmap> HeifLoader::LoadNoProfile()
 
 std::unique_ptr<Bitmap> HeifLoader::LoadWithIccProfile()
 {
-    auto tmp = LoadYCbCr();
+    auto tmp = LoadYCbCr( false );
     if( !tmp ) return nullptr;
     ConvertYCbCrToRGB( tmp );
 
-    auto profileIn = cmsOpenProfileFromMem( m_iccData, m_iccSize );
-    auto profileOut = cmsCreate_sRGBProfile();
-    auto transform = cmsCreateTransform( profileIn, TYPE_RGBA_FLT, profileOut, TYPE_RGBA_8, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA );
-
     auto bmp = std::make_unique<Bitmap>( m_width, m_height );
-    cmsDoTransform( transform, tmp->Data(), bmp->Data(), m_width * m_height );
-
-    cmsDeleteTransform( transform );
-    cmsCloseProfile( profileOut );
-    cmsCloseProfile( profileIn );
+    cmsDoTransform( m_transform, tmp->Data(), bmp->Data(), m_width * m_height );
 
     return bmp;
 }
@@ -399,34 +440,15 @@ std::unique_ptr<BitmapHdr> HeifLoader::LoadHdrNoProfile()
 {
     CheckPanic( m_nclx, "No nclx color profile found" );
 
-    auto bmp = LoadYCbCr();
+    auto bmp = LoadYCbCr( true );
     if( !bmp ) return nullptr;
     ConvertYCbCrToRGB( bmp );
 
-    if( m_nclx->color_primaries != heif_color_primaries_ITU_R_BT_709_5 )
+    if( m_transform )
     {
-        cmsToneCurve* linear = cmsBuildGamma( nullptr, 1 );
-        cmsToneCurve* linear3[3] = { linear, linear, linear };
-
-        const cmsCIExyY white = { m_nclx->color_primary_white_x, m_nclx->color_primary_white_y, 1 };
-        const cmsCIExyYTRIPLE primaries = {
-            { m_nclx->color_primary_red_x, m_nclx->color_primary_red_y, 1 },
-            { m_nclx->color_primary_green_x, m_nclx->color_primary_green_y, 1 },
-            { m_nclx->color_primary_blue_x, m_nclx->color_primary_blue_y, 1 }
-        };
-
-        auto profileIn = cmsCreateRGBProfile( &white, &primaries, linear3 );
-        auto profileOut = cmsCreateRGBProfile( &white709, &primaries709, linear3 );
-        auto transform = cmsCreateTransform( profileIn, TYPE_RGBA_FLT, profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA );
-
         auto corrected = std::make_unique<BitmapHdr>( m_width, m_height );
-        cmsDoTransform( transform, bmp->Data(), corrected->Data(), m_width * m_height );
+        cmsDoTransform( m_transform, bmp->Data(), corrected->Data(), m_width * m_height );
         std::swap( bmp, corrected );
-
-        cmsDeleteTransform( transform );
-        cmsCloseProfile( profileOut );
-        cmsCloseProfile( profileIn );
-        cmsFreeToneCurve( linear );
     }
 
     ApplyTransfer( bmp );
@@ -437,32 +459,20 @@ std::unique_ptr<BitmapHdr> HeifLoader::LoadHdrWithIccProfile()
 {
     CheckPanic( m_nclx, "No nclx color profile found" );
 
-    auto bmp = LoadYCbCr();
+    auto bmp = LoadYCbCr( true );
     if( !bmp ) return nullptr;
     ConvertYCbCrToRGB( bmp );
 
-    cmsToneCurve* linear = cmsBuildGamma( nullptr, 1 );
-    cmsToneCurve* linear3[3] = { linear, linear, linear };
-
-    auto profileIn = cmsOpenProfileFromMem( m_iccData, m_iccSize );
-    auto profileOut = cmsCreateRGBProfile( &white709, &primaries709, linear3 );
-    auto transform = cmsCreateTransform( profileIn, TYPE_RGBA_FLT, profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA );
-
     auto corrected = std::make_unique<BitmapHdr>( m_width, m_height );
-    cmsDoTransform( transform, bmp->Data(), corrected->Data(), m_width * m_height );
+    cmsDoTransform( m_transform, bmp->Data(), corrected->Data(), m_width * m_height );
 
-    cmsDeleteTransform( transform );
-    cmsCloseProfile( profileOut );
-    cmsCloseProfile( profileIn );
-    cmsFreeToneCurve( linear );
-
-    ApplyTransfer( bmp );
+    ApplyTransfer( corrected );
     return corrected;
 }
 
-std::unique_ptr<BitmapHdr> HeifLoader::LoadYCbCr()
+std::unique_ptr<BitmapHdr> HeifLoader::LoadYCbCr( bool hdr )
 {
-    if( !SetupDecode() ) return nullptr;
+    if( !SetupDecode( hdr ) ) return nullptr;
 
     const auto div = m_bppDiv;
     const auto gap = m_stride - m_width;

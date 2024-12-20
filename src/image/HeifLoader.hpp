@@ -40,7 +40,7 @@ public:
 private:
     bool Open();
 
-    bool SetupDecode();
+    bool SetupDecode( bool hdr );
 
     [[nodiscard]] std::unique_ptr<Bitmap> LoadNoProfile();
     [[nodiscard]] std::unique_ptr<Bitmap> LoadWithIccProfile();
@@ -48,7 +48,7 @@ private:
     [[nodiscard]] std::unique_ptr<BitmapHdr> LoadHdrNoProfile();
     [[nodiscard]] std::unique_ptr<BitmapHdr> LoadHdrWithIccProfile();
 
-    [[nodiscard]] std::unique_ptr<BitmapHdr> LoadYCbCr();
+    [[nodiscard]] std::unique_ptr<BitmapHdr> LoadYCbCr( bool hdr);
 
     void ConvertYCbCrToRGB( const std::unique_ptr<BitmapHdr>& bmp );
     void ApplyTransfer( const std::unique_ptr<BitmapHdr>& bmp );
@@ -74,6 +74,10 @@ private:
     const uint8_t* m_planeCb;
     const uint8_t* m_planeCr;
     const uint8_t* m_planeA;
+
+    void* m_profileIn;
+    void* m_profileOut;
+    void* m_transform;
 
     TaskDispatch* m_td;
 };

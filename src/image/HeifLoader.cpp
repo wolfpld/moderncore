@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "HeifLoader.hpp"
+#include "util/Alloca.h"
 #include "util/Bitmap.hpp"
 #include "util/BitmapHdr.hpp"
 #include "util/FileBuffer.hpp"
@@ -238,25 +239,24 @@ std::unique_ptr<Bitmap> HeifLoader::Load()
             if( !SetupDecode( true ) ) return nullptr;
 
             auto bmp = std::make_unique<Bitmap>( m_width, m_height );
-            auto out = bmp->Data();
+            auto out = (uint32_t*)bmp->Data();
 
-            auto tmp = std::make_unique<BitmapHdr>( m_width, m_height );
-            auto ptr = tmp->Data();
-            LoadYCbCr( ptr, m_width * m_height, 0 );
-
+            size_t offset = 0;
             size_t sz = m_width * m_height;
             while( sz > 0 )
             {
                 const auto chunk = std::min( sz, size_t( 16 * 1024 ) );
-                m_td->Queue( [this, ptr, out, chunk] {
+                m_td->Queue( [this, out, chunk, offset] {
+                    auto ptr = (float*)alloca( chunk * 4 * sizeof( float ) );
+                    LoadYCbCr( ptr, chunk, offset );
                     ConvertYCbCrToRGB( ptr, chunk );
                     if( m_transform ) cmsDoTransform( m_transform, ptr, ptr, chunk );
                     ApplyTransfer( ptr, chunk );
-                    ToneMap::PbrNeutral( (uint32_t*)out, ptr, chunk );
+                    ToneMap::PbrNeutral( out, ptr, chunk );
                 } );
-                ptr += chunk * 4;
-                out += chunk * 4;
+                out += chunk;
                 sz -= chunk;
+                offset += chunk;
             }
             m_td->Sync();
             return bmp;
@@ -275,26 +275,29 @@ std::unique_ptr<BitmapHdr> HeifLoader::LoadHdr()
     if( !SetupDecode( true ) ) return nullptr;
 
     auto bmp = std::make_unique<BitmapHdr>( m_width, m_height );
-    LoadYCbCr( bmp->Data(), m_width * m_height, 0 );
     if( m_td )
     {
         auto ptr = bmp->Data();
+        size_t offset = 0;
         size_t sz = m_width * m_height;
         while( sz > 0 )
         {
             const auto chunk = std::min( sz, size_t( 16 * 1024 ) );
-            m_td->Queue( [this, ptr, chunk] {
+            m_td->Queue( [this, ptr, chunk, offset] {
+                LoadYCbCr( ptr, chunk, offset );
                 ConvertYCbCrToRGB( ptr, chunk );
                 if( m_transform ) cmsDoTransform( m_transform, ptr, ptr, chunk );
                 ApplyTransfer( ptr, chunk );
             } );
             ptr += chunk * 4;
             sz -= chunk;
+            offset += chunk;
         }
         m_td->Sync();
     }
     else
     {
+        LoadYCbCr( bmp->Data(), m_width * m_height, 0 );
         ConvertYCbCrToRGB( bmp->Data(), m_width * m_height );
         if( m_transform ) cmsDoTransform( m_transform, bmp->Data(), bmp->Data(), m_width * m_height );
         ApplyTransfer( bmp->Data(), m_width * m_height );

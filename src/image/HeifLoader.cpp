@@ -221,7 +221,8 @@ std::unique_ptr<Bitmap> HeifLoader::Load()
         else
         {
             if( !SetupDecode( false ) ) return nullptr;
-            auto tmp = LoadYCbCr();
+            auto tmp = std::make_unique<BitmapHdr>( m_width, m_height );
+            LoadYCbCr( tmp->Data(), m_width * m_height, 0 );
             ConvertYCbCrToRGB( tmp->Data(), m_width * m_height );
 
             auto bmp = std::make_unique<Bitmap>( m_width, m_height );
@@ -239,8 +240,9 @@ std::unique_ptr<Bitmap> HeifLoader::Load()
             auto bmp = std::make_unique<Bitmap>( m_width, m_height );
             auto out = bmp->Data();
 
-            auto tmp = LoadYCbCr();
+            auto tmp = std::make_unique<BitmapHdr>( m_width, m_height );
             auto ptr = tmp->Data();
+            LoadYCbCr( ptr, m_width * m_height, 0 );
 
             size_t sz = m_width * m_height;
             while( sz > 0 )
@@ -272,7 +274,8 @@ std::unique_ptr<BitmapHdr> HeifLoader::LoadHdr()
     if( !m_buf && !Open() ) return nullptr;
     if( !SetupDecode( true ) ) return nullptr;
 
-    auto bmp = LoadYCbCr();
+    auto bmp = std::make_unique<BitmapHdr>( m_width, m_height );
+    LoadYCbCr( bmp->Data(), m_width * m_height, 0 );
     if( m_td )
     {
         auto ptr = bmp->Data();
@@ -477,119 +480,94 @@ std::unique_ptr<Bitmap> HeifLoader::LoadNoProfile()
     return bmp;
 }
 
-std::unique_ptr<BitmapHdr> HeifLoader::LoadYCbCr()
+template<typename T>
+static inline void ProcessYCbCrAlpha( float* ptr, const T* srcY, const T* srcCb, const T* srcCr, const T* srcA, size_t sz, size_t offset, size_t width, size_t stride, float div )
 {
-    const auto div = m_bppDiv;
-    const auto gap = m_stride - m_width;
+    const auto gap = stride - width;
 
-    auto srcY = m_planeY;
-    auto srcCb = m_planeCb;
-    auto srcCr = m_planeCr;
-    auto srcA = m_planeA;
+    const int py = offset / width;
+    int px = offset % width;
 
-    auto bmp = std::make_unique<BitmapHdr>( m_width, m_height );
-    auto dst = bmp->Data();
+    srcY += py * stride + px;
+    srcCb += py * stride + px;
+    srcCr += py * stride + px;
+    srcA += py * stride + px;
+
+    for(;;)
+    {
+        auto line = std::min( sz, size_t( width - px ) );
+        sz -= line;
+        while( line-- )
+        {
+            *ptr++ = float(*srcY++) * div;
+            *ptr++ = float(*srcCb++) * div - 0.5f;
+            *ptr++ = float(*srcCr++) * div - 0.5f;
+            *ptr++ = float(*srcA++) * div;
+        }
+        if( sz == 0 ) break;
+        px = 0;
+
+        srcY += gap;
+        srcCb += gap;
+        srcCr += gap;
+        srcA += gap;
+    }
+}
+
+template<typename T>
+static inline void ProcessYCbCr( float* ptr, const T* srcY, const T* srcCb, const T* srcCr, size_t sz, size_t offset, size_t width, size_t stride, float div )
+{
+    const auto gap = stride - width;
+
+    const int py = offset / width;
+    int px = offset % width;
+
+    srcY += py * stride + px;
+    srcCb += py * stride + px;
+    srcCr += py * stride + px;
+
+    for(;;)
+    {
+        auto line = std::min( sz, size_t( width - px ) );
+        sz -= line;
+        while( line-- )
+        {
+            *ptr++ = float(*srcY++) * div;
+            *ptr++ = float(*srcCb++) * div - 0.5f;
+            *ptr++ = float(*srcCr++) * div - 0.5f;
+            *ptr++ = 1.f;
+        }
+        if( sz == 0 ) break;
+        px = 0;
+
+        srcY += gap;
+        srcCb += gap;
+        srcCr += gap;
+    }
+}
+
+void HeifLoader::LoadYCbCr( float* ptr, size_t sz, size_t offset )
+{
     if( m_planeA )
     {
         if( m_bpp > 8 )
         {
-            auto srcY16 = (uint16_t*)srcY;
-            auto srcCb16 = (uint16_t*)srcCb;
-            auto srcCr16 = (uint16_t*)srcCr;
-            auto srcA16 = (uint16_t*)srcA;
-
-            for( int i=0; i<m_height; i++ )
-            {
-                for( int j=0; j<m_width; j++ )
-                {
-                    const auto Y = float(*srcY16++) * div;
-                    const auto Cb = float(*srcCb16++) * div - 0.5f;
-                    const auto Cr = float(*srcCr16++) * div - 0.5f;
-                    const auto a = float(*srcA16++) * div;
-
-                    *dst++ = Y;
-                    *dst++ = Cb;
-                    *dst++ = Cr;
-                    *dst++ = a;
-                }
-
-                srcY16 += gap;
-                srcCb16 += gap;
-                srcCr16 += gap;
-                srcA16 += gap;
-            }
+            ProcessYCbCrAlpha( ptr, (uint16_t*)m_planeY, (uint16_t*)m_planeCb, (uint16_t*)m_planeCr, (uint16_t*)m_planeA, sz, offset, m_width, m_stride, m_bppDiv );
         }
         else
         {
-            for( int i=0; i<m_height; i++ )
-            {
-                for( int j=0; j<m_width; j++ )
-                {
-                    const auto Y = float(*srcY++) * div;
-                    const auto Cb = float(*srcCb++) * div - 0.5f;
-                    const auto Cr = float(*srcCr++) * div - 0.5f;
-                    const auto a = float(*srcA++) * div;
-
-                    *dst++ = Y;
-                    *dst++ = Cb;
-                    *dst++ = Cr;
-                    *dst++ = a;
-                }
-
-                srcY += gap;
-                srcCb += gap;
-                srcCr += gap;
-                srcA += gap;
-            }
+            ProcessYCbCrAlpha( ptr, m_planeY, m_planeCb, m_planeCr, m_planeA, sz, offset, m_width, m_stride, m_bppDiv );
         }
     }
     else
     {
         if( m_bpp > 8 )
         {
-            auto srcY16 = (uint16_t*)srcY;
-            auto srcCb16 = (uint16_t*)srcCb;
-            auto srcCr16 = (uint16_t*)srcCr;
-
-            for( int i=0; i<m_height; i++ )
-            {
-                for( int j=0; j<m_width; j++ )
-                {
-                    const auto Y = float(*srcY16++) * div;
-                    const auto Cb = float(*srcCb16++) * div - 0.5f;
-                    const auto Cr = float(*srcCr16++) * div - 0.5f;
-
-                    *dst++ = Y;
-                    *dst++ = Cb;
-                    *dst++ = Cr;
-                    *dst++ = 1.f;
-                }
-
-                srcY16 += gap;
-                srcCb16 += gap;
-                srcCr16 += gap;
-            }
+            ProcessYCbCr( ptr, (uint16_t*)m_planeY, (uint16_t*)m_planeCb, (uint16_t*)m_planeCr, sz, offset, m_width, m_stride, m_bppDiv );
         }
         else
         {
-            for( int i=0; i<m_height; i++ )
-            {
-                for( int j=0; j<m_width; j++ )
-                {
-                    const auto Y = float(*srcY++) * div;
-                    const auto Cb = float(*srcCb++) * div - 0.5f;
-                    const auto Cr = float(*srcCr++) * div - 0.5f;
-
-                    *dst++ = Y;
-                    *dst++ = Cb;
-                    *dst++ = Cr;
-                    *dst++ = 1.f;
-                }
-
-                srcY += gap;
-                srcCb += gap;
-                srcCr += gap;
-            }
+            ProcessYCbCr( ptr, m_planeY, m_planeCb, m_planeCr, sz, offset, m_width, m_stride, m_bppDiv );
         }
     }
 
@@ -601,8 +579,6 @@ std::unique_ptr<BitmapHdr> HeifLoader::LoadYCbCr()
         constexpr float scale = 255.f / 219.f;
         constexpr float offset = 16.f / 255.f;
 
-        auto ptr = bmp->Data();
-        auto sz = bmp->Width() * bmp->Height();
         do
         {
             ptr[0] = ( ptr[0] - offset ) * scale;
@@ -610,8 +586,6 @@ std::unique_ptr<BitmapHdr> HeifLoader::LoadYCbCr()
         }
         while( --sz );
     }
-
-    return bmp;
 }
 
 void HeifLoader::ConvertYCbCrToRGB( float* ptr, size_t sz )

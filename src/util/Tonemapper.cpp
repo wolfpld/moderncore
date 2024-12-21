@@ -54,7 +54,7 @@ float LinearToSrgb( float x )
 
 void PbrNeutral( uint32_t* dst, float* src, size_t sz )
 {
-#ifdef __SSE4_1__
+#if defined __SSE4_1__ && defined __FMA__
     do
     {
         const auto color = PbrNeutral( { src[0], src[1], src[2] } );

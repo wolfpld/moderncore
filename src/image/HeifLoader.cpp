@@ -128,7 +128,7 @@ void LinearizePq512( float* ptr, int sz )
 }
 #  endif
 
-void LinearizePq( float* ptr, int sz, TaskDispatch* td )
+void LinearizePq( float* ptr, int sz )
 {
 #  ifdef __AVX512F__
     LinearizePq512( ptr, sz );
@@ -665,7 +665,7 @@ void HeifLoader::ApplyTransfer( float* ptr, size_t sz )
     {
     case heif_transfer_characteristic_ITU_R_BT_2100_0_PQ:
         //mclog( LogLevel::Info, "HEIF: Applying PQ transfer function" );
-        LinearizePq( ptr, sz, m_td );
+        LinearizePq( ptr, sz );
         break;
     case heif_transfer_characteristic_ITU_R_BT_2100_0_HLG:
         //mclog( LogLevel::Info, "HEIF: Applying HLG transfer function" );

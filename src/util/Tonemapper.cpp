@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cfloat>
 #include <cmath>
 
 #include "Simd.hpp"
@@ -17,12 +18,14 @@ struct HdrColor
     float a;
 };
 
+constexpr auto startCompression = 0.8f - 0.04f;
+constexpr auto desaturation = 0.15f;
+constexpr auto d = 1.f - startCompression;
+constexpr auto d2 = d * d;
+constexpr auto dsc = d - startCompression;
+
 HdrColor PbrNeutral( const HdrColor& hdr )
 {
-    constexpr auto startCompression = 0.8f - 0.04f;
-    constexpr auto desaturation = 0.15f;
-    constexpr auto d = 1.f - startCompression;
-
     const auto x = std::min( { hdr.r, hdr.g, hdr.b } );
     const auto offset = x < 0.08f ? x - 6.25f * x * x : 0.04f;
 
@@ -31,7 +34,7 @@ HdrColor PbrNeutral( const HdrColor& hdr )
     const auto peak = std::max( { color.r, color.g, color.b } );
     if( peak < startCompression ) return color;
 
-    const auto newPeak = 1.f - d * d / ( peak + d - startCompression );
+    const auto newPeak = 1.f - d2 / ( peak + dsc );
     color.r *= newPeak / peak;
     color.g *= newPeak / peak;
     color.b *= newPeak / peak;
@@ -52,10 +55,55 @@ float LinearToSrgb( float x )
 }
 }
 
+#if defined __SSE4_1__ && defined __FMA__
+__m128 PbrNeutral128( __m128 hdr )
+{
+    __m128 vx0 = _mm_blend_ps( hdr, _mm_set1_ps( FLT_MAX ), 0x8 );
+    __m128 vx1 = _mm_shuffle_ps( hdr, hdr, _MM_SHUFFLE( 0, 1, 3, 2 ) );
+    __m128 vx2 = _mm_min_ps( hdr, vx1 );
+    __m128 vx3 = _mm_shuffle_ps( vx2, vx2, _MM_SHUFFLE( 2, 3, 0, 1 ) );
+    __m128 vx = _mm_min_ps( vx2, vx3 );
+
+    __m128 vo0 = _mm_cmplt_ps( vx, _mm_set1_ps( 0.08f ) );
+    __m128 vo1 = _mm_mul_ps( vx, vx );
+    __m128 vo2 = _mm_mul_ps( vo1, _mm_set1_ps( 6.25f ) );
+    __m128 vo3 = _mm_sub_ps( vx, vo2 ); // fma
+    __m128 vo = _mm_blendv_ps( _mm_set1_ps( 0.04f ), vo3, vo0 );
+
+    __m128 vc0 = _mm_sub_ps( hdr, vo );
+
+    __m128 vp0 = _mm_blend_ps( vc0, _mm_set1_ps( FLT_MIN ), 0x8 );
+    __m128 vp1 = _mm_shuffle_ps( vp0, vp0, _MM_SHUFFLE( 0, 1, 3, 2 ) );
+    __m128 vp2 = _mm_max_ps( vp0, vp1 );
+    __m128 vp3 = _mm_shuffle_ps( vp2, vp2, _MM_SHUFFLE( 2, 3, 0, 1 ) );
+    __m128 vp = _mm_max_ps( vp2, vp3 );
+
+    __m128 rc = _mm_cmplt_ps( vp, _mm_set1_ps( startCompression ) );
+
+    __m128 vnp1 = _mm_add_ps( vp, _mm_set1_ps( dsc ) );
+    __m128 vnp2 = _mm_div_ps( _mm_set1_ps( d2 ), vnp1 );
+    __m128 vnp = _mm_sub_ps( _mm_set1_ps( 1.0f ), vnp2 );
+    __m128 vnp3 = _mm_div_ps( vnp, vp );
+
+    __m128 vc1 = _mm_mul_ps( vc0, vnp3 );
+
+    __m128 vg0 = _mm_sub_ps( vp, vnp );
+    __m128 vg1 = _mm_fmadd_ps( _mm_set1_ps( desaturation ), vg0, _mm_set1_ps( 1.0f ) );
+    __m128 vg2 = _mm_div_ps( _mm_set1_ps( 1.0f ), vg1 );
+    __m128 vg = _mm_sub_ps( _mm_set1_ps( 1.0f ), vg2 );
+
+    __m128 vr0 = _mm_fnmadd_ps( vg, vc1, vc1 );
+    __m128 vr1 = _mm_fmadd_ps( vg, vnp, vr0 );
+    __m128 vr = _mm_blendv_ps( vr1, vc0, rc );
+
+    return vr;
+}
+#endif
+
 void PbrNeutral( uint32_t* dst, float* src, size_t sz )
 {
 #if defined __SSE4_1__ && defined __FMA__
-#if defined __AVX512F__
+#if defined __AVX512F__ && 0
     while( sz > 3 )
     {
         const HdrColor color[4] = {
@@ -90,7 +138,7 @@ void PbrNeutral( uint32_t* dst, float* src, size_t sz )
     }
 
 #endif
-#if defined __AVX2__
+#if defined __AVX2__ && 0
     while( sz > 1 )
     {
         const HdrColor color[2] = {
@@ -125,7 +173,7 @@ void PbrNeutral( uint32_t* dst, float* src, size_t sz )
         const auto color = PbrNeutral( { src[0], src[1], src[2] } );
 
         __m128 s0 = _mm_loadu_ps( src );
-        __m128 v0 = _mm_loadu_ps( &color.r );
+        __m128 v0 = PbrNeutral128( s0 );
         __m128 v1 = _mm_cmple_ps( v0, _mm_set1_ps( 0.0031308f ) );
         __m128 v2 = _mm_mul_ps( v0, _mm_set1_ps( 12.92f ) );
         __m128 v3 = _mm_pow_ps( v0, _mm_set1_ps( 1.0f / 2.4f ) );

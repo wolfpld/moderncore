@@ -7,7 +7,8 @@
             "request": "launch",
             "program": "${command:cmake.launchTargetPath}",
             "args": ["-ds"],
-            "cwd": "${config:cmake.buildDirectory}"
+            "cwd": "${config:cmake.buildDirectory}",
+            "initCommands": ["command script import ${workspaceRoot}/simd.py"]
         }
     ]
 }

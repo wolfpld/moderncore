@@ -143,21 +143,58 @@ __m256 PbrNeutral256( __m256 hdr )
 }
 #endif
 
+#if defined __AVX512F__
+__m512 PbrNeutral512( __m512 hdr )
+{
+    __m512 vx0 = _mm512_mask_blend_ps( 0x8888, hdr, _mm512_set1_ps( FLT_MAX ) );
+    __m512 vx1 = _mm512_shuffle_ps( hdr, hdr, _MM_SHUFFLE( 0, 1, 3, 2 ) );
+    __m512 vx2 = _mm512_min_ps( hdr, vx1 );
+    __m512 vx3 = _mm512_shuffle_ps( vx2, vx2, _MM_SHUFFLE( 2, 3, 0, 1 ) );
+    __m512 vx = _mm512_min_ps( vx2, vx3 );
+
+    __mmask16 vo0 = _mm512_cmp_ps_mask( vx, _mm512_set1_ps( 0.08f ), _CMP_LT_OQ );
+    __m512 vo1 = _mm512_mul_ps( vx, vx );
+    __m512 vo2 = _mm512_fnmadd_ps( vo1, _mm512_set1_ps( 6.25f ), vx );
+    __m512 vo = _mm512_mask_blend_ps( vo0, _mm512_set1_ps( 0.04f ), vo2 );
+
+    __m512 vc0 = _mm512_sub_ps( hdr, vo );
+
+    __m512 vp0 = _mm512_mask_blend_ps( 0x8888, vc0, _mm512_set1_ps( FLT_MIN ) );
+    __m512 vp1 = _mm512_shuffle_ps( vp0, vp0, _MM_SHUFFLE( 0, 1, 3, 2 ) );
+    __m512 vp2 = _mm512_max_ps( vp0, vp1 );
+    __m512 vp3 = _mm512_shuffle_ps( vp2, vp2, _MM_SHUFFLE( 2, 3, 0, 1 ) );
+    __m512 vp = _mm512_max_ps( vp2, vp3 );
+
+    __mmask16 rc = _mm512_cmp_ps_mask( vp, _mm512_set1_ps( startCompression ), _CMP_LT_OQ );
+
+    __m512 vnp1 = _mm512_add_ps( vp, _mm512_set1_ps( dsc ) );
+    __m512 vnp2 = _mm512_div_ps( _mm512_set1_ps( d2 ), vnp1 );
+    __m512 vnp = _mm512_sub_ps( _mm512_set1_ps( 1.0f ), vnp2 );
+    __m512 vnp3 = _mm512_div_ps( vnp, vp );
+
+    __m512 vc1 = _mm512_mul_ps( vc0, vnp3 );
+
+    __m512 vg0 = _mm512_sub_ps( vp, vnp );
+    __m512 vg1 = _mm512_fmadd_ps( _mm512_set1_ps( desaturation ), vg0, _mm512_set1_ps( 1.0f ) );
+    __m512 vg2 = _mm512_rcp14_ps( vg1 );
+    __m512 vg = _mm512_sub_ps( _mm512_set1_ps( 1.0f ), vg2 );
+
+    __m512 vr0 = _mm512_fnmadd_ps( vg, vc1, vc1 );
+    __m512 vr1 = _mm512_fmadd_ps( vg, vnp, vr0 );
+    __m512 vr = _mm512_mask_blend_ps( rc, vr1, vc0 );
+
+    return vr;
+}
+#endif
+
 void PbrNeutral( uint32_t* dst, float* src, size_t sz )
 {
 #if defined __SSE4_1__ && defined __FMA__
-#if defined __AVX512F__ && 0
+#if defined __AVX512F__
     while( sz > 3 )
     {
-        const HdrColor color[4] = {
-            PbrNeutral( { src[0], src[1], src[2] } ),
-            PbrNeutral( { src[4], src[5], src[6] } ),
-            PbrNeutral( { src[8], src[9], src[10] } ),
-            PbrNeutral( { src[12], src[13], src[14] } )
-        };
-
         __m512 s0 = _mm512_loadu_ps( src );
-        __m512 v0 = _mm512_loadu_ps( (const float*)color );
+        __m512 v0 = PbrNeutral512( s0 );
         __mmask16 v1 = _mm512_cmp_ps_mask( v0, _mm512_set1_ps( 0.0031308f ), _CMP_LE_OQ );
         __m512 v2 = _mm512_mul_ps( v0, _mm512_set1_ps( 12.92f ) );
         __m512 v3 = _mm512_pow_ps( v0, _mm512_set1_ps( 1.0f / 2.4f ) );

@@ -88,7 +88,7 @@ __m128 PbrNeutral128( __m128 hdr )
 
     __m128 vg0 = _mm_sub_ps( vp, vnp );
     __m128 vg1 = _mm_fmadd_ps( _mm_set1_ps( desaturation ), vg0, _mm_set1_ps( 1.0f ) );
-    __m128 vg2 = _mm_div_ps( _mm_set1_ps( 1.0f ), vg1 );
+    __m128 vg2 = _mm_rcp_ps( vg1 );
     __m128 vg = _mm_sub_ps( _mm_set1_ps( 1.0f ), vg2 );
 
     __m128 vr0 = _mm_fnmadd_ps( vg, vc1, vc1 );

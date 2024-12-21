@@ -123,7 +123,7 @@ void PbrNeutral( uint32_t* dst, float* src, size_t sz )
         __m512 v6 = _mm512_mask_blend_ps( v1, v5, v2 );
         __m512 v7 = _mm512_mask_blend_ps( 0x8888, v6, s0 );
         __m512 v8 = _mm512_min_ps( v7, _mm512_set1_ps( 1.0f ) );
-        __m512 v9 = _mm512_max_ps( v8, _mm512_set1_ps( 0.0f ) );
+        __m512 v9 = _mm512_max_ps( v8, _mm512_setzero_ps() );
         __m512 v10 = _mm512_mul_ps( v9, _mm512_set1_ps( 255.0f ) );
         __m512i v11 = _mm512_cvtps_epi32( v10 );
         __m512i v12 = _mm512_packus_epi32( v11, v11 );
@@ -156,7 +156,7 @@ void PbrNeutral( uint32_t* dst, float* src, size_t sz )
         __m256 v6 = _mm256_blendv_ps( v5, v2, v1 );
         __m256 v7 = _mm256_blend_ps( v6, s0, 0x88 );
         __m256 v8 = _mm256_min_ps( v7, _mm256_set1_ps( 1.0f ) );
-        __m256 v9 = _mm256_max_ps( v8, _mm256_set1_ps( 0.0f ) );
+        __m256 v9 = _mm256_max_ps( v8, _mm256_setzero_ps() );
         __m256 v10 = _mm256_mul_ps( v9, _mm256_set1_ps( 255.0f ) );
         __m256i v11 = _mm256_cvtps_epi32( v10 );
         __m256i v12 = _mm256_packus_epi32( v11, v11 );
@@ -182,7 +182,7 @@ void PbrNeutral( uint32_t* dst, float* src, size_t sz )
         __m128 v6 = _mm_blendv_ps( v5, v2, v1 );
         __m128 v7 = _mm_blend_ps( v6, s0, 0x8 );
         __m128 v8 = _mm_min_ps( v7, _mm_set1_ps( 1.0f ) );
-        __m128 v9 = _mm_max_ps( v8, _mm_set1_ps( 0.0f ) );
+        __m128 v9 = _mm_max_ps( v8, _mm_setzero_ps() );
         __m128 v10 = _mm_mul_ps( v9, _mm_set1_ps( 255.0f ) );
         __m128i v11 = _mm_cvtps_epi32( v10 );
         __m128i v12 = _mm_packus_epi32( v11, v11 );

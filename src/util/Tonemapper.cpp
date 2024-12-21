@@ -55,6 +55,41 @@ float LinearToSrgb( float x )
 void PbrNeutral( uint32_t* dst, float* src, size_t sz )
 {
 #if defined __SSE4_1__ && defined __FMA__
+#if defined __AVX512F__
+    while( sz > 3 )
+    {
+        const HdrColor color[4] = {
+            PbrNeutral( { src[0], src[1], src[2] } ),
+            PbrNeutral( { src[4], src[5], src[6] } ),
+            PbrNeutral( { src[8], src[9], src[10] } ),
+            PbrNeutral( { src[12], src[13], src[14] } )
+        };
+
+        __m512 s0 = _mm512_loadu_ps( src );
+        __m512 v0 = _mm512_loadu_ps( (const float*)color );
+        __mmask16 v1 = _mm512_cmp_ps_mask( v0, _mm512_set1_ps( 0.0031308f ), _CMP_LE_OQ );
+        __m512 v2 = _mm512_mul_ps( v0, _mm512_set1_ps( 12.92f ) );
+        __m512 v3 = _mm512_pow_ps( v0, _mm512_set1_ps( 1.0f / 2.4f ) );
+        __m512 v4 = _mm512_mul_ps( v3, _mm512_set1_ps( 1.055f ) );
+        __m512 v5 = _mm512_sub_ps( v4, _mm512_set1_ps( 0.055f ) );
+        __m512 v6 = _mm512_mask_blend_ps( v1, v5, v2 );
+        __m512 v7 = _mm512_mask_blend_ps( 0x8888, v6, s0 );
+        __m512 v8 = _mm512_min_ps( v7, _mm512_set1_ps( 1.0f ) );
+        __m512 v9 = _mm512_max_ps( v8, _mm512_set1_ps( 0.0f ) );
+        __m512 v10 = _mm512_mul_ps( v9, _mm512_set1_ps( 255.0f ) );
+        __m512i v11 = _mm512_cvtps_epi32( v10 );
+        __m512i v12 = _mm512_packus_epi32( v11, v11 );
+        __m512i v13 = _mm512_packus_epi16( v12, v12 );
+        *dst++ = _mm_cvtsi128_si32( _mm512_castsi512_si128( v13 ) );
+        *dst++ = _mm_cvtsi128_si32( _mm512_extracti32x4_epi32( v13, 1 ) );
+        *dst++ = _mm_cvtsi128_si32( _mm512_extracti32x4_epi32( v13, 2 ) );
+        *dst++ = _mm_cvtsi128_si32( _mm512_extracti32x4_epi32( v13, 3 ) );
+
+        src += 16;
+        sz -= 4;
+    }
+
+#endif
 #if defined __AVX2__
     while( sz > 1 )
     {

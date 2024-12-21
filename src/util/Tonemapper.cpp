@@ -99,6 +99,50 @@ __m128 PbrNeutral128( __m128 hdr )
 }
 #endif
 
+#if defined __AVX2__
+__m256 PbrNeutral256( __m256 hdr )
+{
+    __m256 vx0 = _mm256_blend_ps( hdr, _mm256_set1_ps( FLT_MAX ), 0x88 );
+    __m256 vx1 = _mm256_shuffle_ps( hdr, hdr, _MM_SHUFFLE( 0, 1, 3, 2 ) );
+    __m256 vx2 = _mm256_min_ps( hdr, vx1 );
+    __m256 vx3 = _mm256_shuffle_ps( vx2, vx2, _MM_SHUFFLE( 2, 3, 0, 1 ) );
+    __m256 vx = _mm256_min_ps( vx2, vx3 );
+
+    __m256 vo0 = _mm256_cmp_ps( vx, _mm256_set1_ps( 0.08f ), _CMP_LT_OQ );
+    __m256 vo1 = _mm256_mul_ps( vx, vx );
+    __m256 vo2 = _mm256_fnmadd_ps( vo1, _mm256_set1_ps( 6.25f ), vx );
+    __m256 vo = _mm256_blendv_ps( _mm256_set1_ps( 0.04f ), vo2, vo0 );
+
+    __m256 vc0 = _mm256_sub_ps( hdr, vo );
+
+    __m256 vp0 = _mm256_blend_ps( vc0, _mm256_set1_ps( FLT_MIN ), 0x88 );
+    __m256 vp1 = _mm256_shuffle_ps( vp0, vp0, _MM_SHUFFLE( 0, 1, 3, 2 ) );
+    __m256 vp2 = _mm256_max_ps( vp0, vp1 );
+    __m256 vp3 = _mm256_shuffle_ps( vp2, vp2, _MM_SHUFFLE( 2, 3, 0, 1 ) );
+    __m256 vp = _mm256_max_ps( vp2, vp3 );
+
+    __m256 rc = _mm256_cmp_ps( vp, _mm256_set1_ps( startCompression ), _CMP_LT_OQ );
+
+    __m256 vnp1 = _mm256_add_ps( vp, _mm256_set1_ps( dsc ) );
+    __m256 vnp2 = _mm256_div_ps( _mm256_set1_ps( d2 ), vnp1 );
+    __m256 vnp = _mm256_sub_ps( _mm256_set1_ps( 1.0f ), vnp2 );
+    __m256 vnp3 = _mm256_div_ps( vnp, vp );
+
+    __m256 vc1 = _mm256_mul_ps( vc0, vnp3 );
+
+    __m256 vg0 = _mm256_sub_ps( vp, vnp );
+    __m256 vg1 = _mm256_fmadd_ps( _mm256_set1_ps( desaturation ), vg0, _mm256_set1_ps( 1.0f ) );
+    __m256 vg2 = _mm256_rcp_ps( vg1 );
+    __m256 vg = _mm256_sub_ps( _mm256_set1_ps( 1.0f ), vg2 );
+
+    __m256 vr0 = _mm256_fnmadd_ps( vg, vc1, vc1 );
+    __m256 vr1 = _mm256_fmadd_ps( vg, vnp, vr0 );
+    __m256 vr = _mm256_blendv_ps( vr1, vc0, rc );
+
+    return vr;
+}
+#endif
+
 void PbrNeutral( uint32_t* dst, float* src, size_t sz )
 {
 #if defined __SSE4_1__ && defined __FMA__
@@ -137,16 +181,11 @@ void PbrNeutral( uint32_t* dst, float* src, size_t sz )
     }
 
 #endif
-#if defined __AVX2__ && 0
+#if defined __AVX2__
     while( sz > 1 )
     {
-        const HdrColor color[2] = {
-            PbrNeutral( { src[0], src[1], src[2] } ),
-            PbrNeutral( { src[4], src[5], src[6] } )
-        };
-
         __m256 s0 = _mm256_loadu_ps( src );
-        __m256 v0 = _mm256_loadu_ps( (const float*)color );
+        __m256 v0 = PbrNeutral256( s0 );
         __m256 v1 = _mm256_cmp_ps( v0, _mm256_set1_ps( 0.0031308f ), _CMP_LE_OQ );
         __m256 v2 = _mm256_mul_ps( v0, _mm256_set1_ps( 12.92f ) );
         __m256 v3 = _mm256_pow_ps( v0, _mm256_set1_ps( 1.0f / 2.4f ) );

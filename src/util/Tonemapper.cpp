@@ -66,9 +66,8 @@ __m128 PbrNeutral128( __m128 hdr )
 
     __m128 vo0 = _mm_cmplt_ps( vx, _mm_set1_ps( 0.08f ) );
     __m128 vo1 = _mm_mul_ps( vx, vx );
-    __m128 vo2 = _mm_mul_ps( vo1, _mm_set1_ps( 6.25f ) );
-    __m128 vo3 = _mm_sub_ps( vx, vo2 ); // fma
-    __m128 vo = _mm_blendv_ps( _mm_set1_ps( 0.04f ), vo3, vo0 );
+    __m128 vo2 = _mm_fnmadd_ps( vo1, _mm_set1_ps( 6.25f ), vx );
+    __m128 vo = _mm_blendv_ps( _mm_set1_ps( 0.04f ), vo2, vo0 );
 
     __m128 vc0 = _mm_sub_ps( hdr, vo );
 

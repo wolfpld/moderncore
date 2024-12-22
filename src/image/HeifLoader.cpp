@@ -222,12 +222,36 @@ std::unique_ptr<Bitmap> HeifLoader::Load()
         else
         {
             if( !SetupDecode( false ) ) return nullptr;
-            auto tmp = std::make_unique<BitmapHdr>( m_width, m_height );
-            LoadYCbCr( tmp->Data(), m_width * m_height, 0 );
-            ConvertYCbCrToRGB( tmp->Data(), m_width * m_height );
 
             auto bmp = std::make_unique<Bitmap>( m_width, m_height );
-            cmsDoTransform( m_transform, tmp->Data(), bmp->Data(), m_width * m_height );
+            auto out = (uint32_t*)bmp->Data();
+
+            if( m_td )
+            {
+                size_t offset = 0;
+                size_t sz = m_width * m_height;
+                while( sz > 0 )
+                {
+                    const auto chunk = std::min( sz, size_t( 16 * 1024 ) );
+                    m_td->Queue( [this, out, chunk, offset] {
+                        auto ptr = (float*)alloca( chunk * 4 * sizeof( float ) );
+                        LoadYCbCr( ptr, chunk, offset );
+                        ConvertYCbCrToRGB( ptr, chunk );
+                        cmsDoTransform( m_transform, ptr, out, chunk );
+                    } );
+                    out += chunk;
+                    sz -= chunk;
+                    offset += chunk;
+                }
+                m_td->Sync();
+            }
+            else
+            {
+                auto tmp = std::make_unique<BitmapHdr>( m_width, m_height );
+                LoadYCbCr( tmp->Data(), m_width * m_height, 0 );
+                ConvertYCbCrToRGB( tmp->Data(), m_width * m_height );
+                cmsDoTransform( m_transform, tmp->Data(), out, m_width * m_height );
+            }
 
             return bmp;
         }

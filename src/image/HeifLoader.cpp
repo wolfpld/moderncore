@@ -373,6 +373,12 @@ bool HeifLoader::SetupDecode( bool hdr )
 
     if( bppY > 8 ) m_stride /= 2;
 
+    // H.273, 8.3, VideoFullRangeFlag is false if not present
+    if( !m_nclx || !m_nclx->full_range_flag )
+    {
+        mclog( LogLevel::Info, "HEIF: Full range flag not set, converting to full range" );
+    }
+
     m_matrix = Conversion::BT601;
     if( m_nclx )
     {
@@ -399,6 +405,19 @@ bool HeifLoader::SetupDecode( bool hdr )
             break;
         default:
             mclog( LogLevel::Error, "HEIF: Matrix coefficients %d not implemented, defaulting to BT.601", m_nclx->matrix_coefficients );
+            break;
+        }
+
+        switch( m_nclx->transfer_characteristics )
+        {
+        case heif_transfer_characteristic_ITU_R_BT_2100_0_PQ:
+            mclog( LogLevel::Info, "HEIF: Applying PQ transfer function" );
+            break;
+        case heif_transfer_characteristic_ITU_R_BT_2100_0_HLG:
+            mclog( LogLevel::Info, "HEIF: Applying HLG transfer function" );
+            break;
+        default:
+            mclog( LogLevel::Error, "HEIF: Transfer characteristics %d not implemented", m_nclx->transfer_characteristics );
             break;
         }
     }
@@ -577,8 +596,6 @@ void HeifLoader::LoadYCbCr( float* ptr, size_t sz, size_t offset )
     // H.273, 8.3, VideoFullRangeFlag is false if not present
     if( !m_nclx || !m_nclx->full_range_flag )
     {
-        mclog( LogLevel::Info, "HEIF: Full range flag not set, converting to full range" );
-
         constexpr float scale = 255.f / 219.f;
         constexpr float offset = 16.f / 255.f;
 
@@ -664,11 +681,9 @@ void HeifLoader::ApplyTransfer( float* ptr, size_t sz )
     switch( m_nclx->transfer_characteristics )
     {
     case heif_transfer_characteristic_ITU_R_BT_2100_0_PQ:
-        //mclog( LogLevel::Info, "HEIF: Applying PQ transfer function" );
         LinearizePq( ptr, sz );
         break;
     case heif_transfer_characteristic_ITU_R_BT_2100_0_HLG:
-        //mclog( LogLevel::Info, "HEIF: Applying HLG transfer function" );
         do
         {
             const auto r = ptr[0];
@@ -686,7 +701,6 @@ void HeifLoader::ApplyTransfer( float* ptr, size_t sz )
         while( --sz );
         break;
     default:
-        mclog( LogLevel::Error, "HEIF: Transfer characteristics %d not implemented", m_nclx->transfer_characteristics );
         break;
     }
 }

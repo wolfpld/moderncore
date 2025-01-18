@@ -58,6 +58,34 @@ HdrColor AgxTransform( const HdrColor& hdr )
     return color;
 }
 
+HdrColor AgxLookGolden( const HdrColor& color )
+{
+    const auto luma = 0.2126f * color.r + 0.7152f * color.g + 0.0722f * color.b;
+    const auto vr = std::pow( std::max( 0.f, color.r ), 0.8f );
+    const auto vg = std::pow( std::max( 0.f, color.g * 0.9f ), 0.8f );
+    const auto vb = std::pow( std::max( 0.f, color.b * 0.5f ), 0.8f );
+    return HdrColor {
+        luma + 0.8f * ( vr - luma ),
+        luma + 0.8f * ( vg - luma ),
+        luma + 0.8f * ( vb - luma ),
+        color.a
+    };
+}
+
+HdrColor AgxLookPunchy( const HdrColor& color )
+{
+    const auto luma = 0.2126f * color.r + 0.7152f * color.g + 0.0722f * color.b;
+    const auto vr = std::pow( std::max( 0.f, color.r ), 1.35f );
+    const auto vg = std::pow( std::max( 0.f, color.g ), 1.35f );
+    const auto vb = std::pow( std::max( 0.f, color.b ), 1.35f );
+    return HdrColor {
+        luma + 1.4f * ( vr - luma ),
+        luma + 1.4f * ( vg - luma ),
+        luma + 1.4f * ( vb - luma ),
+        color.a
+    };
+}
+
 HdrColor AgxEotf( const HdrColor& color )
 {
     HdrColor val = {
@@ -80,6 +108,52 @@ void AgX( uint32_t* dst, float* src, size_t sz )
     do
     {
         auto color = AgxTransform( { src[0], src[1], src[2] } );
+        color = AgxEotf( color );
+
+        const auto r = LinearToSrgb( color.r );
+        const auto g = LinearToSrgb( color.g );
+        const auto b = LinearToSrgb( color.b );
+        const auto a = src[3];
+
+        *dst++ = (uint32_t( std::clamp( a, 0.0f, 1.0f ) * 255.0f ) << 24) |
+                 (uint32_t( std::clamp( b, 0.0f, 1.0f ) * 255.0f ) << 16) |
+                 (uint32_t( std::clamp( g, 0.0f, 1.0f ) * 255.0f ) << 8) |
+                  uint32_t( std::clamp( r, 0.0f, 1.0f ) * 255.0f );
+
+        src += 4;
+    }
+    while( --sz );
+}
+
+void AgXGolden( uint32_t* dst, float* src, size_t sz )
+{
+    do
+    {
+        auto color = AgxTransform( { src[0], src[1], src[2] } );
+        color = AgxLookGolden( color );
+        color = AgxEotf( color );
+
+        const auto r = LinearToSrgb( color.r );
+        const auto g = LinearToSrgb( color.g );
+        const auto b = LinearToSrgb( color.b );
+        const auto a = src[3];
+
+        *dst++ = (uint32_t( std::clamp( a, 0.0f, 1.0f ) * 255.0f ) << 24) |
+                 (uint32_t( std::clamp( b, 0.0f, 1.0f ) * 255.0f ) << 16) |
+                 (uint32_t( std::clamp( g, 0.0f, 1.0f ) * 255.0f ) << 8) |
+                  uint32_t( std::clamp( r, 0.0f, 1.0f ) * 255.0f );
+
+        src += 4;
+    }
+    while( --sz );
+}
+
+void AgXPunchy( uint32_t* dst, float* src, size_t sz )
+{
+    do
+    {
+        auto color = AgxTransform( { src[0], src[1], src[2] } );
+        color = AgxLookPunchy( color );
         color = AgxEotf( color );
 
         const auto r = LinearToSrgb( color.r );

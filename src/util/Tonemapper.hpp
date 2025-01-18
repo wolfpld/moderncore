@@ -9,6 +9,8 @@ namespace ToneMap
 enum class Operator
 {
     AgX,
+    AgXGolden,
+    AgXPunchy,
     PbrNeutral
 };
 
@@ -26,6 +28,8 @@ struct HdrColor
 float LinearToSrgb( float x );
 
 void AgX( uint32_t* dst, float* src, size_t sz );
+void AgXGolden( uint32_t* dst, float* src, size_t sz );
+void AgXPunchy( uint32_t* dst, float* src, size_t sz );
 void PbrNeutral( uint32_t* dst, float* src, size_t sz );
 
 }

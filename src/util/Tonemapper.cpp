@@ -13,6 +13,12 @@ void Process( Operator op, uint32_t* dst, float* src, size_t sz )
     case Operator::AgX:
         AgX( dst, src, sz );
         break;
+    case Operator::AgXGolden:
+        AgXGolden( dst, src, sz );
+        break;
+    case Operator::AgXPunchy:
+        AgXPunchy( dst, src, sz );
+        break;
     case Operator::PbrNeutral:
         PbrNeutral( dst, src, sz );
         break;

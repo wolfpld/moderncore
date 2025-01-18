@@ -43,6 +43,8 @@ void PrintHelp()
     printf( "\nTone mapping operators:\n" );
     printf( "  pbr (default)\n" );
     printf( "  agx\n" );
+    printf( "  agx-golden\n" );
+    printf( "  agx-punchy\n" );
 }
 
 enum class ScaleMode
@@ -419,6 +421,14 @@ int main( int argc, char** argv )
             else if( strcmp( optarg, "agx" ) == 0 )
             {
                 tonemap = ToneMap::Operator::AgX;
+            }
+            else if( strcmp( optarg, "agx-golden" ) == 0 )
+            {
+                tonemap = ToneMap::Operator::AgXGolden;
+            }
+            else if( strcmp( optarg, "agx-punchy" ) == 0 )
+            {
+                tonemap = ToneMap::Operator::AgXPunchy;
             }
             else
             {

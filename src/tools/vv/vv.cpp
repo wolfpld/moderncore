@@ -38,7 +38,11 @@ void PrintHelp()
     printf( "  -g, --checkerboard           Use checkerboard background\n" );
     printf( "  -A, --noanim                 Disable animation\n" );
     printf( "  -w, --write [file.png]       Write output to file\n" );
+    printf( "  -t, --tonemap [operator]     Choose HDR tone mapping operator\n" );
     printf( "  --help                       Print this help\n" );
+    printf( "\nTone mapping operators:\n" );
+    printf( "  pbr (default)\n" );
+    printf( "  agx\n" );
 }
 
 enum class ScaleMode
@@ -350,6 +354,7 @@ int main( int argc, char** argv )
         { "checkerboard", no_argument, nullptr, 'g' },
         { "noanim", no_argument, nullptr, 'A' },
         { "write", required_argument, nullptr, 'w' },
+        { "tonemap", required_argument, nullptr, 't' },
         { "help", no_argument, nullptr, OptHelp },
         {}
     };
@@ -370,7 +375,7 @@ int main( int argc, char** argv )
     ToneMap::Operator tonemap = ToneMap::Operator::PbrNeutral;
 
     int opt;
-    while( ( opt = getopt_long( argc, argv, "debsf6G:gAw:", longOptions, nullptr ) ) != -1 )
+    while( ( opt = getopt_long( argc, argv, "debsf6G:gAw:t:", longOptions, nullptr ) ) != -1 )
     {
         switch (opt)
         {
@@ -405,6 +410,21 @@ int main( int argc, char** argv )
         case 'w':
             writeFn = optarg;
             gfxMode = GfxMode::WriteFile;
+            break;
+        case 't':
+            if( strcmp( optarg, "pbr" ) == 0 )
+            {
+                tonemap = ToneMap::Operator::PbrNeutral;
+            }
+            else if( strcmp( optarg, "agx" ) == 0 )
+            {
+                tonemap = ToneMap::Operator::AgX;
+            }
+            else
+            {
+                mclog( LogLevel::Error, "Unknown tone mapping operator" );
+                return 1;
+            }
             break;
         default:
             printf( "\n" );

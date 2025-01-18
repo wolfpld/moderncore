@@ -1,6 +1,7 @@
-// Based on https://iolite-engine.com/blog_posts/minimal_agx_implementation
+// Based on https://github.com/bWFuanVzYWth/AgX/blob/main/agx.glsl
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 
 #include "Tonemapper.hpp"
@@ -8,54 +9,59 @@
 namespace ToneMap
 {
 
-float AgxDefaultContrast( float x )
+float AgxCurve( float x )
 {
-    const auto x2 = x * x;
-    const auto x4 = x2 * x2;
+    constexpr auto threshold = 0.6060606060606061f;
+    constexpr auto a_up = 69.86278913545539f;
+    constexpr auto a_down = 59.507875f;
+    constexpr auto b_up = 13.0f / 4.0f;
+    constexpr auto b_down = 3.0f;
+    constexpr auto c_up = -4.0f / 13.0f;
+    constexpr auto c_down = -1.0f / 3.0f;
 
-    return + 15.5f      * x4 * x2
-           - 40.14f     * x4 * x
-           + 31.96f     * x4
-           - 6.868f     * x2 * x
-           + 0.4298f    * x2
-           + 0.1191f    * x
-           - 0.00232f;
+    const float mask = x < threshold ? 0.f : 1.f;
+    const float a = a_up + (a_down - a_up) * mask;
+    const float b = b_up + (b_down - b_up) * mask;
+    const float c = c_up + (c_down - c_up) * mask;
+
+    return 0.5f + ( -2.f * threshold + 2.f * x ) * pow( 1.f + a * pow( fabs( x - threshold ), b ), c );
 }
 
 HdrColor AgxTransform( const HdrColor& hdr )
 {
-    constexpr auto min_ev = -12.47393f;
-    constexpr auto max_ev = 4.026069f;
+    constexpr auto min_ev = -12.473931188332413f;
+    constexpr auto max_ev = 4.026068811667588f;
+    constexpr auto range = max_ev - min_ev;
+    constexpr auto invrange = 1.f / range;
 
-    HdrColor color = {
-        0.842479062253094f * hdr.r + 0.0423282422610123f * hdr.g + 0.0423756549057051f * hdr.b,
-        0.0784335999999992f * hdr.r + 0.878468636469772f * hdr.g + 0.0784336f * hdr.b,
-        0.0792237451477643f * hdr.r + 0.0791661274605434f * hdr.g + 0.879142973793104f * hdr.b,
+    constexpr std::array agx_mat = {
+        0.8424010709504686f, 0.04240107095046854f, 0.04240107095046854f,
+        0.07843650156180276f, 0.8784365015618028f, 0.07843650156180276f,
+        0.0791624274877287f, 0.0791624274877287f, 0.8791624274877287f
+    };
+
+    const HdrColor c1 = {
+        agx_mat[0] * hdr.r + agx_mat[1] * hdr.g + agx_mat[2] * hdr.b,
+        agx_mat[3] * hdr.r + agx_mat[4] * hdr.g + agx_mat[5] * hdr.b,
+        agx_mat[6] * hdr.r + agx_mat[7] * hdr.g + agx_mat[8] * hdr.b,
         hdr.a
     };
 
-    color = {
-        color.r <= 0 ? min_ev : std::clamp( std::log2( color.r ), min_ev, max_ev ),
-        color.g <= 0 ? min_ev : std::clamp( std::log2( color.g ), min_ev, max_ev ),
-        color.b <= 0 ? min_ev : std::clamp( std::log2( color.b ), min_ev, max_ev ),
-        color.a
+    const HdrColor c2 = {
+        c1.r <= 0 ? 0.f : std::clamp( std::log2( c1.r ) * invrange - min_ev * invrange, 0.f, 1.f ),
+        c1.g <= 0 ? 0.f : std::clamp( std::log2( c1.g ) * invrange - min_ev * invrange, 0.f, 1.f ),
+        c1.b <= 0 ? 0.f : std::clamp( std::log2( c1.b ) * invrange - min_ev * invrange, 0.f, 1.f ),
+        c1.a
     };
 
-    color = {
-        ( color.r - min_ev ) / ( max_ev - min_ev ),
-        ( color.g - min_ev ) / ( max_ev - min_ev ),
-        ( color.b - min_ev ) / ( max_ev - min_ev ),
-        color.a
+    const HdrColor c3 = {
+        AgxCurve( c2.r ),
+        AgxCurve( c2.g ),
+        AgxCurve( c2.b ),
+        c2.a
     };
 
-    color = {
-        AgxDefaultContrast( color.r ),
-        AgxDefaultContrast( color.g ),
-        AgxDefaultContrast( color.b ),
-        color.a
-    };
-
-    return color;
+    return c3;
 }
 
 HdrColor AgxLookGolden( const HdrColor& color )
@@ -88,18 +94,24 @@ HdrColor AgxLookPunchy( const HdrColor& color )
 
 HdrColor AgxEotf( const HdrColor& color )
 {
-    HdrColor val = {
-        1.19687900512017f * color.r - 0.0528968517574562f * color.g - 0.0529716355144438f * color.b,
-        -0.0980208811401368f * color.r + 1.15190312990417f * color.g - 0.0980434501171241f * color.b,
-        -0.0990297440797205f * color.r - 0.0989611768448433f * color.g + 1.15107367264116f * color.b,
+    constexpr std::array agx_mat_inv = {
+        1.1969986613119143f, -0.053001338688085674f, -0.053001338688085674f,
+        -0.09804562695225345f, 1.1519543730477466f, -0.09804562695225345f,
+        -0.09895303435966087f, -0.09895303435966087f, 1.151046965640339f
+    };
+
+    const HdrColor out = {
+        agx_mat_inv[0] * color.r + agx_mat_inv[1] * color.g + agx_mat_inv[2] * color.b,
+        agx_mat_inv[3] * color.r + agx_mat_inv[4] * color.g + agx_mat_inv[5] * color.b,
+        agx_mat_inv[6] * color.r + agx_mat_inv[7] * color.g + agx_mat_inv[8] * color.b,
         color.a
     };
 
     return HdrColor {
-        std::pow( std::max( 0.f, val.r ), 2.2f ),
-        std::pow( std::max( 0.f, val.g ), 2.2f ),
-        std::pow( std::max( 0.f, val.b ), 2.2f ),
-        val.a
+        std::pow( std::max( 0.f, out.r ), 2.2f ),
+        std::pow( std::max( 0.f, out.g ), 2.2f ),
+        std::pow( std::max( 0.f, out.b ), 2.2f ),
+        out.a
     };
 }
 

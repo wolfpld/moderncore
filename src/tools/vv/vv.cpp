@@ -367,6 +367,7 @@ int main( int argc, char** argv )
     int bg = -2;
     bool disableAnimation = false;
     const char* writeFn = nullptr;
+    ToneMap::Operator tonemap = ToneMap::Operator::PbrNeutral;
 
     int opt;
     while( ( opt = getopt_long( argc, argv, "debsf6G:gAw:", longOptions, nullptr ) ) != -1 )
@@ -429,8 +430,8 @@ int main( int argc, char** argv )
     std::unique_ptr<BitmapAnim> anim;
     std::unique_ptr<VectorImage> vectorImage;
 
-    auto imageThread = std::thread( [&bitmap, &anim, &vectorImage, imageFile, disableAnimation, &td] {
-        auto loader = GetImageLoader( imageFile, &td );
+    auto imageThread = std::thread( [&bitmap, &anim, &vectorImage, imageFile, disableAnimation, &td, tonemap] {
+        auto loader = GetImageLoader( imageFile, tonemap, &td );
         if( loader )
         {
             if( !disableAnimation && loader->IsAnimated() )
@@ -448,8 +449,8 @@ int main( int argc, char** argv )
                 while( sz > 0 )
                 {
                     const auto chunk = std::min( sz, size_t( 16 * 1024 ) );
-                    td.Queue( [src, dst, chunk] {
-                        ToneMap::PbrNeutral( (uint32_t*)dst, src, chunk );
+                    td.Queue( [src, dst, chunk, tonemap] {
+                        ToneMap::Process( tonemap, (uint32_t*)dst, src, chunk );
                     } );
                     src += chunk * 4;
                     dst += chunk * 4;

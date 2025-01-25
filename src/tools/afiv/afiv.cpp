@@ -6,9 +6,12 @@
 #include "render/Texture.hpp"
 #include "util/ArgParser.hpp"
 #include "util/Bitmap.hpp"
+#include "util/BitmapHdr.hpp"
 #include "util/Callstack.hpp"
 #include "util/Logs.hpp"
 #include "util/Panic.hpp"
+#include "util/TaskDispatch.hpp"
+#include "util/Tonemapper.hpp"
 #include "util/VectorImage.hpp"
 #include "vulkan/VlkCommandBuffer.hpp"
 #include "vulkan/VlkDevice.hpp"
@@ -88,24 +91,54 @@ int main( int argc, char** argv )
 
     const char* imageFile = argv[optind];
 
+    const auto workerThreads = std::max( 1u, std::thread::hardware_concurrency() - 1 );
+    TaskDispatch td( workerThreads, "Worker" );
+
     auto vulkanThread = std::thread( [enableValidation] {
         g_vkInstance = std::make_unique<VlkInstance>( VlkInstanceType::Wayland, enableValidation );
     } );
-    auto imageThread = std::thread( [imageFile] {
-        g_bitmap = LoadImage( imageFile );
-        if( !g_bitmap )
+    auto imageThread = std::thread( [imageFile, &td] {
+        auto loader = GetImageLoader( imageFile, ToneMap::Operator::PbrNeutral, &td );
+        if( loader )
         {
-            auto vector = LoadVectorImage( imageFile );
-            if( vector )
+            if( loader->IsHdr() && loader->PreferHdr() )
             {
-                auto w = vector->Width();
-                auto h = vector->Height();
-                if( w < 0 || h < 0 )
+                auto hdr = loader->LoadHdr();
+                g_bitmap = std::make_unique<Bitmap>( hdr->Width(), hdr->Height() );
+
+                auto src = hdr->Data();
+                auto dst = g_bitmap->Data();
+                size_t sz = hdr->Width() * hdr->Height();
+                while( sz )
                 {
-                    w = 512;
-                    h = 512;
+                    const auto chunk = std::min( sz, size_t( 16 * 1024 ) );
+                    td.Queue( [src, dst, chunk] {
+                        ToneMap::Process( ToneMap::Operator::PbrNeutral, (uint32_t*)dst, src, chunk );
+                    } );
+                    src += chunk * 4;
+                    dst += chunk * 4;
+                    sz -= chunk;
                 }
-                g_bitmap = vector->Rasterize( w, h );
+                td.Sync();
+            }
+            else
+            {
+                g_bitmap = loader->Load();
+            }
+            if( !g_bitmap )
+            {
+                auto vector = LoadVectorImage( imageFile );
+                if( vector )
+                {
+                    auto w = vector->Width();
+                    auto h = vector->Height();
+                    if( w < 0 || h < 0 )
+                    {
+                        w = 512;
+                        h = 512;
+                    }
+                    g_bitmap = vector->Rasterize( w, h );
+                }
             }
         }
         CheckPanic( g_bitmap, "Failed to load image" );

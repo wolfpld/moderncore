@@ -157,8 +157,8 @@ int main( int argc, char** argv )
 
     g_waylandWindow = std::make_unique<WaylandWindow>( *g_waylandDisplay, *g_vkInstance );
     g_waylandWindow->SetListener( &listener, nullptr );
-    g_waylandWindow->SetTitle( "AFIV" );
-    g_waylandWindow->SetAppId( "afiv" );
+    g_waylandWindow->SetTitle( "IV" );
+    g_waylandWindow->SetAppId( "iv" );
     g_waylandWindow->Commit();
     g_waylandDisplay->Roundtrip();
 

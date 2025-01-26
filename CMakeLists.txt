@@ -352,15 +352,15 @@ target_include_directories(mcore PRIVATE
     ${WAYLAND_SERVER_INCLUDE_DIRS}
 )
 
-# afiv
+# iv
 
-set(AFIV_SRC
-    src/tools/afiv/afiv.cpp
+set(IV_SRC
+    src/tools/iv/iv.cpp
     src/render/Texture.cpp
 )
 
-add_executable(afiv ${AFIV_SRC})
-target_link_libraries(afiv PRIVATE
+add_executable(iv ${IV_SRC})
+target_link_libraries(iv PRIVATE
     mcoreutil
     mcoreimage
     mcorevulkan
@@ -394,7 +394,7 @@ target_link_libraries(vv PRIVATE
 set(CMAKE_INSTALL_PREFIX /)
 install(TARGETS
     mcore
-    afiv
+    iv
     vv
     mcoreutil
     mcoreimage

@@ -3,6 +3,7 @@
 #include <lcms2.h>
 #include <setjmp.h>
 #include <stdint.h>
+#include <string.h>
 
 #include "JpgLoader.hpp"
 #include "util/Bitmap.hpp"
@@ -90,6 +91,14 @@ std::unique_ptr<Bitmap> JpgLoader::Load()
         {
             cmsDoTransform( transform, bmp->Data(), bmp->Data(), bmp->Width() * bmp->Height() );
             cmsDeleteTransform( transform );
+
+            auto ptr = bmp->Data() + 3;
+            size_t sz = bmp->Width() * bmp->Height();
+            while( sz-- )
+            {
+                memset( ptr, 0xFF, 1 );
+                ptr += 4;
+            }
         }
 
         cmsCloseProfile( profileOut );

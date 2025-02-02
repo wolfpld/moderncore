@@ -51,7 +51,8 @@ std::unique_ptr<Bitmap> JpgLoader::Load()
     jpeg_stdio_src( &cinfo, *m_file );
     jpeg_save_markers( &cinfo, JPEG_APP0 + 2, 0xFFFF );
     jpeg_read_header( &cinfo, TRUE );
-    cinfo.out_color_space = JCS_EXT_RGBA;
+    const bool cmyk = cinfo.jpeg_color_space == JCS_CMYK || cinfo.jpeg_color_space == JCS_YCCK;
+    if( !cmyk ) cinfo.out_color_space = JCS_EXT_RGBA;
     jpeg_start_decompress( &cinfo );
 
     auto bmp = std::make_unique<Bitmap>( cinfo.output_width, cinfo.output_height );
@@ -66,7 +67,31 @@ std::unique_ptr<Bitmap> JpgLoader::Load()
         ptr += cinfo.output_width * 4;
     }
 
-    if( icc )
+    if( cmyk )
+    {
+        if( icc )
+        {
+            mclog( LogLevel::Info, "ICC profile size: %u", iccSz );
+
+            auto profileIn = cmsOpenProfileFromMem( icc, iccSz );
+            auto profileOut = cmsCreate_sRGBProfile();
+            auto transform = cmsCreateTransform( profileIn, TYPE_CMYK_8_REV, profileOut, TYPE_RGBA_8, INTENT_PERCEPTUAL, 0 );
+
+            if( transform )
+            {
+                cmsDoTransform( transform, bmp->Data(), bmp->Data(), bmp->Width() * bmp->Height() );
+                cmsDeleteTransform( transform );
+            }
+
+            cmsCloseProfile( profileOut );
+            cmsCloseProfile( profileIn );
+        }
+        else
+        {
+            mclog( LogLevel::Warning, "No ICC profile found in CMYK JPEG" );
+        }
+    }
+    else if( icc )
     {
         mclog( LogLevel::Info, "ICC profile size: %u", iccSz );
 

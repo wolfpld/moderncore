@@ -54,7 +54,7 @@ std::unique_ptr<Bitmap> JpgLoader::Load()
     jpeg_save_markers( &cinfo, JPEG_APP0 + 2, 0xFFFF );
     jpeg_read_header( &cinfo, TRUE );
     const bool cmyk = cinfo.jpeg_color_space == JCS_CMYK || cinfo.jpeg_color_space == JCS_YCCK;
-    if( !cmyk ) cinfo.out_color_space = JCS_EXT_RGBA;
+    if( !cmyk ) cinfo.out_color_space = JCS_EXT_RGBX;
     jpeg_start_decompress( &cinfo );
 
     auto bmp = std::make_unique<Bitmap>( cinfo.output_width, cinfo.output_height );
@@ -91,14 +91,6 @@ std::unique_ptr<Bitmap> JpgLoader::Load()
         {
             cmsDoTransform( transform, bmp->Data(), bmp->Data(), bmp->Width() * bmp->Height() );
             cmsDeleteTransform( transform );
-
-            auto ptr = bmp->Data() + 3;
-            size_t sz = bmp->Width() * bmp->Height();
-            while( sz-- )
-            {
-                memset( ptr, 0xFF, 1 );
-                ptr += 4;
-            }
         }
 
         cmsCloseProfile( profileOut );
@@ -125,5 +117,14 @@ std::unique_ptr<Bitmap> JpgLoader::Load()
     free( icc );
     jpeg_finish_decompress( &cinfo );
     jpeg_destroy_decompress( &cinfo );
+
+    ptr = bmp->Data() + 3;
+    size_t sz = bmp->Width() * bmp->Height();
+    while( sz-- )
+    {
+        memset( ptr, 0xFF, 1 );
+        ptr += 4;
+    }
+
     return bmp;
 }

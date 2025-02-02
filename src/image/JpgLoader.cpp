@@ -6,6 +6,7 @@
 
 #include "JpgLoader.hpp"
 #include "util/Bitmap.hpp"
+#include "util/Cmyk.hpp"
 #include "util/FileWrapper.hpp"
 #include "util/Panic.hpp"
 
@@ -69,27 +70,30 @@ std::unique_ptr<Bitmap> JpgLoader::Load()
 
     if( cmyk )
     {
+        cmsHPROFILE profileIn;
+
         if( icc )
         {
             mclog( LogLevel::Info, "ICC profile size: %u", iccSz );
-
-            auto profileIn = cmsOpenProfileFromMem( icc, iccSz );
-            auto profileOut = cmsCreate_sRGBProfile();
-            auto transform = cmsCreateTransform( profileIn, TYPE_CMYK_8_REV, profileOut, TYPE_RGBA_8, INTENT_PERCEPTUAL, 0 );
-
-            if( transform )
-            {
-                cmsDoTransform( transform, bmp->Data(), bmp->Data(), bmp->Width() * bmp->Height() );
-                cmsDeleteTransform( transform );
-            }
-
-            cmsCloseProfile( profileOut );
-            cmsCloseProfile( profileIn );
+            profileIn = cmsOpenProfileFromMem( icc, iccSz );
         }
         else
         {
-            mclog( LogLevel::Warning, "No ICC profile found in CMYK JPEG" );
+            mclog( LogLevel::Info, "No ICC profile found, using default" );
+            profileIn = cmsOpenProfileFromMem( CMYK::ProfileData(), CMYK::ProfileSize() );
         }
+
+        auto profileOut = cmsCreate_sRGBProfile();
+        auto transform = cmsCreateTransform( profileIn, TYPE_CMYK_8_REV, profileOut, TYPE_RGBA_8, INTENT_PERCEPTUAL, 0 );
+
+        if( transform )
+        {
+            cmsDoTransform( transform, bmp->Data(), bmp->Data(), bmp->Width() * bmp->Height() );
+            cmsDeleteTransform( transform );
+        }
+
+        cmsCloseProfile( profileOut );
+        cmsCloseProfile( profileIn );
     }
     else if( icc )
     {

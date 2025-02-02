@@ -3,7 +3,6 @@
 #include <lcms2.h>
 #include <setjmp.h>
 #include <stdint.h>
-#include <string.h>
 
 #include "JpgLoader.hpp"
 #include "util/Bitmap.hpp"
@@ -118,13 +117,6 @@ std::unique_ptr<Bitmap> JpgLoader::Load()
     jpeg_finish_decompress( &cinfo );
     jpeg_destroy_decompress( &cinfo );
 
-    ptr = bmp->Data() + 3;
-    size_t sz = bmp->Width() * bmp->Height();
-    while( sz-- )
-    {
-        memset( ptr, 0xFF, 1 );
-        ptr += 4;
-    }
-
+    bmp->SetAlpha( 0xFF );
     return bmp;
 }

@@ -86,6 +86,17 @@ void Bitmap::FlipVertical()
     }
 }
 
+void Bitmap::SetAlpha( uint8_t alpha )
+{
+    auto ptr = m_data + 3;
+    size_t sz = m_width * m_height;
+    while( sz-- )
+    {
+        memset( ptr, alpha, 1 );
+        ptr += 4;
+    }
+}
+
 void Bitmap::SavePng( const char* path ) const
 {
     FILE* f = fopen( path, "wb" );

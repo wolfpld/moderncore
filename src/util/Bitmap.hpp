@@ -16,6 +16,7 @@ public:
     void Resize( uint32_t width, uint32_t height );
     void Extend( uint32_t width, uint32_t height );
     void SetAlpha( uint8_t alpha );
+    void NormalizeOrientation();
 
     void FlipVertical();
     void FlipHorizontal();

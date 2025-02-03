@@ -252,6 +252,42 @@ void Bitmap::SetAlpha( uint8_t alpha )
     }
 }
 
+void Bitmap::NormalizeOrientation()
+{
+    if( m_orientation <= 1 ) return;
+
+    switch( m_orientation )
+    {
+    case 2:
+        FlipHorizontal();
+        break;
+    case 3:
+        Rotate180();
+        break;
+    case 4:
+        FlipVertical();
+        break;
+    case 5:
+        Rotate270();
+        FlipVertical();
+        break;
+    case 6:
+        Rotate90();
+        break;
+    case 7:
+        Rotate90();
+        FlipVertical();
+        break;
+    case 8:
+        Rotate270();
+        break;
+    default:
+        Panic( "Invalid orientation value!" );
+    }
+
+    m_orientation = 1;
+}
+
 void Bitmap::SavePng( const char* path ) const
 {
     FILE* f = fopen( path, "wb" );

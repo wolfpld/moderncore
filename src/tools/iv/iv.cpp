@@ -1,5 +1,6 @@
 #include <getopt.h>
 #include <memory>
+#include <string.h>
 #include <thread>
 
 #include "image/ImageLoader.hpp"
@@ -59,14 +60,17 @@ int main( int argc, char** argv )
     bool enableValidation = true;
 #endif
 
+    ToneMap::Operator tonemap = ToneMap::Operator::PbrNeutral;
+
     struct option longOptions[] = {
         { "debug", no_argument, nullptr, 'd' },
         { "external", no_argument, nullptr, 'e' },
         { "validation", required_argument, nullptr, 'V' },
+        { "tonemap", required_argument, nullptr, 't' },
     };
 
     int opt;
-    while( ( opt = getopt_long( argc, argv, "deV:", longOptions, nullptr ) ) != -1 )
+    while( ( opt = getopt_long( argc, argv, "deV:t:", longOptions, nullptr ) ) != -1 )
     {
         switch (opt)
         {
@@ -78,6 +82,29 @@ int main( int argc, char** argv )
             break;
         case 'V':
             enableValidation = ParseBoolean( optarg );
+            break;
+        case 't':
+            if( strcmp( optarg, "pbr" ) == 0 )
+            {
+                tonemap = ToneMap::Operator::PbrNeutral;
+            }
+            else if( strcmp( optarg, "agx" ) == 0 )
+            {
+                tonemap = ToneMap::Operator::AgX;
+            }
+            else if( strcmp( optarg, "agx-golden" ) == 0 )
+            {
+                tonemap = ToneMap::Operator::AgXGolden;
+            }
+            else if( strcmp( optarg, "agx-punchy" ) == 0 )
+            {
+                tonemap = ToneMap::Operator::AgXPunchy;
+            }
+            else
+            {
+                mclog( LogLevel::Error, "Unknown tone mapping operator" );
+                return 1;
+            }
             break;
         default:
             break;
@@ -97,8 +124,8 @@ int main( int argc, char** argv )
     auto vulkanThread = std::thread( [enableValidation] {
         g_vkInstance = std::make_unique<VlkInstance>( VlkInstanceType::Wayland, enableValidation );
     } );
-    auto imageThread = std::thread( [imageFile, &td] {
-        auto loader = GetImageLoader( imageFile, ToneMap::Operator::PbrNeutral, &td );
+    auto imageThread = std::thread( [imageFile, &td, tonemap] {
+        auto loader = GetImageLoader( imageFile, tonemap, &td );
         if( loader )
         {
             if( loader->IsHdr() && loader->PreferHdr() )
@@ -112,8 +139,8 @@ int main( int argc, char** argv )
                 while( sz )
                 {
                     const auto chunk = std::min( sz, size_t( 16 * 1024 ) );
-                    td.Queue( [src, dst, chunk] {
-                        ToneMap::Process( ToneMap::Operator::PbrNeutral, (uint32_t*)dst, src, chunk );
+                    td.Queue( [src, dst, chunk, tonemap] {
+                        ToneMap::Process( tonemap, (uint32_t*)dst, src, chunk );
                     } );
                     src += chunk * 4;
                     dst += chunk * 4;

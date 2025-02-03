@@ -109,6 +109,17 @@ void Bitmap::FlipHorizontal()
     }
 }
 
+void Bitmap::Rotate180()
+{
+    auto ptr1 = (uint32_t*)m_data;
+    auto ptr2 = (uint32_t*)m_data + m_width * m_height - 1;
+
+    for( uint32_t i=0; i<m_width * m_height / 2; i++ )
+    {
+        std::swap( *ptr1++, *ptr2-- );
+    }
+}
+
 void Bitmap::SetAlpha( uint8_t alpha )
 {
     auto ptr = m_data;

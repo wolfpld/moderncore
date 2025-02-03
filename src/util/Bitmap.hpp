@@ -19,6 +19,7 @@ public:
 
     void FlipVertical();
     void FlipHorizontal();
+    void Rotate180();
 
     [[nodiscard]] uint32_t Width() const { return m_width; }
     [[nodiscard]] uint32_t Height() const { return m_height; }

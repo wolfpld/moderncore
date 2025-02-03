@@ -140,6 +140,26 @@ void Bitmap::Rotate180()
     }
 }
 
+void Bitmap::Rotate270()
+{
+    auto tmp = new uint8_t[m_width * m_height * 4];
+
+    auto src = (uint32_t*)m_data;
+    auto dst = (uint32_t*)tmp;
+
+    for( uint32_t y=0; y<m_height; y++ )
+    {
+        for( uint32_t x=0; x<m_width; x++ )
+        {
+            dst[( m_width - x - 1 ) * m_height + y] = src[y * m_width + x];
+        }
+    }
+
+    delete[] m_data;
+    m_data = tmp;
+    std::swap( m_width, m_height );
+}
+
 void Bitmap::SetAlpha( uint8_t alpha )
 {
     auto ptr = m_data;

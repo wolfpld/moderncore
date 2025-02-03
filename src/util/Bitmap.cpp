@@ -81,7 +81,7 @@ void Bitmap::FlipVertical()
     auto ptr2 = m_data + ( m_height - 1 ) * m_width * 4;
     auto tmp = alloca( m_width * 4 );
 
-    for ( uint32_t y=0; y<m_height/2; y++ )
+    for( uint32_t y=0; y<m_height/2; y++ )
     {
         memcpy( tmp, ptr1, m_width * 4 );
         memcpy( ptr1, ptr2, m_width * 4 );

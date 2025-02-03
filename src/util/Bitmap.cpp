@@ -12,10 +12,11 @@
 #  include <x86intrin.h>
 #endif
 
-Bitmap::Bitmap( uint32_t width, uint32_t height )
+Bitmap::Bitmap( uint32_t width, uint32_t height, int orientation )
     : m_width( width )
     , m_height( height )
     , m_data( new uint8_t[width*height*4] )
+    , m_orientation( orientation )
 {
 }
 

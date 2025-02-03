@@ -5,7 +5,7 @@
 class Bitmap
 {
 public:
-    Bitmap( uint32_t width, uint32_t height );
+    Bitmap( uint32_t width, uint32_t height, int orientation = 0 );
     ~Bitmap();
 
     Bitmap( const Bitmap& ) = delete;
@@ -22,6 +22,7 @@ public:
     [[nodiscard]] uint32_t Height() const { return m_height; }
     [[nodiscard]] uint8_t* Data() { return m_data; }
     [[nodiscard]] const uint8_t* Data() const { return m_data; }
+    [[nodiscard]] int Orientation() const { return m_orientation; }
 
     void SavePng( const char* path ) const;
 
@@ -29,4 +30,6 @@ private:
     uint32_t m_width;
     uint32_t m_height;
     uint8_t* m_data;
+
+    int m_orientation;
 };

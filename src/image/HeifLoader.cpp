@@ -3,6 +3,7 @@
 #include <libheif/heif.h>
 #include <lcms2.h>
 #include <string.h>
+#include <vector>
 
 #include "HeifLoader.hpp"
 #include "util/Alloca.h"
@@ -165,6 +166,7 @@ HeifLoader::HeifLoader( std::shared_ptr<FileWrapper> file, ToneMap::Operator ton
     , m_tonemap( tonemap )
     , m_ctx( nullptr )
     , m_handle( nullptr )
+    , m_handleGainMap( nullptr )
     , m_image( nullptr )
     , m_nclx( nullptr )
     , m_iccData( nullptr )
@@ -189,6 +191,7 @@ HeifLoader::~HeifLoader()
     if( m_profileIn ) cmsCloseProfile( m_profileIn );
     if( m_iccData ) delete[] m_iccData;
     if( m_image ) heif_image_release( m_image );
+    if( m_handleGainMap ) heif_image_handle_release( m_handleGainMap );
     if( m_handle ) heif_image_handle_release( m_handle );
     if( m_ctx ) heif_context_free( m_ctx );
 }
@@ -362,6 +365,30 @@ bool HeifLoader::Open()
 
     m_width = heif_image_handle_get_width( m_handle );
     m_height = heif_image_handle_get_height( m_handle );
+
+    constexpr int filter = LIBHEIF_AUX_IMAGE_FILTER_OMIT_ALPHA | LIBHEIF_AUX_IMAGE_FILTER_OMIT_DEPTH;
+    const auto auxnum = heif_image_handle_get_number_of_auxiliary_images( m_handle, filter );
+    if( auxnum > 0 )
+    {
+        std::vector<heif_item_id> aux( auxnum );
+        heif_image_handle_get_list_of_auxiliary_image_IDs( m_handle, filter, aux.data(), auxnum );
+
+        for( auto item : aux )
+        {
+            heif_image_handle* auxHandle;
+            heif_image_handle_get_auxiliary_image_handle( m_handle, item, &auxHandle );
+            const char* type;
+            heif_image_handle_get_auxiliary_type( auxHandle, &type );
+            if( strcmp( type, "urn:com:apple:photo:2020:aux:hdrgainmap" ) == 0 )
+            {
+                mclog( LogLevel::Info, "HEIF: Found gain map %s", type );
+                heif_image_handle_release_auxiliary_type( auxHandle, &type );
+                break;
+            }
+            heif_image_handle_release_auxiliary_type( auxHandle, &type );
+            heif_image_handle_release( auxHandle );
+        }
+    }
 
     return true;
 }

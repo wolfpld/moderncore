@@ -54,6 +54,7 @@ private:
 
     heif_context* m_ctx;
     heif_image_handle* m_handle;
+    heif_image_handle* m_handleGainMap;
     heif_image* m_image;
     heif_color_profile_nclx* m_nclx;
 

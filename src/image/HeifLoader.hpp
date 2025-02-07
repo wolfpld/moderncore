@@ -38,9 +38,9 @@ public:
     [[nodiscard]] std::unique_ptr<BitmapHdr> LoadHdr() override;
 
 private:
-    bool Open();
+    [[nodiscard]] bool Open();
 
-    bool SetupDecode( bool hdr );
+    [[nodiscard]] bool SetupDecode( bool hdr );
 
     [[nodiscard]] std::unique_ptr<Bitmap> LoadNoProfile();
     void LoadYCbCr( float* ptr, size_t sz, size_t offset );

@@ -48,7 +48,7 @@ public:
     void SetTitle( const char* title );
     void Resize( uint32_t width, uint32_t height );
     void LockSize();
-    void Commit( bool render = false );
+    void Commit();
 
     VlkCommandBuffer& BeginFrame( bool imageTransfer = false );
     void EndFrame();

@@ -118,16 +118,8 @@ void WaylandWindow::LockSize()
     xdg_toplevel_set_max_size( m_xdgToplevel, extent.width, extent.height );
 }
 
-void WaylandWindow::Commit( bool render )
+void WaylandWindow::Commit()
 {
-    if( render )
-    {
-        CheckPanic( m_listener, "Listener not set" );
-        CheckPanic( m_vkDevice, "Vulkan device not set" );
-
-        Invoke( OnRender, this );
-    }
-
     wl_surface_commit( m_surface );
 }
 

@@ -382,8 +382,12 @@ bool HeifLoader::Open()
             if( strcmp( type, "urn:com:apple:photo:2020:aux:hdrgainmap" ) == 0 )
             {
                 mclog( LogLevel::Info, "HEIF: Found gain map %s", type );
-                heif_image_handle_release_auxiliary_type( auxHandle, &type );
-                break;
+                const auto bitDepth = heif_image_handle_get_luma_bits_per_pixel( auxHandle );
+                const auto width = heif_image_handle_get_width( auxHandle );
+                const auto height = heif_image_handle_get_height( auxHandle );
+                if( width == m_width / 2 && height == m_height / 2 && bitDepth == 8 ) break;
+                mclog( LogLevel::Warning, "HEIF: Invalid gain map %dx%d, %d bpp", width, height, bitDepth );
+                mclog( LogLevel::Warning, "HEIF: Expected %dx%d, 8 bpp", m_width / 2, m_height / 2 );
             }
             heif_image_handle_release_auxiliary_type( auxHandle, &type );
             heif_image_handle_release( auxHandle );

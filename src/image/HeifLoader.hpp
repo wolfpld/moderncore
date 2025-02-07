@@ -48,6 +48,8 @@ private:
     void ConvertYCbCrToRGB( float* ptr, size_t sz );
     void ApplyTransfer( float* ptr, size_t sz );
 
+    [[nodiscard]] bool GetGainMapHeadroom( heif_image_handle* handle );
+
     bool m_valid;
     ToneMap::Operator m_tonemap;
     std::unique_ptr<FileBuffer> m_buf;
@@ -61,6 +63,7 @@ private:
     int m_width, m_height;
     int m_stride, m_bpp;
     float m_bppDiv;
+    float m_gainMapHeadroom;
 
     Conversion m_matrix;
 

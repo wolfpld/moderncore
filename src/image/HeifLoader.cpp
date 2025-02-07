@@ -2,6 +2,7 @@
 #include <cmath>
 #include <libheif/heif.h>
 #include <lcms2.h>
+#include <pugixml.hpp>
 #include <string.h>
 #include <vector>
 
@@ -387,7 +388,7 @@ bool HeifLoader::Open()
                 const auto height = heif_image_handle_get_height( auxHandle );
                 if( width == m_width / 2 && height == m_height / 2 && bitDepth == 8 )
                 {
-                    m_handleGainMap = auxHandle;
+                    if( GetGainMapHeadroom( auxHandle ) ) m_handleGainMap = auxHandle;
                     break;
                 }
                 mclog( LogLevel::Warning, "HEIF: Invalid gain map %dx%d, %d bpp", width, height, bitDepth );
@@ -767,4 +768,44 @@ void HeifLoader::ApplyTransfer( float* ptr, size_t sz )
     default:
         break;
     }
+}
+
+bool HeifLoader::GetGainMapHeadroom( heif_image_handle* handle )
+{
+    const auto metanum = heif_image_handle_get_number_of_metadata_blocks( handle, nullptr );
+    std::vector<heif_item_id> meta( metanum );
+    heif_image_handle_get_list_of_metadata_block_IDs( handle, nullptr, meta.data(), metanum );
+
+    for( auto metaitem : meta )
+    {
+        auto metatype = heif_image_handle_get_metadata_type( handle, metaitem );
+        if( strcmp( metatype, "mime" ) == 0 )
+        {
+            const auto exifSize = heif_image_handle_get_metadata_size( handle, metaitem );
+            std::vector<uint8_t> exifData( exifSize );
+            heif_image_handle_get_metadata( handle, metaitem, exifData.data() );
+
+            pugi::xml_document doc;
+            doc.load_buffer( exifData.data(), exifSize );
+
+            const auto desc = doc.child( "x:xmpmeta" ).child( "rdf:RDF" ).child( "rdf:Description" );
+            if( desc )
+            {
+                const auto version = desc.child( "HDRGainMap:HDRGainMapVersion" );
+                if( version )
+                {
+                    const auto headroom = desc.child( "HDRGainMap:HDRGainMapHeadroom" );
+                    if( headroom )
+                    {
+                        m_gainMapHeadroom = headroom.text().as_float();
+                        mclog( LogLevel::Info, "HEIF: Gain map headroom found: %f", m_gainMapHeadroom );
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+
+    mclog( LogLevel::Warning, "HEIF: No gain map headroom found" );
+    return false;
 }

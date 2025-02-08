@@ -6,9 +6,9 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "CmykIcm.hpp"
 #include "JpgLoader.hpp"
 #include "util/Bitmap.hpp"
-#include "util/Cmyk.hpp"
 #include "util/FileBuffer.hpp"
 #include "util/FileWrapper.hpp"
 #include "util/Panic.hpp"
@@ -138,7 +138,7 @@ std::unique_ptr<Bitmap> JpgLoader::Load()
         else
         {
             mclog( LogLevel::Info, "No ICC profile found, using default" );
-            profileIn = cmsOpenProfileFromMem( CMYK::ProfileData(), CMYK::ProfileSize() );
+            profileIn = cmsOpenProfileFromMem( Embed::CmykIcmData, Embed::CmykIcmSize );
         }
 
         auto profileOut = cmsCreate_sRGBProfile();

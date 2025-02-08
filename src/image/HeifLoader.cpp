@@ -284,7 +284,7 @@ std::unique_ptr<Bitmap> HeifLoader::Load()
                     LoadYCbCr( ptr, chunk, offset );
                     ConvertYCbCrToRGB( ptr, chunk );
                     if( m_transform ) cmsDoTransform( m_transform, ptr, ptr, chunk );
-                    ApplyTransfer( ptr, chunk );
+                    ApplyTransfer( ptr, chunk, offset );
                     ToneMap::Process( m_tonemap, out, ptr, chunk );
                 } );
                 out += chunk;
@@ -320,7 +320,7 @@ std::unique_ptr<BitmapHdr> HeifLoader::LoadHdr()
                 LoadYCbCr( ptr, chunk, offset );
                 ConvertYCbCrToRGB( ptr, chunk );
                 if( m_transform ) cmsDoTransform( m_transform, ptr, ptr, chunk );
-                ApplyTransfer( ptr, chunk );
+                ApplyTransfer( ptr, chunk, offset );
             } );
             ptr += chunk * 4;
             sz -= chunk;
@@ -333,7 +333,7 @@ std::unique_ptr<BitmapHdr> HeifLoader::LoadHdr()
         LoadYCbCr( bmp->Data(), m_width * m_height, 0 );
         ConvertYCbCrToRGB( bmp->Data(), m_width * m_height );
         if( m_transform ) cmsDoTransform( m_transform, bmp->Data(), bmp->Data(), m_width * m_height );
-        ApplyTransfer( bmp->Data(), m_width * m_height );
+        ApplyTransfer( bmp->Data(), m_width * m_height, 0 );
     }
 
     return bmp;
@@ -785,34 +785,51 @@ void HeifLoader::ConvertYCbCrToRGB( float* ptr, size_t sz )
     }
 }
 
-void HeifLoader::ApplyTransfer( float* ptr, size_t sz )
+void HeifLoader::ApplyTransfer( float* ptr, size_t sz, size_t offset )
 {
-    CheckPanic( m_nclx, "No nclx color profile found" );
-
-    switch( m_nclx->transfer_characteristics )
+    if( m_gainMap )
     {
-    case heif_transfer_characteristic_ITU_R_BT_2100_0_PQ:
-        LinearizePq( ptr, sz );
-        break;
-    case heif_transfer_characteristic_ITU_R_BT_2100_0_HLG:
+        auto gptr = m_gainMap + offset;
         do
         {
-            const auto r = ptr[0];
-            const auto g = ptr[1];
-            const auto b = ptr[2];
-
-            const auto Y = 0.2627f * r + 0.6780f * g + 0.0593f * b;
-
-            ptr[0] = Hlg( r, Y );
-            ptr[1] = Hlg( g, Y );
-            ptr[2] = Hlg( b, Y );
-
+            const auto gain = *gptr++;
+            const auto mul = 1.f + ( m_gainMapHeadroom - 1.f ) * gain;
+            ptr[0] *= mul;
+            ptr[1] *= mul;
+            ptr[2] *= mul;
             ptr += 4;
         }
         while( --sz );
-        break;
-    default:
-        break;
+    }
+    else
+    {
+        CheckPanic( m_nclx, "No nclx color profile found" );
+
+        switch( m_nclx->transfer_characteristics )
+        {
+        case heif_transfer_characteristic_ITU_R_BT_2100_0_PQ:
+            LinearizePq( ptr, sz );
+            break;
+        case heif_transfer_characteristic_ITU_R_BT_2100_0_HLG:
+            do
+            {
+                const auto r = ptr[0];
+                const auto g = ptr[1];
+                const auto b = ptr[2];
+
+                const auto Y = 0.2627f * r + 0.6780f * g + 0.0593f * b;
+
+                ptr[0] = Hlg( r, Y );
+                ptr[1] = Hlg( g, Y );
+                ptr[2] = Hlg( b, Y );
+
+                ptr += 4;
+            }
+            while( --sz );
+            break;
+        default:
+            break;
+        }
     }
 }
 

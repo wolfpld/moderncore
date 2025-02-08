@@ -46,7 +46,7 @@ private:
     void LoadYCbCr( float* ptr, size_t sz, size_t offset );
 
     void ConvertYCbCrToRGB( float* ptr, size_t sz );
-    void ApplyTransfer( float* ptr, size_t sz );
+    void ApplyTransfer( float* ptr, size_t sz, size_t offset );
 
     [[nodiscard]] bool GetGainMapHeadroom( heif_image_handle* handle );
 

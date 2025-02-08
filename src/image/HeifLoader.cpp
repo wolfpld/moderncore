@@ -417,6 +417,20 @@ bool HeifLoader::SetupDecode( bool hdr )
         if( err.code == heif_error_Color_profile_does_not_exist ) mclog( LogLevel::Info, "HEIF: No image-level nclx color profile found" );
     }
 
+    const auto imgIccSize = heif_image_get_raw_color_profile_size( m_image );
+    if( imgIccSize > 0 )
+    {
+        mclog( LogLevel::Info, "HEIF: Found image level ICC color profile" );
+        if( m_iccData )
+        {
+            mclog( LogLevel::Info, "HEIF: Multiple ICC profiles found, using image level (handle level: %zu bytes, image level: %zu bytes)", m_iccSize, imgIccSize );
+            delete[] m_iccData;
+        }
+        m_iccData = new char[imgIccSize];
+        m_iccSize = imgIccSize;
+        heif_image_get_raw_color_profile( m_image, m_iccData );
+    }
+
     int strideY, strideCb, strideCr, strideA;
     m_planeY  = heif_image_get_plane_readonly( m_image, heif_channel_Y, &strideY );
     m_planeCb = heif_image_get_plane_readonly( m_image, heif_channel_Cb, &strideCb );

@@ -134,6 +134,7 @@ set(MCOREUTIL_SRC
     src/util/BitmapHdr.cpp
     src/util/Callstack.cpp
     src/util/Config.cpp
+    src/util/EmbedData.cpp
     src/util/FileBuffer.cpp
     src/util/Home.cpp
     src/util/Logs.cpp
@@ -148,9 +149,11 @@ set(MCOREUTIL_SRC
 add_library(mcoreutil ${MCOREUTIL_SRC})
 target_link_libraries(mcoreutil PRIVATE
     Tracy::TracyClient
+    ${LZ4_LINK_LIBRARIES}
     ${PNG_LINK_LIBRARIES}
 )
 target_include_directories(mcoreutil PRIVATE
+    ${LZ4_INCLUDE_DIRS}
     ${stb_SOURCE_DIR}
     ${PNG_INCLUDE_DIRS}
 )

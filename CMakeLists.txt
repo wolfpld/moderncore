@@ -67,6 +67,7 @@ pkg_check_modules(HEIF REQUIRED libheif)
 pkg_check_modules(JPEG REQUIRED libjpeg)
 pkg_check_modules(JXL REQUIRED libjxl libjxl_threads)
 pkg_check_modules(LCMS REQUIRED lcms2)
+pkg_check_modules(LZ4 REQUIRED liblz4)
 pkg_check_modules(PNG REQUIRED libpng)
 pkg_check_modules(PUGIXML REQUIRED pugixml)
 pkg_check_modules(RAW REQUIRED libraw)
@@ -105,6 +106,8 @@ add_custom_target(git-ref
 # embed
 
 add_executable(embed helpers/embed.cpp)
+target_link_libraries(embed PRIVATE ${LZ4_LINK_LIBRARIES})
+target_include_directories(embed PRIVATE ${LZ4_INCLUDE_DIRS})
 
 
 # mcoreutil

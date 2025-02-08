@@ -70,6 +70,8 @@ private:
     size_t m_iccSize;
     char* m_iccData;
 
+    float* m_gainMap;
+
     const uint8_t* m_planeY;
     const uint8_t* m_planeCb;
     const uint8_t* m_planeCr;

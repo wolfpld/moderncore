@@ -6,7 +6,7 @@
             "type": "lldb",
             "request": "launch",
             "program": "${command:cmake.launchTargetPath}",
-            "args": ["~/img/test.exr"],
+            "args": ["~/img/test.heic"],
             "cwd": "${config:cmake.buildDirectory}",
             "initCommands": ["command script import ${workspaceRoot}/simd.py"]
         }

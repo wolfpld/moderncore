@@ -3,6 +3,7 @@
 #include <libheif/heif.h>
 #include <lcms2.h>
 #include <pugixml.hpp>
+#include <stb_image_resize2.h>
 #include <string.h>
 #include <vector>
 
@@ -170,6 +171,7 @@ HeifLoader::HeifLoader( std::shared_ptr<FileWrapper> file, ToneMap::Operator ton
     , m_handleGainMap( nullptr )
     , m_image( nullptr )
     , m_nclx( nullptr )
+    , m_gainMap( nullptr )
     , m_iccData( nullptr )
     , m_profileIn( nullptr )
     , m_profileOut( nullptr )
@@ -190,7 +192,8 @@ HeifLoader::~HeifLoader()
     if( m_transform ) cmsDeleteTransform( m_transform );
     if( m_profileOut ) cmsCloseProfile( m_profileOut );
     if( m_profileIn ) cmsCloseProfile( m_profileIn );
-    if( m_iccData ) delete[] m_iccData;
+    delete[] m_iccData;
+    delete[] m_gainMap;
     if( m_image ) heif_image_release( m_image );
     if( m_handleGainMap ) heif_image_handle_release( m_handleGainMap );
     if( m_handle ) heif_image_handle_release( m_handle );
@@ -205,6 +208,7 @@ bool HeifLoader::IsValid() const
 bool HeifLoader::IsHdr()
 {
     if( !m_buf && !Open() ) return false;
+    if( m_handleGainMap ) return true;
     if( m_nclx )
     {
         return
@@ -528,6 +532,48 @@ bool HeifLoader::SetupDecode( bool hdr )
             cmsFreeToneCurve( linear );
             m_transform = cmsCreateTransform( m_profileIn, TYPE_RGBA_FLT, m_profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA );
         }
+    }
+
+    if( hdr && m_handleGainMap )
+    {
+        heif_image* gainMap;
+        err = heif_decode_image( m_handleGainMap, &gainMap, heif_colorspace_monochrome, heif_chroma_monochrome, nullptr );
+        if( err.code != heif_error_Ok ) return false;
+
+        int stride;
+        auto src = heif_image_get_plane_readonly( gainMap, heif_channel_Y, &stride );
+        if( !src )
+        {
+            heif_image_release( gainMap );
+            return false;
+        }
+
+        const auto w = heif_image_handle_get_width( m_handleGainMap );
+        const auto h = heif_image_handle_get_height( m_handleGainMap );
+        CheckPanic( w == m_width / 2 && h == m_height / 2, "Invalid gain map size" );
+
+        std::vector<float> tmp( w * h );
+        auto dst = tmp.data();
+        for( int i=0; i<h; i++ )
+        {
+            for( int i=0; i<w; i++ )
+            {
+                const auto v = *src++ / 255.f;
+                if( v < 0.081f )
+                {
+                    *dst++ = v / 4.5f;
+                }
+                else
+                {
+                    *dst++ = pow( ( v + 0.099f ) / 1.099f, 1.f / 0.45f );
+                }
+            }
+            src += stride - w;
+        }
+        heif_image_release( gainMap );
+
+        m_gainMap = new float[m_width * m_height];
+        stbir_resize_float_linear( tmp.data(), w, h, 0, m_gainMap, m_width, m_height, 0, STBIR_1CHANNEL );
     }
 
     return true;

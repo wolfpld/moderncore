@@ -222,7 +222,7 @@ std::unique_ptr<Bitmap> HeifLoader::Load()
 {
     if( !m_buf && !Open() ) return nullptr;
 
-    if( !IsHdr() )
+    if( !IsHdr() || m_handleGainMap )
     {
         if( !m_transform )
         {

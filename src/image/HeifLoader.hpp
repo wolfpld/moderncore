@@ -42,9 +42,7 @@ private:
 
     [[nodiscard]] bool SetupDecode( bool hdr );
 
-    [[nodiscard]] std::unique_ptr<Bitmap> LoadNoProfile();
     void LoadYCbCr( float* ptr, size_t sz, size_t offset );
-
     void ConvertYCbCrToRGB( float* ptr, size_t sz );
     void ApplyTransfer( float* ptr, size_t sz, size_t offset );
 

@@ -224,46 +224,39 @@ std::unique_ptr<Bitmap> HeifLoader::Load()
 
     if( !IsHdr() || m_handleGainMap )
     {
-        if( !m_transform )
+        if( !SetupDecode( false ) ) return nullptr;
+
+        auto bmp = std::make_unique<Bitmap>( m_width, m_height );
+        auto out = (uint32_t*)bmp->Data();
+
+        if( m_td )
         {
-            return LoadNoProfile();
+            size_t offset = 0;
+            size_t sz = m_width * m_height;
+            while( sz > 0 )
+            {
+                const auto chunk = std::min( sz, size_t( 16 * 1024 ) );
+                m_td->Queue( [this, out, chunk, offset] {
+                    auto ptr = (float*)alloca( chunk * 4 * sizeof( float ) );
+                    LoadYCbCr( ptr, chunk, offset );
+                    ConvertYCbCrToRGB( ptr, chunk );
+                    cmsDoTransform( m_transform, ptr, out, chunk );
+                } );
+                out += chunk;
+                sz -= chunk;
+                offset += chunk;
+            }
+            m_td->Sync();
         }
         else
         {
-            if( !SetupDecode( false ) ) return nullptr;
-
-            auto bmp = std::make_unique<Bitmap>( m_width, m_height );
-            auto out = (uint32_t*)bmp->Data();
-
-            if( m_td )
-            {
-                size_t offset = 0;
-                size_t sz = m_width * m_height;
-                while( sz > 0 )
-                {
-                    const auto chunk = std::min( sz, size_t( 16 * 1024 ) );
-                    m_td->Queue( [this, out, chunk, offset] {
-                        auto ptr = (float*)alloca( chunk * 4 * sizeof( float ) );
-                        LoadYCbCr( ptr, chunk, offset );
-                        ConvertYCbCrToRGB( ptr, chunk );
-                        cmsDoTransform( m_transform, ptr, out, chunk );
-                    } );
-                    out += chunk;
-                    sz -= chunk;
-                    offset += chunk;
-                }
-                m_td->Sync();
-            }
-            else
-            {
-                auto tmp = std::make_unique<BitmapHdr>( m_width, m_height );
-                LoadYCbCr( tmp->Data(), m_width * m_height, 0 );
-                ConvertYCbCrToRGB( tmp->Data(), m_width * m_height );
-                cmsDoTransform( m_transform, tmp->Data(), out, m_width * m_height );
-            }
-
-            return bmp;
+            auto tmp = std::make_unique<BitmapHdr>( m_width, m_height );
+            LoadYCbCr( tmp->Data(), m_width * m_height, 0 );
+            ConvertYCbCrToRGB( tmp->Data(), m_width * m_height );
+            cmsDoTransform( m_transform, tmp->Data(), out, m_width * m_height );
         }
+
+        return bmp;
     }
     else
     {
@@ -505,17 +498,21 @@ bool HeifLoader::SetupDecode( bool hdr )
         }
     }
 
+    cmsToneCurve* linear = cmsBuildGamma( nullptr, 1 );
+    cmsToneCurve* linear3[3] = { linear, linear, linear };
+
+    // cmsCreate_sRGBProfile() uses 2.2 gamma internally, not the proper 61966-2-1 transfer function
+    cmsToneCurve* gamma = cmsBuildGamma( nullptr, 2.2f );
+    cmsToneCurve* gamma3[3] = { gamma, gamma, gamma };
+
     if( m_iccData )
     {
         m_profileIn = cmsOpenProfileFromMem( m_iccData, m_iccSize );
         int outType;
         if( hdr )
         {
-            cmsToneCurve* linear = cmsBuildGamma( nullptr, 1 );
-            cmsToneCurve* linear3[3] = { linear, linear, linear };
             m_profileOut = cmsCreateRGBProfile( &white709, &primaries709, linear3 );
             outType = TYPE_RGBA_FLT;
-            cmsFreeToneCurve( linear );
         }
         else
         {
@@ -524,29 +521,42 @@ bool HeifLoader::SetupDecode( bool hdr )
         }
         m_transform = cmsCreateTransform( m_profileIn, TYPE_RGBA_FLT, m_profileOut, outType, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA );
     }
-    else
+    else if( m_nclx )
     {
-        CheckPanic( m_nclx, "No color profile code path should be taken." );
-        CheckPanic( hdr, "No color profile code path should be taken." );
+        const cmsCIExyY white = { m_nclx->color_primary_white_x, m_nclx->color_primary_white_y, 1 };
+        const cmsCIExyYTRIPLE primaries = {
+            { m_nclx->color_primary_red_x, m_nclx->color_primary_red_y, 1 },
+            { m_nclx->color_primary_green_x, m_nclx->color_primary_green_y, 1 },
+            { m_nclx->color_primary_blue_x, m_nclx->color_primary_blue_y, 1 }
+        };
 
-        if( m_nclx->color_primaries != heif_color_primaries_ITU_R_BT_709_5 )
+        if( hdr )
         {
-            cmsToneCurve* linear = cmsBuildGamma( nullptr, 1 );
-            cmsToneCurve* linear3[3] = { linear, linear, linear };
-
-            const cmsCIExyY white = { m_nclx->color_primary_white_x, m_nclx->color_primary_white_y, 1 };
-            const cmsCIExyYTRIPLE primaries = {
-                { m_nclx->color_primary_red_x, m_nclx->color_primary_red_y, 1 },
-                { m_nclx->color_primary_green_x, m_nclx->color_primary_green_y, 1 },
-                { m_nclx->color_primary_blue_x, m_nclx->color_primary_blue_y, 1 }
-            };
-
             m_profileIn = cmsCreateRGBProfile( &white, &primaries, linear3 );
-            m_profileOut = cmsCreateRGBProfile( &white709, &primaries709, linear3 );
-            cmsFreeToneCurve( linear );
-            m_transform = cmsCreateTransform( m_profileIn, TYPE_RGBA_FLT, m_profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA );
+            if( m_nclx->color_primaries != heif_color_primaries_ITU_R_BT_709_5 )
+            {
+                m_profileOut = cmsCreateRGBProfile( &white709, &primaries709, linear3 );
+                m_transform = cmsCreateTransform( m_profileIn, TYPE_RGBA_FLT, m_profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA );
+            }
+        }
+        else
+        {
+            m_profileIn = cmsCreateRGBProfile( &white, &primaries, gamma3 );
+            m_profileOut = cmsCreate_sRGBProfile();
+            m_transform = cmsCreateTransform( m_profileIn, TYPE_RGBA_FLT, m_profileOut, TYPE_RGBA_8, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA );
         }
     }
+    else
+    {
+        CheckPanic( !hdr, "Can't be HDR here" );
+
+        m_profileIn = cmsCreateRGBProfile( &white709, &primaries709, gamma3 );
+        m_profileOut = cmsCreate_sRGBProfile();
+        m_transform = cmsCreateTransform( m_profileIn, TYPE_RGBA_FLT, m_profileOut, TYPE_RGBA_8, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA );
+    }
+
+    cmsFreeToneCurve( linear );
+    cmsFreeToneCurve( gamma );
 
     if( hdr && m_handleGainMap )
     {
@@ -591,40 +601,6 @@ bool HeifLoader::SetupDecode( bool hdr )
     }
 
     return true;
-}
-
-std::unique_ptr<Bitmap> HeifLoader::LoadNoProfile()
-{
-    heif_image* img;
-    auto err = heif_decode_image( m_handle, &img, heif_colorspace_RGB, heif_chroma_interleaved_RGBA, nullptr );
-    if( err.code != heif_error_Ok ) return nullptr;
-
-    int stride;
-    auto src = heif_image_get_plane_readonly( img, heif_channel_interleaved, &stride );
-    if( !src )
-    {
-        heif_image_release( img );
-        return nullptr;
-    }
-
-    auto bmp = std::make_unique<Bitmap>( m_width, m_height );
-    if( stride == m_width * 4 )
-    {
-        memcpy( bmp->Data(), src, m_width * m_height * 4 );
-    }
-    else
-    {
-        auto dst = bmp->Data();
-        for( int i=0; i<m_height; i++ )
-        {
-            memcpy( dst, src, m_width * 4 );
-            dst += m_width * 4;
-            src += stride;
-        }
-    }
-
-    heif_image_release( img );
-    return bmp;
 }
 
 template<typename T>

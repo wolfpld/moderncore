@@ -222,7 +222,7 @@ void WaylandWindow::SetDevice( std::shared_ptr<VlkDevice> device, const VkExtent
 
 void WaylandWindow::InvokeRender()
 {
-    Invoke( OnRender, this );
+    if( !InvokeRet( OnRender, false, this ) ) wl_surface_commit( m_surface );
 }
 
 void WaylandWindow::CreateSwapchain( const VkExtent2D& extent )

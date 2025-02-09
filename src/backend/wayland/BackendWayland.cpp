@@ -149,7 +149,7 @@ void BackendWayland::Close( WaylandWindow* )
     m_dpy->Stop();
 }
 
-void BackendWayland::Render( WaylandWindow* window )
+bool BackendWayland::Render( WaylandWindow* window )
 {
 #ifdef TRACY_ENABLE
     ZoneScoped;
@@ -196,4 +196,6 @@ void BackendWayland::Render( WaylandWindow* window )
 #endif
 
     window->EndFrame();
+
+    return true;
 }

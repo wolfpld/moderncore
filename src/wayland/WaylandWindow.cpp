@@ -296,5 +296,5 @@ void WaylandWindow::FrameDone( struct wl_callback* cb, uint32_t time )
     cb = wl_surface_frame( m_surface );
     wl_callback_add_listener( cb, &listener, this );
 
-    Invoke( OnRender, this );
+    InvokeRender();
 }

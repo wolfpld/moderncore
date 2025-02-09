@@ -550,6 +550,7 @@ int main( int argc, char** argv )
                     if( (
                           (
                             gfxQuery.starts_with( "\033[?12;" ) ||
+                            gfxQuery.starts_with( "\033[?61;" ) ||
                             gfxQuery.starts_with( "\033[?62;" ) ||
                             gfxQuery.starts_with( "\033[?63;" ) ||
                             gfxQuery.starts_with( "\033[?64;" ) ||

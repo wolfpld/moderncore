@@ -643,7 +643,7 @@ int main( int argc, char** argv )
 
         sixel_dither_t* dither;
         sixel_dither_new( &dither, -1, nullptr );
-        sixel_dither_initialize( dither, bitmap->Data(), bitmap->Width(), bitmap->Height(), SIXEL_PIXELFORMAT_RGBA8888, SIXEL_LARGE_AUTO, SIXEL_REP_AUTO, SIXEL_QUALITY_HIGHCOLOR );
+        sixel_dither_initialize( dither, bitmap->Data(), bitmap->Width(), bitmap->Height(), SIXEL_PIXELFORMAT_RGBA8888, SIXEL_LARGE_AUTO, SIXEL_REP_AUTO, SIXEL_QUALITY_FULL );
 
         sixel_output_t* output;
         sixel_output_new( &output, []( char* data, int size, void* ) -> int {

@@ -42,9 +42,6 @@ static bool HasValidationLayers()
     LogLevel loglevel;
     switch( severity )
     {
-    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
-        loglevel = LogLevel::Debug;
-        break;
     case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
         loglevel = LogLevel::Warning;
         break;

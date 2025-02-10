@@ -4,12 +4,13 @@
 #include <vector>
 #include <vulkan/vulkan.h>
 
+#include "VlkBase.hpp"
 #include "VlkSwapchainProperties.hpp"
 #include "util/NoCopy.hpp"
 
 class VlkDevice;
 
-class VlkSwapchain
+class VlkSwapchain : public VlkBase
 {
 public:
     VlkSwapchain( const VlkDevice& device, VkSurfaceKHR surface, const VkExtent2D& extent );

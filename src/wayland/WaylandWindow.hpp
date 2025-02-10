@@ -93,7 +93,7 @@ private:
     VkSurfaceKHR m_vkSurface;
     VlkInstance& m_vkInstance;
     std::shared_ptr<VlkDevice> m_vkDevice;
-    std::unique_ptr<VlkSwapchain> m_swapchain;
+    std::shared_ptr<VlkSwapchain> m_swapchain;
 
     const Listener* m_listener = nullptr;
     void* m_listenerPtr;

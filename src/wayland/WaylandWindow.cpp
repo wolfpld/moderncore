@@ -228,7 +228,7 @@ void WaylandWindow::InvokeRender()
 void WaylandWindow::CreateSwapchain( const VkExtent2D& extent )
 {
     m_swapchain.reset();
-    m_swapchain = std::make_unique<VlkSwapchain>( *m_vkDevice, m_vkSurface, extent );
+    m_swapchain = std::make_shared<VlkSwapchain>( *m_vkDevice, m_vkSurface, extent );
 
     const auto imageViews = m_swapchain->GetImageViews();
     const auto numImages = imageViews.size();

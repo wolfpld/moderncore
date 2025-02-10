@@ -135,6 +135,7 @@ VlkCommandBuffer& WaylandWindow::BeginFrame( bool imageTransfer )
         wp_viewport_set_destination( m_viewport, extent.width * 120 / m_scale, extent.height * 120 / m_scale );
     }
 
+    m_frameIdx = ( m_frameIdx + 1 ) % m_frameData.size();
     auto& frame = m_frameData[m_frameIdx];
 
     frame.fence->Wait();
@@ -195,8 +196,6 @@ void WaylandWindow::EndFrame()
     presentInfo.pImageIndices = &m_imageIdx;
 
     VkVerify( vkQueuePresentKHR( m_vkDevice->GetQueue( QueueType::Present ), &presentInfo ) );
-
-    m_frameIdx = ( m_frameIdx + 1 ) % m_frameData.size();
 }
 
 VkImage WaylandWindow::GetImage()

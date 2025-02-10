@@ -241,10 +241,10 @@ void WaylandWindow::CreateSwapchain( const VkExtent2D& extent )
 
     for( size_t i=oldSize; i<numImages; i++ )
     {
-        m_frameData[i].commandBuffer = std::make_unique<VlkCommandBuffer>( *m_vkDevice->GetCommandPool( QueueType::Graphic ), true );
-        m_frameData[i].imageAvailable = std::make_unique<VlkSemaphore>( *m_vkDevice );
-        m_frameData[i].renderFinished = std::make_unique<VlkSemaphore>( *m_vkDevice );
-        m_frameData[i].fence = std::make_unique<VlkFence>( *m_vkDevice, VK_FENCE_CREATE_SIGNALED_BIT );
+        m_frameData[i].commandBuffer = std::make_shared<VlkCommandBuffer>( *m_vkDevice->GetCommandPool( QueueType::Graphic ), true );
+        m_frameData[i].imageAvailable = std::make_shared<VlkSemaphore>( *m_vkDevice );
+        m_frameData[i].renderFinished = std::make_shared<VlkSemaphore>( *m_vkDevice );
+        m_frameData[i].fence = std::make_shared<VlkFence>( *m_vkDevice, VK_FENCE_CREATE_SIGNALED_BIT );
     }
 }
 

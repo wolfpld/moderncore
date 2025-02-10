@@ -24,10 +24,10 @@ class WaylandWindow
 {
     struct FrameData
     {
-        std::unique_ptr<VlkCommandBuffer> commandBuffer;
-        std::unique_ptr<VlkSemaphore> imageAvailable;
-        std::unique_ptr<VlkSemaphore> renderFinished;
-        std::unique_ptr<VlkFence> fence;
+        std::shared_ptr<VlkCommandBuffer> commandBuffer;
+        std::shared_ptr<VlkSemaphore> imageAvailable;
+        std::shared_ptr<VlkSemaphore> renderFinished;
+        std::shared_ptr<VlkFence> fence;
     };
 
 public:

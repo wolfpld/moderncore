@@ -226,6 +226,7 @@ set(MCOREVULKAN_SRC
     src/vulkan/VlkDescriptorSetLayout.cpp
     src/vulkan/VlkDevice.cpp
     src/vulkan/VlkFence.cpp
+    src/vulkan/VlkGarbage.cpp
     src/vulkan/VlkImage.cpp
     src/vulkan/VlkImageView.cpp
     src/vulkan/VlkInstance.cpp

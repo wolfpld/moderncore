@@ -11,12 +11,14 @@
 #include "vulkan/VlkDevice.hpp"
 #include "vulkan/VlkError.hpp"
 #include "vulkan/VlkFence.hpp"
+#include "vulkan/VlkGarbage.hpp"
 #include "vulkan/VlkInstance.hpp"
 #include "vulkan/VlkSemaphore.hpp"
 #include "vulkan/VlkSwapchain.hpp"
 
 WaylandWindow::WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance )
     : m_vkInstance( vkInstance )
+    , m_garbage( std::make_shared<VlkGarbage>() )
 {
     ZoneScoped;
 

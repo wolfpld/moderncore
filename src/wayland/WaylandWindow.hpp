@@ -16,6 +16,7 @@
 class VlkCommandBuffer;
 class VlkDevice;
 class VlkFence;
+class VlkGarbage;
 class VlkInstance;
 class VlkSemaphore;
 class WaylandDisplay;
@@ -94,6 +95,7 @@ private:
     VlkInstance& m_vkInstance;
     std::shared_ptr<VlkDevice> m_vkDevice;
     std::shared_ptr<VlkSwapchain> m_swapchain;
+    std::shared_ptr<VlkGarbage> m_garbage;
 
     const Listener* m_listener = nullptr;
     void* m_listenerPtr;

@@ -2,9 +2,10 @@
 
 #include <vulkan/vulkan.h>
 
+#include "VlkBase.hpp"
 #include "util/NoCopy.hpp"
 
-class VlkSemaphore
+class VlkSemaphore : public VlkBase
 {
 public:
     explicit VlkSemaphore( VkDevice device );

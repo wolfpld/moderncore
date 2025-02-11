@@ -27,7 +27,7 @@ static void PrintSwapchainProperties( const VlkSwapchainProperties &properties )
     }
 }
 
-VlkSwapchain::VlkSwapchain( const VlkDevice& device, VkSurfaceKHR surface, const VkExtent2D& extent )
+VlkSwapchain::VlkSwapchain( const VlkDevice& device, VkSurfaceKHR surface, const VkExtent2D& extent, VkSwapchainKHR oldSwapchain )
     : m_properties( *device.GetPhysicalDevice(), surface )
     , m_format { VK_FORMAT_UNDEFINED }
     , m_presentMode( VK_PRESENT_MODE_FIFO_KHR )
@@ -80,7 +80,7 @@ VlkSwapchain::VlkSwapchain( const VlkDevice& device, VkSurfaceKHR surface, const
     createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     createInfo.presentMode = m_presentMode;
     createInfo.clipped = VK_TRUE;
-    createInfo.oldSwapchain = VK_NULL_HANDLE;
+    createInfo.oldSwapchain = oldSwapchain;
 
     if( graphicQueue.sharePresent )
     {

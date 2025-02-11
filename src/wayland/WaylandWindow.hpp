@@ -6,6 +6,7 @@
 #include <wayland-client.h>
 
 #include "util/NoCopy.hpp"
+#include "vulkan/VlkSurface.hpp"
 #include "vulkan/VlkSwapchain.hpp"
 
 #include "wayland-xdg-decoration-client-protocol.h"
@@ -67,7 +68,7 @@ public:
 
     [[nodiscard]] wl_surface* Surface() { return m_surface; }
     [[nodiscard]] xdg_toplevel* XdgToplevel() { return m_xdgToplevel; }
-    [[nodiscard]] VkSurfaceKHR VkSurface() { return m_vkSurface; }
+    [[nodiscard]] VkSurfaceKHR VkSurface() { return *m_vkSurface; }
     [[nodiscard]] VlkDevice& Device() { return *m_vkDevice; }
 
 private:
@@ -91,10 +92,10 @@ private:
     wp_fractional_scale_v1* m_fractionalScale = nullptr;
     wp_viewport* m_viewport = nullptr;
 
-    VkSurfaceKHR m_vkSurface;
     VlkInstance& m_vkInstance;
     std::shared_ptr<VlkDevice> m_vkDevice;
     std::shared_ptr<VlkSwapchain> m_swapchain;
+    std::shared_ptr<VlkSurface> m_vkSurface;
     std::shared_ptr<VlkGarbage> m_garbage;
 
     const Listener* m_listener = nullptr;

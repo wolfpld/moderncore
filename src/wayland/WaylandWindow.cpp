@@ -64,11 +64,7 @@ WaylandWindow::WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance )
         zxdg_toplevel_decoration_v1_set_mode( m_xdgToplevelDecoration, ZXDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE );
     }
 
-    VkWaylandSurfaceCreateInfoKHR createInfo = { VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR };
-    createInfo.display = display.Display();
-    createInfo.surface = Surface();
-
-    VkVerify( vkCreateWaylandSurfaceKHR( vkInstance, &createInfo, nullptr, &m_vkSurface ) );
+    m_vkSurface = std::make_shared<VlkSurface>( m_vkInstance, display.Display(), m_surface );
 
     static constexpr wl_callback_listener frameListener = {
         .done = Method( FrameDone )
@@ -83,7 +79,8 @@ WaylandWindow::~WaylandWindow()
     vkQueueWaitIdle( m_vkDevice->GetQueue( QueueType::Graphic ) );
     for( auto& frame : m_frameData ) frame.fence->Wait();
     if( m_swapchain ) m_swapchain.reset();
-    vkDestroySurfaceKHR( m_vkInstance, m_vkSurface, nullptr );
+    m_vkSurface.reset();
+
     wp_viewport_destroy( m_viewport );
     wp_fractional_scale_v1_destroy( m_fractionalScale );
     if( m_xdgToplevelDecoration ) zxdg_toplevel_decoration_v1_destroy( m_xdgToplevelDecoration );
@@ -229,7 +226,7 @@ void WaylandWindow::InvokeRender()
 void WaylandWindow::CreateSwapchain( const VkExtent2D& extent )
 {
     m_swapchain.reset();
-    m_swapchain = std::make_shared<VlkSwapchain>( *m_vkDevice, m_vkSurface, extent );
+    m_swapchain = std::make_shared<VlkSwapchain>( *m_vkDevice, *m_vkSurface, extent );
 
     const auto imageViews = m_swapchain->GetImageViews();
     const auto numImages = imageViews.size();

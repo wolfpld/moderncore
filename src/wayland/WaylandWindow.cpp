@@ -238,8 +238,10 @@ void WaylandWindow::InvokeRender()
 
 void WaylandWindow::CreateSwapchain( const VkExtent2D& extent )
 {
-    m_swapchain.reset();
-    m_swapchain = std::make_shared<VlkSwapchain>( *m_vkDevice, *m_vkSurface, extent );
+    auto oldSwapchain = m_swapchain;
+    if( m_swapchain ) CleanupSwapchain();
+    m_swapchain = std::make_shared<VlkSwapchain>( *m_vkDevice, *m_vkSurface, extent, oldSwapchain ? *oldSwapchain : VK_NULL_HANDLE );
+    oldSwapchain.reset();
 
     const auto imageViews = m_swapchain->GetImageViews();
     const auto numImages = imageViews.size();

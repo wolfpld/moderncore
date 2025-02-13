@@ -76,13 +76,7 @@ WaylandWindow::WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance )
 
 WaylandWindow::~WaylandWindow()
 {
-    for( auto& frame : m_frameData )
-    {
-        frame.renderFence->Wait();
-        frame.presentFence->Wait();
-    }
-    if( m_swapchain ) m_swapchain.reset();
-    m_vkSurface.reset();
+    CleanupSwapchain( true );
 
     wp_viewport_destroy( m_viewport );
     wp_fractional_scale_v1_destroy( m_fractionalScale );
@@ -245,21 +239,52 @@ void WaylandWindow::CreateSwapchain( const VkExtent2D& extent )
 
     const auto imageViews = m_swapchain->GetImageViews();
     const auto numImages = imageViews.size();
-    const auto oldSize = m_frameData.size();
 
-    if( oldSize == numImages ) return;
-
-    m_frameData.resize( numImages );
-    if( oldSize > numImages ) return;
-
-    for( size_t i=oldSize; i<numImages; i++ )
+    CheckPanic( m_frameData.empty(), "Frame data is not empty!" );
+    m_frameData.reserve( numImages );
+    for( size_t i=0; i<numImages; i++ )
     {
-        m_frameData[i].commandBuffer = std::make_shared<VlkCommandBuffer>( *m_vkDevice->GetCommandPool( QueueType::Graphic ), true );
-        m_frameData[i].imageAvailable = std::make_shared<VlkSemaphore>( *m_vkDevice );
-        m_frameData[i].renderFinished = std::make_shared<VlkSemaphore>( *m_vkDevice );
-        m_frameData[i].renderFence = std::make_shared<VlkFence>( *m_vkDevice, VK_FENCE_CREATE_SIGNALED_BIT );
-        m_frameData[i].presentFence = std::make_shared<VlkFence>( *m_vkDevice, VK_FENCE_CREATE_SIGNALED_BIT );
+        m_frameData.emplace_back( FrameData {
+            .commandBuffer = std::make_shared<VlkCommandBuffer>( *m_vkDevice->GetCommandPool( QueueType::Graphic ), true ),
+            .imageAvailable = std::make_shared<VlkSemaphore>( *m_vkDevice ),
+            .renderFinished = std::make_shared<VlkSemaphore>( *m_vkDevice ),
+            .renderFence = std::make_shared<VlkFence>( *m_vkDevice, VK_FENCE_CREATE_SIGNALED_BIT ),
+            .presentFence = std::make_shared<VlkFence>( *m_vkDevice, VK_FENCE_CREATE_SIGNALED_BIT )
+        } );
     }
+
+    m_garbage->Collect();
+}
+
+void WaylandWindow::CleanupSwapchain( bool withSurface )
+{
+    auto& current = m_frameData[m_frameIdx];
+    m_garbage->Add( std::move( current.renderFence ), {
+        current.commandBuffer
+    } );
+    std::vector<std::shared_ptr<VlkBase>> objects = {
+        current.imageAvailable,
+        current.renderFinished,
+        std::move( m_swapchain ),
+    };
+    if( withSurface ) objects.emplace_back( std::move( m_vkSurface ) );
+    m_garbage->Add( std::move( current.presentFence ), std::move( objects ) );
+
+    uint32_t idx = (m_frameIdx + 1) % m_frameData.size();
+    while( idx != m_frameIdx )
+    {
+        auto& frame = m_frameData[idx];
+        m_garbage->Add( std::move( frame.renderFence ), {
+            frame.commandBuffer
+        } );
+        m_garbage->Add( std::move( frame.presentFence ), {
+            frame.imageAvailable,
+            frame.renderFinished
+        } );
+        idx = (idx + 1) % m_frameData.size();
+    }
+
+    m_frameData.clear();
 }
 
 void WaylandWindow::XdgSurfaceConfigure( struct xdg_surface *xdg_surface, uint32_t serial )

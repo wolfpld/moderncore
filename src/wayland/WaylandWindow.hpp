@@ -74,6 +74,7 @@ public:
 
 private:
     void CreateSwapchain( const VkExtent2D& extent );
+    void CleanupSwapchain( bool withSurface = false );
 
     void XdgSurfaceConfigure( struct xdg_surface *xdg_surface, uint32_t serial );
 

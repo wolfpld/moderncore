@@ -99,7 +99,10 @@ void WaylandWindow::SetTitle( const char* title )
 
 void WaylandWindow::Resize( uint32_t width, uint32_t height )
 {
-    CreateSwapchain( VkExtent2D( width, height ) );
+    m_extent = {
+        .width = width,
+        .height = height
+    };
 
     // Ensure viewport is updated
     m_prevScale = 0;
@@ -121,12 +124,17 @@ void WaylandWindow::Commit()
 
 VlkCommandBuffer& WaylandWindow::BeginFrame( bool imageTransfer )
 {
+    const auto& extent = m_swapchain->GetExtent();
+    if( extent.width != m_extent.width || extent.height != m_extent.height )
+    {
+        CreateSwapchain( m_extent );
+    }
+
     if( m_scale != m_prevScale )
     {
         m_prevScale = m_scale;
-        const auto& extent = m_swapchain->GetExtent();
-        wp_viewport_set_source( m_viewport, 0, 0, wl_fixed_from_int( extent.width ), wl_fixed_from_int( extent.height ) );
-        wp_viewport_set_destination( m_viewport, extent.width * 120 / m_scale, extent.height * 120 / m_scale );
+        wp_viewport_set_source( m_viewport, 0, 0, wl_fixed_from_int( m_extent.width ), wl_fixed_from_int( m_extent.height ) );
+        wp_viewport_set_destination( m_viewport, m_extent.width * 120 / m_scale, m_extent.height * 120 / m_scale );
     }
 
     m_frameIdx = ( m_frameIdx + 1 ) % m_frameData.size();
@@ -235,6 +243,7 @@ void WaylandWindow::CreateSwapchain( const VkExtent2D& extent )
     auto oldSwapchain = m_swapchain;
     if( m_swapchain ) CleanupSwapchain();
     m_swapchain = std::make_shared<VlkSwapchain>( *m_vkDevice, *m_vkSurface, extent, oldSwapchain ? *oldSwapchain : VK_NULL_HANDLE );
+    m_extent = m_swapchain->GetExtent();
     oldSwapchain.reset();
 
     const auto imageViews = m_swapchain->GetImageViews();

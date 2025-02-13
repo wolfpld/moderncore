@@ -276,6 +276,7 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
     if( instance.Type() == VlkInstanceType::Wayland )
     {
         deviceExtensions.emplace_back( VK_KHR_SWAPCHAIN_EXTENSION_NAME );
+        deviceExtensions.emplace_back( VK_EXT_SWAPCHAIN_MAINTENANCE_1_EXTENSION_NAME );
     }
     else
     {

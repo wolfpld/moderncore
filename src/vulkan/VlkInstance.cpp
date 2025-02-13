@@ -96,6 +96,8 @@ VlkInstance::VlkInstance( VlkInstanceType instanceType, bool enableValidation )
     case VlkInstanceType::Wayland:
         instanceExtensions.emplace_back( VK_KHR_SURFACE_EXTENSION_NAME );
         instanceExtensions.emplace_back( VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME );
+        instanceExtensions.emplace_back( VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME );
+        instanceExtensions.emplace_back( VK_EXT_SURFACE_MAINTENANCE_1_EXTENSION_NAME );
         break;
     default:
         break;

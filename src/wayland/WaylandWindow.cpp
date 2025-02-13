@@ -77,7 +77,11 @@ WaylandWindow::WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance )
 WaylandWindow::~WaylandWindow()
 {
     vkQueueWaitIdle( m_vkDevice->GetQueue( QueueType::Graphic ) );
-    for( auto& frame : m_frameData ) frame.fence->Wait();
+    for( auto& frame : m_frameData )
+    {
+        frame.renderFence->Wait();
+        frame.presentFence->Wait();
+    }
     if( m_swapchain ) m_swapchain.reset();
     m_vkSurface.reset();
 
@@ -135,8 +139,8 @@ VlkCommandBuffer& WaylandWindow::BeginFrame( bool imageTransfer )
     m_frameIdx = ( m_frameIdx + 1 ) % m_frameData.size();
     auto& frame = m_frameData[m_frameIdx];
 
-    frame.fence->Wait();
-    frame.fence->Reset();
+    frame.renderFence->Wait();
+    frame.renderFence->Reset();
 
     auto res = vkAcquireNextImageKHR( *m_vkDevice, *m_swapchain, UINT64_MAX, *frame.imageAvailable, VK_NULL_HANDLE, &m_imageIdx );
 
@@ -181,11 +185,21 @@ void WaylandWindow::EndFrame()
     submitInfo.signalSemaphoreCount = signalSemaphores.size();
     submitInfo.pSignalSemaphores = signalSemaphores.data();
 
-    VkVerify( vkQueueSubmit( m_vkDevice->GetQueue( QueueType::Graphic ), 1, &submitInfo, *frame.fence ) );
+    VkVerify( vkQueueSubmit( m_vkDevice->GetQueue( QueueType::Graphic ), 1, &submitInfo, *frame.renderFence ) );
 
     const std::array<VkSwapchainKHR, 1> swapchains = { *m_swapchain };
+    const std::array<VkFence, 1> fences = { *frame.presentFence };
+    static_assert( swapchains.size() == fences.size() );
+
+    frame.presentFence->Wait();
+    frame.presentFence->Reset();
+
+    VkSwapchainPresentFenceInfoEXT presentFenceInfo = { VK_STRUCTURE_TYPE_SWAPCHAIN_PRESENT_FENCE_INFO_EXT };
+    presentFenceInfo.swapchainCount = fences.size();
+    presentFenceInfo.pFences = fences.data();
 
     VkPresentInfoKHR presentInfo = { VK_STRUCTURE_TYPE_PRESENT_INFO_KHR };
+    presentInfo.pNext = &presentFenceInfo;
     presentInfo.waitSemaphoreCount = signalSemaphores.size();
     presentInfo.pWaitSemaphores = signalSemaphores.data();
     presentInfo.swapchainCount = swapchains.size();
@@ -242,7 +256,8 @@ void WaylandWindow::CreateSwapchain( const VkExtent2D& extent )
         m_frameData[i].commandBuffer = std::make_shared<VlkCommandBuffer>( *m_vkDevice->GetCommandPool( QueueType::Graphic ), true );
         m_frameData[i].imageAvailable = std::make_shared<VlkSemaphore>( *m_vkDevice );
         m_frameData[i].renderFinished = std::make_shared<VlkSemaphore>( *m_vkDevice );
-        m_frameData[i].fence = std::make_shared<VlkFence>( *m_vkDevice, VK_FENCE_CREATE_SIGNALED_BIT );
+        m_frameData[i].renderFence = std::make_shared<VlkFence>( *m_vkDevice, VK_FENCE_CREATE_SIGNALED_BIT );
+        m_frameData[i].presentFence = std::make_shared<VlkFence>( *m_vkDevice, VK_FENCE_CREATE_SIGNALED_BIT );
     }
 }
 

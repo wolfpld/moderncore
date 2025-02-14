@@ -349,7 +349,7 @@ foreach(SHADER IN LISTS SHADER_SRC)
 
     add_custom_command(
         OUTPUT ${SPIRV}
-        COMMAND ${GLSLC} -O -o ${SPIRV} ${CMAKE_CURRENT_LIST_DIR}/${SHADER}
+        COMMAND ${GLSLC} --target-env=vulkan1.3 -O -o ${SPIRV} ${CMAKE_CURRENT_LIST_DIR}/${SHADER}
         DEPENDS ${SHADER}
     )
 

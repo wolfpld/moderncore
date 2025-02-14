@@ -141,10 +141,22 @@ VlkCommandBuffer& WaylandWindow::BeginFrame( bool imageTransfer )
     auto& frame = m_frameData[m_frameIdx];
 
     frame.renderFence->Wait();
+    for(;;)
+    {
+        auto res = vkAcquireNextImageKHR( *m_vkDevice, *m_swapchain, UINT64_MAX, *frame.imageAvailable, VK_NULL_HANDLE, &m_imageIdx );
+        if( res == VK_SUCCESS ) break;
+        if( res == VK_ERROR_OUT_OF_DATE_KHR || res == VK_SUBOPTIMAL_KHR )
+        {
+            mclog( LogLevel::Warning, "Swapchain out of date or suboptimal, recreating (%s)", string_VkResult( res ) );
+            CreateSwapchain( m_extent );
+        }
+        else
+        {
+            Panic( "Failed to acquire swapchain image (%s)", string_VkResult( res ) );
+        }
+    }
+
     frame.renderFence->Reset();
-
-    auto res = vkAcquireNextImageKHR( *m_vkDevice, *m_swapchain, UINT64_MAX, *frame.imageAvailable, VK_NULL_HANDLE, &m_imageIdx );
-
     frame.commandBuffer->Reset();
     frame.commandBuffer->Begin( VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT );
 
@@ -207,7 +219,8 @@ void WaylandWindow::EndFrame()
     presentInfo.pSwapchains = swapchains.data();
     presentInfo.pImageIndices = &m_imageIdx;
 
-    VkVerify( vkQueuePresentKHR( m_vkDevice->GetQueue( QueueType::Present ), &presentInfo ) );
+    const auto res = vkQueuePresentKHR( m_vkDevice->GetQueue( QueueType::Present ), &presentInfo );
+    CheckPanic( res == VK_SUCCESS || res == VK_SUBOPTIMAL_KHR || res == VK_ERROR_OUT_OF_DATE_KHR, "Failed to present swapchain image (%s)", string_VkResult( res ) );
 }
 
 VkImage WaylandWindow::GetImage()

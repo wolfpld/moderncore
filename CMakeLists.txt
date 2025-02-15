@@ -109,14 +109,17 @@ add_executable(embed helpers/embed.cpp)
 target_link_libraries(embed PRIVATE ${LZ4_LINK_LIBRARIES})
 target_include_directories(embed PRIVATE ${LZ4_INCLUDE_DIRS})
 
+function(Embed NAME FILE)
+    add_custom_command(
+        OUTPUT ${NAME}.cpp ${NAME}.hpp
+        COMMAND embed ${NAME} ${CMAKE_CURRENT_LIST_DIR}/${FILE} ${NAME}
+        DEPENDS embed ${CMAKE_CURRENT_LIST_DIR}/${FILE}
+    )
+endfunction()
 
 # mcoreutil
 
-add_custom_command(
-    OUTPUT CmykIcm.cpp CmykIcm.hpp
-    COMMAND embed CmykIcm ${CMAKE_CURRENT_LIST_DIR}/src/util/cmyk.icm CmykIcm
-    DEPENDS embed ${CMAKE_CURRENT_LIST_DIR}/src/util/cmyk.icm
-)
+Embed(CmykIcm src/util/cmyk.icm)
 
 set(MCOREUTIL_SRC
     contrib/ini/ini.c

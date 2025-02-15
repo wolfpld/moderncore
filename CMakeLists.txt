@@ -383,9 +383,12 @@ target_include_directories(mcore PRIVATE
 
 # iv
 
+Embed(HourglassSvg src/tools/iv/hourglass.svg)
+
 set(IV_SRC
     src/tools/iv/iv.cpp
     src/render/Texture.cpp
+    HourglassSvg.cpp
 )
 
 add_executable(iv ${IV_SRC})

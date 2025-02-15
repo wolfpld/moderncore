@@ -10,7 +10,7 @@
 #include "util/Logs.hpp"
 #include "util/Panic.hpp"
 
-SvgImage::SvgImage( FileWrapper& file, const char* path )
+SvgImage::SvgImage( FileWrapper& file )
     : m_buf( std::make_unique<FileBuffer>( file ) )
     , m_stream( g_memory_input_stream_new_from_data( m_buf->data(), m_buf->size(), nullptr ) )
     , m_handle( rsvg_handle_new_from_stream_sync( m_stream, nullptr, RSVG_HANDLE_FLAGS_NONE, nullptr, nullptr ) )

@@ -13,7 +13,7 @@ typedef struct _RsvgHandle RsvgHandle;
 class SvgImage : public VectorImage
 {
 public:
-    explicit SvgImage( FileWrapper& file, const char* path );
+    explicit SvgImage( FileWrapper& file );
     ~SvgImage() override;
 
     NoCopy( SvgImage );

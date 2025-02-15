@@ -9,7 +9,6 @@ class FileBuffer;
 
 typedef struct _GInputStream GInputStream;
 typedef struct _RsvgHandle RsvgHandle;
-typedef struct _GFile GFile;
 
 class SvgImage : public VectorImage
 {
@@ -29,7 +28,6 @@ public:
 private:
     std::unique_ptr<FileBuffer> m_buf;
 
-    GFile* m_file;
     GInputStream* m_stream;
     RsvgHandle* m_handle;
 

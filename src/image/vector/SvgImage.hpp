@@ -14,6 +14,7 @@ class SvgImage : public VectorImage
 {
 public:
     explicit SvgImage( FileWrapper& file );
+    explicit SvgImage( std::shared_ptr<FileBuffer> buf );
     ~SvgImage() override;
 
     NoCopy( SvgImage );
@@ -26,7 +27,7 @@ public:
     [[nodiscard]] std::unique_ptr<Bitmap> Rasterize( int width, int height ) override;
 
 private:
-    std::unique_ptr<FileBuffer> m_buf;
+    std::shared_ptr<FileBuffer> m_buf;
 
     GInputStream* m_stream;
     RsvgHandle* m_handle;

@@ -255,7 +255,7 @@ void WaylandWindow::CreateSwapchain( const VkExtent2D& extent )
 {
     auto oldSwapchain = m_swapchain;
     if( m_swapchain ) CleanupSwapchain();
-    m_swapchain = std::make_shared<VlkSwapchain>( *m_vkDevice, *m_vkSurface, extent, oldSwapchain ? *oldSwapchain : VK_NULL_HANDLE );
+    m_swapchain = std::make_shared<VlkSwapchain>( *m_vkDevice, *m_vkSurface, extent, oldSwapchain ? *oldSwapchain : VkSwapchainKHR { VK_NULL_HANDLE } );
     m_extent = m_swapchain->GetExtent();
     oldSwapchain.reset();
 

@@ -6,6 +6,7 @@
 
 #include "SvgImage.hpp"
 #include "util/Bitmap.hpp"
+#include "util/DataBuffer.hpp"
 #include "util/FileBuffer.hpp"
 #include "util/Logs.hpp"
 #include "util/Panic.hpp"
@@ -15,7 +16,7 @@ SvgImage::SvgImage( FileWrapper& file )
 {
 }
 
-SvgImage::SvgImage( std::shared_ptr<FileBuffer> buf )
+SvgImage::SvgImage( std::shared_ptr<DataBuffer> buf )
     : m_buf( std::move( buf ) )
     , m_stream( g_memory_input_stream_new_from_data( m_buf->data(), m_buf->size(), nullptr ) )
     , m_handle( rsvg_handle_new_from_stream_sync( m_stream, nullptr, RSVG_HANDLE_FLAGS_NONE, nullptr, nullptr ) )

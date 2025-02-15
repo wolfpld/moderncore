@@ -28,7 +28,6 @@ std::unique_ptr<WaylandWindow> g_waylandWindow;
 std::shared_ptr<VlkDevice> g_vkDevice;
 std::unique_ptr<Bitmap> g_bitmap;
 std::unique_ptr<Texture> g_texture;
-bool g_ready = false;
 
 
 void Render()
@@ -176,7 +175,7 @@ int main( int argc, char** argv )
 
     static constexpr WaylandWindow::Listener listener = {
         .OnClose = [] (void*, WaylandWindow*) { g_waylandDisplay->Stop(); },
-        .OnRender = [] (void*, WaylandWindow*) { if( g_ready ) Render(); return true; },
+        .OnRender = [] (void*, WaylandWindow*) { Render(); return true; },
         .OnResize = [] (void*, WaylandWindow*, uint32_t width, uint32_t height) { g_waylandWindow->Resize( width, height ); }
     };
 
@@ -202,7 +201,6 @@ int main( int argc, char** argv )
 
     g_texture = std::make_unique<Texture>( *g_vkDevice, *g_bitmap, VK_FORMAT_R8G8B8A8_SRGB );
 
-    g_ready = true;
     g_waylandWindow->InvokeRender();
     g_waylandDisplay->Run();
 

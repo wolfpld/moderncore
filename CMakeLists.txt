@@ -408,6 +408,9 @@ set(IV_SRC
 
 Embed(IV_SRC HourglassSvg src/tools/iv/assets/hourglass.svg)
 
+EmbedShader(IV_SRC BackgroundVert src/tools/iv/shader/Background.vert)
+EmbedShader(IV_SRC BackgroundFrag src/tools/iv/shader/Background.frag)
+
 add_executable(iv ${IV_SRC})
 target_link_libraries(iv PRIVATE
     mcoreutil

@@ -19,9 +19,10 @@ struct Vertex
     float x, y;
 };
 
-Background::Background( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format )
+Background::Background( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, float scale )
     : m_garbage( garbage )
     , m_device( std::move( device ) )
+    , m_scale( scale )
 {
     Unembed( BackgroundVert );
     Unembed( BackgroundFrag );

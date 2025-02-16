@@ -14,10 +14,12 @@ class VlkShader;
 class Background
 {
 public:
-    Background( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format );
+    Background( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, float scale );
     ~Background();
 
     void Render( VlkCommandBuffer& cmdbuf, VkExtent2D extent );
+
+    void SetScale( float scale ) { m_scale = scale; }
 
 private:
     GarbageChute& m_garbage;
@@ -27,4 +29,6 @@ private:
     std::shared_ptr<VlkPipelineLayout> m_pipelineLayout;
     std::shared_ptr<VlkPipeline> m_pipeline;
     std::shared_ptr<VlkBuffer> m_vertexBuffer;
+
+    float m_scale;
 };

@@ -48,7 +48,7 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
     m_device = std::make_shared<VlkDevice>( m_vkInstance, physDevice, VlkDevice::RequireGraphic | VlkDevice::RequirePresent, m_window->VkSurface() );
     m_window->SetDevice( m_device, VkExtent2D { 256, 256 } );
 
-    m_background = std::make_shared<Background>( *m_window, m_device, m_window->GetFormat() );
+    m_background = std::make_shared<Background>( *m_window, m_device, m_window->GetFormat(), m_scale );
 
     m_window->InvokeRender();
 }
@@ -92,6 +92,14 @@ bool Viewport::Render( WaylandWindow* window )
 void Viewport::Scale( WaylandWindow* window, uint32_t scale )
 {
     CheckPanic( window == m_window.get(), "Invalid window" );
+    if( m_background )
+    {
+        m_background->SetScale( scale / 120.f );
+    }
+    else
+    {
+        m_scale = scale / 120.f;
+    }
 }
 
 void Viewport::Resize( WaylandWindow* window, uint32_t width, uint32_t height )

@@ -28,4 +28,6 @@ private:
     std::shared_ptr<VlkDevice> m_device;
 
     std::shared_ptr<Background> m_background;
+
+    float m_scale = 1.f;
 };

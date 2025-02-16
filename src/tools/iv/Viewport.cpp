@@ -1,6 +1,9 @@
+#include <vulkan/vulkan.h>
+
 #include "Viewport.hpp"
 #include "util/Invoke.hpp"
 #include "util/Panic.hpp"
+#include "vulkan/VlkCommandBuffer.hpp"
 #include "vulkan/VlkDevice.hpp"
 #include "vulkan/VlkInstance.hpp"
 #include "vulkan/VlkPhysicalDevice.hpp"
@@ -60,8 +63,29 @@ bool Viewport::Render( WaylandWindow* window )
 {
     CheckPanic( window == m_window.get(), "Invalid window" );
     auto& cmdbuf = window->BeginFrame( true );
+
+    const VkRenderingAttachmentInfo attachmentInfo = {
+        .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+        .imageView = window->GetImageView(),
+        .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        .loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+        .storeOp = VK_ATTACHMENT_STORE_OP_STORE
+    };
+    const VkRenderingInfo renderingInfo = {
+        .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+        .renderArea = { { 0, 0 }, window->GetExtent() },
+        .layerCount = 1,
+        .colorAttachmentCount = 1,
+        .pColorAttachments = &attachmentInfo
+    };
+
+    vkCmdBeginRendering( cmdbuf, &renderingInfo );
+
     m_background->Render( cmdbuf, window->GetExtent() );
+
+    vkCmdEndRendering( cmdbuf );
     window->EndFrame();
+
     return true;
 }
 

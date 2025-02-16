@@ -132,10 +132,12 @@ Background::Background( GarbageChute& garbage, std::shared_ptr<VlkDevice> device
 
 Background::~Background()
 {
-    m_garbage.Recycle( std::move( m_pipeline ) );
-    m_garbage.Recycle( std::move( m_pipelineLayout ) );
-    m_garbage.Recycle( std::move( m_shader ) );
-    m_garbage.Recycle( std::move( m_vertexBuffer ) );
+    m_garbage.Recycle( {
+        std::move( m_pipeline ),
+        std::move( m_pipelineLayout ),
+        std::move( m_shader ),
+        std::move( m_vertexBuffer )
+    } );
 }
 
 void Background::Render( VlkCommandBuffer& cmdbuf, VkExtent2D extent )

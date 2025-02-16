@@ -139,8 +139,8 @@ std::unique_ptr<Bitmap> JpgLoader::Load()
         else
         {
             mclog( LogLevel::Info, "No ICC profile found, using default" );
-            EmbedData cmyk( Embed::CmykIcmSize, Embed::CmykIcmLz4Size, Embed::CmykIcmData );
-            profileIn = cmsOpenProfileFromMem( cmyk.data(), cmyk.size() );
+            Unembed( CmykIcm );
+            profileIn = cmsOpenProfileFromMem( CmykIcm.data(), CmykIcm.size() );
         }
 
         auto profileOut = cmsCreate_sRGBProfile();

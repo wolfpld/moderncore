@@ -12,7 +12,15 @@ VlkGarbage::~VlkGarbage()
 
 void VlkGarbage::Recycle( std::shared_ptr<VlkFence> fence, std::vector<std::shared_ptr<VlkBase>>&& objects )
 {
-    m_garbage.emplace( std::move( fence ), std::move( objects ) );
+    auto it = m_garbage.find( fence );
+    if( it != m_garbage.end() )
+    {
+        it->second.insert( it->second.end(), objects.begin(), objects.end() );
+    }
+    else
+    {
+        m_garbage.emplace( std::move( fence ), std::move( objects ) );
+    }
 }
 
 void VlkGarbage::Collect()

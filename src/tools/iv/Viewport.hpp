@@ -3,6 +3,7 @@
 #include <memory>
 #include <stdint.h>
 
+#include "Background.hpp"
 #include "wayland/WaylandWindow.hpp"
 
 class VlkDevice;
@@ -26,4 +27,6 @@ private:
 
     std::unique_ptr<WaylandWindow> m_window;
     std::shared_ptr<VlkDevice> m_device;
+
+    std::shared_ptr<Background> m_background;
 };

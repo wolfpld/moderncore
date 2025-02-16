@@ -37,7 +37,9 @@ private:
     VkPhysicalDeviceMemoryProperties m_memoryProperties;
 
     VkPhysicalDeviceFeatures2 m_features;
-    VkPhysicalDeviceDynamicRenderingFeatures m_dynamicRenderingFeatures;
+    VkPhysicalDeviceVulkan11Features m_features11;
+    VkPhysicalDeviceVulkan12Features m_features12;
+    VkPhysicalDeviceVulkan13Features m_features13;
 
     std::vector<VkQueueFamilyProperties> m_queueFamilyProperties;
     std::vector<VkExtensionProperties> m_extensionProperties;

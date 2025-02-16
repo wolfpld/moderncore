@@ -23,10 +23,21 @@ VlkPhysicalDevice::VlkPhysicalDevice( VkPhysicalDevice physDev )
     vkGetPhysicalDeviceProperties( physDev, &m_properties );
     vkGetPhysicalDeviceMemoryProperties( physDev, &m_memoryProperties );
 
-    m_dynamicRenderingFeatures = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES };
-
-    m_features = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2 };
-    m_features.pNext = &m_dynamicRenderingFeatures;
+    m_features13 = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES
+    };
+    m_features12 = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
+        .pNext = &m_features13
+    };
+    m_features11 = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,
+        .pNext = &m_features12
+    };
+    m_features = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
+        .pNext = &m_features11
+    };
 
     vkGetPhysicalDeviceFeatures2( physDev, &m_features );
 }
@@ -57,7 +68,7 @@ bool VlkPhysicalDevice::HasPushDescriptor() const
 
 bool VlkPhysicalDevice::HasDynamicRendering() const
 {
-    return m_dynamicRenderingFeatures.dynamicRendering == VK_TRUE;
+    return m_features13.dynamicRendering == VK_TRUE;
 }
 
 bool VlkPhysicalDevice::HasCalibratedTimestamps() const

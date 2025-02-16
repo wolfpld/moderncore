@@ -383,7 +383,7 @@ target_include_directories(mcore PRIVATE
 
 # iv
 
-Embed(HourglassSvg src/tools/iv/hourglass.svg)
+Embed(HourglassSvg src/tools/iv/assets/hourglass.svg)
 
 set(IV_SRC
     src/tools/iv/Background.cpp

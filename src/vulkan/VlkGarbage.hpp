@@ -3,18 +3,13 @@
 #include <memory>
 #include <vector>
 
-#include "VlkBase.hpp"
+#include "util/RobinHood.hpp"
 
+class VlkBase;
 class VlkFence;
 
 class VlkGarbage
 {
-    struct Garbage
-    {
-        std::shared_ptr<VlkFence> fence;
-        std::vector<std::shared_ptr<VlkBase>> objects;
-    };
-
 public:
     ~VlkGarbage();
 
@@ -22,5 +17,5 @@ public:
     void Collect();
 
 private:
-    std::vector<Garbage> m_garbage;
+    unordered_flat_map<std::shared_ptr<VlkFence>, std::vector<std::shared_ptr<VlkBase>>> m_garbage;
 };

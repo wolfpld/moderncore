@@ -4,12 +4,13 @@
 #include <vector>
 #include <vulkan/vulkan.h>
 
+#include "VlkBase.hpp"
 #include "util/DataContainer.hpp"
 #include "util/NoCopy.hpp"
 
 class VlkShaderModule;
 
-class VlkShader
+class VlkShader : public VlkBase
 {
 public:
     struct Stage

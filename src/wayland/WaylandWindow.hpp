@@ -8,6 +8,7 @@
 #include "util/NoCopy.hpp"
 #include "vulkan/VlkSurface.hpp"
 #include "vulkan/VlkSwapchain.hpp"
+#include "vulkan/ext/GarbageChute.hpp"
 
 #include "wayland-xdg-decoration-client-protocol.h"
 #include "wayland-xdg-shell-client-protocol.h"
@@ -22,7 +23,7 @@ class VlkInstance;
 class VlkSemaphore;
 class WaylandDisplay;
 
-class WaylandWindow
+class WaylandWindow : public GarbageChute
 {
     struct FrameData
     {
@@ -71,6 +72,9 @@ public:
     [[nodiscard]] xdg_toplevel* XdgToplevel() { return m_xdgToplevel; }
     [[nodiscard]] VkSurfaceKHR VkSurface() { return *m_vkSurface; }
     [[nodiscard]] VlkDevice& Device() { return *m_vkDevice; }
+
+    void Recycle( std::shared_ptr<VlkBase>&& garbage ) override;
+    void Recycle( std::vector<std::shared_ptr<VlkBase>>&& garbage ) override;
 
 private:
     void CreateSwapchain( const VkExtent2D& extent );

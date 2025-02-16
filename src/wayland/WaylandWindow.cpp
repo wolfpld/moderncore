@@ -251,6 +251,18 @@ void WaylandWindow::InvokeRender()
     if( !InvokeRet( OnRender, false, this ) ) wl_surface_commit( m_surface );
 }
 
+void WaylandWindow::Recycle( std::shared_ptr<VlkBase>&& garbage )
+{
+    auto& current = m_frameData[m_frameIdx];
+    m_garbage->Recycle( current.renderFence, std::move( garbage ) );
+}
+
+void WaylandWindow::Recycle( std::vector<std::shared_ptr<VlkBase>>&& garbage )
+{
+    auto& current = m_frameData[m_frameIdx];
+    m_garbage->Recycle( current.renderFence, std::move( garbage ) );
+}
+
 void WaylandWindow::CreateSwapchain( const VkExtent2D& extent )
 {
     auto oldSwapchain = m_swapchain;

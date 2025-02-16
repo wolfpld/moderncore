@@ -48,7 +48,7 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
     m_device = std::make_shared<VlkDevice>( m_vkInstance, physDevice, VlkDevice::RequireGraphic | VlkDevice::RequirePresent, m_window->VkSurface() );
     m_window->SetDevice( m_device, VkExtent2D { 256, 256 } );
 
-    m_background = std::make_shared<Background>( *m_window, m_device );
+    m_background = std::make_shared<Background>( *m_window, m_device, m_window->GetFormat() );
 
     m_window->InvokeRender();
 }

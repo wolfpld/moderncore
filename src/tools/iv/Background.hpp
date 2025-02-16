@@ -14,7 +14,7 @@ class VlkShader;
 class Background
 {
 public:
-    Background( GarbageChute& garbage, std::shared_ptr<VlkDevice> device );
+    Background( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format );
     ~Background();
 
     void Render( VlkCommandBuffer& cmdbuf, VkExtent2D extent );

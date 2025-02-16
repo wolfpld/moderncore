@@ -19,7 +19,7 @@ struct Vertex
     float x, y;
 };
 
-Background::Background( GarbageChute& garbage, std::shared_ptr<VlkDevice> device )
+Background::Background( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format )
     : m_garbage( garbage )
     , m_device( std::move( device ) )
 {
@@ -80,10 +80,10 @@ Background::Background( GarbageChute& garbage, std::shared_ptr<VlkDevice> device
         .attachmentCount = 1,
         .pAttachments = &colorBlendAttachment
     };
-    static constexpr std::array colorAttachmentFormats = {
-        VK_FORMAT_R8G8B8A8_SRGB
+    const std::array colorAttachmentFormats = {
+        format
     };
-    constexpr VkPipelineRenderingCreateInfo rendering = {
+    const VkPipelineRenderingCreateInfo rendering = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
         .colorAttachmentCount = colorAttachmentFormats.size(),
         .pColorAttachmentFormats = colorAttachmentFormats.data()

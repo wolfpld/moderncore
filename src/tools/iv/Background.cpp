@@ -6,6 +6,7 @@
 #include "BackgroundVert.hpp"
 #include "util/EmbedData.hpp"
 #include "vulkan/VlkBuffer.hpp"
+#include "vulkan/VlkCommandBuffer.hpp"
 #include "vulkan/VlkDevice.hpp"
 #include "vulkan/VlkPipeline.hpp"
 #include "vulkan/VlkPipelineLayout.hpp"
@@ -135,4 +136,24 @@ Background::~Background()
     m_garbage.Recycle( std::move( m_pipelineLayout ) );
     m_garbage.Recycle( std::move( m_shader ) );
     m_garbage.Recycle( std::move( m_vertexBuffer ) );
+}
+
+void Background::Render( VlkCommandBuffer& cmdbuf, VkExtent2D extent )
+{
+    VkViewport viewport = {
+        .width = float( extent.width ),
+        .height = float( extent.height )
+    };
+    VkRect2D scissor = {
+        .extent = extent
+    };
+
+    std::array<VkBuffer, 1> vertexBuffers = { *m_vertexBuffer };
+    constexpr std::array<VkDeviceSize, 1> offsets = { 0 };
+
+    vkCmdBindPipeline( cmdbuf, VK_PIPELINE_BIND_POINT_GRAPHICS, *m_pipeline );
+    vkCmdSetViewport( cmdbuf, 0, 1, &viewport );
+    vkCmdSetScissor( cmdbuf, 0, 1, &scissor );
+    vkCmdBindVertexBuffers( cmdbuf, 0, 1, vertexBuffers.data(), offsets.data() );
+    vkCmdDraw( cmdbuf, 3, 1, 0, 0 );
 }

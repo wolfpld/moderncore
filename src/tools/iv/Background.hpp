@@ -1,9 +1,11 @@
 #pragma once
 
 #include <memory>
+#include <vulkan/vulkan.h>
 
 class GarbageChute;
 class VlkBuffer;
+class VlkCommandBuffer;
 class VlkDevice;
 class VlkPipeline;
 class VlkPipelineLayout;
@@ -14,6 +16,8 @@ class Background
 public:
     Background( GarbageChute& garbage, std::shared_ptr<VlkDevice> device );
     ~Background();
+
+    void Render( VlkCommandBuffer& cmdbuf, VkExtent2D extent );
 
 private:
     GarbageChute& m_garbage;

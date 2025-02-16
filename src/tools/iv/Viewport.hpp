@@ -14,7 +14,6 @@ class Viewport
 {
 public:
     Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu );
-    ~Viewport();
 
 private:
     void Close( WaylandWindow* window );

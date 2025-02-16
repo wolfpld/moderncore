@@ -50,10 +50,6 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
     m_window->InvokeRender();
 }
 
-Viewport::~Viewport()
-{
-}
-
 void Viewport::Close( WaylandWindow* window )
 {
     CheckPanic( window == m_window.get(), "Invalid window" );

@@ -60,6 +60,7 @@ bool Viewport::Render( WaylandWindow* window )
 {
     CheckPanic( window == m_window.get(), "Invalid window" );
     auto& cmdbuf = window->BeginFrame( true );
+    m_background->Render( cmdbuf, window->GetExtent() );
     window->EndFrame();
     return true;
 }

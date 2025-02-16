@@ -226,6 +226,11 @@ VkImageView WaylandWindow::GetImageView()
     return m_swapchain->GetImageViews()[m_imageIdx];
 }
 
+VkFormat WaylandWindow::GetFormat()
+{
+    return m_swapchain->GetFormat();
+}
+
 void WaylandWindow::SetListener( const Listener* listener, void* listenerPtr )
 {
     m_listener = listener;

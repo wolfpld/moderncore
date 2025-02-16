@@ -59,6 +59,7 @@ public:
 
     VkImage GetImage();
     VkImageView GetImageView();
+    VkFormat GetFormat();
 
     void SetListener( const Listener* listener, void* listenerPtr );
     void SetDevice( std::shared_ptr<VlkDevice> device, const VkExtent2D& extent );

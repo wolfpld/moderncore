@@ -119,6 +119,21 @@ function(Embed LIST NAME FILE)
     return(PROPAGATE ${LIST})
 endfunction()
 
+function(EmbedShader LIST NAME FILE)
+    add_custom_command(
+        OUTPUT ${NAME}.spv
+        COMMAND ${GLSLC} --target-env=vulkan1.3 -O -o ${NAME}.spv ${CMAKE_CURRENT_LIST_DIR}/${FILE}
+        DEPENDS ${GLSLC} ${CMAKE_CURRENT_LIST_DIR}/${FILE}
+    )
+    add_custom_command(
+        OUTPUT ${NAME}.cpp ${NAME}.hpp
+        COMMAND embed ${NAME} ${NAME}.spv ${NAME}
+        DEPENDS embed ${NAME}.spv
+    )
+    list(APPEND ${LIST} ${NAME}.cpp)
+    return(PROPAGATE ${LIST})
+endfunction()
+
 # mcoreutil
 
 set(MCOREUTIL_SRC

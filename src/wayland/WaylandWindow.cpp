@@ -249,6 +249,8 @@ void WaylandWindow::InvokeRender()
     wl_callback_add_listener( cb, &listener, this );
 
     if( !InvokeRet( OnRender, false, this ) ) wl_surface_commit( m_surface );
+
+    m_garbage->Collect();
 }
 
 void WaylandWindow::Recycle( std::shared_ptr<VlkBase>&& garbage )

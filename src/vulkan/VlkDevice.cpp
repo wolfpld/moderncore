@@ -287,23 +287,34 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
         deviceExtensions.emplace_back( VK_KHR_EXTERNAL_SEMAPHORE_FD_EXTENSION_NAME );
     }
 
-    VkPhysicalDeviceDynamicRenderingFeatures renderFeatures = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES };
-    renderFeatures.dynamicRendering = VK_TRUE;
+    VkPhysicalDeviceVulkan13Features features13 = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
+        .dynamicRendering = VK_TRUE
+    };
+    VkPhysicalDeviceVulkan12Features features12 = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
+        .pNext = &features13
+    };
+    VkPhysicalDeviceVulkan11Features features11 = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,
+        .pNext = &features12
+    };
+    VkPhysicalDeviceFeatures2 features = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
+        .pNext = &features11
+    };
 
 #ifdef TRACY_ENABLE
-    VkPhysicalDeviceVulkan12Features features12 = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES };
-
     bool profile = m_physDev->HasCalibratedTimestamps();
     if( profile )
     {
         deviceExtensions.emplace_back( VK_EXT_CALIBRATED_TIMESTAMPS_EXTENSION_NAME );
         features12.hostQueryReset = VK_TRUE;
-        renderFeatures.pNext = &features12;
     }
 #endif
 
     VkDeviceCreateInfo devInfo = { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
-    devInfo.pNext = &renderFeatures;
+    devInfo.pNext = &features;
     devInfo.queueCreateInfoCount = (uint32_t)queueCreate.size();
     devInfo.pQueueCreateInfos = queueCreate.data();
     devInfo.enabledExtensionCount = (uint32_t)deviceExtensions.size();

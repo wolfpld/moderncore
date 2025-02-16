@@ -109,17 +109,17 @@ add_executable(embed helpers/embed.cpp)
 target_link_libraries(embed PRIVATE ${LZ4_LINK_LIBRARIES})
 target_include_directories(embed PRIVATE ${LZ4_INCLUDE_DIRS})
 
-function(Embed NAME FILE)
+function(Embed LIST NAME FILE)
     add_custom_command(
         OUTPUT ${NAME}.cpp ${NAME}.hpp
         COMMAND embed ${NAME} ${CMAKE_CURRENT_LIST_DIR}/${FILE} ${NAME}
         DEPENDS embed ${CMAKE_CURRENT_LIST_DIR}/${FILE}
     )
+    list(APPEND ${LIST} ${NAME}.cpp)
+    return(PROPAGATE ${LIST})
 endfunction()
 
 # mcoreutil
-
-Embed(CmykIcm src/util/cmyk.icm)
 
 set(MCOREUTIL_SRC
     contrib/ini/ini.c
@@ -146,8 +146,9 @@ set(MCOREUTIL_SRC
     src/util/TonemapperAgx.cpp
     src/util/TonemapperPbr.cpp
     src/util/stb_image_resize_impl.cpp
-    CmykIcm.cpp
 )
+
+Embed(MCOREUTIL_SRC CmykIcm src/util/cmyk.icm)
 
 add_library(mcoreutil ${MCOREUTIL_SRC})
 target_link_libraries(mcoreutil PRIVATE
@@ -383,15 +384,14 @@ target_include_directories(mcore PRIVATE
 
 # iv
 
-Embed(HourglassSvg src/tools/iv/assets/hourglass.svg)
-
 set(IV_SRC
     src/tools/iv/Background.cpp
     src/tools/iv/iv.cpp
     src/tools/iv/Viewport.cpp
     src/render/Texture.cpp
-    HourglassSvg.cpp
 )
+
+Embed(IV_SRC HourglassSvg src/tools/iv/assets/hourglass.svg)
 
 add_executable(iv ${IV_SRC})
 target_link_libraries(iv PRIVATE

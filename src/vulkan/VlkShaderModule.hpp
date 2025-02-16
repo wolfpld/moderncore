@@ -10,7 +10,7 @@ class VlkShaderModule : public VlkBase
 {
 public:
     template<DataContainer T>
-    VlkShaderModule( VkDevice device, T& data ) : VlkShaderModule( device, data.data(), data.size() ) {}
+    VlkShaderModule( VkDevice device, T& data ) : VlkShaderModule( device, (const char*)data.data(), data.size() ) {}
 
     VlkShaderModule( VkDevice device, const char* data, size_t size );
     ~VlkShaderModule();

@@ -10,6 +10,19 @@ VlkGarbage::~VlkGarbage()
     for( auto& g : m_garbage ) g.first->Wait();
 }
 
+void VlkGarbage::Recycle( std::shared_ptr<VlkFence> fence, std::shared_ptr<VlkBase>&& object )
+{
+    auto it = m_garbage.find( fence );
+    if( it != m_garbage.end() )
+    {
+        it->second.emplace_back( std::move( object ) );
+    }
+    else
+    {
+        m_garbage.emplace( std::move( fence ), std::vector<std::shared_ptr<VlkBase>> { std::move( object ) } );
+    }
+}
+
 void VlkGarbage::Recycle( std::shared_ptr<VlkFence> fence, std::vector<std::shared_ptr<VlkBase>>&& objects )
 {
     auto it = m_garbage.find( fence );

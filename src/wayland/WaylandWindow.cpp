@@ -281,9 +281,7 @@ void WaylandWindow::CreateSwapchain( const VkExtent2D& extent )
 void WaylandWindow::CleanupSwapchain( bool withSurface )
 {
     auto& current = m_frameData[m_frameIdx];
-    m_garbage->Recycle( std::move( current.renderFence ), {
-        current.commandBuffer
-    } );
+    m_garbage->Recycle( std::move( current.renderFence ), current.commandBuffer );
     std::vector<std::shared_ptr<VlkBase>> objects = {
         current.imageAvailable,
         current.renderFinished,
@@ -296,9 +294,7 @@ void WaylandWindow::CleanupSwapchain( bool withSurface )
     while( idx != m_frameIdx )
     {
         auto& frame = m_frameData[idx];
-        m_garbage->Recycle( std::move( frame.renderFence ), {
-            frame.commandBuffer
-        } );
+        m_garbage->Recycle( std::move( frame.renderFence ), frame.commandBuffer );
         m_garbage->Recycle( std::move( frame.presentFence ), {
             frame.imageAvailable,
             frame.renderFinished

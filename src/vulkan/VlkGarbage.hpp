@@ -18,7 +18,7 @@ class VlkGarbage
 public:
     ~VlkGarbage();
 
-    void Add( std::shared_ptr<VlkFence> fence, std::vector<std::shared_ptr<VlkBase>>&& objects );
+    void Recycle( std::shared_ptr<VlkFence> fence, std::vector<std::shared_ptr<VlkBase>>&& objects );
     void Collect();
 
 private:

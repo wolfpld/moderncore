@@ -9,7 +9,7 @@ VlkGarbage::~VlkGarbage()
     for( auto& g : m_garbage ) g.fence->Wait();
 }
 
-void VlkGarbage::Add( std::shared_ptr<VlkFence> fence, std::vector<std::shared_ptr<VlkBase>>&& objects )
+void VlkGarbage::Recycle( std::shared_ptr<VlkFence> fence, std::vector<std::shared_ptr<VlkBase>>&& objects )
 {
     m_garbage.emplace_back( Garbage { std::move( fence ), std::move( objects ) } );
 }

@@ -3,10 +3,11 @@
 #include "util/Panic.hpp"
 #include "vulkan/VlkDevice.hpp"
 #include "vulkan/VlkInstance.hpp"
+#include "vulkan/VlkPhysicalDevice.hpp"
 #include "vulkan/ext/PhysDevSel.hpp"
 #include "wayland/WaylandDisplay.hpp"
 
-Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance )
+Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
     : m_display( display )
     , m_vkInstance( vkInstance )
     , m_window( std::make_unique<WaylandWindow>( display, vkInstance ) )
@@ -28,10 +29,20 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance )
     CheckPanic( !devices.empty(), "No Vulkan physical devices found" );
     mclog( LogLevel::Info, "Found %d Vulkan physical devices", devices.size() );
 
-    auto best = PhysDevSel::PickBest( devices, m_window->VkSurface(), PhysDevSel::RequireGraphic );
-    CheckPanic( best, "Failed to find suitable Vulkan physical device" );
+    std::shared_ptr<VlkPhysicalDevice> physDevice;
+    if( gpu >= 0 )
+    {
+        CheckPanic( gpu < devices.size(), "Invalid GPU id, must be in range 0 - %d", devices.size() - 1 );
+        physDevice = devices[gpu];
+    }
+    else
+    {
+        physDevice = PhysDevSel::PickBest( devices, m_window->VkSurface(), PhysDevSel::RequireGraphic );
+        CheckPanic( physDevice, "Failed to find suitable Vulkan physical device" );
+    }
+    mclog( LogLevel::Info, "Selected GPU: %s", physDevice->Properties().deviceName );
 
-    m_device = std::make_shared<VlkDevice>( m_vkInstance, best, VlkDevice::RequireGraphic | VlkDevice::RequirePresent, m_window->VkSurface() );
+    m_device = std::make_shared<VlkDevice>( m_vkInstance, physDevice, VlkDevice::RequireGraphic | VlkDevice::RequirePresent, m_window->VkSurface() );
     m_window->SetDevice( m_device, VkExtent2D { 256, 256 } );
     m_window->InvokeRender();
 }

@@ -15,6 +15,7 @@ static void PrintHelp()
     printf( "  -d, --debug                  Enable debug output\n" );
     printf( "  -e, --external               Show external callstacks\n" );
     printf( "  -V, --validation [on|off]    Enable or disable Vulkan validation layers\n" );
+    printf( "  -g, --gpu [id]               Select GPU by id\n" );
 }
 
 int main( int argc, char** argv )
@@ -26,15 +27,18 @@ int main( int argc, char** argv )
     bool enableValidation = true;
 #endif
 
+    int gpu = -1;
+
     struct option longOptions[] = {
         { "debug", no_argument, nullptr, 'd' },
         { "external", no_argument, nullptr, 'e' },
         { "validation", required_argument, nullptr, 'V' },
+        { "gpu", required_argument, nullptr, 'g' },
         {}
     };
 
     int opt;
-    while( ( opt = getopt_long( argc, argv, "deV:", longOptions, nullptr ) ) != -1 )
+    while( ( opt = getopt_long( argc, argv, "deV:g:", longOptions, nullptr ) ) != -1 )
     {
         switch (opt)
         {
@@ -47,6 +51,9 @@ int main( int argc, char** argv )
         case 'V':
             enableValidation = ParseBoolean( optarg );
             break;
+        case 'g':
+            gpu = atoi( optarg );
+            break;
         default:
             PrintHelp();
             return 1;
@@ -58,7 +65,7 @@ int main( int argc, char** argv )
     auto waylandDisplay = std::make_unique<WaylandDisplay>();
     waylandDisplay->Connect();
 
-    auto viewport = std::make_unique<Viewport>( *waylandDisplay, *vkInstance );
+    auto viewport = std::make_unique<Viewport>( *waylandDisplay, *vkInstance, gpu );
     waylandDisplay->Run();
 
     return 0;

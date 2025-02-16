@@ -12,7 +12,7 @@ class WaylandDisplay;
 class Viewport
 {
 public:
-    Viewport( WaylandDisplay& display, VlkInstance& vkInstance );
+    Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu );
     ~Viewport();
 
 private:

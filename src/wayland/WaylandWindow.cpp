@@ -1,10 +1,17 @@
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string>
+#include <sys/mman.h>
 #include <tracy/Tracy.hpp>
+#include <unistd.h>
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan_wayland.h>
 
 #include "WaylandDisplay.hpp"
 #include "WaylandWindow.hpp"
+#include "image/vector/SvgImage.hpp"
+#include "util/Bitmap.hpp"
 #include "util/Invoke.hpp"
 #include "util/Panic.hpp"
 #include "vulkan/VlkCommandBuffer.hpp"
@@ -17,7 +24,8 @@
 #include "vulkan/VlkSwapchain.hpp"
 
 WaylandWindow::WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance )
-    : m_vkInstance( vkInstance )
+    : m_display( display )
+    , m_vkInstance( vkInstance )
     , m_garbage( std::make_shared<VlkGarbage>() )
 {
     ZoneScoped;
@@ -88,6 +96,65 @@ void WaylandWindow::SetTitle( const char* title )
 {
     m_title = title;
     xdg_toplevel_set_title( m_xdgToplevel, title );
+}
+
+void WaylandWindow::SetIcon( const SvgImage& icon )
+{
+    const auto mgr = m_display.IconManager();
+    if( !mgr ) return;
+    const auto path = getenv( "XDG_RUNTIME_DIR" );
+    if( !path ) return;
+    const auto sizes = m_display.IconSizes();
+    if( sizes.empty() ) return;
+    const auto shm = m_display.Shm();
+
+    size_t total = 0;
+    for( auto sz : sizes ) total += sz * sz;
+    total *= 4;
+
+    std::string shmPath = path;
+    shmPath.append( "/mcore_icon-XXXXXX" );
+    int fd = mkstemp( shmPath.data() );
+    if( fd < 0 ) return;
+    unlink( shmPath.data() );
+    ftruncate( fd, total );
+    auto membuf = (char*)mmap( nullptr, total, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0 );
+    if( membuf == MAP_FAILED )
+    {
+        close( fd );
+        return;
+    }
+
+    auto pool = wl_shm_create_pool( shm, fd, total );
+    close( fd );
+    auto wlicon = xdg_toplevel_icon_manager_v1_create_icon( mgr );
+
+    std::vector<wl_buffer*> bufs;
+    int32_t offset = 0;
+    for( auto sz : sizes )
+    {
+        auto buf = wl_shm_pool_create_buffer( pool, offset, sz, sz, sz * 4, WL_SHM_FORMAT_ARGB8888 );
+        bufs.push_back( buf );
+
+        auto bmp = icon.Rasterize( sz, sz );
+        auto src = (uint32_t*)bmp->Data();
+        auto dst = (uint32_t*)(membuf + offset);
+        offset += sz * sz * 4;
+
+        int left = sz * sz;
+        while( left-- )
+        {
+            uint32_t px = *src++;
+            *dst++ = ( px & 0xFF00FF00 ) | ( px & 0x00FF0000 ) >> 16 | ( px & 0x000000FF ) << 16;
+        }
+
+        xdg_toplevel_icon_v1_add_buffer( wlicon, buf, sz );
+    }
+
+    xdg_toplevel_icon_manager_v1_set_icon( mgr, m_xdgToplevel, wlicon );
+    xdg_toplevel_icon_v1_destroy( wlicon );
+    for( auto buf : bufs ) wl_buffer_destroy( buf );
+    wl_shm_pool_destroy( pool );
 }
 
 void WaylandWindow::Resize( uint32_t width, uint32_t height )

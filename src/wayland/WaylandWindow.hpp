@@ -15,6 +15,7 @@
 #include "wayland-fractional-scale-client-protocol.h"
 #include "wayland-viewporter-client-protocol.h"
 
+class SvgImage;
 class VlkCommandBuffer;
 class VlkDevice;
 class VlkFence;
@@ -50,6 +51,7 @@ public:
 
     void SetAppId( const char* appId );
     void SetTitle( const char* title );
+    void SetIcon( const SvgImage& icon );
     void Resize( uint32_t width, uint32_t height );
     void LockSize();
     void Commit();
@@ -92,6 +94,7 @@ private:
 
     void FrameDone( struct wl_callback* cb, uint32_t time );
 
+    WaylandDisplay& m_display;
     wl_surface* m_surface;
     xdg_surface* m_xdgSurface;
     xdg_toplevel* m_xdgToplevel;

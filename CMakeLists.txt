@@ -321,6 +321,7 @@ ecm_add_wayland_client_protocol(MCOREWAYLAND_SRC
 
 add_library(mcorewayland ${MCOREWAYLAND_SRC})
 target_link_libraries(mcorewayland PRIVATE
+    mcoreimage
     mcoreutil
     mcorevulkan
     Tracy::TracyClient

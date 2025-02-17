@@ -56,7 +56,7 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
     mclog( LogLevel::Info, "Selected GPU: %s", physDevice->Properties().deviceName );
 
     m_device = std::make_shared<VlkDevice>( m_vkInstance, physDevice, VlkDevice::RequireGraphic | VlkDevice::RequirePresent, m_window->VkSurface() );
-    m_window->SetDevice( m_device, VkExtent2D { 256, 256 } );
+    m_window->SetDevice( m_device, VkExtent2D { uint32_t( 256 * m_scale ), uint32_t( 256 * m_scale ) } );
 
     const auto format = m_window->GetFormat();
     m_background = std::make_shared<Background>( *m_window, m_device, format, m_scale );

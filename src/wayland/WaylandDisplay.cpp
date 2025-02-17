@@ -14,6 +14,7 @@ WaylandDisplay::WaylandDisplay()
 WaylandDisplay::~WaylandDisplay()
 {
     m_seat.reset();
+    if( m_iconManager ) xdg_toplevel_icon_manager_v1_destroy( m_iconManager );
     if( m_cursorShapeManager ) wp_cursor_shape_manager_v1_destroy( m_cursorShapeManager );
     if( m_viewporter ) wp_viewporter_destroy( m_viewporter );
     if( m_fractionalScaleManager ) wp_fractional_scale_manager_v1_destroy( m_fractionalScaleManager );
@@ -102,6 +103,16 @@ void WaylandDisplay::RegistryGlobal( wl_registry* reg, uint32_t name, const char
         m_cursorShapeManager = RegistryBind( wp_cursor_shape_manager_v1 );
         if( m_seat ) m_seat->SetCursorShapeManager( m_cursorShapeManager );
     }
+    else if( strcmp( interface, xdg_toplevel_icon_manager_v1_interface.name ) == 0 )
+    {
+        static constexpr xdg_toplevel_icon_manager_v1_listener listener = {
+            .icon_size = Method( IconManagerSize ),
+            .done = []( void*, xdg_toplevel_icon_manager_v1* ) {}
+        };
+
+        m_iconManager = RegistryBind( xdg_toplevel_icon_manager_v1 );
+        xdg_toplevel_icon_manager_v1_add_listener( m_iconManager, &listener, this );
+    }
 }
 
 void WaylandDisplay::RegistryGlobalRemove( wl_registry* reg, uint32_t name )
@@ -111,4 +122,9 @@ void WaylandDisplay::RegistryGlobalRemove( wl_registry* reg, uint32_t name )
 void WaylandDisplay::XdgWmPing( xdg_wm_base* shell, uint32_t serial )
 {
     xdg_wm_base_pong( shell, serial );
+}
+
+void WaylandDisplay::IconManagerSize( xdg_toplevel_icon_manager_v1* manager, int32_t size )
+{
+    m_iconSizes.emplace_back( size );
 }

@@ -4,13 +4,14 @@
 #include <vulkan/vulkan.h>
 
 #include "util/NoCopy.hpp"
+#include "vulkan/VlkBase.hpp"
 #include "vulkan/VlkImage.hpp"
 #include "vulkan/VlkImageView.hpp"
 
 class Bitmap;
 class VlkDevice;
 
-class Texture
+class Texture : public VlkBase
 {
 public:
     Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format );

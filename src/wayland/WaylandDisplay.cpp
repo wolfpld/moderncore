@@ -20,6 +20,7 @@ WaylandDisplay::~WaylandDisplay()
     if( m_fractionalScaleManager ) wp_fractional_scale_manager_v1_destroy( m_fractionalScaleManager );
     if( m_decorationManager ) zxdg_decoration_manager_v1_destroy( m_decorationManager );
     if( m_xdgWmBase ) xdg_wm_base_destroy( m_xdgWmBase );
+    if( m_shm ) wl_shm_destroy( m_shm );
     if( m_compositor ) wl_compositor_destroy( m_compositor );
     if( m_dpy ) wl_display_disconnect( m_dpy );
 }
@@ -40,6 +41,7 @@ void WaylandDisplay::Connect()
     wl_display_roundtrip( m_dpy );
 
     CheckPanic( m_compositor, "Failed to create Wayland compositor" );
+    CheckPanic( m_shm, "Failed to create Wayland shm" );
     CheckPanic( m_xdgWmBase, "Failed to create Wayland xdg_wm_base" );
     CheckPanic( m_seat, "Failed to create Wayland seat" );
     CheckPanic( m_viewporter, "Failed to create Wayland viewporter" );
@@ -70,6 +72,10 @@ void WaylandDisplay::RegistryGlobal( wl_registry* reg, uint32_t name, const char
     if( strcmp( interface, wl_compositor_interface.name ) == 0 )
     {
         m_compositor = RegistryBind( wl_compositor, 3, 3 );
+    }
+    else if( strcmp( interface, wl_shm_interface.name ) == 0 )
+    {
+        m_shm = RegistryBind( wl_shm );
     }
     else if( strcmp( interface, xdg_wm_base_interface.name ) == 0 )
     {

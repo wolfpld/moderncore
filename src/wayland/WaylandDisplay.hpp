@@ -30,6 +30,7 @@ public:
 
     [[nodiscard]] wl_display* Display() { return m_dpy; }
     [[nodiscard]] wl_compositor* Compositor() { return m_compositor; }
+    [[nodiscard]] wl_shm* Shm() { return m_shm; }
     [[nodiscard]] xdg_wm_base* XdgWmBase() { return m_xdgWmBase; }
     [[nodiscard]] zxdg_decoration_manager_v1* DecorationManager() { return m_decorationManager; }
     [[nodiscard]] wp_fractional_scale_manager_v1* FractionalScaleManager() { return m_fractionalScaleManager; }
@@ -50,6 +51,7 @@ private:
 
     wl_display* m_dpy = nullptr;
     wl_compositor* m_compositor = nullptr;
+    wl_shm* m_shm = nullptr;
     xdg_wm_base* m_xdgWmBase = nullptr;
     std::unique_ptr<WaylandSeat> m_seat;
     zxdg_decoration_manager_v1* m_decorationManager = nullptr;

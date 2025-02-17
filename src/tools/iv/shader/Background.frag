@@ -2,10 +2,14 @@
 
 in vec4 gl_FragCoord;
 
+layout(push_constant) uniform PushConstants {
+    float scale;
+};
+
 layout(location = 0) out vec4 outColor;
 
 void main() {
-    const float div = 8.0;
+    const float div = 8.0 * scale;
     const float lo = pow( 0.2, 2.2 );
     const float hi = pow( 0.3, 2.2 );
     const vec4 darkColor = vec4( lo, lo, lo, 1.0 );

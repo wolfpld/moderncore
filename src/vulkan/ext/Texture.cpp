@@ -10,7 +10,7 @@
 #include "vulkan/VlkDevice.hpp"
 #include "vulkan/VlkFence.hpp"
 
-Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format )
+Texture::Texture( GarbageChute& garbage, VlkDevice& device, const Bitmap& bitmap, VkFormat format )
     : m_layout( VK_IMAGE_LAYOUT_UNDEFINED )
     , m_access( VK_ACCESS_NONE )
 {
@@ -31,7 +31,7 @@ Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format )
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED
     };
-    m_image = std::make_unique<VlkImage>( device, imageInfo );
+    m_image = std::make_shared<VlkImage>( device, imageInfo );
 
     VkImageViewCreateInfo viewInfo = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
@@ -88,9 +88,13 @@ Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format )
 
     cmdBuf->End();
 
-    VlkFence fence( device );
-    device.Submit( *cmdBuf, fence );
-    fence.Wait();
+    auto fence = std::make_shared<VlkFence>( device );
+    device.Submit( *cmdBuf, *fence );
+    garbage.Recycle( std::move( fence ), {
+        std::move( cmdBuf ),
+        std::move( stagingBuffer ),
+        m_image
+    } );
 }
 
 void Texture::TransitionLayout( VkCommandBuffer cmdBuf, VkImageLayout layout, VkAccessFlagBits access, VkPipelineStageFlagBits src, VkPipelineStageFlagBits dst )

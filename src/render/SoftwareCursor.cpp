@@ -250,7 +250,8 @@ void SoftwareCursor::UpdateImage( const CursorBitmap& cursorData )
     CheckPanic( cursorPtr != m_currentBitmap, "Cursor bitmap is unchanged" );
     m_currentBitmap = cursorPtr;
 
-    m_image = std::make_unique<Texture>( m_device, *cursorPtr, VK_FORMAT_B8G8R8A8_SRGB );
+    // requires GarbageChute
+    //m_image = std::make_unique<Texture>( m_device, *cursorPtr, VK_FORMAT_B8G8R8A8_SRGB );
     m_imageInfo.imageView = *m_image;
 
     m_xhot = cursorData.xhot;

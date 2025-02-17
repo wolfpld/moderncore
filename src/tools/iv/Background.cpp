@@ -22,8 +22,9 @@ struct Vertex
 Background::Background( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, float scale )
     : m_garbage( garbage )
     , m_device( std::move( device ) )
-    , m_scale( scale )
 {
+    SetScale( scale );
+
     Unembed( BackgroundVert );
     Unembed( BackgroundFrag );
 
@@ -162,7 +163,7 @@ void Background::Render( VlkCommandBuffer& cmdbuf, VkExtent2D extent )
     constexpr std::array<VkDeviceSize, 1> offsets = { 0 };
 
     vkCmdBindPipeline( cmdbuf, VK_PIPELINE_BIND_POINT_GRAPHICS, *m_pipeline );
-    vkCmdPushConstants( cmdbuf, *m_pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof( float ), &m_scale );
+    vkCmdPushConstants( cmdbuf, *m_pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof( float ), &m_div );
     vkCmdSetViewport( cmdbuf, 0, 1, &viewport );
     vkCmdSetScissor( cmdbuf, 0, 1, &scissor );
     vkCmdBindVertexBuffers( cmdbuf, 0, 1, vertexBuffers.data(), offsets.data() );

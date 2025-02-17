@@ -19,7 +19,7 @@ public:
 
     void Render( VlkCommandBuffer& cmdbuf, VkExtent2D extent );
 
-    void SetScale( float scale ) { m_scale = scale; }
+    void SetScale( float scale ) { m_div = 1.f / 8.f / scale; }
 
 private:
     GarbageChute& m_garbage;
@@ -30,5 +30,5 @@ private:
     std::shared_ptr<VlkPipeline> m_pipeline;
     std::shared_ptr<VlkBuffer> m_vertexBuffer;
 
-    float m_scale;
+    float m_div;
 };

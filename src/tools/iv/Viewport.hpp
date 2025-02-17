@@ -3,9 +3,10 @@
 #include <memory>
 #include <stdint.h>
 
-#include "Background.hpp"
 #include "wayland/WaylandWindow.hpp"
 
+class Background;
+class BusyIndicator;
 class VlkDevice;
 class VlkInstance;
 class WaylandDisplay;
@@ -28,6 +29,7 @@ private:
     std::shared_ptr<VlkDevice> m_device;
 
     std::shared_ptr<Background> m_background;
+    std::shared_ptr<BusyIndicator> m_busyIndicator;
 
     float m_scale = 1.f;
 };

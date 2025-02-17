@@ -2,10 +2,11 @@
 
 #include <vulkan/vulkan.h>
 
+#include "VlkBase.hpp"
 #include "VlkDevice.hpp"
 #include "util/NoCopy.hpp"
 
-class VlkDescriptorSetLayout
+class VlkDescriptorSetLayout : public VlkBase
 {
 public:
     explicit VlkDescriptorSetLayout( const VlkDevice& device, const VkDescriptorSetLayoutCreateInfo& createInfo );

@@ -1,6 +1,10 @@
 #include <vulkan/vulkan.h>
 
+#include "IconSvg.hpp"
 #include "Viewport.hpp"
+#include "image/vector/SvgImage.hpp"
+#include "util/DataBuffer.hpp"
+#include "util/EmbedData.hpp"
 #include "util/Invoke.hpp"
 #include "util/Panic.hpp"
 #include "vulkan/VlkCommandBuffer.hpp"
@@ -22,9 +26,12 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
         .OnResize = Method( Resize )
     };
 
+    Unembed( IconSvg );
+
     m_window->SetListener( &listener, this );
     m_window->SetAppId( "iv" );
     m_window->SetTitle( "IV" );
+    m_window->SetIcon( SvgImage { std::make_shared<DataBuffer>( (const char*)IconSvg.data(), IconSvg.size() ) } );
     m_window->Commit();
     m_display.Roundtrip();
 

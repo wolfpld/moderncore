@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <array>
 #include <math.h>
 #include <string.h>
@@ -23,6 +24,12 @@
 #include "data/HourglassSvg.hpp"
 #include "shader/BusyIndicatorFrag.hpp"
 #include "shader/BusyIndicatorVert.hpp"
+
+static float SmootherStep( float edge0, float edge1, float x )
+{
+    x = std::clamp( ( x - edge0 ) / ( edge1 - edge0 ), 0.0f, 1.0f );
+    return x * x * x * ( x * ( x * 6 - 15 ) + 10 );
+}
 
 struct Vertex
 {
@@ -232,8 +239,11 @@ BusyIndicator::~BusyIndicator()
 
 void BusyIndicator::Update( float delta )
 {
-    m_rot += delta * 0.25f;
-    if( m_rot >= 2 * M_PI ) m_rot -= 2 * M_PI;
+    m_time += delta * 0.35f;
+    float intpart;
+    if( m_time >= 1 ) m_time = std::modff( m_time, &intpart );
+
+    m_rot = M_PI * ( SmootherStep( 0, 0.2f, m_time ) + SmootherStep( 0, 0.2f, m_time - 0.5f ) );
 }
 
 void BusyIndicator::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )

@@ -314,6 +314,11 @@ ecm_add_wayland_client_protocol(MCOREWAYLAND_SRC
     BASENAME tablet
 )
 
+ecm_add_wayland_client_protocol(MCOREWAYLAND_SRC
+    PROTOCOL ${WAYLAND_PROTOCOLS_PKGDATADIR}/staging/xdg-toplevel-icon/xdg-toplevel-icon-v1.xml
+    BASENAME xdg-toplevel-icon
+)
+
 add_library(mcorewayland ${MCOREWAYLAND_SRC})
 target_link_libraries(mcorewayland PRIVATE
     mcoreutil

@@ -407,6 +407,7 @@ set(IV_SRC
 )
 
 Embed(IV_SRC HourglassSvg src/tools/iv/assets/hourglass.svg)
+Embed(IV_SRC IconSvg src/tools/iv/assets/icon.svg)
 
 EmbedShader(IV_SRC BackgroundVert src/tools/iv/shader/Background.vert)
 EmbedShader(IV_SRC BackgroundFrag src/tools/iv/shader/Background.frag)

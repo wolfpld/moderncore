@@ -1,4 +1,5 @@
 #include <array>
+#include <math.h>
 #include <string.h>
 
 #include "BusyIndicator.hpp"
@@ -31,6 +32,7 @@ struct Vertex
 struct PushConstant
 {
     float mul[2];
+    float rot;
 };
 
 constexpr size_t HourglassSize = 128;
@@ -229,7 +231,8 @@ BusyIndicator::~BusyIndicator()
 
 void BusyIndicator::Update( float delta )
 {
-    m_time += delta;
+    m_rot += delta * 0.25f;
+    if( m_rot >= 2 * M_PI ) m_rot -= 2 * M_PI;
 }
 
 void BusyIndicator::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
@@ -244,7 +247,8 @@ void BusyIndicator::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
 
     PushConstant pushConstant = {
         m_scale * HourglassSize / extent.width,
-        m_scale * HourglassSize / extent.height
+        m_scale * HourglassSize / extent.height,
+        m_rot
     };
 
     std::array<VkBuffer, 1> vertexBuffers = { *m_vertexBuffer };

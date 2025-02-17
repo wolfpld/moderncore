@@ -42,7 +42,7 @@ private:
     VkWriteDescriptorSet m_descWrite;
 
     float m_scale;
-    float m_time;
+    float m_rot = 0;
 
     std::unique_ptr<SvgImage> m_hourglass;
 };

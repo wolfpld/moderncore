@@ -45,7 +45,7 @@ bool SvgImage::IsValid() const
     return m_handle != nullptr;
 }
 
-std::unique_ptr<Bitmap> SvgImage::Rasterize( int width, int height )
+std::unique_ptr<Bitmap> SvgImage::Rasterize( int width, int height ) const
 {
     CheckPanic( m_handle, "Invalid SVG image" );
     if( !m_handle ) return nullptr;

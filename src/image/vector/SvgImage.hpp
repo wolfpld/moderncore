@@ -24,7 +24,7 @@ public:
     [[nodiscard]] int Width() const override { return m_width; }
     [[nodiscard]] int Height() const override { return m_height; }
 
-    [[nodiscard]] std::unique_ptr<Bitmap> Rasterize( int width, int height ) override;
+    [[nodiscard]] std::unique_ptr<Bitmap> Rasterize( int width, int height ) const override;
 
 private:
     std::shared_ptr<DataBuffer> m_buf;

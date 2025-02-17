@@ -17,7 +17,7 @@ public:
     Background( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, float scale );
     ~Background();
 
-    void Render( VlkCommandBuffer& cmdbuf, VkExtent2D extent );
+    void Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent );
 
     void SetScale( float scale ) { m_div = 1.f / 8.f / scale; }
 

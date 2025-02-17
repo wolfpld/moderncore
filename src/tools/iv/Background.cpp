@@ -149,7 +149,7 @@ Background::~Background()
     } );
 }
 
-void Background::Render( VlkCommandBuffer& cmdbuf, VkExtent2D extent )
+void Background::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
 {
     VkViewport viewport = {
         .width = float( extent.width ),

@@ -238,6 +238,7 @@ target_include_directories(mcoreimage PRIVATE
 set(MCOREVULKAN_SRC
     src/vulkan/ext/DeviceInfo.cpp
     src/vulkan/ext/PhysDevSel.cpp
+    src/vulkan/ext/Texture.cpp
     src/vulkan/VlkAllocator.cpp
     src/vulkan/VlkBuffer.cpp
     src/vulkan/VlkCommandBuffer.cpp
@@ -356,7 +357,6 @@ set(MCORE_SRC
     src/backend/wayland/BackendWayland.cpp
     src/plumbing/Display.cpp
     src/render/SoftwareCursor.cpp
-    src/render/Texture.cpp
     src/server/Server.cpp
     src/MCore.cpp
 )
@@ -410,7 +410,6 @@ set(IV_SRC
     src/tools/iv/BusyIndicator.cpp
     src/tools/iv/iv.cpp
     src/tools/iv/Viewport.cpp
-    src/render/Texture.cpp
 )
 
 Embed(IV_SRC HourglassSvg src/tools/iv/assets/hourglass.svg)

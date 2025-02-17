@@ -3,7 +3,6 @@
 
 #include "BusyIndicator.hpp"
 #include "image/vector/SvgImage.hpp"
-#include "render/Texture.hpp"
 #include "util/Bitmap.hpp"
 #include "util/DataBuffer.hpp"
 #include "util/EmbedData.hpp"
@@ -18,6 +17,7 @@
 #include "vulkan/VlkShader.hpp"
 #include "vulkan/VlkShaderModule.hpp"
 #include "vulkan/ext/GarbageChute.hpp"
+#include "vulkan/ext/Texture.hpp"
 
 #include "data/HourglassSvg.hpp"
 #include "shader/BusyIndicatorFrag.hpp"

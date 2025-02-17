@@ -2,7 +2,6 @@
 #include <string.h>
 
 #include "SoftwareCursor.hpp"
-#include "Texture.hpp"
 #include "cursor/CursorBase.hpp"
 #include "cursor/CursorLogic.hpp"
 #include "util/Bitmap.hpp"
@@ -17,6 +16,7 @@
 #include "vulkan/VlkSampler.hpp"
 #include "vulkan/VlkShader.hpp"
 #include "vulkan/VlkShaderModule.hpp"
+#include "vulkan/ext/Texture.hpp"
 
 SoftwareCursor::SoftwareCursor( VlkDevice& device, VkRenderPass renderPass, uint32_t screenWidth, uint32_t screenHeight )
     : m_x( 0 )

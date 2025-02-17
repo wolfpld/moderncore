@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <time.h>
 #include <vulkan/vulkan.h>
 
 #include "Background.hpp"
@@ -16,6 +18,13 @@
 #include "wayland/WaylandDisplay.hpp"
 
 #include "data/IconSvg.hpp"
+
+static uint64_t Now()
+{
+    timespec ts;
+    clock_gettime( CLOCK_MONOTONIC, &ts );
+    return uint64_t( ts.tv_sec ) * 1000000000 + ts.tv_nsec;
+}
 
 Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
     : m_display( display )
@@ -62,6 +71,7 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
     m_background = std::make_shared<Background>( *m_window, m_device, format, m_scale );
     m_busyIndicator = std::make_shared<BusyIndicator>( *m_window, m_device, format, m_scale );
 
+    m_lastTime = Now();
     m_window->InvokeRender();
 }
 
@@ -74,6 +84,11 @@ void Viewport::Close( WaylandWindow* window )
 bool Viewport::Render( WaylandWindow* window )
 {
     CheckPanic( window == m_window.get(), "Invalid window" );
+
+    const auto now = Now();
+    const auto delta = std::min( now - m_lastTime, uint64_t( 1000000000 ) );
+    m_lastTime = now;
+
     auto& cmdbuf = window->BeginFrame( true );
 
     const VkRenderingAttachmentInfo attachmentInfo = {

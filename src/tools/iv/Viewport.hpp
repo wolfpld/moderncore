@@ -32,4 +32,5 @@ private:
     std::shared_ptr<BusyIndicator> m_busyIndicator;
 
     float m_scale = 1.f;
+    uint64_t m_lastTime = 0;
 };

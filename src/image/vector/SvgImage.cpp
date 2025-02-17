@@ -50,13 +50,15 @@ std::unique_ptr<Bitmap> SvgImage::Rasterize( int width, int height ) const
     CheckPanic( m_handle, "Invalid SVG image" );
     if( !m_handle ) return nullptr;
 
+    CheckPanic( width - 2 * int( m_border ) > 0 && height - 2 * int( m_border ) > 0, "Invalid rasterize size (%d×%d, with %d px border)", width, height, m_border );
+
     const auto stride = cairo_format_stride_for_width( CAIRO_FORMAT_ARGB32, width );
     auto data = new uint8_t[height * stride];
     memset( data, 0, height * stride );
     auto surface = cairo_image_surface_create_for_data( data, CAIRO_FORMAT_ARGB32, width, height, stride );
     auto cr = cairo_create( surface );
 
-    RsvgRectangle viewbox = { 0, 0, double( width ), double( height ) };
+    RsvgRectangle viewbox = { double( m_border ), double( m_border ), double( width - 2 * m_border ), double( height - 2 * m_border ) };
     if( !rsvg_handle_render_document( m_handle, cr, &viewbox, nullptr ) )
     {
         cairo_destroy( cr );

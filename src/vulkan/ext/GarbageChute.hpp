@@ -4,6 +4,7 @@
 #include <vector>
 
 class VlkBase;
+class VlkFence;
 
 class GarbageChute
 {
@@ -12,4 +13,6 @@ public:
 
     virtual void Recycle( std::shared_ptr<VlkBase>&& garbage ) = 0;
     virtual void Recycle( std::vector<std::shared_ptr<VlkBase>>&& garbage ) = 0;
+    virtual void Recycle( std::shared_ptr<VlkFence> fence, std::shared_ptr<VlkBase>&& garbage ) = 0;
+    virtual void Recycle( std::shared_ptr<VlkFence> fence, std::vector<std::shared_ptr<VlkBase>>&& garbage ) = 0;
 };

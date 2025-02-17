@@ -78,6 +78,8 @@ public:
 
     void Recycle( std::shared_ptr<VlkBase>&& garbage ) override;
     void Recycle( std::vector<std::shared_ptr<VlkBase>>&& garbage ) override;
+    void Recycle( std::shared_ptr<VlkFence> fence, std::shared_ptr<VlkBase>&& garbage ) override;
+    void Recycle( std::shared_ptr<VlkFence> fence, std::vector<std::shared_ptr<VlkBase>>&& garbage ) override;
 
 private:
     void CreateSwapchain( const VkExtent2D& extent );

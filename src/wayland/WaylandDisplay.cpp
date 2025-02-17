@@ -118,6 +118,7 @@ void WaylandDisplay::RegistryGlobal( wl_registry* reg, uint32_t name, const char
 
         m_iconManager = RegistryBind( xdg_toplevel_icon_manager_v1 );
         xdg_toplevel_icon_manager_v1_add_listener( m_iconManager, &listener, this );
+        wl_display_roundtrip( m_dpy );
     }
 }
 

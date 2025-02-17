@@ -227,6 +227,11 @@ BusyIndicator::~BusyIndicator()
     } );
 }
 
+void BusyIndicator::Update( float delta )
+{
+    m_time += delta;
+}
+
 void BusyIndicator::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
 {
     VkViewport viewport = {

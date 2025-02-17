@@ -89,6 +89,8 @@ bool Viewport::Render( WaylandWindow* window )
     const auto delta = std::min( now - m_lastTime, uint64_t( 1000000000 ) );
     m_lastTime = now;
 
+    m_busyIndicator->Update( delta / 1000000000.f );
+
     auto& cmdbuf = window->BeginFrame( true );
 
     const VkRenderingAttachmentInfo attachmentInfo = {

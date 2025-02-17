@@ -21,6 +21,7 @@ public:
     BusyIndicator( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, float scale );
     ~BusyIndicator();
 
+    void Update( float delta );
     void Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent );
     void SetScale( float scale );
 
@@ -41,6 +42,7 @@ private:
     VkWriteDescriptorSet m_descWrite;
 
     float m_scale;
+    float m_time;
 
     std::unique_ptr<SvgImage> m_hourglass;
 };

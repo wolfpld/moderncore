@@ -6,13 +6,14 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "CmykIcm.hpp"
 #include "JpgLoader.hpp"
 #include "util/Bitmap.hpp"
 #include "util/EmbedData.hpp"
 #include "util/FileBuffer.hpp"
 #include "util/FileWrapper.hpp"
 #include "util/Panic.hpp"
+
+#include "data/CmykIcm.hpp"
 
 JpgLoader::JpgLoader( std::shared_ptr<FileWrapper> file )
     : ImageLoader( std::move( file ) )

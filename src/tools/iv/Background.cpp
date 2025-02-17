@@ -2,8 +2,6 @@
 #include <string.h>
 
 #include "Background.hpp"
-#include "BackgroundFrag.hpp"
-#include "BackgroundVert.hpp"
 #include "util/EmbedData.hpp"
 #include "vulkan/VlkBuffer.hpp"
 #include "vulkan/VlkCommandBuffer.hpp"
@@ -13,6 +11,10 @@
 #include "vulkan/VlkShader.hpp"
 #include "vulkan/VlkShaderModule.hpp"
 #include "vulkan/ext/GarbageChute.hpp"
+
+#include "shader/BackgroundFrag.hpp"
+#include "shader/BackgroundVert.hpp"
+
 
 struct Vertex
 {

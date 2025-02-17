@@ -2,7 +2,6 @@
 
 #include "Background.hpp"
 #include "BusyIndicator.hpp"
-#include "IconSvg.hpp"
 #include "Viewport.hpp"
 #include "image/vector/SvgImage.hpp"
 #include "util/DataBuffer.hpp"
@@ -15,6 +14,8 @@
 #include "vulkan/VlkPhysicalDevice.hpp"
 #include "vulkan/ext/PhysDevSel.hpp"
 #include "wayland/WaylandDisplay.hpp"
+
+#include "data/IconSvg.hpp"
 
 Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
     : m_display( display )

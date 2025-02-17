@@ -2,9 +2,6 @@
 #include <string.h>
 
 #include "BusyIndicator.hpp"
-#include "BusyIndicatorFrag.hpp"
-#include "BusyIndicatorVert.hpp"
-#include "HourglassSvg.hpp"
 #include "image/vector/SvgImage.hpp"
 #include "render/Texture.hpp"
 #include "util/Bitmap.hpp"
@@ -21,6 +18,10 @@
 #include "vulkan/VlkShader.hpp"
 #include "vulkan/VlkShaderModule.hpp"
 #include "vulkan/ext/GarbageChute.hpp"
+
+#include "data/HourglassSvg.hpp"
+#include "shader/BusyIndicatorFrag.hpp"
+#include "shader/BusyIndicatorVert.hpp"
 
 struct Vertex
 {

@@ -34,7 +34,7 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
     m_window->SetListener( &listener, this );
     m_window->SetAppId( "iv" );
     m_window->SetTitle( "IV" );
-    m_window->SetIcon( SvgImage { std::make_shared<DataBuffer>( (const char*)IconSvg.data(), IconSvg.size() ) } );
+    m_window->SetIcon( SvgImage { IconSvg } );
     m_window->Commit();
     m_display.Roundtrip();
 

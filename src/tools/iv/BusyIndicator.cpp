@@ -41,7 +41,7 @@ BusyIndicator::BusyIndicator( GarbageChute& garbage, std::shared_ptr<VlkDevice> 
     , m_scale( scale )
 {
     Unembed( HourglassSvg );
-    m_hourglass = std::make_unique<SvgImage>( std::make_shared<DataBuffer>( (const char*)HourglassSvg.data(), HourglassSvg.size() ) );
+    m_hourglass = std::make_unique<SvgImage>( HourglassSvg );
     m_texture = std::make_shared<Texture>( *m_device, *m_hourglass->Rasterize( HourglassSize * scale, HourglassSize * scale ), VK_FORMAT_R8G8B8A8_UNORM );
 
     VkSamplerCreateInfo samplerInfo = {
@@ -70,8 +70,8 @@ BusyIndicator::BusyIndicator( GarbageChute& garbage, std::shared_ptr<VlkDevice> 
     Unembed( BusyIndicatorFrag );
 
     std::array stages = {
-        VlkShader::Stage { std::make_shared<VlkShaderModule>( *m_device, BusyIndicatorVert ), VK_SHADER_STAGE_VERTEX_BIT },
-        VlkShader::Stage { std::make_shared<VlkShaderModule>( *m_device, BusyIndicatorFrag ), VK_SHADER_STAGE_FRAGMENT_BIT }
+        VlkShader::Stage { std::make_shared<VlkShaderModule>( *m_device, *BusyIndicatorVert ), VK_SHADER_STAGE_VERTEX_BIT },
+        VlkShader::Stage { std::make_shared<VlkShaderModule>( *m_device, *BusyIndicatorFrag ), VK_SHADER_STAGE_FRAGMENT_BIT }
     };
     m_shader = std::make_shared<VlkShader>( stages );
 

@@ -407,6 +407,7 @@ target_include_directories(mcore PRIVATE
 
 set(IV_SRC
     src/tools/iv/Background.cpp
+    src/tools/iv/BusyIndicator.cpp
     src/tools/iv/iv.cpp
     src/tools/iv/Viewport.cpp
     src/render/Texture.cpp
@@ -417,6 +418,8 @@ Embed(IV_SRC IconSvg src/tools/iv/assets/icon.svg)
 
 EmbedShader(IV_SRC BackgroundVert src/tools/iv/shader/Background.vert)
 EmbedShader(IV_SRC BackgroundFrag src/tools/iv/shader/Background.frag)
+EmbedShader(IV_SRC BusyIndicatorVert src/tools/iv/shader/BusyIndicator.vert)
+EmbedShader(IV_SRC BusyIndicatorFrag src/tools/iv/shader/BusyIndicator.frag)
 
 add_executable(iv ${IV_SRC})
 target_link_libraries(iv PRIVATE

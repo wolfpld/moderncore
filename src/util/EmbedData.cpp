@@ -7,3 +7,8 @@ EmbedData::EmbedData( size_t size, size_t lz4Size, const uint8_t* data )
 {
     LZ4_decompress_safe( (const char*)data, (char*)m_data, lz4Size, size );
 }
+
+EmbedData::~EmbedData()
+{
+    delete[] m_data;
+}

@@ -11,4 +11,5 @@ class EmbedData : public DataBuffer
 {
 public:
     EmbedData( size_t size, size_t lz4Size, const uint8_t* data );
+    ~EmbedData() override;
 };

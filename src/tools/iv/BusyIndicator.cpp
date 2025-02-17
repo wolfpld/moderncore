@@ -37,11 +37,11 @@ constexpr size_t HourglassSize = 128;
 BusyIndicator::BusyIndicator( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, float scale )
     : m_garbage( garbage )
     , m_device( device )
+    , m_scale( scale )
 {
     Unembed( HourglassSvg );
-
-    auto img = std::make_shared<SvgImage>( std::make_shared<DataBuffer>( (const char*)HourglassSvg.data(), HourglassSvg.size() ) );
-    m_texture = std::make_shared<Texture>( *m_device, *img->Rasterize( HourglassSize, HourglassSize ), VK_FORMAT_R8G8B8A8_UNORM );
+    m_hourglass = std::make_unique<SvgImage>( std::make_shared<DataBuffer>( (const char*)HourglassSvg.data(), HourglassSvg.size() ) );
+    m_texture = std::make_shared<Texture>( *m_device, *m_hourglass->Rasterize( HourglassSize * scale, HourglassSize * scale ), VK_FORMAT_R8G8B8A8_UNORM );
 
     VkSamplerCreateInfo samplerInfo = {
         .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
@@ -237,8 +237,8 @@ void BusyIndicator::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
     };
 
     PushConstant pushConstant = {
-        float( HourglassSize ) / extent.width,
-        float( HourglassSize ) / extent.height
+        m_scale * HourglassSize / extent.width,
+        m_scale * HourglassSize / extent.height
     };
 
     std::array<VkBuffer, 1> vertexBuffers = { *m_vertexBuffer };
@@ -252,4 +252,12 @@ void BusyIndicator::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
     vkCmdBindIndexBuffer( cmdbuf, *m_indexBuffer, 0, VK_INDEX_TYPE_UINT16 );
     CmdPushDescriptorSetKHR( cmdbuf, VK_PIPELINE_BIND_POINT_GRAPHICS, *m_pipelineLayout, 0, 1, &m_descWrite );
     vkCmdDrawIndexed( cmdbuf, 6, 1, 0, 0, 0 );
+}
+
+void BusyIndicator::SetScale( float scale )
+{
+    m_scale = scale;
+    m_garbage.Recycle( std::move( m_texture ) );
+    m_texture = std::make_shared<Texture>( *m_device, *m_hourglass->Rasterize( HourglassSize * scale, HourglassSize * scale ), VK_FORMAT_R8G8B8A8_UNORM );
+    m_imageInfo.imageView = *m_texture;
 }

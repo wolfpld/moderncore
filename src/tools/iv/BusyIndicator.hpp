@@ -4,6 +4,7 @@
 #include <vulkan/vulkan.h>
 
 class GarbageChute;
+class SvgImage;
 class Texture;
 class VlkBuffer;
 class VlkCommandBuffer;
@@ -21,6 +22,7 @@ public:
     ~BusyIndicator();
 
     void Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent );
+    void SetScale( float scale );
 
 private:
     GarbageChute& m_garbage;
@@ -37,4 +39,8 @@ private:
 
     VkDescriptorImageInfo m_imageInfo;
     VkWriteDescriptorSet m_descWrite;
+
+    float m_scale;
+
+    std::unique_ptr<SvgImage> m_hourglass;
 };

@@ -107,6 +107,7 @@ void Viewport::Scale( WaylandWindow* window, uint32_t scale )
     if( m_background )
     {
         m_background->SetScale( scale / 120.f );
+        m_busyIndicator->SetScale( scale / 120.f );
     }
     else
     {

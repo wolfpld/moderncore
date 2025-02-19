@@ -154,6 +154,7 @@ void WaylandWindow::SetIcon( const SvgImage& icon )
     xdg_toplevel_icon_manager_v1_set_icon( mgr, m_xdgToplevel, wlicon );
     xdg_toplevel_icon_v1_destroy( wlicon );
     for( auto buf : bufs ) wl_buffer_destroy( buf );
+    munmap( membuf, total );
     wl_shm_pool_destroy( pool );
 }
 

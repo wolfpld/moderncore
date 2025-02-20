@@ -27,7 +27,6 @@ WaylandWindow::WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance )
     : m_display( display )
     , m_vkInstance( vkInstance )
     , m_garbage( std::make_shared<VlkGarbage>() )
-    , m_staged {}
 {
     ZoneScoped;
 
@@ -161,13 +160,10 @@ void WaylandWindow::SetIcon( const SvgImage& icon )
 
 void WaylandWindow::Resize( uint32_t width, uint32_t height )
 {
-    m_extent = {
+    m_staged = {
         .width = width,
         .height = height
     };
-
-    // Ensure viewport is updated
-    m_prevScale = 0;
 }
 
 void WaylandWindow::LockSize()
@@ -186,17 +182,15 @@ void WaylandWindow::Commit()
 
 VlkCommandBuffer& WaylandWindow::BeginFrame( bool imageTransfer )
 {
-    const auto& extent = m_swapchain->GetExtent();
-    if( extent.width != m_extent.width || extent.height != m_extent.height )
+    if( m_extent.width != m_staged.width || m_extent.height != m_staged.height || m_scale != m_prevScale )
     {
-        CreateSwapchain( m_extent );
-    }
-
-    if( m_scale != m_prevScale )
-    {
+        m_extent = m_staged;
         m_prevScale = m_scale;
-        wp_viewport_set_source( m_viewport, 0, 0, wl_fixed_from_int( m_extent.width ), wl_fixed_from_int( m_extent.height ) );
-        wp_viewport_set_destination( m_viewport, m_extent.width * 120 / m_scale, m_extent.height * 120 / m_scale );
+
+        CreateSwapchain( m_extent );
+
+        wp_viewport_set_source( m_viewport, 0, 0, wl_fixed_from_double( m_extent.width * m_scale / 120.f ), wl_fixed_from_double( m_extent.height * m_scale / 120.f ) );
+        wp_viewport_set_destination( m_viewport, m_extent.width, m_extent.height );
     }
 
     m_frameIdx = ( m_frameIdx + 1 ) % m_frameData.size();
@@ -310,6 +304,7 @@ void WaylandWindow::SetDevice( std::shared_ptr<VlkDevice> device, const VkExtent
 {
     CheckPanic( !m_vkDevice, "Vulkan device already set" );
     m_vkDevice = std::move( device );
+    m_staged = extent;
     CreateSwapchain( extent );
 }
 
@@ -351,10 +346,14 @@ void WaylandWindow::Recycle( std::shared_ptr<VlkFence> fence, std::vector<std::s
 
 void WaylandWindow::CreateSwapchain( const VkExtent2D& extent )
 {
+    const auto scaled = VkExtent2D {
+        .width = extent.width * m_scale / 120,
+        .height = extent.height * m_scale / 120
+    };
+
     auto oldSwapchain = m_swapchain;
     if( m_swapchain ) CleanupSwapchain();
-    m_swapchain = std::make_shared<VlkSwapchain>( *m_vkDevice, *m_vkSurface, extent, oldSwapchain ? *oldSwapchain : VkSwapchainKHR { VK_NULL_HANDLE } );
-    m_extent = m_swapchain->GetExtent();
+    m_swapchain = std::make_shared<VlkSwapchain>( *m_vkDevice, *m_vkSurface, scaled, oldSwapchain ? *oldSwapchain : VkSwapchainKHR { VK_NULL_HANDLE } );
     oldSwapchain.reset();
 
     const auto imageViews = m_swapchain->GetImageViews();
@@ -373,6 +372,7 @@ void WaylandWindow::CreateSwapchain( const VkExtent2D& extent )
         } );
     }
 
+    m_extent = extent;
     m_garbage->Collect();
 }
 
@@ -406,19 +406,16 @@ void WaylandWindow::CleanupSwapchain( bool withSurface )
 void WaylandWindow::XdgSurfaceConfigure( struct xdg_surface *xdg_surface, uint32_t serial )
 {
     xdg_surface_ack_configure( xdg_surface, serial );
-    if( m_staged.width == 0 || m_staged.height == 0 ) return;
-    Invoke( OnResize, this, m_staged.width, m_staged.height );
-    m_staged = {};
 }
 
 void WaylandWindow::XdgToplevelConfigure( struct xdg_toplevel* toplevel, int32_t width, int32_t height, struct wl_array* states )
 {
     if( width == 0 || height == 0 ) return;
-    const auto newWidth = width * m_scale / 120;
-    const auto newHeight = height * m_scale / 120;
-    if( newWidth == m_extent.width && newHeight == m_extent.height ) return;
-    m_staged.width = newWidth;
-    m_staged.height = newHeight;
+
+    m_staged = {
+        .width = uint32_t( width ),
+        .height = uint32_t( height )
+    };
 }
 
 void WaylandWindow::XdgToplevelClose( struct xdg_toplevel* toplevel )

@@ -27,6 +27,7 @@ WaylandWindow::WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance )
     : m_display( display )
     , m_vkInstance( vkInstance )
     , m_garbage( std::make_shared<VlkGarbage>() )
+    , m_staged {}
 {
     ZoneScoped;
 
@@ -405,9 +406,9 @@ void WaylandWindow::CleanupSwapchain( bool withSurface )
 void WaylandWindow::XdgSurfaceConfigure( struct xdg_surface *xdg_surface, uint32_t serial )
 {
     xdg_surface_ack_configure( xdg_surface, serial );
-    if( m_stageWidth == 0 || m_stageHeight == 0 ) return;
-    Invoke( OnResize, this, m_stageWidth, m_stageHeight );
-    m_stageWidth = m_stageHeight = 0;
+    if( m_staged.width == 0 || m_staged.height == 0 ) return;
+    Invoke( OnResize, this, m_staged.width, m_staged.height );
+    m_staged = {};
 }
 
 void WaylandWindow::XdgToplevelConfigure( struct xdg_toplevel* toplevel, int32_t width, int32_t height, struct wl_array* states )
@@ -416,8 +417,8 @@ void WaylandWindow::XdgToplevelConfigure( struct xdg_toplevel* toplevel, int32_t
     const auto newWidth = width * m_scale / 120;
     const auto newHeight = height * m_scale / 120;
     if( newWidth == m_extent.width && newHeight == m_extent.height ) return;
-    m_stageWidth = newWidth;
-    m_stageHeight = newHeight;
+    m_staged.width = newWidth;
+    m_staged.height = newHeight;
 }
 
 void WaylandWindow::XdgToplevelClose( struct xdg_toplevel* toplevel )

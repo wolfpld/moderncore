@@ -120,10 +120,8 @@ private:
     uint32_t m_scale = 120;
     uint32_t m_prevScale = 120;
 
-    uint32_t m_stageWidth = 0;
-    uint32_t m_stageHeight = 0;
-
     VkExtent2D m_extent;
+    VkExtent2D m_staged;
 
     std::string m_title;
 };

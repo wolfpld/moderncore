@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 class Background;
+class Bitmap;
 class BusyIndicator;
 class ImageProvider;
 class VlkDevice;
@@ -17,11 +18,15 @@ class Viewport
 public:
     Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu );
 
+    void LoadImage( const char* path );
+
 private:
     void Close( WaylandWindow* window );
     bool Render( WaylandWindow* window );
     void Scale( WaylandWindow* window, uint32_t scale );
     void Resize( WaylandWindow* window, uint32_t width, uint32_t height );
+
+    void ImageHandler( int result, std::shared_ptr<Bitmap> bitmap );
 
     WaylandDisplay& m_display;
     VlkInstance& m_vkInstance;

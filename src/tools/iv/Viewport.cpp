@@ -78,6 +78,17 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
     m_window->InvokeRender();
 }
 
+void Viewport::LoadImage( const char* path )
+{
+    std::lock_guard lock( m_lock );
+    if( !m_isBusy )
+    {
+        m_isBusy = true;
+        m_busyIndicator->ResetTime();
+    }
+    m_provider->LoadImage( path, Method( ImageHandler ), this );
+}
+
 void Viewport::Close( WaylandWindow* window )
 {
     CheckPanic( window == m_window.get(), "Invalid window" );
@@ -143,4 +154,12 @@ void Viewport::Resize( WaylandWindow* window, uint32_t width, uint32_t height )
 {
     CheckPanic( window == m_window.get(), "Invalid window" );
     window->Resize( width, height );
+}
+
+void Viewport::ImageHandler( int result, std::shared_ptr<Bitmap> bitmap )
+{
+    if( result == ImageProvider::Cancelled ) return;
+
+    std::lock_guard lock( m_lock );
+    m_isBusy = false;
 }

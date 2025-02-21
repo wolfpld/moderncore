@@ -4,6 +4,7 @@
 
 #include "Background.hpp"
 #include "BusyIndicator.hpp"
+#include "ImageProvider.hpp"
 #include "Viewport.hpp"
 #include "image/vector/SvgImage.hpp"
 #include "util/DataBuffer.hpp"
@@ -31,6 +32,7 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
     : m_display( display )
     , m_vkInstance( vkInstance )
     , m_window( std::make_shared<WaylandWindow>( display, vkInstance ) )
+    , m_provider( std::make_shared<ImageProvider>() )
 {
     static constexpr WaylandWindow::Listener listener = {
         .OnClose = Method( Close ),

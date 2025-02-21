@@ -408,6 +408,7 @@ target_include_directories(mcore PRIVATE
 set(IV_SRC
     src/tools/iv/Background.cpp
     src/tools/iv/BusyIndicator.cpp
+    src/tools/iv/ImageProvider.cpp
     src/tools/iv/iv.cpp
     src/tools/iv/Viewport.cpp
 )

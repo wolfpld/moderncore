@@ -5,6 +5,7 @@
 
 class Background;
 class BusyIndicator;
+class ImageProvider;
 class VlkDevice;
 class VlkInstance;
 class WaylandDisplay;
@@ -29,6 +30,8 @@ private:
 
     std::shared_ptr<Background> m_background;
     std::shared_ptr<BusyIndicator> m_busyIndicator;
+
+    std::shared_ptr<ImageProvider> m_provider;
 
     float m_scale = 1.f;
     uint64_t m_lastTime = 0;

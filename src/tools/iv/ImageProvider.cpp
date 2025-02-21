@@ -11,6 +11,9 @@ ImageProvider::ImageProvider()
 
 ImageProvider::~ImageProvider()
 {
+    m_lock.lock();
+    if( m_job ) m_job->cancel = true;
+    m_lock.unlock();
     if( m_thread.joinable() ) m_thread.join();
 }
 

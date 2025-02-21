@@ -409,6 +409,7 @@ set(IV_SRC
     src/tools/iv/Background.cpp
     src/tools/iv/BusyIndicator.cpp
     src/tools/iv/ImageProvider.cpp
+    src/tools/iv/ImageView.cpp
     src/tools/iv/iv.cpp
     src/tools/iv/Viewport.cpp
 )
@@ -419,6 +420,7 @@ Embed(IV_SRC IconSvg src/tools/iv/assets/icon.svg)
 EmbedShader(IV_SRC BackgroundVert src/tools/iv/shader/Background.vert)
 EmbedShader(IV_SRC BackgroundFrag src/tools/iv/shader/Background.frag)
 EmbedShader(IV_SRC BusyIndicatorVert src/tools/iv/shader/BusyIndicator.vert)
+EmbedShader(IV_SRC TexturingVert src/tools/iv/shader/Texturing.vert)
 EmbedShader(IV_SRC TexturingFrag src/tools/iv/shader/Texturing.frag)
 
 add_executable(iv ${IV_SRC})

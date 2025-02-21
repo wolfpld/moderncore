@@ -118,7 +118,7 @@ private:
     uint32_t m_imageIdx;
 
     uint32_t m_scale = 120;
-    uint32_t m_prevScale = 120;
+    uint32_t m_prevScale = 0;
 
     VkExtent2D m_extent;
     VkExtent2D m_staged;

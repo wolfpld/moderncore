@@ -306,6 +306,9 @@ void WaylandWindow::SetDevice( std::shared_ptr<VlkDevice> device, const VkExtent
     m_vkDevice = std::move( device );
     m_staged = extent;
     CreateSwapchain( extent );
+
+    wp_viewport_set_source( m_viewport, 0, 0, wl_fixed_from_double( m_extent.width * m_scale / 120.f ), wl_fixed_from_double( m_extent.height * m_scale / 120.f ) );
+    wp_viewport_set_destination( m_viewport, m_extent.width, m_extent.height );
 }
 
 void WaylandWindow::InvokeRender()
@@ -431,6 +434,7 @@ void WaylandWindow::FractionalScalePreferredScale( wp_fractional_scale_v1* scale
 {
     if( m_scale == scaleValue ) return;
     m_scale = scaleValue;
+    if( m_prevScale == 0 ) m_prevScale = m_scale;
     Invoke( OnScale, this, scaleValue );
 }
 

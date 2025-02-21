@@ -22,6 +22,7 @@ public:
     ~BusyIndicator();
 
     void Update( float delta );
+    void ResetTime();
     void Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent );
     void SetScale( float scale );
 

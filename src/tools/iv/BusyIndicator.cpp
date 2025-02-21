@@ -246,6 +246,11 @@ void BusyIndicator::Update( float delta )
     m_rot = M_PI * ( SmootherStep( 0, 0.2f, m_time ) + SmootherStep( 0, 0.2f, m_time - 0.5f ) );
 }
 
+void BusyIndicator::ResetTime()
+{
+    m_time = 0;
+}
+
 void BusyIndicator::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
 {
     VkViewport viewport = {

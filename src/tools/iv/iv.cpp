@@ -66,6 +66,8 @@ int main( int argc, char** argv )
     waylandDisplay->Connect();
 
     auto viewport = std::make_unique<Viewport>( *waylandDisplay, *vkInstance, gpu );
+    if( optind != argc ) viewport->LoadImage( argv[optind] );
+
     waylandDisplay->Run();
 
     return 0;

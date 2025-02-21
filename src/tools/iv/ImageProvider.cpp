@@ -48,8 +48,9 @@ void ImageProvider::Worker( std::shared_ptr<Job> job )
     auto loader = GetImageLoader( job->path.c_str(), ToneMap::Operator::PbrNeutral, &m_td );
     if( !loader )
     {
-        std::lock_guard lock( m_lock );
+        m_lock.lock();
         if( !job->cancel ) m_job.reset();
+        m_lock.unlock();
         job->callback( job->userData, job->cancel ? Cancelled : Error, {} );
         return;
     }
@@ -60,13 +61,13 @@ void ImageProvider::Worker( std::shared_ptr<Job> job )
         auto hdr = loader->LoadHdr();
         bitmap = std::make_unique<Bitmap>( hdr->Width(), hdr->Height() );
 
+        m_lock.lock();
+        const auto cancel = job->cancel;
+        m_lock.unlock();
+        if( cancel )
         {
-            std::lock_guard lock( m_lock );
-            if( job->cancel )
-            {
-                job->callback( job->userData, Cancelled, {} );
-                return;
-            }
+            job->callback( job->userData, Cancelled, {} );
+            return;
         }
 
         auto src = hdr->Data();
@@ -92,14 +93,16 @@ void ImageProvider::Worker( std::shared_ptr<Job> job )
     // TODO do this with geometry data
     bitmap->NormalizeOrientation();
 
-    std::lock_guard lock( m_lock );
+    m_lock.lock();
     if( job->cancel )
     {
+        m_lock.unlock();
         job->callback( job->userData, Cancelled, {} );
     }
     else
     {
         m_job.reset();
+        m_lock.unlock();
         job->callback( job->userData, Success, std::move( bitmap ) );
     }
 }

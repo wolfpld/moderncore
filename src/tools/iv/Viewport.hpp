@@ -35,4 +35,5 @@ private:
 
     float m_scale = 1.f;
     uint64_t m_lastTime = 0;
+    bool m_isBusy = false;
 };

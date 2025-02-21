@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <mutex>
 #include <stdint.h>
 
 class Background;
@@ -35,5 +36,7 @@ private:
 
     float m_scale = 1.f;
     uint64_t m_lastTime = 0;
+
+    std::mutex m_lock;
     bool m_isBusy = false;
 };

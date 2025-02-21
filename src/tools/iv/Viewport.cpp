@@ -92,8 +92,6 @@ bool Viewport::Render( WaylandWindow* window )
     const auto delta = std::min( now - m_lastTime, uint64_t( 1000000000 ) );
     m_lastTime = now;
 
-    if( m_isBusy ) m_busyIndicator->Update( delta / 1000000000.f );
-
     auto& cmdbuf = window->BeginFrame( true );
 
     const VkRenderingAttachmentInfo attachmentInfo = {
@@ -112,10 +110,15 @@ bool Viewport::Render( WaylandWindow* window )
     };
 
     vkCmdBeginRendering( cmdbuf, &renderingInfo );
-
-    m_background->Render( cmdbuf, window->GetExtent() );
-    if( m_isBusy ) m_busyIndicator->Render( cmdbuf, window->GetExtent() );
-
+    {
+        std::lock_guard lock( m_lock );
+        m_background->Render( cmdbuf, window->GetExtent() );
+        if( m_isBusy )
+        {
+            m_busyIndicator->Update( delta / 1000000000.f );
+            m_busyIndicator->Render( cmdbuf, window->GetExtent() );
+        }
+    }
     vkCmdEndRendering( cmdbuf );
     window->EndFrame();
 

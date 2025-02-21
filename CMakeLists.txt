@@ -419,7 +419,7 @@ Embed(IV_SRC IconSvg src/tools/iv/assets/icon.svg)
 EmbedShader(IV_SRC BackgroundVert src/tools/iv/shader/Background.vert)
 EmbedShader(IV_SRC BackgroundFrag src/tools/iv/shader/Background.frag)
 EmbedShader(IV_SRC BusyIndicatorVert src/tools/iv/shader/BusyIndicator.vert)
-EmbedShader(IV_SRC BusyIndicatorFrag src/tools/iv/shader/BusyIndicator.frag)
+EmbedShader(IV_SRC TexturingFrag src/tools/iv/shader/Texturing.frag)
 
 add_executable(iv ${IV_SRC})
 target_link_libraries(iv PRIVATE

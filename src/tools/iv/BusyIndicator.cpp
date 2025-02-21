@@ -52,7 +52,7 @@ BusyIndicator::BusyIndicator( GarbageChute& garbage, std::shared_ptr<VlkDevice> 
     Unembed( HourglassSvg );
     m_hourglass = std::make_unique<SvgImage>( HourglassSvg );
     m_hourglass->SetBorder( 1 );
-    m_texture = std::make_shared<Texture>( m_garbage, *m_device, *m_hourglass->Rasterize( HourglassSize * scale, HourglassSize * scale ), VK_FORMAT_R8G8B8A8_UNORM );
+    m_texture = std::make_shared<Texture>( m_garbage, *m_device, *m_hourglass->Rasterize( HourglassSize * scale, HourglassSize * scale ), VK_FORMAT_R8G8B8A8_SRGB );
 
     VkSamplerCreateInfo samplerInfo = {
         .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
@@ -284,6 +284,6 @@ void BusyIndicator::SetScale( float scale )
 {
     m_scale = scale;
     m_garbage.Recycle( std::move( m_texture ) );
-    m_texture = std::make_shared<Texture>( m_garbage, *m_device, *m_hourglass->Rasterize( HourglassSize * scale, HourglassSize * scale ), VK_FORMAT_R8G8B8A8_UNORM );
+    m_texture = std::make_shared<Texture>( m_garbage, *m_device, *m_hourglass->Rasterize( HourglassSize * scale, HourglassSize * scale ), VK_FORMAT_R8G8B8A8_SRGB );
     m_imageInfo.imageView = *m_texture;
 }

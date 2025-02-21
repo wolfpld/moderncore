@@ -16,6 +16,7 @@
 #include "vulkan/VlkPhysicalDevice.hpp"
 #include "vulkan/ext/PhysDevSel.hpp"
 #include "wayland/WaylandDisplay.hpp"
+#include "wayland/WaylandWindow.hpp"
 
 #include "data/IconSvg.hpp"
 
@@ -29,7 +30,7 @@ static uint64_t Now()
 Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
     : m_display( display )
     , m_vkInstance( vkInstance )
-    , m_window( std::make_unique<WaylandWindow>( display, vkInstance ) )
+    , m_window( std::make_shared<WaylandWindow>( display, vkInstance ) )
 {
     static constexpr WaylandWindow::Listener listener = {
         .OnClose = Method( Close ),

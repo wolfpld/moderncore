@@ -3,13 +3,12 @@
 #include <memory>
 #include <stdint.h>
 
-#include "wayland/WaylandWindow.hpp"
-
 class Background;
 class BusyIndicator;
 class VlkDevice;
 class VlkInstance;
 class WaylandDisplay;
+class WaylandWindow;
 
 class Viewport
 {
@@ -25,7 +24,7 @@ private:
     WaylandDisplay& m_display;
     VlkInstance& m_vkInstance;
 
-    std::unique_ptr<WaylandWindow> m_window;
+    std::shared_ptr<WaylandWindow> m_window;
     std::shared_ptr<VlkDevice> m_device;
 
     std::shared_ptr<Background> m_background;

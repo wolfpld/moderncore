@@ -5,6 +5,7 @@
 #include "Background.hpp"
 #include "BusyIndicator.hpp"
 #include "ImageProvider.hpp"
+#include "ImageView.hpp"
 #include "Viewport.hpp"
 #include "image/vector/SvgImage.hpp"
 #include "util/DataBuffer.hpp"
@@ -73,6 +74,7 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
     const auto format = m_window->GetFormat();
     m_background = std::make_shared<Background>( *m_window, m_device, format, m_scale );
     m_busyIndicator = std::make_shared<BusyIndicator>( *m_window, m_device, format, m_scale );
+    m_view = std::make_shared<ImageView>( *m_window, m_device, format );
 
     m_lastTime = Now();
     m_window->InvokeRender();
@@ -124,6 +126,7 @@ bool Viewport::Render( WaylandWindow* window )
     {
         std::lock_guard lock( m_lock );
         m_background->Render( cmdbuf, window->GetExtent() );
+        if( m_view->HasBitmap() ) m_view->Render( cmdbuf, window->GetExtent() );
         if( m_isBusy )
         {
             m_busyIndicator->Update( delta / 1000000000.f );
@@ -162,4 +165,5 @@ void Viewport::ImageHandler( int result, std::shared_ptr<Bitmap> bitmap )
 
     std::lock_guard lock( m_lock );
     m_isBusy = false;
+    m_view->SetBitmap( bitmap );
 }

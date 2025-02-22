@@ -11,11 +11,13 @@ VlkCommandBuffer::VlkCommandBuffer( const VlkCommandPool& pool, bool primary )
     info.level = primary ? VK_COMMAND_BUFFER_LEVEL_PRIMARY : VK_COMMAND_BUFFER_LEVEL_SECONDARY;
     info.commandBufferCount = 1;
 
+    std::lock_guard lock( pool );
     VkVerify( vkAllocateCommandBuffers( pool, &info, &m_commandBuffer ) );
 }
 
 VlkCommandBuffer::~VlkCommandBuffer()
 {
+    std::lock_guard lock( m_commandPool );
     vkFreeCommandBuffers( m_device, m_commandPool, 1, &m_commandBuffer );
 }
 

@@ -165,5 +165,6 @@ void Viewport::ImageHandler( int result, std::shared_ptr<Bitmap> bitmap )
 
     std::lock_guard lock( m_lock );
     m_isBusy = false;
-    m_view->SetBitmap( bitmap );
+
+    if( result == ImageProvider::Success ) m_view->SetBitmap( bitmap );
 }

@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <tracy/Tracy.hpp>
 
 #include "ImageProvider.hpp"
 #include "image/ImageLoader.hpp"
@@ -27,6 +28,7 @@ ImageProvider::~ImageProvider()
 
 int64_t ImageProvider::LoadImage( const char* path, Callback callback, void* userData )
 {
+    ZoneScoped;
     const auto id = m_nextId++;
     std::lock_guard lock( m_lock );
     m_jobs.emplace_back( Job {
@@ -41,6 +43,7 @@ int64_t ImageProvider::LoadImage( const char* path, Callback callback, void* use
 
 void ImageProvider::Cancel( int64_t id )
 {
+    ZoneScoped;
     std::lock_guard lock( m_lock );
     if( m_currentJob == id )
     {
@@ -58,6 +61,7 @@ void ImageProvider::Cancel( int64_t id )
 
 void ImageProvider::CancelAll()
 {
+    ZoneScoped;
     std::vector<Job> tmp;
 
     m_lock.lock();
@@ -73,6 +77,7 @@ void ImageProvider::CancelAll()
 
 void ImageProvider::Worker()
 {
+    ZoneScoped;
     std::unique_lock lock( m_lock );
     while( !m_shutdown.load( std::memory_order_acquire ) )
     {
@@ -85,6 +90,7 @@ void ImageProvider::Worker()
         m_currentJob = job.id;
         lock.unlock();
 
+        ZoneScopedN( "Image load" );
         std::unique_ptr<Bitmap> bitmap;
 
         mclog( LogLevel::Info, "Loading image %s", job.path.c_str() );

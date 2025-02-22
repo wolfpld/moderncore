@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <time.h>
+#include <tracy/Tracy.hpp>
 #include <vulkan/vulkan.h>
 
 #include "Background.hpp"
@@ -35,6 +36,8 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
     , m_window( std::make_shared<WaylandWindow>( display, vkInstance ) )
     , m_provider( std::make_shared<ImageProvider>() )
 {
+    ZoneScoped;
+
     static constexpr WaylandWindow::Listener listener = {
         .OnClose = Method( Close ),
         .OnRender = Method( Render ),
@@ -88,13 +91,17 @@ Viewport::~Viewport()
 
 void Viewport::LoadImage( const char* path )
 {
+    ZoneScoped;
+
     std::lock_guard lock( m_lock );
     if( !m_isBusy )
     {
         m_isBusy = true;
         m_busyIndicator->ResetTime();
     }
-    m_provider->LoadImage( path, Method( ImageHandler ), this );
+    const auto id = m_provider->LoadImage( path, Method( ImageHandler ), this );
+
+    ZoneTextF( "id %ld", id );
 }
 
 void Viewport::Close( WaylandWindow* window )
@@ -105,12 +112,14 @@ void Viewport::Close( WaylandWindow* window )
 
 bool Viewport::Render( WaylandWindow* window )
 {
+    ZoneScoped;
     CheckPanic( window == m_window.get(), "Invalid window" );
 
     const auto now = Now();
     const auto delta = std::min( now - m_lastTime, uint64_t( 1000000000 ) );
     m_lastTime = now;
 
+    FrameMark;
     auto& cmdbuf = window->BeginFrame( true );
 
     const VkRenderingAttachmentInfo attachmentInfo = {
@@ -147,6 +156,9 @@ bool Viewport::Render( WaylandWindow* window )
 
 void Viewport::Scale( WaylandWindow* window, uint32_t scale )
 {
+    ZoneScoped;
+    ZoneValue( scale );
+
     CheckPanic( window == m_window.get(), "Invalid window" );
     if( m_background )
     {
@@ -161,12 +173,18 @@ void Viewport::Scale( WaylandWindow* window, uint32_t scale )
 
 void Viewport::Resize( WaylandWindow* window, uint32_t width, uint32_t height )
 {
+    ZoneScoped;
+    ZoneTextF( "width %u, height %u", width, height );
+
     CheckPanic( window == m_window.get(), "Invalid window" );
     window->Resize( width, height );
 }
 
 void Viewport::ImageHandler( int64_t id, int result, std::shared_ptr<Bitmap> bitmap )
 {
+    ZoneScoped;
+    ZoneTextF( "id %ld, result %d", id, result );
+
     if( result == ImageProvider::Cancelled ) return;
 
     std::lock_guard lock( m_lock );

@@ -55,8 +55,8 @@ void VlkGarbage::Recycle( std::shared_ptr<VlkFence> fence, std::vector<std::shar
 
 void VlkGarbage::Collect()
 {
-    std::lock_guard lock( m_lock );
-    ReapGarbage();
+    std::unique_lock lock( m_lock );
+    ReapGarbage( lock );
 }
 
 void VlkGarbage::Reaper()
@@ -69,7 +69,7 @@ void VlkGarbage::Reaper()
         m_cv.wait( lock, [this] { return m_shutdown.load( std::memory_order_acquire ) || !m_garbage.empty(); } );
         if( m_shutdown.load( std::memory_order_acquire ) ) return;
 
-        ReapGarbage();
+        ReapGarbage( lock );
 
         if( !m_garbage.empty() )
         {
@@ -79,12 +79,14 @@ void VlkGarbage::Reaper()
     }
 }
 
-void VlkGarbage::ReapGarbage()
+void VlkGarbage::ReapGarbage( std::unique_lock<std::mutex>& lock )
 {
     ZoneScoped;
 
     size_t count = 0;
     size_t sets = 0;
+
+    std::vector<std::shared_ptr<VlkBase>> tmp;
 
     auto it = m_garbage.begin();
     while( it != m_garbage.end() )
@@ -93,6 +95,7 @@ void VlkGarbage::ReapGarbage()
         {
             count += it->second.size();
             sets++;
+            tmp.insert( tmp.end(), std::make_move_iterator( it->second.begin() ), std::make_move_iterator( it->second.end() ) );
             it = m_garbage.erase( it );
         }
         else
@@ -101,5 +104,14 @@ void VlkGarbage::ReapGarbage()
         }
     }
 
-    if( count > 0 ) mclog( LogLevel::Debug, "Garbage collected: %zu sets, %zu items", sets, count );
+    if( !tmp.empty() )
+    {
+        ZoneScopedN( "Garbage collection" );
+        ZoneTextF( "Sets: %zu, Items: %zu", sets, count );
+
+        lock.unlock();
+        tmp.clear();
+        mclog( LogLevel::Debug, "Garbage collected: %zu sets, %zu items", sets, count );
+        lock.lock();
+    }
 }

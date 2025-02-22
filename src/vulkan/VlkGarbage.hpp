@@ -25,7 +25,7 @@ public:
 
 private:
     void Reaper();
-    void ReapGarbage();
+    void ReapGarbage( std::unique_lock<std::mutex>& lock );
 
     std::mutex m_lock;
     unordered_flat_map<std::shared_ptr<VlkFence>, std::vector<std::shared_ptr<VlkBase>>> m_garbage;

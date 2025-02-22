@@ -90,6 +90,7 @@ Viewport::~Viewport()
 {
     m_window->Close();
     m_provider->CancelAll();
+    m_provider.reset();
 }
 
 void Viewport::LoadImage( const char* path )

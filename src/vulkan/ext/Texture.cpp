@@ -4,11 +4,11 @@
 
 #include "Texture.hpp"
 #include "util/Bitmap.hpp"
-#include "util/Tracy.hpp"
 #include "vulkan/VlkBuffer.hpp"
 #include "vulkan/VlkCommandBuffer.hpp"
 #include "vulkan/VlkDevice.hpp"
 #include "vulkan/VlkFence.hpp"
+#include "vulkan/ext/Tracy.hpp"
 
 Texture::Texture( GarbageChute& garbage, VlkDevice& device, const Bitmap& bitmap, VkFormat format )
     : m_layout( VK_IMAGE_LAYOUT_UNDEFINED )

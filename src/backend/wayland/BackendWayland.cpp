@@ -8,11 +8,11 @@
 #include "util/Config.hpp"
 #include "util/Invoke.hpp"
 #include "util/Panic.hpp"
-#include "util/Tracy.hpp"
 #include "vulkan/VlkCommandBuffer.hpp"
 #include "vulkan/VlkDevice.hpp"
 #include "vulkan/VlkInstance.hpp"
 #include "vulkan/ext/PhysDevSel.hpp"
+#include "vulkan/ext/Tracy.hpp"
 #include "wayland/WaylandDisplay.hpp"
 #include "wayland/WaylandWindow.hpp"
 

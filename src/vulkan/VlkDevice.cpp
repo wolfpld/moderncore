@@ -10,7 +10,7 @@
 #include "VlkError.hpp"
 #include "VlkInstance.hpp"
 #include "VlkPhysicalDevice.hpp"
-#include "util/Tracy.hpp"
+#include "vulkan/ext/Tracy.hpp"
 
 VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> physDev, int flags, VkSurfaceKHR presentSurface )
     : m_physDev( std::move( physDev ) )

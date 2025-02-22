@@ -55,6 +55,7 @@ public:
     void Resize( uint32_t width, uint32_t height );
     void LockSize();
     void Commit();
+    void Close();
 
     VlkCommandBuffer& BeginFrame( bool imageTransfer = false );
     void EndFrame();

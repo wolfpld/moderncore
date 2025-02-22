@@ -180,6 +180,13 @@ void WaylandWindow::Commit()
     wl_surface_commit( m_surface );
 }
 
+void WaylandWindow::Close()
+{
+    wl_surface_attach( m_surface, nullptr, 0, 0 );
+    wl_surface_commit( m_surface );
+    wl_display_flush( m_display.Display() );
+}
+
 VlkCommandBuffer& WaylandWindow::BeginFrame( bool imageTransfer )
 {
     if( m_extent.width != m_staged.width || m_extent.height != m_staged.height || m_scale != m_prevScale )

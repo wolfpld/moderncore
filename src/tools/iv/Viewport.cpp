@@ -94,15 +94,15 @@ void Viewport::LoadImage( const char* path )
 {
     ZoneScoped;
 
+    const auto id = m_provider->LoadImage( path, Method( ImageHandler ), this );
+    ZoneTextF( "id %ld", id );
+
     std::lock_guard lock( m_lock );
     if( !m_isBusy )
     {
         m_isBusy = true;
         m_busyIndicator->ResetTime();
     }
-    const auto id = m_provider->LoadImage( path, Method( ImageHandler ), this );
-
-    ZoneTextF( "id %ld", id );
 }
 
 void Viewport::Close( WaylandWindow* window )

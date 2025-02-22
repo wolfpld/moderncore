@@ -158,8 +158,10 @@ void Viewport::Scale( WaylandWindow* window, uint32_t scale )
 {
     ZoneScoped;
     ZoneValue( scale );
-
     CheckPanic( window == m_window.get(), "Invalid window" );
+
+    mclog( LogLevel::Info, "Preferred window scale: %g", scale / 120.f );
+
     if( m_background )
     {
         m_background->SetScale( scale / 120.f );

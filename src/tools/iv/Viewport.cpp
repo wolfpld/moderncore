@@ -189,10 +189,8 @@ void Viewport::ImageHandler( int64_t id, int result, std::shared_ptr<Bitmap> bit
     ZoneScoped;
     ZoneTextF( "id %ld, result %d", id, result );
 
-    if( result == ImageProvider::Cancelled ) return;
+    m_view->SetBitmap( bitmap );
 
     std::lock_guard lock( m_lock );
     m_isBusy = false;
-
-    if( result == ImageProvider::Success ) m_view->SetBitmap( bitmap );
 }

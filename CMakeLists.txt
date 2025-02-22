@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.29)
 option(TRACY_ENABLE "Enable Tracy" OFF)
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 option(MARCH_NATIVE "Enable -march=native" ON)
+option(SANITIZE "Sanitizer parameters" OFF)
 
 set(CMAKE_CXX_STANDARD 20)
 
@@ -18,6 +19,11 @@ include(cmake/FindWaylandScanner.cmake)
 
 if(NOT TRACY_ENABLE)
     set(TRACY_OPTIONS "TRACY_STATIC ON")
+endif()
+
+if(SANITIZE)
+    add_compile_options(-fsanitize=${SANITIZE} -fno-omit-frame-pointer)
+    add_link_options(-fsanitize=${SANITIZE} -fno-omit-frame-pointer)
 endif()
 
 CPMAddPackage(

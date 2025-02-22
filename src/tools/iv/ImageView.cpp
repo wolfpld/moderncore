@@ -237,20 +237,14 @@ void ImageView::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
 
 void ImageView::SetBitmap( const std::shared_ptr<Bitmap>& bitmap )
 {
-    std::lock_guard lock( m_lock );
-
-    if( m_texture )
+    if( !bitmap )
     {
-        m_garbage.Recycle( {
-            std::move( m_texture ),
-            std::move( m_vertexBuffer ),
-        } );
+        std::lock_guard lock( m_lock );
+        Cleanup();
+        return;
     }
 
-    if( !bitmap ) return;
-
-    m_texture = std::make_shared<Texture>( m_garbage, *m_device, *bitmap, VK_FORMAT_R8G8B8A8_SRGB );
-    m_imageInfo.imageView = *m_texture;
+    auto texture = std::make_shared<Texture>( m_garbage, *m_device, *bitmap, VK_FORMAT_R8G8B8A8_SRGB );
 
     const auto w = float( bitmap->Width() );
     const auto h = float( bitmap->Height() );
@@ -268,13 +262,32 @@ void ImageView::SetBitmap( const std::shared_ptr<Bitmap>& bitmap )
         .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE
     };
-    m_vertexBuffer = std::make_shared<VlkBuffer>( *m_device, vinfo, VlkBuffer::PreferDevice | VlkBuffer::WillWrite );
-    memcpy( m_vertexBuffer->Ptr(), vdata, sizeof( vdata ) );
-    m_vertexBuffer->Flush();
+    auto vb = std::make_shared<VlkBuffer>( *m_device, vinfo, VlkBuffer::PreferDevice | VlkBuffer::WillWrite );
+    memcpy( vb->Ptr(), vdata, sizeof( vdata ) );
+    vb->Flush();
+
+    std::lock_guard lock( m_lock );
+    Cleanup();
+
+    std::swap( m_texture, texture );
+    std::swap( m_vertexBuffer, vb );
+
+    m_imageInfo.imageView = *m_texture;
 }
 
 bool ImageView::HasBitmap()
 {
     std::lock_guard lock( m_lock );
     return m_texture != nullptr;
+}
+
+void ImageView::Cleanup()
+{
+    if( m_texture )
+    {
+        m_garbage.Recycle( {
+            std::move( m_texture ),
+            std::move( m_vertexBuffer ),
+        } );
+    }
 }

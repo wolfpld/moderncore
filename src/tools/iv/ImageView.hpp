@@ -29,6 +29,8 @@ public:
     [[nodiscard]] bool HasBitmap();
 
 private:
+    void Cleanup();
+
     GarbageChute& m_garbage;
     std::shared_ptr<VlkDevice> m_device;
 

@@ -244,7 +244,7 @@ void ImageView::SetBitmap( const std::shared_ptr<Bitmap>& bitmap )
         return;
     }
 
-    auto texture = std::make_shared<Texture>( m_garbage, *m_device, *bitmap, VK_FORMAT_R8G8B8A8_SRGB );
+    auto texture = std::make_shared<Texture>( *m_device, *bitmap, VK_FORMAT_R8G8B8A8_SRGB );
 
     const auto w = float( bitmap->Width() );
     const auto h = float( bitmap->Height() );

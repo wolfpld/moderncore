@@ -19,7 +19,6 @@ class SvgImage;
 class VlkCommandBuffer;
 class VlkDevice;
 class VlkFence;
-class VlkGarbage;
 class VlkInstance;
 class VlkSemaphore;
 class WaylandDisplay;
@@ -79,8 +78,6 @@ public:
 
     void Recycle( std::shared_ptr<VlkBase>&& garbage ) override;
     void Recycle( std::vector<std::shared_ptr<VlkBase>>&& garbage ) override;
-    void Recycle( std::shared_ptr<VlkFence> fence, std::shared_ptr<VlkBase>&& garbage ) override;
-    void Recycle( std::shared_ptr<VlkFence> fence, std::vector<std::shared_ptr<VlkBase>>&& garbage ) override;
 
 private:
     void CreateSwapchain( const VkExtent2D& extent );
@@ -109,7 +106,6 @@ private:
     std::shared_ptr<VlkDevice> m_vkDevice;
     std::shared_ptr<VlkSwapchain> m_swapchain;
     std::shared_ptr<VlkSurface> m_vkSurface;
-    std::shared_ptr<VlkGarbage> m_garbage;
 
     const Listener* m_listener = nullptr;
     void* m_listenerPtr;

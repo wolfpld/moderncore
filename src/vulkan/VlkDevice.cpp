@@ -8,12 +8,14 @@
 #include "VlkCommandPool.hpp"
 #include "VlkDevice.hpp"
 #include "VlkError.hpp"
+#include "VlkGarbage.hpp"
 #include "VlkInstance.hpp"
 #include "VlkPhysicalDevice.hpp"
 #include "vulkan/ext/Tracy.hpp"
 
 VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> physDev, int flags, VkSurfaceKHR presentSurface )
     : m_physDev( std::move( physDev ) )
+    , m_garbage( std::make_shared<VlkGarbage>() )
     , m_queueInfo {}
     , m_queue {}
 {
@@ -399,6 +401,8 @@ VlkDevice::~VlkDevice()
 #ifdef TRACY_ENABLE
     TracyVkDestroy( m_tracyCtx );
 #endif
+
+    m_garbage.reset();
 
     for( auto& pool : m_commandPool ) pool.reset();
     vmaDestroyAllocator( m_allocator );

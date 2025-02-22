@@ -14,6 +14,7 @@
 
 class VlkCommandBuffer;
 class VlkCommandPool;
+class VlkGarbage;
 class VlkInstance;
 
 class VlkDevice
@@ -49,6 +50,7 @@ public:
     [[nodiscard]] auto GetQueue( QueueType type ) const { CheckPanic( m_queue[(int)type] != VK_NULL_HANDLE, "Queue does not exist" ); return m_queue[(int)type]; }
     [[nodiscard]] auto& GetCommandPool( QueueType type ) const { CheckPanic( m_commandPool[(int)type], "Command pool does not exist" ); return m_commandPool[(int)type]; }
     [[nodiscard]] auto& GetPhysicalDevice() const { return m_physDev; }
+    [[nodiscard]] auto& GetGarbage() const { return m_garbage; }
 
     operator VkDevice() const { return m_device; }
     operator VkPhysicalDevice() const { return *m_physDev; }
@@ -72,4 +74,6 @@ private:
 #ifdef TRACY_ENABLE
     TracyVkCtx m_tracyCtx = nullptr;
 #endif
+
+    std::shared_ptr<VlkGarbage> m_garbage;
 };

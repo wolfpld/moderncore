@@ -7,7 +7,6 @@
 #include "vulkan/VlkBase.hpp"
 #include "vulkan/VlkImage.hpp"
 #include "vulkan/VlkImageView.hpp"
-#include "vulkan/ext/GarbageChute.hpp"
 
 class Bitmap;
 class VlkDevice;
@@ -15,7 +14,7 @@ class VlkDevice;
 class Texture : public VlkBase
 {
 public:
-    Texture( GarbageChute& garbage, VlkDevice& device, const Bitmap& bitmap, VkFormat format );
+    Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format );
 
     NoCopy( Texture );
 

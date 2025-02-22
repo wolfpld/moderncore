@@ -26,7 +26,6 @@
 WaylandWindow::WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance )
     : m_display( display )
     , m_vkInstance( vkInstance )
-    , m_garbage( std::make_shared<VlkGarbage>() )
 {
     ZoneScoped;
 
@@ -326,30 +325,18 @@ void WaylandWindow::InvokeRender()
     wl_callback_add_listener( cb, &listener, this );
 
     if( !InvokeRet( OnRender, false, this ) ) wl_surface_commit( m_surface );
-
-    m_garbage->Collect();
 }
 
 void WaylandWindow::Recycle( std::shared_ptr<VlkBase>&& garbage )
 {
     auto& current = m_frameData[m_frameIdx];
-    m_garbage->Recycle( current.renderFence, std::move( garbage ) );
+    m_vkDevice->GetGarbage()->Recycle( current.renderFence, std::move( garbage ) );
 }
 
 void WaylandWindow::Recycle( std::vector<std::shared_ptr<VlkBase>>&& garbage )
 {
     auto& current = m_frameData[m_frameIdx];
-    m_garbage->Recycle( current.renderFence, std::move( garbage ) );
-}
-
-void WaylandWindow::Recycle( std::shared_ptr<VlkFence> fence, std::shared_ptr<VlkBase>&& garbage )
-{
-    m_garbage->Recycle( std::move( fence ), std::move( garbage ) );
-}
-
-void WaylandWindow::Recycle( std::shared_ptr<VlkFence> fence, std::vector<std::shared_ptr<VlkBase>>&& garbage )
-{
-    m_garbage->Recycle( std::move( fence ), std::move( garbage ) );
+    m_vkDevice->GetGarbage()->Recycle( current.renderFence, std::move( garbage ) );
 }
 
 void WaylandWindow::CreateSwapchain( const VkExtent2D& extent )
@@ -381,27 +368,27 @@ void WaylandWindow::CreateSwapchain( const VkExtent2D& extent )
     }
 
     m_extent = extent;
-    m_garbage->Collect();
 }
 
 void WaylandWindow::CleanupSwapchain( bool withSurface )
 {
+    auto& garbage = *m_vkDevice->GetGarbage();
     auto& current = m_frameData[m_frameIdx];
-    m_garbage->Recycle( std::move( current.renderFence ), current.commandBuffer );
+    garbage.Recycle( std::move( current.renderFence ), current.commandBuffer );
     std::vector<std::shared_ptr<VlkBase>> objects = {
         current.imageAvailable,
         current.renderFinished,
         std::move( m_swapchain ),
     };
     if( withSurface ) objects.emplace_back( std::move( m_vkSurface ) );
-    m_garbage->Recycle( std::move( current.presentFence ), std::move( objects ) );
+    garbage.Recycle( std::move( current.presentFence ), std::move( objects ) );
 
     uint32_t idx = (m_frameIdx + 1) % m_frameData.size();
     while( idx != m_frameIdx )
     {
         auto& frame = m_frameData[idx];
-        m_garbage->Recycle( std::move( frame.renderFence ), frame.commandBuffer );
-        m_garbage->Recycle( std::move( frame.presentFence ), {
+        garbage.Recycle( std::move( frame.renderFence ), frame.commandBuffer );
+        garbage.Recycle( std::move( frame.presentFence ), {
             frame.imageAvailable,
             frame.renderFinished
         } );

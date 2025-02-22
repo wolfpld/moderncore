@@ -8,9 +8,10 @@
 #include "vulkan/VlkCommandBuffer.hpp"
 #include "vulkan/VlkDevice.hpp"
 #include "vulkan/VlkFence.hpp"
+#include "vulkan/VlkGarbage.hpp"
 #include "vulkan/ext/Tracy.hpp"
 
-Texture::Texture( GarbageChute& garbage, VlkDevice& device, const Bitmap& bitmap, VkFormat format )
+Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format )
     : m_layout( VK_IMAGE_LAYOUT_UNDEFINED )
     , m_access( VK_ACCESS_NONE )
 {
@@ -81,7 +82,7 @@ Texture::Texture( GarbageChute& garbage, VlkDevice& device, const Bitmap& bitmap
 
     auto fence = std::make_shared<VlkFence>( device );
     device.Submit( *cmdBuf, *fence );
-    garbage.Recycle( std::move( fence ), {
+    device.GetGarbage()->Recycle( std::move( fence ), {
         std::move( cmdBuf ),
         std::move( stagingBuffer ),
         m_image

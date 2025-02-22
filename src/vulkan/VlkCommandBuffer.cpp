@@ -25,12 +25,14 @@ void VlkCommandBuffer::Begin( VkCommandBufferUsageFlags flags )
 {
     VkCommandBufferBeginInfo begin = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
     begin.flags = flags;
+    m_commandPool.lock();
     VkVerify( vkBeginCommandBuffer( m_commandBuffer, &begin ) );
 }
 
 void VlkCommandBuffer::End()
 {
     VkVerify( vkEndCommandBuffer( m_commandBuffer ) );
+    m_commandPool.unlock();
 }
 
 void VlkCommandBuffer::Reset( VkCommandBufferResetFlags flags )

@@ -70,6 +70,6 @@ private:
     std::array<std::shared_ptr<VlkCommandPool>, 4> m_commandPool;
 
 #ifdef TRACY_ENABLE
-    TracyVkCtx m_tracyCtx = {};
+    TracyVkCtx m_tracyCtx = nullptr;
 #endif
 };

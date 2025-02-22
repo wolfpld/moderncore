@@ -305,12 +305,9 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
     };
 
 #ifdef TRACY_ENABLE
-    bool profile = m_physDev->HasCalibratedTimestamps();
-    if( profile )
-    {
-        deviceExtensions.emplace_back( VK_EXT_CALIBRATED_TIMESTAMPS_EXTENSION_NAME );
-        features12.hostQueryReset = VK_TRUE;
-    }
+    CheckPanic( m_physDev->HasCalibratedTimestamps(), "Calibrated timestamps not supported, cannot profile." );
+    deviceExtensions.emplace_back( VK_EXT_CALIBRATED_TIMESTAMPS_EXTENSION_NAME );
+    features12.hostQueryReset = VK_TRUE;
 #endif
 
     VkDeviceCreateInfo devInfo = { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
@@ -380,31 +377,27 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
     }
 
 #ifdef TRACY_ENABLE
-    if( profile )
-    {
-        auto gpdctd = (PFN_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT)vkGetInstanceProcAddr( instance, "vkGetPhysicalDeviceCalibrateableTimeDomainsEXT" );
-        auto gct = (PFN_vkGetCalibratedTimestampsEXT)vkGetInstanceProcAddr( instance, "vkGetCalibratedTimestampsEXT" );
+    auto gpdctd = (PFN_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT)vkGetInstanceProcAddr( instance, "vkGetPhysicalDeviceCalibrateableTimeDomainsEXT" );
+    auto gct = (PFN_vkGetCalibratedTimestampsEXT)vkGetInstanceProcAddr( instance, "vkGetCalibratedTimestampsEXT" );
 
-        uint32_t count;
-        gpdctd( *m_physDev, &count, nullptr );
-        std::vector<VkTimeDomainEXT> domains( count );
-        gpdctd( *m_physDev, &count, domains.data() );
+    uint32_t count;
+    gpdctd( *m_physDev, &count, nullptr );
+    std::vector<VkTimeDomainEXT> domains( count );
+    gpdctd( *m_physDev, &count, domains.data() );
 
-        if( std::find( domains.begin(), domains.end(), VK_TIME_DOMAIN_CLOCK_MONOTONIC_RAW_EXT ) != domains.end() )
-        {
-            m_tracyCtx = TracyVkContextHostCalibrated( *m_physDev, m_device, vkResetQueryPool, gpdctd, gct );
-            auto& properties = m_physDev->Properties();
-            TracyVkContextName( m_tracyCtx, properties.deviceName, strlen( properties.deviceName ) );
-            mclog( LogLevel::Info, "Vulkan profiling available on device %s", properties.deviceName );
-        }
-    }
+    CheckPanic( std::find( domains.begin(), domains.end(), VK_TIME_DOMAIN_CLOCK_MONOTONIC_EXT ) != domains.end(), "VK_TIME_DOMAIN_CLOCK_MONOTONIC_RAW_EXT not supported, cannot profile." );
+
+    m_tracyCtx = TracyVkContextHostCalibrated( *m_physDev, m_device, vkResetQueryPool, gpdctd, gct );
+    auto& properties = m_physDev->Properties();
+    TracyVkContextName( m_tracyCtx, properties.deviceName, strlen( properties.deviceName ) );
+    mclog( LogLevel::Info, "Vulkan profiling available on device %s", properties.deviceName );
 #endif
 }
 
 VlkDevice::~VlkDevice()
 {
 #ifdef TRACY_ENABLE
-    if( m_tracyCtx ) TracyVkDestroy( m_tracyCtx );
+    TracyVkDestroy( m_tracyCtx );
 #endif
 
     for( auto& pool : m_commandPool ) pool.reset();

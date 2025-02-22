@@ -175,21 +175,11 @@ bool BackendWayland::Render( WaylandWindow* window )
     };
 
     vkCmdBeginRendering( cmdbuf, &renderingInfo );
-
-#ifdef TRACY_ENABLE
-    auto tracyCtx = window->Device().GetTracyContext();
-    tracy::VkCtxScope* tracyScope = nullptr;
-    if( tracyCtx ) ZoneVkNew( tracyCtx, tracyScope, cmdbuf, "Render", true );
-#endif
-
-    //for( auto& renderable : Server::Instance().Renderables() ) renderable->Render( *this, cmdbuf );
-
+    {
+        ZoneVk( window->Device(), cmdbuf, "Render", true );
+        //for( auto& renderable : Server::Instance().Renderables() ) renderable->Render( *this, cmdbuf );
+    }
     vkCmdEndRendering( cmdbuf );
-
-#ifdef TRACY_ENABLE
-    delete tracyScope;
-#endif
-
     window->EndFrame();
 
     return true;

@@ -58,34 +58,25 @@ Texture::Texture( GarbageChute& garbage, VlkDevice& device, const Bitmap& bitmap
 
     auto cmdBuf = std::make_unique<VlkCommandBuffer>( *device.GetCommandPool( QueueType::Graphic ) );
     cmdBuf->Begin( VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT );
+    {
+        ZoneVk( device, *cmdBuf, "Texture upload", true );
+        TransitionLayout( *cmdBuf, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT );
 
-#ifdef TRACY_ENABLE
-    auto tracyCtx = device.GetTracyContext();
-    tracy::VkCtxScope* tracyScope = nullptr;
-    if( tracyCtx ) ZoneVkNew( tracyCtx, tracyScope, *cmdBuf, "Texture upload", true );
-#endif
+        VkBufferImageCopy region = {
+            .imageSubresource = {
+                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                .layerCount = 1
+            },
+            .imageExtent = {
+                .width = bitmap.Width(),
+                .height = bitmap.Height(),
+                .depth = 1
+            }
+        };
+        vkCmdCopyBufferToImage( *cmdBuf, *stagingBuffer, *m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region );
 
-    TransitionLayout( *cmdBuf, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT );
-
-    VkBufferImageCopy region = {
-        .imageSubresource = {
-            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-            .layerCount = 1
-        },
-        .imageExtent = {
-            .width = bitmap.Width(),
-            .height = bitmap.Height(),
-            .depth = 1
-        }
-    };
-    vkCmdCopyBufferToImage( *cmdBuf, *stagingBuffer, *m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region );
-
-    TransitionLayout( *cmdBuf, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT );
-
-#ifdef TRACY_ENABLE
-    delete tracyScope;
-#endif
-
+        TransitionLayout( *cmdBuf, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT );
+    }
     cmdBuf->End();
 
     auto fence = std::make_shared<VlkFence>( device );

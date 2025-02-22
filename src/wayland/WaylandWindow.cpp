@@ -241,10 +241,7 @@ void WaylandWindow::EndFrame()
 
     m_swapchain->PresentBarrier( *frame.commandBuffer, m_imageIdx );
 
-#ifdef TRACY_ENABLE
-    { auto tracyCtx = m_vkDevice->GetTracyContext(); if( tracyCtx ) TracyVkCollect( tracyCtx, *frame.commandBuffer ); }
-#endif
-
+    TracyVkCollect( m_vkDevice->GetTracyContext(), *frame.commandBuffer );
     frame.commandBuffer->End();
 
     const std::array<VkSemaphore, 1> waitSemaphores = { *frame.imageAvailable };

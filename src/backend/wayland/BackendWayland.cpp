@@ -150,12 +150,8 @@ void BackendWayland::Close( WaylandWindow* )
 
 bool BackendWayland::Render( WaylandWindow* window )
 {
-#ifdef TRACY_ENABLE
     ZoneScoped;
-    char buf[128];
-    const auto len = snprintf( buf, 128, "Render %s", window->GetTitle() );
-    ZoneName( buf, len );
-#endif
+    ZoneNameF( "Render %s", window->GetTitle() );
 
     auto& cmdbuf = window->BeginFrame();
 

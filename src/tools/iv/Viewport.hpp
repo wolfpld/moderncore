@@ -18,6 +18,7 @@ class Viewport
 {
 public:
     Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu );
+    ~Viewport();
 
     void LoadImage( const char* path );
 

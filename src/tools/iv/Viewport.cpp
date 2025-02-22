@@ -80,6 +80,11 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
     m_window->InvokeRender();
 }
 
+Viewport::~Viewport()
+{
+    m_window->Close();
+}
+
 void Viewport::LoadImage( const char* path )
 {
     std::lock_guard lock( m_lock );

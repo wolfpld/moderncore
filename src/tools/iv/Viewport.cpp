@@ -82,6 +82,7 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
 
 Viewport::~Viewport()
 {
+    m_provider->CancelRequest();
     m_window->Close();
 }
 

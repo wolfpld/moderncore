@@ -9,24 +9,6 @@
 
 WaylandDisplay::WaylandDisplay()
 {
-}
-
-WaylandDisplay::~WaylandDisplay()
-{
-    m_seat.reset();
-    if( m_iconManager ) xdg_toplevel_icon_manager_v1_destroy( m_iconManager );
-    if( m_cursorShapeManager ) wp_cursor_shape_manager_v1_destroy( m_cursorShapeManager );
-    if( m_viewporter ) wp_viewporter_destroy( m_viewporter );
-    if( m_fractionalScaleManager ) wp_fractional_scale_manager_v1_destroy( m_fractionalScaleManager );
-    if( m_decorationManager ) zxdg_decoration_manager_v1_destroy( m_decorationManager );
-    if( m_xdgWmBase ) xdg_wm_base_destroy( m_xdgWmBase );
-    if( m_shm ) wl_shm_destroy( m_shm );
-    if( m_compositor ) wl_compositor_destroy( m_compositor );
-    if( m_dpy ) wl_display_disconnect( m_dpy );
-}
-
-void WaylandDisplay::Connect()
-{
     ZoneScoped;
 
     m_dpy = wl_display_connect( nullptr );
@@ -47,6 +29,20 @@ void WaylandDisplay::Connect()
     CheckPanic( m_viewporter, "Failed to create Wayland viewporter" );
     CheckPanic( m_fractionalScaleManager, "Failed to create Wayland fractional scale manager" );
     CheckPanic( m_cursorShapeManager, "Failed to create Wayland cursor shape manager" );
+}
+
+WaylandDisplay::~WaylandDisplay()
+{
+    m_seat.reset();
+    if( m_iconManager ) xdg_toplevel_icon_manager_v1_destroy( m_iconManager );
+    if( m_cursorShapeManager ) wp_cursor_shape_manager_v1_destroy( m_cursorShapeManager );
+    if( m_viewporter ) wp_viewporter_destroy( m_viewporter );
+    if( m_fractionalScaleManager ) wp_fractional_scale_manager_v1_destroy( m_fractionalScaleManager );
+    if( m_decorationManager ) zxdg_decoration_manager_v1_destroy( m_decorationManager );
+    if( m_xdgWmBase ) xdg_wm_base_destroy( m_xdgWmBase );
+    if( m_shm ) wl_shm_destroy( m_shm );
+    if( m_compositor ) wl_compositor_destroy( m_compositor );
+    if( m_dpy ) wl_display_disconnect( m_dpy );
 }
 
 void WaylandDisplay::Roundtrip()

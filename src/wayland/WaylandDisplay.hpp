@@ -22,7 +22,6 @@ public:
     ~WaylandDisplay();
     NoCopy( WaylandDisplay );
 
-    void Connect();
     void Roundtrip();
 
     void Run();

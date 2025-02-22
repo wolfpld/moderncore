@@ -19,7 +19,6 @@
 BackendWayland::BackendWayland()
     : m_dpy( std::make_unique<WaylandDisplay>() )
 {
-    m_dpy->Connect();
 }
 
 BackendWayland::~BackendWayland()

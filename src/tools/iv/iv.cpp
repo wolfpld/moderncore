@@ -61,9 +61,7 @@ int main( int argc, char** argv )
     }
 
     auto vkInstance = std::make_unique<VlkInstance>( VlkInstanceType::Wayland, enableValidation );
-
     auto waylandDisplay = std::make_unique<WaylandDisplay>();
-    waylandDisplay->Connect();
 
     auto viewport = std::make_unique<Viewport>( *waylandDisplay, *vkInstance, gpu );
     if( optind != argc ) viewport->LoadImage( argv[optind] );

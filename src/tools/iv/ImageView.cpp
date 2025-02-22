@@ -247,6 +247,8 @@ void ImageView::SetBitmap( const std::shared_ptr<Bitmap>& bitmap )
         } );
     }
 
+    if( !bitmap ) return;
+
     m_texture = std::make_shared<Texture>( m_garbage, *m_device, *bitmap, VK_FORMAT_R8G8B8A8_SRGB );
     m_imageInfo.imageView = *m_texture;
 

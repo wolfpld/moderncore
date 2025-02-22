@@ -4,6 +4,7 @@
 #include <condition_variable>
 #include <memory>
 #include <mutex>
+#include <stdint.h>
 #include <string>
 #include <thread>
 #include <vector>
@@ -22,34 +23,35 @@ public:
         Cancelled
     };
 
-    typedef void(*Callback)( void* userData, int result, std::shared_ptr<Bitmap> bitmap );
+    typedef void(*Callback)( void* userData, int64_t id, int result, std::shared_ptr<Bitmap> bitmap );
 
     ImageProvider();
     ~ImageProvider();
 
-    void LoadImage( const char* path, Callback callback, void* userData );
-    void CancelRequest();
+    int64_t LoadImage( const char* path, Callback callback, void* userData );
+
+    void Cancel( int64_t id );
+    void CancelAll();
 
 private:
     struct Job
     {
+        int64_t id;
         std::string path;
         Callback callback;
         void* userData;
-        bool cancel;
     };
 
-    void Worker( std::shared_ptr<Job> job );
-    void Reaper();
+    void Worker();
+
+    int64_t m_currentJob;
+    int64_t m_nextId;
+    std::vector<Job> m_jobs;
+
+    std::atomic<bool> m_shutdown;
+    std::mutex m_lock;
+    std::condition_variable m_cv;
+    std::thread m_thread;
 
     TaskDispatch m_td;
-
-    std::mutex m_lock;
-    std::thread m_thread;
-    std::shared_ptr<Job> m_job;
-
-    std::condition_variable m_reapCv;
-    std::vector<std::thread> m_reapPile;
-    std::atomic<bool> m_shutdown;
-    std::thread m_reaper;
 };

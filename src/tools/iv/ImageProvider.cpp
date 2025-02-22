@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "ImageProvider.hpp"
 #include "image/ImageLoader.hpp"
 #include "util/Bitmap.hpp"
@@ -7,138 +9,128 @@
 ImageProvider::ImageProvider()
     : m_td( std::max( 1u, std::thread::hardware_concurrency() - 1 ), "Image Provider" )
     , m_shutdown( false )
-    , m_reaper( [this] { Reaper(); } )
+    , m_currentJob( -1 )
+    , m_nextId( 0 )
+    , m_thread( [this] { Worker(); } )
 {
 }
 
 ImageProvider::~ImageProvider()
 {
-    m_lock.lock();
-    if( m_job ) m_job->cancel = true;
-    m_shutdown.store( true, std::memory_order_release );
-    m_reapCv.notify_all();
-    m_lock.unlock();
-    m_reaper.join();
-    if( m_thread.joinable() ) m_thread.join();
-    for( auto& t : m_reapPile ) t.join();
-}
-
-void ImageProvider::LoadImage( const char* path, Callback callback, void* userData )
-{
     {
         std::lock_guard lock( m_lock );
-
-        if( m_job )
-        {
-            m_job->cancel = true;
-            m_job.reset();
-            m_reapPile.emplace_back( std::move( m_thread ) );
-            m_reapCv.notify_one();
-        }
-        else if( m_thread.joinable() )
-        {
-            m_thread.join();
-        }
+        m_shutdown.store( true, std::memory_order_release );
+        m_cv.notify_all();
     }
+    m_thread.join();
+}
 
-    m_job = std::make_shared<Job>( Job {
+int64_t ImageProvider::LoadImage( const char* path, Callback callback, void* userData )
+{
+    const auto id = m_nextId++;
+    std::lock_guard lock( m_lock );
+    m_jobs.emplace_back( Job {
+        .id = id,
         .path = path,
         .callback = callback,
-        .userData = userData,
-        .cancel = false
+        .userData = userData
     } );
-
-    m_thread = std::thread( [this] { Worker( m_job ); } );
+    m_cv.notify_one();
+    return id;
 }
 
-void ImageProvider::CancelRequest()
+void ImageProvider::Cancel( int64_t id )
 {
     std::lock_guard lock( m_lock );
-    if( m_job )
+    if( m_currentJob == id )
     {
-        m_job->cancel = true;
-        m_job.reset();
-        m_reapPile.emplace_back( std::move( m_thread ) );
-        m_reapCv.notify_one();
-    }
-}
-
-// Worker signals that the job is done by reseting m_job
-void ImageProvider::Worker( std::shared_ptr<Job> job )
-{
-    mclog( LogLevel::Info, "Loading image %s", job->path.c_str() );
-    auto loader = GetImageLoader( job->path.c_str(), ToneMap::Operator::PbrNeutral, &m_td );
-    if( !loader )
-    {
-        m_lock.lock();
-        if( !job->cancel ) m_job.reset();
-        m_lock.unlock();
-        job->callback( job->userData, job->cancel ? Cancelled : Error, {} );
-        return;
-    }
-
-    std::unique_ptr<Bitmap> bitmap;
-    if( loader->IsHdr() && loader->PreferHdr() )
-    {
-        auto hdr = loader->LoadHdr();
-        bitmap = std::make_unique<Bitmap>( hdr->Width(), hdr->Height() );
-
-        m_lock.lock();
-        const auto cancel = job->cancel;
-        m_lock.unlock();
-        if( cancel )
-        {
-            job->callback( job->userData, Cancelled, {} );
-            return;
-        }
-
-        auto src = hdr->Data();
-        auto dst = bitmap->Data();
-        size_t sz = hdr->Width() * hdr->Height();
-        while( sz > 0 )
-        {
-            const auto chunk = std::min( sz, size_t( 16 * 1024 ) );
-            m_td.Queue( [src, dst, chunk] {
-                ToneMap::Process( ToneMap::Operator::PbrNeutral, (uint32_t*)dst, src, chunk );
-            } );
-            src += chunk * 4;
-            dst += chunk * 4;
-            sz -= chunk;
-        }
-        m_td.Sync();
+        m_currentJob = -1;
     }
     else
     {
-        bitmap = loader->Load();
+        auto it = std::find_if( m_jobs.begin(), m_jobs.end(), [id]( const auto& job ) { return job.id == id; } );
+        if( it != m_jobs.end() )
+        {
+            m_jobs.erase( it );
+        }
     }
+}
 
-    // TODO do this with geometry data
-    bitmap->NormalizeOrientation();
+void ImageProvider::CancelAll()
+{
+    std::vector<Job> tmp;
 
     m_lock.lock();
-    if( job->cancel )
+    std::swap( tmp, m_jobs );
+    m_currentJob = -1;
+    m_lock.unlock();
+
+    for( auto& job : tmp )
     {
-        m_lock.unlock();
-        job->callback( job->userData, Cancelled, {} );
-    }
-    else
-    {
-        m_job.reset();
-        m_lock.unlock();
-        job->callback( job->userData, Success, std::move( bitmap ) );
+        job.callback( job.userData, job.id, Result::Cancelled, nullptr );
     }
 }
 
-void ImageProvider::Reaper()
+void ImageProvider::Worker()
 {
     std::unique_lock lock( m_lock );
     while( !m_shutdown.load( std::memory_order_acquire ) )
     {
-        m_reapCv.wait( lock, [this] { return !m_reapPile.empty() || m_shutdown.load( std::memory_order_acquire ); } );
-        if( m_reapPile.empty() ) continue;
-        auto pile = std::move( m_reapPile );
+        m_currentJob = -1;
+        m_cv.wait( lock, [this] { return !m_jobs.empty() || m_shutdown.load( std::memory_order_acquire ); } );
+        if( m_shutdown.load( std::memory_order_acquire ) ) return;
+
+        auto job = std::move( m_jobs.back() );
+        m_jobs.pop_back();
+        m_currentJob = job.id;
         lock.unlock();
-        for( auto& t : pile ) t.join();
+
+        std::unique_ptr<Bitmap> bitmap;
+
+        mclog( LogLevel::Info, "Loading image %s", job.path.c_str() );
+        auto loader = GetImageLoader( job.path.c_str(), ToneMap::Operator::PbrNeutral, &m_td );
+        if( loader )
+        {
+            if( loader->IsHdr() && loader->PreferHdr() )
+            {
+                auto hdr = loader->LoadHdr();
+                bitmap = std::make_unique<Bitmap>( hdr->Width(), hdr->Height() );
+
+                auto src = hdr->Data();
+                auto dst = bitmap->Data();
+                size_t sz = hdr->Width() * hdr->Height();
+                while( sz > 0 )
+                {
+                    const auto chunk = std::min( sz, size_t( 16 * 1024 ) );
+                    m_td.Queue( [src, dst, chunk] {
+                        ToneMap::Process( ToneMap::Operator::PbrNeutral, (uint32_t*)dst, src, chunk );
+                    } );
+                    src += chunk * 4;
+                    dst += chunk * 4;
+                    sz -= chunk;
+                }
+                m_td.Sync();
+            }
+            else
+            {
+                bitmap = loader->Load();
+            }
+        }
+
         lock.lock();
+        if( m_currentJob == -1 )
+        {
+            job.callback( job.userData, job.id, Result::Cancelled, nullptr );
+        }
+        else if( bitmap )
+        {
+            mclog( LogLevel::Info, "Image loaded: %ux%u", bitmap->Width(), bitmap->Height() );
+            job.callback( job.userData, job.id, Result::Success, std::move( bitmap ) );
+        }
+        else
+        {
+            mclog( LogLevel::Error, "Failed to load image %s", job.path.c_str() );
+            job.callback( job.userData, job.id, Result::Error, nullptr );
+        }
     }
 }

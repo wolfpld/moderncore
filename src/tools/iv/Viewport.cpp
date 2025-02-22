@@ -82,7 +82,7 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
 
 Viewport::~Viewport()
 {
-    m_provider->CancelRequest();
+    m_provider->CancelAll();
     m_window->Close();
 }
 
@@ -165,7 +165,7 @@ void Viewport::Resize( WaylandWindow* window, uint32_t width, uint32_t height )
     window->Resize( width, height );
 }
 
-void Viewport::ImageHandler( int result, std::shared_ptr<Bitmap> bitmap )
+void Viewport::ImageHandler( int64_t id, int result, std::shared_ptr<Bitmap> bitmap )
 {
     if( result == ImageProvider::Cancelled ) return;
 

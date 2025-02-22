@@ -28,7 +28,7 @@ private:
     void Scale( WaylandWindow* window, uint32_t scale );
     void Resize( WaylandWindow* window, uint32_t width, uint32_t height );
 
-    void ImageHandler( int result, std::shared_ptr<Bitmap> bitmap );
+    void ImageHandler( int64_t id, int result, std::shared_ptr<Bitmap> bitmap );
 
     WaylandDisplay& m_display;
     VlkInstance& m_vkInstance;

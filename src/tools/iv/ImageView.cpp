@@ -15,6 +15,7 @@
 #include "vulkan/VlkShaderModule.hpp"
 #include "vulkan/ext/GarbageChute.hpp"
 #include "vulkan/ext/Texture.hpp"
+#include "vulkan/ext/Tracy.hpp"
 
 #include "shader/TexturingFrag.hpp"
 #include "shader/TexturingVert.hpp"
@@ -223,6 +224,7 @@ void ImageView::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
 
     std::lock_guard lock( m_lock );
 
+    ZoneVk( *m_device, cmdbuf, "ImageView", true );
     vkCmdBindPipeline( cmdbuf, VK_PIPELINE_BIND_POINT_GRAPHICS, *m_pipeline );
     vkCmdPushConstants( cmdbuf, *m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof( PushConstant ), &pushConstant );
     vkCmdSetViewport( cmdbuf, 0, 1, &viewport );

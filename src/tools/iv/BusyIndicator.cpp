@@ -20,6 +20,7 @@
 #include "vulkan/VlkShaderModule.hpp"
 #include "vulkan/ext/GarbageChute.hpp"
 #include "vulkan/ext/Texture.hpp"
+#include "vulkan/ext/Tracy.hpp"
 
 #include "data/HourglassSvg.hpp"
 #include "shader/BusyIndicatorVert.hpp"
@@ -270,6 +271,7 @@ void BusyIndicator::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
     std::array<VkBuffer, 1> vertexBuffers = { *m_vertexBuffer };
     constexpr std::array<VkDeviceSize, 1> offsets = { 0 };
 
+    ZoneVk( *m_device, cmdbuf, "BusyIndicator", true );
     vkCmdBindPipeline( cmdbuf, VK_PIPELINE_BIND_POINT_GRAPHICS, *m_pipeline );
     vkCmdPushConstants( cmdbuf, *m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof( PushConstant ), &pushConstant );
     vkCmdSetViewport( cmdbuf, 0, 1, &viewport );

@@ -18,6 +18,7 @@
 #include "vulkan/VlkInstance.hpp"
 #include "vulkan/VlkPhysicalDevice.hpp"
 #include "vulkan/ext/PhysDevSel.hpp"
+#include "vulkan/ext/Tracy.hpp"
 #include "wayland/WaylandDisplay.hpp"
 #include "wayland/WaylandWindow.hpp"
 
@@ -140,6 +141,7 @@ bool Viewport::Render( WaylandWindow* window )
     vkCmdBeginRendering( cmdbuf, &renderingInfo );
     {
         std::lock_guard lock( m_lock );
+        ZoneVk( *m_device, cmdbuf, "Viewport", true );
         m_background->Render( cmdbuf, window->GetExtent() );
         if( m_view->HasBitmap() ) m_view->Render( cmdbuf, window->GetExtent() );
         if( m_isBusy )

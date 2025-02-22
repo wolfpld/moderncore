@@ -11,6 +11,7 @@
 #include "vulkan/VlkShader.hpp"
 #include "vulkan/VlkShaderModule.hpp"
 #include "vulkan/ext/GarbageChute.hpp"
+#include "vulkan/ext/Tracy.hpp"
 
 #include "shader/BackgroundFrag.hpp"
 #include "shader/BackgroundVert.hpp"
@@ -164,6 +165,7 @@ void Background::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
     std::array<VkBuffer, 1> vertexBuffers = { *m_vertexBuffer };
     constexpr std::array<VkDeviceSize, 1> offsets = { 0 };
 
+    ZoneVk( *m_device, cmdbuf, "Background", true );
     vkCmdBindPipeline( cmdbuf, VK_PIPELINE_BIND_POINT_GRAPHICS, *m_pipeline );
     vkCmdPushConstants( cmdbuf, *m_pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof( float ), &m_div );
     vkCmdSetViewport( cmdbuf, 0, 1, &viewport );

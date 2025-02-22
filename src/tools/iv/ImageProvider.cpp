@@ -44,6 +44,17 @@ void ImageProvider::LoadImage( const char* path, Callback callback, void* userDa
     m_thread = std::thread( [this] { Worker( m_job ); } );
 }
 
+void ImageProvider::CancelRequest()
+{
+    std::lock_guard lock( m_lock );
+    if( m_job )
+    {
+        m_job->cancel = true;
+        m_job.reset();
+        m_thread.detach();
+    }
+}
+
 // Worker signals that the job is done by reseting m_job
 void ImageProvider::Worker( std::shared_ptr<Job> job )
 {

@@ -25,6 +25,7 @@ public:
     ~ImageProvider();
 
     void LoadImage( const char* path, Callback callback, void* userData );
+    void CancelRequest();
 
 private:
     struct Job

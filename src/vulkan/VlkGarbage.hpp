@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <mutex>
 #include <vector>
 
 #include "util/RobinHood.hpp"
@@ -19,5 +20,6 @@ public:
     void Collect();
 
 private:
+    std::mutex m_lock;
     unordered_flat_map<std::shared_ptr<VlkFence>, std::vector<std::shared_ptr<VlkBase>>> m_garbage;
 };

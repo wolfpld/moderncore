@@ -12,6 +12,7 @@ VlkGarbage::~VlkGarbage()
 
 void VlkGarbage::Recycle( std::shared_ptr<VlkFence> fence, std::shared_ptr<VlkBase>&& object )
 {
+    std::lock_guard lock( m_lock );
     auto it = m_garbage.find( fence );
     if( it != m_garbage.end() )
     {
@@ -25,6 +26,7 @@ void VlkGarbage::Recycle( std::shared_ptr<VlkFence> fence, std::shared_ptr<VlkBa
 
 void VlkGarbage::Recycle( std::shared_ptr<VlkFence> fence, std::vector<std::shared_ptr<VlkBase>>&& objects )
 {
+    std::lock_guard lock( m_lock );
     auto it = m_garbage.find( fence );
     if( it != m_garbage.end() )
     {
@@ -41,18 +43,21 @@ void VlkGarbage::Collect()
     size_t count = 0;
     size_t sets = 0;
 
-    auto it = m_garbage.begin();
-    while( it != m_garbage.end() )
     {
-        if( it->first->Wait( 0 ) == VK_SUCCESS )
+        std::lock_guard lock( m_lock );
+        auto it = m_garbage.begin();
+        while( it != m_garbage.end() )
         {
-            count += it->second.size();
-            sets++;
-            it = m_garbage.erase( it );
-        }
-        else
-        {
-            ++it;
+            if( it->first->Wait( 0 ) == VK_SUCCESS )
+            {
+                count += it->second.size();
+                sets++;
+                it = m_garbage.erase( it );
+            }
+            else
+            {
+                ++it;
+            }
         }
     }
 

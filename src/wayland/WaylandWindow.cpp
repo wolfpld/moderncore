@@ -189,6 +189,7 @@ void WaylandWindow::Close()
 
 VlkCommandBuffer& WaylandWindow::BeginFrame( bool imageTransfer )
 {
+    if( m_prevScale == 0 ) m_prevScale = m_scale;
     if( m_extent.width != m_staged.width || m_extent.height != m_staged.height || m_scale != m_prevScale )
     {
         m_extent = m_staged;
@@ -438,7 +439,6 @@ void WaylandWindow::FractionalScalePreferredScale( wp_fractional_scale_v1* scale
 {
     if( m_scale == scaleValue ) return;
     m_scale = scaleValue;
-    if( m_prevScale == 0 ) m_prevScale = m_scale;
     Invoke( OnScale, this, scaleValue );
 }
 

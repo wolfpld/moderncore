@@ -88,8 +88,8 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
 
 Viewport::~Viewport()
 {
-    m_provider->CancelAll();
     m_window->Close();
+    m_provider->CancelAll();
 }
 
 void Viewport::LoadImage( const char* path )

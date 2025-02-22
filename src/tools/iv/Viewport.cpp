@@ -73,7 +73,7 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
     }
     mclog( LogLevel::Info, "Selected GPU: %s", physDevice->Properties().deviceName );
 
-    m_device = std::make_shared<VlkDevice>( m_vkInstance, physDevice, VlkDevice::RequireGraphic | VlkDevice::RequirePresent, m_window->VkSurface() );
+    m_device = std::make_shared<VlkDevice>( m_vkInstance, physDevice, VlkDevice::RequireGraphic | VlkDevice::RequirePresent | VlkDevice::RequireTransfer, m_window->VkSurface() );
     PrintQueueConfig( *m_device );
     m_window->SetDevice( m_device, VkExtent2D { 1650, 900 } );
 

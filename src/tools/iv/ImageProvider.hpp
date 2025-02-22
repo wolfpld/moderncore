@@ -1,9 +1,12 @@
 #pragma once
 
+#include <atomic>
+#include <condition_variable>
 #include <memory>
 #include <mutex>
 #include <string>
 #include <thread>
+#include <vector>
 
 #include "util/TaskDispatch.hpp"
 
@@ -37,10 +40,16 @@ private:
     };
 
     void Worker( std::shared_ptr<Job> job );
+    void Reaper();
 
     TaskDispatch m_td;
 
     std::mutex m_lock;
     std::thread m_thread;
     std::shared_ptr<Job> m_job;
+
+    std::condition_variable m_reapCv;
+    std::vector<std::thread> m_reapPile;
+    std::atomic<bool> m_shutdown;
+    std::thread m_reaper;
 };

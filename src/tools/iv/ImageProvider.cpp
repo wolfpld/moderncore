@@ -6,6 +6,8 @@
 
 ImageProvider::ImageProvider()
     : m_td( std::max( 1u, std::thread::hardware_concurrency() - 1 ), "Image Provider" )
+    , m_shutdown( false )
+    , m_reaper( [this] { Reaper(); } )
 {
 }
 
@@ -13,8 +15,12 @@ ImageProvider::~ImageProvider()
 {
     m_lock.lock();
     if( m_job ) m_job->cancel = true;
+    m_shutdown.store( true, std::memory_order_release );
+    m_reapCv.notify_all();
     m_lock.unlock();
+    m_reaper.join();
     if( m_thread.joinable() ) m_thread.join();
+    for( auto& t : m_reapPile ) t.join();
 }
 
 void ImageProvider::LoadImage( const char* path, Callback callback, void* userData )
@@ -26,7 +32,8 @@ void ImageProvider::LoadImage( const char* path, Callback callback, void* userDa
         {
             m_job->cancel = true;
             m_job.reset();
-            m_thread.detach();
+            m_reapPile.emplace_back( std::move( m_thread ) );
+            m_reapCv.notify_one();
         }
         else if( m_thread.joinable() )
         {
@@ -51,7 +58,8 @@ void ImageProvider::CancelRequest()
     {
         m_job->cancel = true;
         m_job.reset();
-        m_thread.detach();
+        m_reapPile.emplace_back( std::move( m_thread ) );
+        m_reapCv.notify_one();
     }
 }
 
@@ -118,5 +126,19 @@ void ImageProvider::Worker( std::shared_ptr<Job> job )
         m_job.reset();
         m_lock.unlock();
         job->callback( job->userData, Success, std::move( bitmap ) );
+    }
+}
+
+void ImageProvider::Reaper()
+{
+    std::unique_lock lock( m_lock );
+    while( !m_shutdown.load( std::memory_order_acquire ) )
+    {
+        m_reapCv.wait( lock, [this] { return !m_reapPile.empty() || m_shutdown.load( std::memory_order_acquire ); } );
+        if( m_reapPile.empty() ) continue;
+        auto pile = std::move( m_reapPile );
+        lock.unlock();
+        for( auto& t : pile ) t.join();
+        lock.lock();
     }
 }

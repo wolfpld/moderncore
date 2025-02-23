@@ -127,7 +127,7 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
         m_queueInfo[(int)QueueType::Compute].idx = idx;
     }
 
-    if( flags & RequireTransfer )
+    // Always want transfer queue
     {
         uint32_t idx = sz;
         for( idx=0; idx<sz; idx++ )

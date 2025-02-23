@@ -24,8 +24,7 @@ public:
     {
         RequireGraphic  = 1 << 0,
         RequireCompute  = 1 << 1,
-        RequireTransfer = 1 << 2,
-        RequirePresent  = 1 << 3,
+        RequirePresent  = 1 << 2,
     };
 
     struct QueueInfo

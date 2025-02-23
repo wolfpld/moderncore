@@ -68,19 +68,21 @@ VlkSwapchain::VlkSwapchain( const VlkDevice& device, VkSurfaceKHR surface, const
     const auto& presentQueue = device.GetQueueInfo( QueueType::Present );
     const std::array queues = { uint32_t( graphicQueue.idx ), uint32_t( presentQueue.idx ) };
 
-    VkSwapchainCreateInfoKHR createInfo = { VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR };
-    createInfo.surface = surface;
-    createInfo.minImageCount = imageCount;
-    createInfo.imageFormat = m_format.format;
-    createInfo.imageColorSpace = m_format.colorSpace;
-    createInfo.imageExtent = m_extent;
-    createInfo.imageArrayLayers = 1;
-    createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-    createInfo.preTransform = caps.currentTransform;
-    createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-    createInfo.presentMode = m_presentMode;
-    createInfo.clipped = VK_TRUE;
-    createInfo.oldSwapchain = oldSwapchain;
+    VkSwapchainCreateInfoKHR createInfo = {
+        .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+        .surface = surface,
+        .minImageCount = imageCount,
+        .imageFormat = m_format.format,
+        .imageColorSpace = m_format.colorSpace,
+        .imageExtent = m_extent,
+        .imageArrayLayers = 1,
+        .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+        .preTransform = caps.currentTransform,
+        .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+        .presentMode = m_presentMode,
+        .clipped = VK_TRUE,
+        .oldSwapchain = oldSwapchain
+    };
 
     if( graphicQueue.sharePresent )
     {
@@ -102,18 +104,13 @@ VlkSwapchain::VlkSwapchain( const VlkDevice& device, VkSurfaceKHR surface, const
 
     if( swapchainImageCount != imageCount ) mclog( LogLevel::Warning, "Swapchain created with %u images", swapchainImageCount );
 
-    VkImageViewCreateInfo viewCreateInfo = { VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO };
-    viewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    viewCreateInfo.format = m_format.format;
-    viewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-    viewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-    viewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-    viewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-    viewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    viewCreateInfo.subresourceRange.baseMipLevel = 0;
-    viewCreateInfo.subresourceRange.levelCount = 1;
-    viewCreateInfo.subresourceRange.baseArrayLayer = 0;
-    viewCreateInfo.subresourceRange.layerCount = 1;
+    VkImageViewCreateInfo viewCreateInfo = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .format = m_format.format,
+        .components = { VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY },
+        .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 }
+    };
 
     m_imageViews.resize( swapchainImageCount );
     for( uint32_t i=0; i<swapchainImageCount; ++i )

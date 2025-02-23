@@ -19,11 +19,7 @@ Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format )
         .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
         .imageType = VK_IMAGE_TYPE_2D,
         .format = format,
-        .extent = {
-            .width = bitmap.Width(),
-            .height = bitmap.Height(),
-            .depth = 1
-        },
+        .extent = { bitmap.Width(), bitmap.Height(), 1 },
         .mipLevels = 1,
         .arrayLayers = 1,
         .samples = VK_SAMPLE_COUNT_1_BIT,
@@ -39,11 +35,7 @@ Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format )
         .image = *m_image,
         .viewType = VK_IMAGE_VIEW_TYPE_2D,
         .format = format,
-        .subresourceRange = {
-            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-            .levelCount = 1,
-            .layerCount = 1
-        }
+        .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 }
     };
     m_imageView = std::make_unique<VlkImageView>( device, viewInfo );
 
@@ -64,15 +56,8 @@ Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format )
         TransitionLayout( *cmdBuf, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT );
 
         VkBufferImageCopy region = {
-            .imageSubresource = {
-                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                .layerCount = 1
-            },
-            .imageExtent = {
-                .width = bitmap.Width(),
-                .height = bitmap.Height(),
-                .depth = 1
-            }
+            .imageSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 },
+            .imageExtent = { bitmap.Width(), bitmap.Height(), 1 }
         };
         vkCmdCopyBufferToImage( *cmdBuf, *stagingBuffer, *m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region );
 
@@ -102,11 +87,7 @@ void Texture::TransitionLayout( VkCommandBuffer cmdBuf, VkImageLayout layout, Vk
         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .image = *m_image,
-        .subresourceRange = {
-            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-            .levelCount = 1,
-            .layerCount = 1
-        },
+        .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 }
     };
     vkCmdPipelineBarrier( cmdBuf, src, dst, 0, 0, nullptr, 0, nullptr, 1, &barrier );
 

@@ -186,7 +186,7 @@ void WaylandWindow::Close()
     wl_display_flush( m_display.Display() );
 }
 
-VlkCommandBuffer& WaylandWindow::BeginFrame( bool imageTransfer )
+VlkCommandBuffer& WaylandWindow::BeginFrame()
 {
     if( m_prevScale == 0 ) m_prevScale = m_scale;
     if( m_extent.width != m_staged.width || m_extent.height != m_staged.height || m_scale != m_prevScale )
@@ -222,15 +222,7 @@ VlkCommandBuffer& WaylandWindow::BeginFrame( bool imageTransfer )
     frame.renderFence->Reset();
     frame.commandBuffer->Reset();
     frame.commandBuffer->Begin( VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT );
-
-    if( imageTransfer )
-    {
-        m_swapchain->TransferBarrier( *frame.commandBuffer, m_imageIdx );
-    }
-    else
-    {
-        m_swapchain->RenderBarrier( *frame.commandBuffer, m_imageIdx );
-    }
+    m_swapchain->RenderBarrier( *frame.commandBuffer, m_imageIdx );
 
     return *frame.commandBuffer;
 }

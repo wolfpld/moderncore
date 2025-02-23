@@ -56,7 +56,7 @@ public:
     void Commit();
     void Close();
 
-    VlkCommandBuffer& BeginFrame( bool imageTransfer = false );
+    VlkCommandBuffer& BeginFrame();
     void EndFrame();
 
     VkImage GetImage();

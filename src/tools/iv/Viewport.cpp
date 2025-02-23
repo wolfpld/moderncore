@@ -124,7 +124,7 @@ bool Viewport::Render( WaylandWindow* window )
     m_lastTime = now;
 
     FrameMark;
-    auto& cmdbuf = window->BeginFrame( true );
+    auto& cmdbuf = window->BeginFrame();
 
     const VkRenderingAttachmentInfo attachmentInfo = {
         .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,

@@ -14,6 +14,7 @@
 #include "wayland-xdg-toplevel-icon-client-protocol.h"
 
 class WaylandSeat;
+class WaylandPointer;
 
 class WaylandDisplay
 {
@@ -37,6 +38,9 @@ public:
     [[nodiscard]] xdg_toplevel_icon_manager_v1* IconManager() { return m_iconManager; }
 
     [[nodiscard]] const std::vector<int32_t>& IconSizes() const { return m_iconSizes; }
+
+    [[nodiscard]] WaylandPointer& Pointer();
+    [[nodiscard]] const WaylandPointer& Pointer() const;
 
 protected:
     void RegistryGlobal( wl_registry* reg, uint32_t name, const char* interface, uint32_t version );

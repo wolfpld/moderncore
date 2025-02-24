@@ -55,6 +55,16 @@ void WaylandDisplay::Run()
     while( m_keepRunning && wl_display_dispatch( m_dpy ) != -1 ) {}
 }
 
+WaylandPointer& WaylandDisplay::Pointer()
+{
+    return m_seat->Pointer();
+}
+
+const WaylandPointer& WaylandDisplay::Pointer() const
+{
+    return m_seat->Pointer();
+}
+
 void WaylandDisplay::RegistryGlobalShim( wl_registry* reg, uint32_t name, const char* interface, uint32_t version )
 {
     ZoneScoped;

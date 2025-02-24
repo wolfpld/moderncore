@@ -205,7 +205,10 @@ VlkCommandBuffer& WaylandWindow::BeginFrame()
         wp_viewport_set_destination( m_viewport, m_extent.width, m_extent.height );
     }
 
-    if( m_cursor != m_display.Pointer().GetCursor( m_surface ) ) m_display.Pointer().SetCursor( m_surface, m_cursor );
+    {
+        std::lock_guard lock( m_cursorLock );
+        if( m_cursor != m_display.Pointer().GetCursor( m_surface ) ) m_display.Pointer().SetCursor( m_surface, m_cursor );
+    }
 
     m_frameIdx = ( m_frameIdx + 1 ) % m_frameData.size();
     auto& frame = m_frameData[m_frameIdx];
@@ -338,6 +341,12 @@ void WaylandWindow::InvokeRender()
     wl_callback_add_listener( cb, &listener, this );
 
     if( !InvokeRet( OnRender, false, this ) ) wl_surface_commit( m_surface );
+}
+
+void WaylandWindow::SetCursor( WaylandCursor cursor )
+{
+    std::lock_guard lock( m_cursorLock );
+    m_cursor = cursor;
 }
 
 void WaylandWindow::Recycle( std::shared_ptr<VlkBase>&& garbage )

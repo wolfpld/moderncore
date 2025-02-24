@@ -69,7 +69,7 @@ public:
 
     void InvokeRender();
 
-    void SetCursor( WaylandCursor cursor ) { m_cursor = cursor; }
+    void SetCursor( WaylandCursor cursor );
 
     [[nodiscard]] const VkExtent2D& GetExtent() const { return m_swapchain->GetExtent(); }
     [[nodiscard]] const char* GetTitle() const { return m_title.c_str(); }
@@ -123,6 +123,7 @@ private:
     VkExtent2D m_extent;
     VkExtent2D m_staged;
 
+    std::mutex m_cursorLock;
     WaylandCursor m_cursor;
 
     std::string m_title;

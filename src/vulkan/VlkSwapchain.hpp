@@ -40,5 +40,4 @@ private:
 
     std::vector<VkImage> m_images;
     std::vector<VkImageView> m_imageViews;
-    std::vector<VkImageLayout> m_imageLayouts;
 };

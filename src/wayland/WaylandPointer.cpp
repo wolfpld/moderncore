@@ -40,6 +40,12 @@ void WaylandPointer::SetCursorShapeManager( wp_cursor_shape_manager_v1* cursorSh
     m_cursorShapeDevice = wp_cursor_shape_manager_v1_get_pointer( m_cursorShapeManager, m_pointer );
 }
 
+void WaylandPointer::SetCursor( WaylandCursor cursor )
+{
+    wp_cursor_shape_device_v1_set_shape( m_cursorShapeDevice, m_enterSerial, (wp_cursor_shape_device_v1_shape)cursor );
+    m_cursor = cursor;
+}
+
 void WaylandPointer::Enter( wl_pointer* pointer, uint32_t serial, wl_surface* surf, wl_fixed_t sx, wl_fixed_t sy )
 {
     CheckPanic( m_cursorShapeDevice, "Cursor shape device not created" );

@@ -19,6 +19,9 @@ public:
 
     void SetCursorShapeManager( wp_cursor_shape_manager_v1* cursorShapeManager );
 
+    WaylandCursor GetCursor() const { return m_cursor; }
+    void SetCursor( WaylandCursor cursor );
+
 private:
     void Enter( wl_pointer* pointer, uint32_t serial, wl_surface* surf, wl_fixed_t sx, wl_fixed_t sy );
     void Leave( wl_pointer* pointer, uint32_t serial, wl_surface* surf );

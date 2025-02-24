@@ -22,6 +22,9 @@ public:
     void PointerMotion( double x, double y );
     void SetCursorShapeManager( wp_cursor_shape_manager_v1* cursorShapeManager );
 
+    [[nodiscard]] WaylandPointer& Pointer() { return *m_pointer; }
+    [[nodiscard]] const WaylandPointer& Pointer() const { return *m_pointer; }
+
 private:
     void Capabilities( wl_seat* seat, uint32_t caps );
     void Name( wl_seat* seat, const char* name );

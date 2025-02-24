@@ -16,7 +16,7 @@ public:
     VkResult Wait( uint64_t timeout = UINT64_MAX );
     void Reset();
 
-    operator VkFence() const { return m_fence; }
+    operator VkFence&() { return m_fence; }
 
 private:
     VkFence m_fence;

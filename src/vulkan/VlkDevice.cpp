@@ -291,6 +291,7 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
 
     VkPhysicalDeviceVulkan13Features features13 = {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
+        .synchronization2 = VK_TRUE,
         .dynamicRendering = VK_TRUE
     };
     VkPhysicalDeviceVulkan12Features features12 = {
@@ -411,11 +412,16 @@ VlkDevice::~VlkDevice()
 
 void VlkDevice::Submit( const VlkCommandBuffer& cmdbuf, VkFence fence )
 {
-    const std::array<VkCommandBuffer, 1> cmdbufs = { cmdbuf };
+    VkCommandBufferSubmitInfo cmdbufInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
+        .commandBuffer = cmdbuf
+    };
 
-    VkSubmitInfo submitInfo = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
-    submitInfo.commandBufferCount = (uint32_t)cmdbufs.size();
-    submitInfo.pCommandBuffers = cmdbufs.data();
+    VkSubmitInfo2 submitInfo = {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
+        .commandBufferInfoCount = 1,
+        .pCommandBufferInfos = &cmdbufInfo
+    };
 
-    VkVerify( vkQueueSubmit( GetQueue( cmdbuf ), 1, &submitInfo, fence ) );
+    VkVerify( vkQueueSubmit2( GetQueue( cmdbuf ), 1, &submitInfo, fence ) );
 }

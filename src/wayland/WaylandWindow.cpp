@@ -236,41 +236,55 @@ void WaylandWindow::EndFrame()
     TracyVkCollect( m_vkDevice->GetTracyContext(), *frame.commandBuffer );
     frame.commandBuffer->End();
 
-    const std::array<VkSemaphore, 1> waitSemaphores = { *frame.imageAvailable };
-    const std::array<VkSemaphore, 1> signalSemaphores = { *frame.renderFinished };
-    constexpr std::array<VkPipelineStageFlags, 1> waitStages = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-    const std::array<VkCommandBuffer, 1> commandBuffers = { *frame.commandBuffer };
+    VkCommandBufferSubmitInfo cmdbufInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
+        .commandBuffer = *frame.commandBuffer
+    };
+    VkSemaphoreSubmitInfo semaImageAvailable = {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+        .semaphore = *frame.imageAvailable,
+        .value = 1,
+        .stageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT
+    };
+    VkSemaphoreSubmitInfo semaRenderFinished = {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+        .semaphore = *frame.renderFinished,
+        .value = 1,
+        .stageMask = VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT
+    };
+    VkSubmitInfo2 submitInfo = {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
+        .waitSemaphoreInfoCount = 1,
+        .pWaitSemaphoreInfos = &semaImageAvailable,
+        .commandBufferInfoCount = 1,
+        .pCommandBufferInfos = &cmdbufInfo,
+        .signalSemaphoreInfoCount = 1,
+        .pSignalSemaphoreInfos = &semaRenderFinished
+    };
 
-    VkSubmitInfo submitInfo = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
-    submitInfo.waitSemaphoreCount = waitSemaphores.size();
-    submitInfo.pWaitSemaphores = waitSemaphores.data();
-    submitInfo.pWaitDstStageMask = waitStages.data();
-    submitInfo.commandBufferCount = commandBuffers.size();
-    submitInfo.pCommandBuffers = commandBuffers.data();
-    submitInfo.signalSemaphoreCount = signalSemaphores.size();
-    submitInfo.pSignalSemaphores = signalSemaphores.data();
-
-    VkVerify( vkQueueSubmit( m_vkDevice->GetQueue( QueueType::Graphic ), 1, &submitInfo, *frame.renderFence ) );
-
-    const std::array<VkSwapchainKHR, 1> swapchains = { *m_swapchain };
-    const std::array<VkFence, 1> fences = { *frame.presentFence };
-    static_assert( swapchains.size() == fences.size() );
+    VkVerify( vkQueueSubmit2( m_vkDevice->GetQueue( QueueType::Graphic ), 1, &submitInfo, *frame.renderFence ) );
 
     frame.presentFence->Wait();
     frame.presentFence->Reset();
 
-    VkSwapchainPresentFenceInfoEXT presentFenceInfo = { VK_STRUCTURE_TYPE_SWAPCHAIN_PRESENT_FENCE_INFO_EXT };
-    presentFenceInfo.swapchainCount = fences.size();
-    presentFenceInfo.pFences = fences.data();
+    VkFence presentFence = *frame.presentFence;
+    VkSemaphore renderFinished = *frame.renderFinished;
+    VkSwapchainKHR swapchain = *m_swapchain;
 
-    VkPresentInfoKHR presentInfo = { VK_STRUCTURE_TYPE_PRESENT_INFO_KHR };
-    presentInfo.pNext = &presentFenceInfo;
-    presentInfo.waitSemaphoreCount = signalSemaphores.size();
-    presentInfo.pWaitSemaphores = signalSemaphores.data();
-    presentInfo.swapchainCount = swapchains.size();
-    presentInfo.pSwapchains = swapchains.data();
-    presentInfo.pImageIndices = &m_imageIdx;
-
+    VkSwapchainPresentFenceInfoEXT presentFenceInfo = {
+        .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_PRESENT_FENCE_INFO_EXT,
+        .swapchainCount = 1,
+        .pFences = &presentFence
+    };
+    VkPresentInfoKHR presentInfo = {
+        .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+        .pNext = &presentFenceInfo,
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = &renderFinished,
+        .swapchainCount = 1,
+        .pSwapchains = &swapchain,
+        .pImageIndices = &m_imageIdx
+    };
     const auto res = vkQueuePresentKHR( m_vkDevice->GetQueue( QueueType::Present ), &presentInfo );
     CheckPanic( res == VK_SUCCESS || res == VK_SUBOPTIMAL_KHR || res == VK_ERROR_OUT_OF_DATE_KHR, "Failed to present swapchain image (%s)", string_VkResult( res ) );
 }

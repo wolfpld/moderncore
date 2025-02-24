@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <memory>
 #include <mutex>
 #include <vulkan/vulkan.h>
@@ -18,6 +19,12 @@ class VlkShader;
 
 class ImageView
 {
+    struct Vertex
+    {
+        float x, y;
+        float u, v;
+    };
+
 public:
     ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, const VkExtent2D& extent );
     ~ImageView();
@@ -31,6 +38,7 @@ public:
 
 private:
     void Cleanup();
+    std::array<Vertex, 4> SetupVertexBuffer();
 
     GarbageChute& m_garbage;
     std::shared_ptr<VlkDevice> m_device;
@@ -45,6 +53,7 @@ private:
     std::shared_ptr<VlkSampler> m_sampler;
 
     VkExtent2D m_extent;
+    VkExtent2D m_bitmapExtent;
 
     VkDescriptorImageInfo m_imageInfo;
     VkWriteDescriptorSet m_descWrite;

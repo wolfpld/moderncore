@@ -20,12 +20,6 @@
 #include "shader/TexturingFrag.hpp"
 #include "shader/TexturingVert.hpp"
 
-struct Vertex
-{
-    float x, y;
-    float u, v;
-};
-
 struct PushConstant
 {
     float screenSize[2];
@@ -253,27 +247,21 @@ void ImageView::SetBitmap( const std::shared_ptr<Bitmap>& bitmap )
 
     auto texture = std::make_shared<Texture>( *m_device, *bitmap, VK_FORMAT_R8G8B8A8_SRGB );
 
-    const auto w = float( bitmap->Width() );
-    const auto h = float( bitmap->Height() );
-
-    const Vertex vdata[] = {
-        { 0, 0, 0, 0 },
-        { w, 0, 1, 0 },
-        { w, h, 1, 1 },
-        { 0, h, 0, 1 }
-    };
-
     constexpr VkBufferCreateInfo vinfo = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-        .size = sizeof( vdata ),
+        .size = sizeof( Vertex ) * 4,
         .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE
     };
     auto vb = std::make_shared<VlkBuffer>( *m_device, vinfo, VlkBuffer::PreferDevice | VlkBuffer::WillWrite );
-    memcpy( vb->Ptr(), vdata, sizeof( vdata ) );
-    vb->Flush();
 
     std::lock_guard lock( m_lock );
+
+    m_bitmapExtent = { bitmap->Width(), bitmap->Height() };
+    const auto vdata = SetupVertexBuffer();
+    memcpy( vb->Ptr(), vdata.data(), sizeof( Vertex ) * 4 );
+    vb->Flush();
+
     Cleanup();
 
     std::swap( m_texture, texture );
@@ -297,4 +285,17 @@ void ImageView::Cleanup()
             std::move( m_vertexBuffer ),
         } );
     }
+}
+
+std::array<ImageView::Vertex, 4> ImageView::SetupVertexBuffer()
+{
+    const auto w = float( m_bitmapExtent.width );
+    const auto h = float( m_bitmapExtent.height );
+
+    return { {
+        { 0, 0, 0, 0 },
+        { w, 0, 1, 0 },
+        { w, h, 1, 1 },
+        { 0, h, 0, 1 }
+    } };
 }

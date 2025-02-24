@@ -81,7 +81,7 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
     const auto format = m_window->GetFormat();
     m_background = std::make_shared<Background>( *m_window, m_device, format, m_scale );
     m_busyIndicator = std::make_shared<BusyIndicator>( *m_window, m_device, format, m_scale );
-    m_view = std::make_shared<ImageView>( *m_window, m_device, format );
+    m_view = std::make_shared<ImageView>( *m_window, m_device, format, m_window->GetExtent() );
 
     m_lastTime = Now();
     m_window->InvokeRender();
@@ -187,6 +187,7 @@ void Viewport::Resize( WaylandWindow* window, uint32_t width, uint32_t height )
 
     CheckPanic( window == m_window.get(), "Invalid window" );
     window->Resize( width, height );
+    m_view->Resize( window->GetExtent() );
 }
 
 void Viewport::ImageHandler( int64_t id, int result, std::shared_ptr<Bitmap> bitmap )

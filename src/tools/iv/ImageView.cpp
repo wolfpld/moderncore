@@ -31,9 +31,10 @@ struct PushConstant
     float screenSize[2];
 };
 
-ImageView::ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format )
+ImageView::ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, const VkExtent2D& extent )
     : m_garbage( garbage )
     , m_device( device )
+    , m_extent( extent )
 {
     VkSamplerCreateInfo samplerInfo = {
         .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
@@ -233,6 +234,12 @@ void ImageView::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
     vkCmdBindIndexBuffer( cmdbuf, *m_indexBuffer, 0, VK_INDEX_TYPE_UINT16 );
     CmdPushDescriptorSetKHR( cmdbuf, VK_PIPELINE_BIND_POINT_GRAPHICS, *m_pipelineLayout, 0, 1, &m_descWrite );
     vkCmdDrawIndexed( cmdbuf, 6, 1, 0, 0, 0 );
+}
+
+void ImageView::Resize( const VkExtent2D& extent )
+{
+    std::lock_guard lock( m_lock );
+    m_extent = extent;
 }
 
 void ImageView::SetBitmap( const std::shared_ptr<Bitmap>& bitmap )

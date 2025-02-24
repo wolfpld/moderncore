@@ -19,10 +19,11 @@ class VlkShader;
 class ImageView
 {
 public:
-    ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format );
+    ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, const VkExtent2D& extent );
     ~ImageView();
 
     void Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent );
+    void Resize( const VkExtent2D& extent );
 
     void SetBitmap( const std::shared_ptr<Bitmap>& bitmap );
 
@@ -42,6 +43,8 @@ private:
     std::shared_ptr<VlkBuffer> m_indexBuffer;
     std::shared_ptr<Texture> m_texture;
     std::shared_ptr<VlkSampler> m_sampler;
+
+    VkExtent2D m_extent;
 
     VkDescriptorImageInfo m_imageInfo;
     VkWriteDescriptorSet m_descWrite;

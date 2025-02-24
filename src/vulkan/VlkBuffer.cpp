@@ -1,3 +1,5 @@
+#include <tracy/Tracy.hpp>
+
 #include "VlkBuffer.hpp"
 #include "VlkError.hpp"
 
@@ -5,6 +7,8 @@ VlkBuffer::VlkBuffer( VmaAllocator allocator, const VkBufferCreateInfo& createIn
     : m_allocator( allocator )
     , m_size( createInfo.size )
 {
+    ZoneScoped;
+
     VmaAllocationCreateInfo allocInfo = {};
 
     if( flags & PreferDevice ) allocInfo.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
@@ -23,15 +27,18 @@ VlkBuffer::VlkBuffer( VmaAllocator allocator, const VkBufferCreateInfo& createIn
 
 VlkBuffer::~VlkBuffer()
 {
+    ZoneScoped;
     vmaDestroyBuffer( m_allocator, m_buffer, m_alloc );
 }
 
 void VlkBuffer::Flush( VkDeviceSize offset, VkDeviceSize size )
 {
+    ZoneScoped;
     vmaFlushAllocation( m_allocator, m_alloc, offset, size );
 }
 
 void VlkBuffer::Invalidate( VkDeviceSize offset, VkDeviceSize size )
 {
+    ZoneScoped;
     vmaInvalidateAllocation( m_allocator, m_alloc, offset, size );
 }

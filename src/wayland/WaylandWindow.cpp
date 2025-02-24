@@ -194,8 +194,11 @@ void WaylandWindow::Close()
 VlkCommandBuffer& WaylandWindow::BeginFrame()
 {
     if( m_prevScale == 0 ) m_prevScale = m_scale;
-    if( m_extent.width != m_staged.width || m_extent.height != m_staged.height || m_scale != m_prevScale )
+    const bool resized = m_staged.width != m_extent.width || m_staged.height != m_extent.height;
+    if( resized || m_scale != m_prevScale )
     {
+        if( resized ) Invoke( OnResize, this, m_staged.width, m_staged.height );
+
         m_extent = m_staged;
         m_prevScale = m_scale;
 

@@ -20,6 +20,7 @@
 #include "vulkan/ext/DeviceInfo.hpp"
 #include "vulkan/ext/PhysDevSel.hpp"
 #include "vulkan/ext/Tracy.hpp"
+#include "wayland/WaylandCursor.hpp"
 #include "wayland/WaylandDisplay.hpp"
 #include "wayland/WaylandWindow.hpp"
 
@@ -105,6 +106,7 @@ void Viewport::LoadImage( const char* path )
     {
         m_isBusy = true;
         m_busyIndicator->ResetTime();
+        m_window->SetCursor( WaylandCursor::Wait );
     }
 }
 
@@ -196,4 +198,5 @@ void Viewport::ImageHandler( int64_t id, int result, std::shared_ptr<Bitmap> bit
 
     std::lock_guard lock( m_lock );
     m_isBusy = false;
+    m_window->SetCursor( WaylandCursor::Default );
 }

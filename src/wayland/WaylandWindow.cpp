@@ -34,6 +34,7 @@ WaylandWindow::WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance )
 
     m_surface = wl_compositor_create_surface( display.Compositor() );
     CheckPanic( m_surface, "Failed to create Wayland surface" );
+    m_display.Pointer().AddWindow( m_surface );
 
     static constexpr wp_fractional_scale_v1_listener listener = {
         .preferred_scale = Method( FractionalScalePreferredScale )
@@ -86,6 +87,7 @@ WaylandWindow::~WaylandWindow()
     if( m_xdgToplevelDecoration ) zxdg_toplevel_decoration_v1_destroy( m_xdgToplevelDecoration );
     xdg_toplevel_destroy( m_xdgToplevel );
     xdg_surface_destroy( m_xdgSurface );
+    m_display.Pointer().RemoveWindow( m_surface );
     wl_surface_destroy( m_surface );
 }
 
@@ -203,7 +205,7 @@ VlkCommandBuffer& WaylandWindow::BeginFrame()
         wp_viewport_set_destination( m_viewport, m_extent.width, m_extent.height );
     }
 
-    if( m_cursor != m_display.Pointer().GetCursor() ) m_display.Pointer().SetCursor( m_cursor );
+    if( m_cursor != m_display.Pointer().GetCursor( m_surface ) ) m_display.Pointer().SetCursor( m_surface, m_cursor );
 
     m_frameIdx = ( m_frameIdx + 1 ) % m_frameData.size();
     auto& frame = m_frameData[m_frameIdx];

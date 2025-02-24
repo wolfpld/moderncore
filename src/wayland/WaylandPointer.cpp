@@ -2,12 +2,11 @@
 #include "WaylandPointer.hpp"
 #include "WaylandSeat.hpp"
 #include "util/Invoke.hpp"
+#include "util/Panic.hpp"
 
 WaylandPointer::WaylandPointer( wl_pointer* pointer, WaylandSeat& seat )
     : m_pointer( pointer )
     , m_seat( seat )
-    , m_cursor( WaylandCursor::Default )
-    , m_enterSerial( 0 )
 {
     static constexpr wl_pointer_listener listener = {
         .enter = Method( Enter ),
@@ -40,24 +39,51 @@ void WaylandPointer::SetCursorShapeManager( wp_cursor_shape_manager_v1* cursorSh
     m_cursorShapeDevice = wp_cursor_shape_manager_v1_get_pointer( m_cursorShapeManager, m_pointer );
 }
 
-void WaylandPointer::SetCursor( WaylandCursor cursor )
+WaylandCursor WaylandPointer::GetCursor( wl_surface* window )
 {
-    wp_cursor_shape_device_v1_set_shape( m_cursorShapeDevice, m_enterSerial, (wp_cursor_shape_device_v1_shape)cursor );
-    m_cursor = cursor;
+    auto it = m_cursorMap.find( window );
+    CheckPanic( it != m_cursorMap.end(), "Getting cursor for an unknown window!" );
+    return it->second;
 }
 
-void WaylandPointer::Enter( wl_pointer* pointer, uint32_t serial, wl_surface* surf, wl_fixed_t sx, wl_fixed_t sy )
+void WaylandPointer::SetCursor( wl_surface* window, WaylandCursor cursor )
+{
+    if( m_activeWindow == window ) wp_cursor_shape_device_v1_set_shape( m_cursorShapeDevice, m_enterSerial, (wp_cursor_shape_device_v1_shape)cursor );
+    auto it = m_cursorMap.find( window );
+    CheckPanic( it != m_cursorMap.end(), "Setting cursor on an unknown window!" );
+    it->second = cursor;
+}
+
+void WaylandPointer::AddWindow( wl_surface* window )
+{
+    CheckPanic( m_cursorMap.find( window ) == m_cursorMap.end(), "Window already added!" );
+    m_cursorMap.emplace( window, WaylandCursor::Default );
+}
+
+void WaylandPointer::RemoveWindow( wl_surface* window )
+{
+    CheckPanic( m_cursorMap.find( window ) != m_cursorMap.end(), "Window not added!" );
+    m_cursorMap.erase( window );
+}
+
+void WaylandPointer::Enter( wl_pointer* pointer, uint32_t serial, wl_surface* window, wl_fixed_t sx, wl_fixed_t sy )
 {
     CheckPanic( m_cursorShapeDevice, "Cursor shape device not created" );
 
-    wp_cursor_shape_device_v1_set_shape( m_cursorShapeDevice, serial, (wp_cursor_shape_device_v1_shape)m_cursor );
+    auto it = m_cursorMap.find( window );
+    CheckPanic( it != m_cursorMap.end(), "Unknown window entered!" );
+    wp_cursor_shape_device_v1_set_shape( m_cursorShapeDevice, serial, (wp_cursor_shape_device_v1_shape)it->second );
+
     m_enterSerial = serial;
+    m_activeWindow = window;
 
     m_seat.PointerMotion( wl_fixed_to_double( sx ), wl_fixed_to_double( sy ) );
 }
 
-void WaylandPointer::Leave( wl_pointer* pointer, uint32_t serial, wl_surface* surf )
+void WaylandPointer::Leave( wl_pointer* pointer, uint32_t serial, wl_surface* window )
 {
+    CheckPanic( m_activeWindow == window, "Unknown window left!" );
+    m_activeWindow = nullptr;
 }
 
 void WaylandPointer::Motion( wl_pointer* pointer, uint32_t time, wl_fixed_t sx, wl_fixed_t sy )

@@ -232,8 +232,23 @@ void ImageView::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
 
 void ImageView::Resize( const VkExtent2D& extent )
 {
+    constexpr VkBufferCreateInfo vinfo = {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .size = sizeof( Vertex ) * 4,
+        .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE
+    };
+    auto vb = std::make_shared<VlkBuffer>( *m_device, vinfo, VlkBuffer::PreferDevice | VlkBuffer::WillWrite );
+
     std::lock_guard lock( m_lock );
     m_extent = extent;
+
+    const auto vdata = SetupVertexBuffer();
+    memcpy( vb->Ptr(), vdata.data(), sizeof( Vertex ) * 4 );
+    vb->Flush();
+
+    std::swap( m_vertexBuffer, vb );
+    m_garbage.Recycle( std::move( vb ) );
 }
 
 void ImageView::SetBitmap( const std::shared_ptr<Bitmap>& bitmap )
@@ -289,13 +304,35 @@ void ImageView::Cleanup()
 
 std::array<ImageView::Vertex, 4> ImageView::SetupVertexBuffer()
 {
-    const auto w = float( m_bitmapExtent.width );
-    const auto h = float( m_bitmapExtent.height );
+    float x0, x1, y0, y1;
+
+    if( m_bitmapExtent.width <= m_extent.width &&
+        m_bitmapExtent.height <= m_extent.height )
+    {
+        x0 = ( m_extent.width - m_bitmapExtent.width ) / 2;
+        x1 = x0 + m_bitmapExtent.width;
+        y0 = ( m_extent.height - m_bitmapExtent.height ) / 2;
+        y1 = y0 + m_bitmapExtent.height;
+    }
+    else
+    {
+        const auto wr = float( m_extent.width ) / m_bitmapExtent.width;
+        const auto hr = float( m_extent.height ) / m_bitmapExtent.height;
+        const auto r = std::min( wr, hr );
+
+        const auto w = m_bitmapExtent.width * r;
+        const auto h = m_bitmapExtent.height * r;
+
+        x0 = ( m_extent.width - w ) / 2;
+        x1 = x0 + w;
+        y0 = ( m_extent.height - h ) / 2;
+        y1 = y0 + h;
+    }
 
     return { {
-        { 0, 0, 0, 0 },
-        { w, 0, 1, 0 },
-        { w, h, 1, 1 },
-        { 0, h, 0, 1 }
+        { x0, y0, 0, 0 },
+        { x1, y0, 1, 0 },
+        { x1, y1, 1, 1 },
+        { x0, y1, 0, 1 }
     } };
 }

@@ -21,6 +21,7 @@ class VlkDevice;
 class VlkFence;
 class VlkInstance;
 class VlkSemaphore;
+enum class WaylandCursor;
 class WaylandDisplay;
 
 class WaylandWindow : public GarbageChute
@@ -67,6 +68,8 @@ public:
     void SetDevice( std::shared_ptr<VlkDevice> device, const VkExtent2D& extent );
 
     void InvokeRender();
+
+    void SetCursor( WaylandCursor cursor ) { m_cursor = cursor; }
 
     [[nodiscard]] const VkExtent2D& GetExtent() const { return m_swapchain->GetExtent(); }
     [[nodiscard]] const char* GetTitle() const { return m_title.c_str(); }
@@ -119,6 +122,8 @@ private:
 
     VkExtent2D m_extent;
     VkExtent2D m_staged;
+
+    WaylandCursor m_cursor;
 
     std::string m_title;
 };

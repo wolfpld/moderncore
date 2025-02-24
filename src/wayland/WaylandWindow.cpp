@@ -9,6 +9,7 @@
 #include <vulkan/vulkan_wayland.h>
 
 #include "WaylandDisplay.hpp"
+#include "WaylandPointer.hpp"
 #include "WaylandWindow.hpp"
 #include "image/vector/SvgImage.hpp"
 #include "util/Bitmap.hpp"
@@ -22,10 +23,12 @@
 #include "vulkan/VlkInstance.hpp"
 #include "vulkan/VlkSemaphore.hpp"
 #include "vulkan/VlkSwapchain.hpp"
+#include "wayland/WaylandCursor.hpp"
 
 WaylandWindow::WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance )
     : m_display( display )
     , m_vkInstance( vkInstance )
+    , m_cursor( WaylandCursor::Default )
 {
     ZoneScoped;
 
@@ -199,6 +202,8 @@ VlkCommandBuffer& WaylandWindow::BeginFrame()
         wp_viewport_set_source( m_viewport, 0, 0, wl_fixed_from_double( m_extent.width * m_scale / 120.f ), wl_fixed_from_double( m_extent.height * m_scale / 120.f ) );
         wp_viewport_set_destination( m_viewport, m_extent.width, m_extent.height );
     }
+
+    if( m_cursor != m_display.Pointer().GetCursor() ) m_display.Pointer().SetCursor( m_cursor );
 
     m_frameIdx = ( m_frameIdx + 1 ) % m_frameData.size();
     auto& frame = m_frameData[m_frameIdx];

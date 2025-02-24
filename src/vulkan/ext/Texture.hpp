@@ -18,15 +18,15 @@ public:
 
     NoCopy( Texture );
 
-    void TransitionLayout( VkCommandBuffer cmdBuf, VkImageLayout layout, VkAccessFlagBits access, VkPipelineStageFlagBits src, VkPipelineStageFlagBits dst );
-
     operator VkImage() const { return *m_image; }
     operator VkImageView() const { return *m_imageView; }
 
 private:
+    void WriteBarrier( VkCommandBuffer cmdbuf );
+    void ReadBarrier( VkCommandBuffer cmdbuf );
+    void ReadBarrierTrn( VkCommandBuffer cmdbuf, uint32_t trnQueue, uint32_t gfxQueue );
+    void ReadBarrierGfx( VkCommandBuffer cmdbuf, uint32_t trnQueue, uint32_t gfxQueue );
+
     std::shared_ptr<VlkImage> m_image;
     std::unique_ptr<VlkImageView> m_imageView;
-
-    VkImageLayout m_layout;
-    VkAccessFlagBits m_access;
 };

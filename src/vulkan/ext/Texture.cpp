@@ -12,8 +12,6 @@
 #include "vulkan/ext/Tracy.hpp"
 
 Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format )
-    : m_layout( VK_IMAGE_LAYOUT_UNDEFINED )
-    , m_access( VK_ACCESS_NONE )
 {
     VkImageCreateInfo imageInfo = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
@@ -45,52 +43,158 @@ Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format )
         .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE
     };
-    auto stagingBuffer = std::make_unique<VlkBuffer>( device, bufferInfo, VlkBuffer::WillWrite | VlkBuffer::PreferHost );
+    auto stagingBuffer = std::make_shared<VlkBuffer>( device, bufferInfo, VlkBuffer::WillWrite | VlkBuffer::PreferHost );
     memcpy( stagingBuffer->Ptr(), bitmap.Data(), bitmap.Width() * bitmap.Height() * 4 );
     stagingBuffer->Flush();
 
-    auto cmdBuf = std::make_unique<VlkCommandBuffer>( *device.GetCommandPool( QueueType::Graphic ) );
-    cmdBuf->Begin( VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT );
+    if( device.GetQueueInfo( QueueType::Graphic ).shareTransfer )
     {
-        ZoneVk( device, *cmdBuf, "Texture upload", true );
-        TransitionLayout( *cmdBuf, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT );
+        auto cmdbuf = std::make_unique<VlkCommandBuffer>( *device.GetCommandPool( QueueType::Graphic ) );
+        cmdbuf->Begin( VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT );
+        {
+            ZoneVk( device, *cmdbuf, "Texture upload", true );
+            WriteBarrier( *cmdbuf );
+            VkBufferImageCopy region = {
+                .imageSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 },
+                .imageExtent = { bitmap.Width(), bitmap.Height(), 1 }
+            };
+            vkCmdCopyBufferToImage( *cmdbuf, *stagingBuffer, *m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region );
+            ReadBarrier( *cmdbuf );
+        }
+        cmdbuf->End();
 
-        VkBufferImageCopy region = {
-            .imageSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 },
-            .imageExtent = { bitmap.Width(), bitmap.Height(), 1 }
-        };
-        vkCmdCopyBufferToImage( *cmdBuf, *stagingBuffer, *m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region );
-
-        TransitionLayout( *cmdBuf, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT );
+        auto fence = std::make_shared<VlkFence>( device );
+        device.Submit( *cmdbuf, *fence );
+        device.GetGarbage()->Recycle( std::move( fence ), {
+            std::move( cmdbuf ),
+            std::move( stagingBuffer ),
+            m_image
+        } );
     }
-    cmdBuf->End();
+    else
+    {
+        const auto trnQueue = device.GetQueueInfo( QueueType::Transfer ).idx;
+        const auto gfxQueue = device.GetQueueInfo( QueueType::Graphic ).idx;
 
-    auto fence = std::make_shared<VlkFence>( device );
-    device.Submit( *cmdBuf, *fence );
-    device.GetGarbage()->Recycle( std::move( fence ), {
-        std::move( cmdBuf ),
-        std::move( stagingBuffer ),
-        m_image
-    } );
+        auto cmdTrn = std::make_unique<VlkCommandBuffer>( *device.GetCommandPool( QueueType::Transfer ) );
+        cmdTrn->Begin( VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT );
+        {
+            ZoneVk( device, *cmdTrn, "Texture upload", true );
+            WriteBarrier( *cmdTrn );
+            VkBufferImageCopy region = {
+                .imageSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 },
+                .imageExtent = { bitmap.Width(), bitmap.Height(), 1 }
+            };
+            vkCmdCopyBufferToImage( *cmdTrn, *stagingBuffer, *m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region );
+            ReadBarrierTrn( *cmdTrn, trnQueue, gfxQueue );
+        }
+        cmdTrn->End();
+
+        auto fenceTrn = std::make_shared<VlkFence>( device );
+        device.Submit( *cmdTrn, *fenceTrn );
+        device.GetGarbage()->Recycle( std::move( fenceTrn ), {
+            std::move( cmdTrn ),
+            stagingBuffer,
+            m_image
+        } );
+
+        auto cmdGfx = std::make_unique<VlkCommandBuffer>( *device.GetCommandPool( QueueType::Graphic ) );
+        cmdGfx->Begin( VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT );
+        ReadBarrierGfx( *cmdGfx, trnQueue, gfxQueue );
+        cmdGfx->End();
+
+        auto fenceGfx = std::make_shared<VlkFence>( device );
+        device.Submit( *cmdGfx, *fenceGfx );
+        device.GetGarbage()->Recycle( std::move( fenceGfx ), {
+            std::move( cmdGfx ),
+            std::move( stagingBuffer ),
+            m_image
+        } );
+    }
 }
 
-void Texture::TransitionLayout( VkCommandBuffer cmdBuf, VkImageLayout layout, VkAccessFlagBits access, VkPipelineStageFlagBits src, VkPipelineStageFlagBits dst )
+void Texture::WriteBarrier( VkCommandBuffer cmdbuf )
 {
-    if( m_layout == layout && m_access == access ) return;
-
-    VkImageMemoryBarrier barrier = {
-        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-        .srcAccessMask = m_access,
-        .dstAccessMask = access,
-        .oldLayout = m_layout,
-        .newLayout = layout,
+    VkImageMemoryBarrier2 barrier = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+        .dstStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+        .dstAccessMask = VK_ACCESS_2_MEMORY_WRITE_BIT,
+        .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .image = *m_image,
         .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 }
     };
-    vkCmdPipelineBarrier( cmdBuf, src, dst, 0, 0, nullptr, 0, nullptr, 1, &barrier );
+    VkDependencyInfo deps = {
+        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+        .imageMemoryBarrierCount = 1,
+        .pImageMemoryBarriers = &barrier
+    };
+    vkCmdPipelineBarrier2( cmdbuf, &deps );
+}
 
-    m_layout = layout;
-    m_access = access;
+void Texture::ReadBarrier( VkCommandBuffer cmdbuf )
+{
+    VkImageMemoryBarrier2 barrier = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+        .srcStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+        .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
+        .dstStageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT,
+        .dstAccessMask = VK_ACCESS_2_SHADER_READ_BIT,
+        .oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        .newLayout = VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .image = *m_image,
+        .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 }
+    };
+    VkDependencyInfo deps = {
+        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+        .imageMemoryBarrierCount = 1,
+        .pImageMemoryBarriers = &barrier
+    };
+    vkCmdPipelineBarrier2( cmdbuf, &deps );
+}
+
+void Texture::ReadBarrierTrn( VkCommandBuffer cmdbuf, uint32_t trnQueue, uint32_t gfxQueue )
+{
+    VkImageMemoryBarrier2 barrier = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+        .srcStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+        .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
+        .oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        .newLayout = VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL,
+        .srcQueueFamilyIndex = trnQueue,
+        .dstQueueFamilyIndex = gfxQueue,
+        .image = *m_image,
+        .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 }
+    };
+    VkDependencyInfo deps = {
+        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+        .imageMemoryBarrierCount = 1,
+        .pImageMemoryBarriers = &barrier
+    };
+    vkCmdPipelineBarrier2( cmdbuf, &deps );
+}
+
+void Texture::ReadBarrierGfx( VkCommandBuffer cmdbuf, uint32_t trnQueue, uint32_t gfxQueue )
+{
+    VkImageMemoryBarrier2 barrier = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+        .dstStageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT,
+        .dstAccessMask = VK_ACCESS_2_SHADER_READ_BIT,
+        .oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        .newLayout = VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL,
+        .srcQueueFamilyIndex = trnQueue,
+        .dstQueueFamilyIndex = gfxQueue,
+        .image = *m_image,
+        .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 }
+    };
+    VkDependencyInfo deps = {
+        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+        .imageMemoryBarrierCount = 1,
+        .pImageMemoryBarriers = &barrier
+    };
+    vkCmdPipelineBarrier2( cmdbuf, &deps );
 }

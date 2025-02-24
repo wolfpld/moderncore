@@ -1,3 +1,4 @@
+#include "WaylandCursor.hpp"
 #include "WaylandPointer.hpp"
 #include "WaylandSeat.hpp"
 #include "util/Invoke.hpp"
@@ -5,6 +6,8 @@
 WaylandPointer::WaylandPointer( wl_pointer* pointer, WaylandSeat& seat )
     : m_pointer( pointer )
     , m_seat( seat )
+    , m_cursor( WaylandCursor::Default )
+    , m_enterSerial( 0 )
 {
     static constexpr wl_pointer_listener listener = {
         .enter = Method( Enter ),
@@ -39,7 +42,11 @@ void WaylandPointer::SetCursorShapeManager( wp_cursor_shape_manager_v1* cursorSh
 
 void WaylandPointer::Enter( wl_pointer* pointer, uint32_t serial, wl_surface* surf, wl_fixed_t sx, wl_fixed_t sy )
 {
-    wl_pointer_set_cursor( pointer, serial, nullptr, 0, 0 );
+    CheckPanic( m_cursorShapeDevice, "Cursor shape device not created" );
+
+    wp_cursor_shape_device_v1_set_shape( m_cursorShapeDevice, serial, (wp_cursor_shape_device_v1_shape)m_cursor );
+    m_enterSerial = serial;
+
     m_seat.PointerMotion( wl_fixed_to_double( sx ), wl_fixed_to_double( sy ) );
 }
 

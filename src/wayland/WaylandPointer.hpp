@@ -7,6 +7,7 @@
 #include "wayland-cursor-shape-client-protocol.h"
 
 class WaylandSeat;
+enum class WaylandCursor;
 
 class WaylandPointer
 {
@@ -33,6 +34,8 @@ private:
 
     wl_pointer* m_pointer;
     WaylandSeat& m_seat;
+    WaylandCursor m_cursor;
+    uint32_t m_enterSerial;
 
     wp_cursor_shape_manager_v1* m_cursorShapeManager = nullptr;
     wp_cursor_shape_device_v1* m_cursorShapeDevice = nullptr;

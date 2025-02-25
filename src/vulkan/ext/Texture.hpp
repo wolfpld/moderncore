@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 #include <vulkan/vulkan.h>
 
 #include "util/NoCopy.hpp"
@@ -10,11 +11,12 @@
 
 class Bitmap;
 class VlkDevice;
+class VlkFence;
 
 class Texture : public VlkBase
 {
 public:
-    Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format );
+    Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format, std::vector<std::shared_ptr<VlkFence>>& fencesOut );
 
     NoCopy( Texture );
 

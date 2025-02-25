@@ -2,6 +2,7 @@
 #include <array>
 #include <math.h>
 #include <string.h>
+#include <vector>
 
 #include "BusyIndicator.hpp"
 #include "image/vector/SvgImage.hpp"
@@ -12,6 +13,7 @@
 #include "vulkan/VlkCommandBuffer.hpp"
 #include "vulkan/VlkDescriptorSetLayout.hpp"
 #include "vulkan/VlkDevice.hpp"
+#include "vulkan/VlkFence.hpp"
 #include "vulkan/VlkPipeline.hpp"
 #include "vulkan/VlkPipelineLayout.hpp"
 #include "vulkan/VlkProxy.hpp"
@@ -53,7 +55,8 @@ BusyIndicator::BusyIndicator( GarbageChute& garbage, std::shared_ptr<VlkDevice> 
     Unembed( HourglassSvg );
     m_hourglass = std::make_unique<SvgImage>( HourglassSvg );
     m_hourglass->SetBorder( 1 );
-    m_texture = std::make_shared<Texture>( *m_device, *m_hourglass->Rasterize( HourglassSize * scale, HourglassSize * scale ), VK_FORMAT_R8G8B8A8_SRGB );
+    std::vector<std::shared_ptr<VlkFence>> texFences;
+    m_texture = std::make_shared<Texture>( *m_device, *m_hourglass->Rasterize( HourglassSize * scale, HourglassSize * scale ), VK_FORMAT_R8G8B8A8_SRGB, texFences );
 
     VkSamplerCreateInfo samplerInfo = {
         .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
@@ -222,6 +225,8 @@ BusyIndicator::BusyIndicator( GarbageChute& garbage, std::shared_ptr<VlkDevice> 
     m_indexBuffer = std::make_shared<VlkBuffer>( *m_device, iinfo, VlkBuffer::PreferDevice | VlkBuffer::WillWrite );
     memcpy( m_indexBuffer->Ptr(), idata, sizeof( idata ) );
     m_indexBuffer->Flush();
+
+    for( auto& fence : texFences ) fence->Wait();
 }
 
 BusyIndicator::~BusyIndicator()
@@ -286,6 +291,8 @@ void BusyIndicator::SetScale( float scale )
 {
     m_scale = scale;
     m_garbage.Recycle( std::move( m_texture ) );
-    m_texture = std::make_shared<Texture>( *m_device, *m_hourglass->Rasterize( HourglassSize * scale, HourglassSize * scale ), VK_FORMAT_R8G8B8A8_SRGB );
+    std::vector<std::shared_ptr<VlkFence>> texFences;
+    m_texture = std::make_shared<Texture>( *m_device, *m_hourglass->Rasterize( HourglassSize * scale, HourglassSize * scale ), VK_FORMAT_R8G8B8A8_SRGB, texFences );
     m_imageInfo.imageView = *m_texture;
+    for( auto& fence : texFences ) fence->Wait();
 }

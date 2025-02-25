@@ -1,4 +1,5 @@
 #include <string.h>
+#include <vector>
 
 #include "ImageView.hpp"
 #include "util/Bitmap.hpp"
@@ -7,6 +8,7 @@
 #include "vulkan/VlkCommandBuffer.hpp"
 #include "vulkan/VlkDescriptorSetLayout.hpp"
 #include "vulkan/VlkDevice.hpp"
+#include "vulkan/VlkFence.hpp"
 #include "vulkan/VlkPipeline.hpp"
 #include "vulkan/VlkPipelineLayout.hpp"
 #include "vulkan/VlkProxy.hpp"
@@ -260,7 +262,8 @@ void ImageView::SetBitmap( const std::shared_ptr<Bitmap>& bitmap )
         return;
     }
 
-    auto texture = std::make_shared<Texture>( *m_device, *bitmap, VK_FORMAT_R8G8B8A8_SRGB );
+    std::vector<std::shared_ptr<VlkFence>> texFences;
+    auto texture = std::make_shared<Texture>( *m_device, *bitmap, VK_FORMAT_R8G8B8A8_SRGB, texFences );
 
     constexpr VkBufferCreateInfo vinfo = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
@@ -269,6 +272,8 @@ void ImageView::SetBitmap( const std::shared_ptr<Bitmap>& bitmap )
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE
     };
     auto vb = std::make_shared<VlkBuffer>( *m_device, vinfo, VlkBuffer::PreferDevice | VlkBuffer::WillWrite );
+
+    for( auto& fence : texFences ) fence->Wait();
 
     std::lock_guard lock( m_lock );
 

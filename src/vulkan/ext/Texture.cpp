@@ -11,7 +11,7 @@
 #include "vulkan/VlkGarbage.hpp"
 #include "vulkan/ext/Tracy.hpp"
 
-Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format )
+Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format, std::vector<std::shared_ptr<VlkFence>>& fencesOut )
 {
     VkImageCreateInfo imageInfo = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
@@ -65,11 +65,12 @@ Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format )
 
         auto fence = std::make_shared<VlkFence>( device );
         device.Submit( *cmdbuf, *fence );
-        device.GetGarbage()->Recycle( std::move( fence ), {
+        device.GetGarbage()->Recycle( fence, {
             std::move( cmdbuf ),
             std::move( stagingBuffer ),
             m_image
         } );
+        fencesOut.emplace_back( std::move( fence ) );
     }
     else
     {
@@ -92,11 +93,12 @@ Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format )
 
         auto fenceTrn = std::make_shared<VlkFence>( device );
         device.Submit( *cmdTrn, *fenceTrn );
-        device.GetGarbage()->Recycle( std::move( fenceTrn ), {
+        device.GetGarbage()->Recycle( fenceTrn, {
             std::move( cmdTrn ),
             stagingBuffer,
             m_image
         } );
+        fencesOut.emplace_back( std::move( fenceTrn ) );
 
         auto cmdGfx = std::make_unique<VlkCommandBuffer>( *device.GetCommandPool( QueueType::Graphic ) );
         cmdGfx->Begin( VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT );
@@ -105,11 +107,12 @@ Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format )
 
         auto fenceGfx = std::make_shared<VlkFence>( device );
         device.Submit( *cmdGfx, *fenceGfx );
-        device.GetGarbage()->Recycle( std::move( fenceGfx ), {
+        device.GetGarbage()->Recycle( fenceGfx, {
             std::move( cmdGfx ),
             std::move( stagingBuffer ),
             m_image
         } );
+        fencesOut.emplace_back( std::move( fenceGfx ) );
     }
 }
 

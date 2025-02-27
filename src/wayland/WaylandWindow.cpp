@@ -276,7 +276,9 @@ void WaylandWindow::EndFrame()
         .pSignalSemaphoreInfos = &semaRenderFinished
     };
 
+    m_vkDevice->lock( QueueType::Graphic );
     VkVerify( vkQueueSubmit2( m_vkDevice->GetQueue( QueueType::Graphic ), 1, &submitInfo, *frame.renderFence ) );
+    m_vkDevice->unlock( QueueType::Graphic );
 
     frame.presentFence->Wait();
     frame.presentFence->Reset();

@@ -446,5 +446,7 @@ void VlkDevice::Submit( const VlkCommandBuffer& cmdbuf, VkFence fence )
         .pCommandBufferInfos = &cmdbufInfo
     };
 
+    lock( cmdbuf );
     VkVerify( vkQueueSubmit2( GetQueue( cmdbuf ), 1, &submitInfo, fence ) );
+    unlock( cmdbuf );
 }

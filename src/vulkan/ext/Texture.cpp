@@ -88,9 +88,6 @@ Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format, bool
     };
     auto stagingBuffer = std::make_shared<VlkBuffer>( device, bufferInfo, VlkBuffer::WillWrite | VlkBuffer::PreferHost );
 
-    auto cmdTrn = std::make_unique<VlkCommandBuffer>( *device.GetCommandPool( QueueType::Transfer ) );
-    cmdTrn->Begin( VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT );
-
     std::unique_ptr<Bitmap> tmp;
     auto bmpptr = &bitmap;
     auto bufptr = (uint8_t*)stagingBuffer->Ptr();
@@ -101,15 +98,6 @@ Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format, bool
         bufptr += mipdata.size;
         stagingBuffer->Flush( mipdata.offset, mipdata.size );
 
-        ZoneVk( device, *cmdTrn, "Texture upload", true );
-        WriteBarrier( *cmdTrn, level );
-        VkBufferImageCopy region = {
-            .bufferOffset = mipdata.offset,
-            .imageSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, level, 0, 1 },
-            .imageExtent = { mipdata.width, mipdata.height, 1 }
-        };
-        vkCmdCopyBufferToImage( *cmdTrn, *stagingBuffer, *m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region );
-
         if( level < mipLevels-1 )
         {
             ZoneScopedN( "Mip downscale" );
@@ -118,6 +106,22 @@ Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format, bool
             tmp = bmpptr->ResizeNew( mipChain[level+1].width, mipChain[level+1].height );
             bmpptr = tmp.get();
         }
+    }
+
+    auto cmdTrn = std::make_unique<VlkCommandBuffer>( *device.GetCommandPool( QueueType::Transfer ) );
+    cmdTrn->Begin( VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT );
+
+    for( uint32_t level = 0; level < mipLevels; level++ )
+    {
+        ZoneVk( device, *cmdTrn, "Texture upload", true );
+        WriteBarrier( *cmdTrn, level );
+        const MipData& mipdata = mipChain[level];
+        VkBufferImageCopy region = {
+            .bufferOffset = mipdata.offset,
+            .imageSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, level, 0, 1 },
+            .imageExtent = { mipdata.width, mipdata.height, 1 }
+        };
+        vkCmdCopyBufferToImage( *cmdTrn, *stagingBuffer, *m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region );
     }
 
     const auto shareQueue = device.GetQueueInfo( QueueType::Graphic ).shareTransfer;

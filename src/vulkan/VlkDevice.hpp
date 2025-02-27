@@ -2,6 +2,7 @@
 
 #include <array>
 #include <memory>
+#include <mutex>
 #include <stdexcept>
 #include <vulkan/vulkan.h>
 #include <tracy/TracyVulkan.hpp>
@@ -59,16 +60,19 @@ public:
     [[nodiscard]] auto& GetTracyContext() const { return m_tracyCtx; }
 #endif
 
+    void lock( QueueType type ) { CheckPanic( m_queueLock[(int)type], "Queue lock does not exist" ); m_queueLock[(int)type]->lock(); }
+    void unlock( QueueType type ) { CheckPanic( m_queueLock[(int)type], "Queue lock does not exist" ); m_queueLock[(int)type]->unlock(); }
+
 private:
     VkDevice m_device;
     std::shared_ptr<VlkPhysicalDevice> m_physDev;
 
-    std::array<QueueInfo, 4> m_queueInfo;
-    std::array<VkQueue, 4> m_queue;
-
     VmaAllocator m_allocator;
 
+    std::array<QueueInfo, 4> m_queueInfo;
+    std::array<VkQueue, 4> m_queue;
     std::array<std::shared_ptr<VlkCommandPool>, 4> m_commandPool;
+    std::array<std::shared_ptr<std::mutex>, 4> m_queueLock;
 
 #ifdef TRACY_ENABLE
     TracyVkCtx m_tracyCtx = nullptr;

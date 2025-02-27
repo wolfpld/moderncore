@@ -366,17 +366,40 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
     if( m_queueInfo[(int)QueueType::Graphic].idx >= 0 )
     {
         m_commandPool[(int)QueueType::Graphic] = std::make_shared<VlkCommandPool>( *this, m_queueInfo[(int)QueueType::Graphic].idx, QueueType::Graphic );
-        if( m_queueInfo[(int)QueueType::Graphic].shareCompute ) m_commandPool[(int)QueueType::Compute] = m_commandPool[(int)QueueType::Graphic];
-        if( m_queueInfo[(int)QueueType::Graphic].shareTransfer ) m_commandPool[(int)QueueType::Transfer] = m_commandPool[(int)QueueType::Graphic];
+        m_queueLock[(int)QueueType::Graphic] = std::make_shared<std::mutex>();
+
+        if( m_queueInfo[(int)QueueType::Graphic].shareCompute )
+        {
+            m_commandPool[(int)QueueType::Compute] = m_commandPool[(int)QueueType::Graphic];
+            m_queueLock[(int)QueueType::Compute] = m_queueLock[(int)QueueType::Graphic];
+        }
+
+        if( m_queueInfo[(int)QueueType::Graphic].shareTransfer )
+        {
+            m_commandPool[(int)QueueType::Transfer] = m_commandPool[(int)QueueType::Graphic];
+            m_queueLock[(int)QueueType::Transfer] = m_queueLock[(int)QueueType::Graphic];
+        }
     }
     if( m_queueInfo[(int)QueueType::Compute].idx >= 0 )
     {
-        if( !m_commandPool[(int)QueueType::Compute] ) m_commandPool[(int)QueueType::Compute] = std::make_shared<VlkCommandPool>( *this, m_queueInfo[(int)QueueType::Compute].idx, QueueType::Compute );
-        if( !m_commandPool[(int)QueueType::Transfer] && m_queueInfo[(int)QueueType::Compute].shareTransfer ) m_commandPool[(int)QueueType::Transfer] = m_commandPool[(int)QueueType::Compute];
+        if( !m_commandPool[(int)QueueType::Compute] )
+        {
+            m_commandPool[(int)QueueType::Compute] = std::make_shared<VlkCommandPool>( *this, m_queueInfo[(int)QueueType::Compute].idx, QueueType::Compute );
+            m_queueLock[(int)QueueType::Compute] = std::make_shared<std::mutex>();
+        }
+        if( !m_commandPool[(int)QueueType::Transfer] && m_queueInfo[(int)QueueType::Compute].shareTransfer )
+        {
+            m_commandPool[(int)QueueType::Transfer] = m_commandPool[(int)QueueType::Compute];
+            m_queueLock[(int)QueueType::Transfer] = m_queueLock[(int)QueueType::Compute];
+        }
     }
     if( m_queueInfo[(int)QueueType::Transfer].idx >= 0 )
     {
-        if( !m_commandPool[(int)QueueType::Transfer] ) m_commandPool[(int)QueueType::Transfer] = std::make_shared<VlkCommandPool>( *this, m_queueInfo[(int)QueueType::Transfer].idx, QueueType::Transfer );
+        if( !m_commandPool[(int)QueueType::Transfer] )
+        {
+            m_commandPool[(int)QueueType::Transfer] = std::make_shared<VlkCommandPool>( *this, m_queueInfo[(int)QueueType::Transfer].idx, QueueType::Transfer );
+            m_queueLock[(int)QueueType::Transfer] = std::make_shared<std::mutex>();
+        }
     }
 
 #ifdef TRACY_ENABLE

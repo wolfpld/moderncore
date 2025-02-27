@@ -233,8 +233,9 @@ VlkCommandBuffer& WaylandWindow::BeginFrame()
     }
 
     frame.renderFence->Reset();
+    frame.commandBuffer->lock();
     frame.commandBuffer->Reset();
-    frame.commandBuffer->Begin( VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT );
+    frame.commandBuffer->Begin( VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, false );
     m_swapchain->RenderBarrier( *frame.commandBuffer, m_imageIdx );
 
     return *frame.commandBuffer;

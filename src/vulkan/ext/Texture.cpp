@@ -1,5 +1,8 @@
+#include <algorithm>
+#include <cmath>
 #include <string.h>
 #include <vulkan/vulkan.h>
+#include <tracy/Tracy.hpp>
 #include <tracy/TracyVulkan.hpp>
 
 #include "Texture.hpp"
@@ -11,14 +14,54 @@
 #include "vulkan/VlkGarbage.hpp"
 #include "vulkan/ext/Tracy.hpp"
 
-Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format, std::vector<std::shared_ptr<VlkFence>>& fencesOut )
+struct MipData
 {
+    uint32_t width;
+    uint32_t height;
+    uint64_t offset;
+    uint64_t size;
+};
+
+static std::vector<MipData> CalcMipLevels( uint32_t width, uint32_t height, uint64_t& total )
+{
+    const auto mipLevels = (uint32_t)std::floor( std::log2( std::max( width, height ) ) ) + 1;
+    uint64_t offset = 0;
+    std::vector<MipData> levels( mipLevels );
+    for( uint32_t i=0; i<mipLevels; i++ )
+    {
+        const uint64_t size = width * height * 4;
+        levels[i] = { width, height, offset, size };
+        width = std::max( 1u, width / 2 );
+        height = std::max( 1u, height / 2 );
+        offset += size;
+    }
+    total = offset;
+    return levels;
+}
+
+Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format, bool mips, std::vector<std::shared_ptr<VlkFence>>& fencesOut )
+{
+    ZoneScoped;
+
+    uint64_t bufsize;
+    std::vector<MipData> mipChain;
+    if( mips )
+    {
+        mipChain = CalcMipLevels( bitmap.Width(), bitmap.Height(), bufsize );
+    }
+    else
+    {
+        bufsize = bitmap.Width() * bitmap.Height() * 4;
+        mipChain.emplace_back( bitmap.Width(), bitmap.Height(), 0, bufsize );
+    }
+    const auto mipLevels = (uint32_t)mipChain.size();
+
     VkImageCreateInfo imageInfo = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
         .imageType = VK_IMAGE_TYPE_2D,
         .format = format,
         .extent = { bitmap.Width(), bitmap.Height(), 1 },
-        .mipLevels = 1,
+        .mipLevels = mipLevels,
         .arrayLayers = 1,
         .samples = VK_SAMPLE_COUNT_1_BIT,
         .tiling = VK_IMAGE_TILING_OPTIMAL,
@@ -33,90 +76,90 @@ Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format, std:
         .image = *m_image,
         .viewType = VK_IMAGE_VIEW_TYPE_2D,
         .format = format,
-        .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 }
+        .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, mipLevels, 0, 1 }
     };
     m_imageView = std::make_unique<VlkImageView>( device, viewInfo );
 
     VkBufferCreateInfo bufferInfo = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-        .size = bitmap.Width() * bitmap.Height() * 4,
+        .size = bufsize,
         .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE
     };
     auto stagingBuffer = std::make_shared<VlkBuffer>( device, bufferInfo, VlkBuffer::WillWrite | VlkBuffer::PreferHost );
-    memcpy( stagingBuffer->Ptr(), bitmap.Data(), bitmap.Width() * bitmap.Height() * 4 );
-    stagingBuffer->Flush();
 
-    if( device.GetQueueInfo( QueueType::Graphic ).shareTransfer )
+    auto cmdTrn = std::make_unique<VlkCommandBuffer>( *device.GetCommandPool( QueueType::Transfer ) );
+    cmdTrn->Begin( VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT );
+
+    std::unique_ptr<Bitmap> tmp;
+    auto bmpptr = &bitmap;
+    auto bufptr = (uint8_t*)stagingBuffer->Ptr();
+    for( uint32_t level = 0; level < mipLevels; level++ )
     {
-        auto cmdbuf = std::make_unique<VlkCommandBuffer>( *device.GetCommandPool( QueueType::Graphic ) );
-        cmdbuf->Begin( VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT );
-        {
-            ZoneVk( device, *cmdbuf, "Texture upload", true );
-            WriteBarrier( *cmdbuf );
-            VkBufferImageCopy region = {
-                .imageSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 },
-                .imageExtent = { bitmap.Width(), bitmap.Height(), 1 }
-            };
-            vkCmdCopyBufferToImage( *cmdbuf, *stagingBuffer, *m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region );
-            ReadBarrier( *cmdbuf );
-        }
-        cmdbuf->End();
+        const MipData& mipdata = mipChain[level];
+        memcpy( bufptr, bmpptr->Data(), mipdata.size );
+        bufptr += mipdata.size;
+        stagingBuffer->Flush( mipdata.offset, mipdata.size );
 
-        auto fence = std::make_shared<VlkFence>( device );
-        device.Submit( *cmdbuf, *fence );
-        device.GetGarbage()->Recycle( fence, {
-            std::move( cmdbuf ),
-            std::move( stagingBuffer ),
-            m_image
-        } );
-        fencesOut.emplace_back( std::move( fence ) );
+        ZoneVk( device, *cmdTrn, "Texture upload", true );
+        WriteBarrier( *cmdTrn, level );
+        VkBufferImageCopy region = {
+            .bufferOffset = mipdata.offset,
+            .imageSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, level, 0, 1 },
+            .imageExtent = { mipdata.width, mipdata.height, 1 }
+        };
+        vkCmdCopyBufferToImage( *cmdTrn, *stagingBuffer, *m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region );
+
+        if( level < mipLevels-1 )
+        {
+            ZoneScopedN( "Mip downscale" );
+            ZoneTextF( "Level %u, %u x %u, %u bytes", level, mipChain[level+1].width, mipChain[level+1].height, mipChain[level+1].size );
+
+            tmp = bmpptr->ResizeNew( mipChain[level+1].width, mipChain[level+1].height );
+            bmpptr = tmp.get();
+        }
+    }
+
+    const auto shareQueue = device.GetQueueInfo( QueueType::Graphic ).shareTransfer;
+    const auto trnQueue = device.GetQueueInfo( QueueType::Transfer ).idx;
+    const auto gfxQueue = device.GetQueueInfo( QueueType::Graphic ).idx;
+    if( shareQueue )
+    {
+        ReadBarrier( *cmdTrn, mipLevels );
     }
     else
     {
-        const auto trnQueue = device.GetQueueInfo( QueueType::Transfer ).idx;
-        const auto gfxQueue = device.GetQueueInfo( QueueType::Graphic ).idx;
+        ReadBarrierTrn( *cmdTrn, mipLevels, trnQueue, gfxQueue );
+    }
+    cmdTrn->End();
 
-        auto cmdTrn = std::make_unique<VlkCommandBuffer>( *device.GetCommandPool( QueueType::Transfer ) );
-        cmdTrn->Begin( VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT );
-        {
-            ZoneVk( device, *cmdTrn, "Texture upload", true );
-            WriteBarrier( *cmdTrn );
-            VkBufferImageCopy region = {
-                .imageSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 },
-                .imageExtent = { bitmap.Width(), bitmap.Height(), 1 }
-            };
-            vkCmdCopyBufferToImage( *cmdTrn, *stagingBuffer, *m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region );
-            ReadBarrierTrn( *cmdTrn, trnQueue, gfxQueue );
-        }
-        cmdTrn->End();
+    auto fenceTrn = std::make_shared<VlkFence>( device );
+    device.Submit( *cmdTrn, *fenceTrn );
+    device.GetGarbage()->Recycle( fenceTrn, {
+        std::move( cmdTrn ),
+        std::move( stagingBuffer ),
+        m_image
+    } );
+    fencesOut.emplace_back( std::move( fenceTrn ) );
 
-        auto fenceTrn = std::make_shared<VlkFence>( device );
-        device.Submit( *cmdTrn, *fenceTrn );
-        device.GetGarbage()->Recycle( fenceTrn, {
-            std::move( cmdTrn ),
-            stagingBuffer,
-            m_image
-        } );
-        fencesOut.emplace_back( std::move( fenceTrn ) );
-
+    if( !shareQueue )
+    {
         auto cmdGfx = std::make_unique<VlkCommandBuffer>( *device.GetCommandPool( QueueType::Graphic ) );
         cmdGfx->Begin( VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT );
-        ReadBarrierGfx( *cmdGfx, trnQueue, gfxQueue );
+        ReadBarrierGfx( *cmdGfx, mipLevels, trnQueue, gfxQueue );
         cmdGfx->End();
 
         auto fenceGfx = std::make_shared<VlkFence>( device );
         device.Submit( *cmdGfx, *fenceGfx );
         device.GetGarbage()->Recycle( fenceGfx, {
             std::move( cmdGfx ),
-            std::move( stagingBuffer ),
             m_image
         } );
         fencesOut.emplace_back( std::move( fenceGfx ) );
     }
 }
 
-void Texture::WriteBarrier( VkCommandBuffer cmdbuf )
+void Texture::WriteBarrier( VkCommandBuffer cmdbuf, uint32_t mip )
 {
     VkImageMemoryBarrier2 barrier = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
@@ -127,7 +170,7 @@ void Texture::WriteBarrier( VkCommandBuffer cmdbuf )
         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .image = *m_image,
-        .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 }
+        .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, mip, 1, 0, 1 }
     };
     VkDependencyInfo deps = {
         .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
@@ -137,7 +180,7 @@ void Texture::WriteBarrier( VkCommandBuffer cmdbuf )
     vkCmdPipelineBarrier2( cmdbuf, &deps );
 }
 
-void Texture::ReadBarrier( VkCommandBuffer cmdbuf )
+void Texture::ReadBarrier( VkCommandBuffer cmdbuf, uint32_t mipLevels )
 {
     VkImageMemoryBarrier2 barrier = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
@@ -150,7 +193,7 @@ void Texture::ReadBarrier( VkCommandBuffer cmdbuf )
         .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
         .image = *m_image,
-        .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 }
+        .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, mipLevels, 0, 1 }
     };
     VkDependencyInfo deps = {
         .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
@@ -160,7 +203,7 @@ void Texture::ReadBarrier( VkCommandBuffer cmdbuf )
     vkCmdPipelineBarrier2( cmdbuf, &deps );
 }
 
-void Texture::ReadBarrierTrn( VkCommandBuffer cmdbuf, uint32_t trnQueue, uint32_t gfxQueue )
+void Texture::ReadBarrierTrn( VkCommandBuffer cmdbuf, uint32_t mipLevels, uint32_t trnQueue, uint32_t gfxQueue )
 {
     VkImageMemoryBarrier2 barrier = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
@@ -171,7 +214,7 @@ void Texture::ReadBarrierTrn( VkCommandBuffer cmdbuf, uint32_t trnQueue, uint32_
         .srcQueueFamilyIndex = trnQueue,
         .dstQueueFamilyIndex = gfxQueue,
         .image = *m_image,
-        .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 }
+        .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, mipLevels, 0, 1 }
     };
     VkDependencyInfo deps = {
         .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
@@ -181,7 +224,7 @@ void Texture::ReadBarrierTrn( VkCommandBuffer cmdbuf, uint32_t trnQueue, uint32_
     vkCmdPipelineBarrier2( cmdbuf, &deps );
 }
 
-void Texture::ReadBarrierGfx( VkCommandBuffer cmdbuf, uint32_t trnQueue, uint32_t gfxQueue )
+void Texture::ReadBarrierGfx( VkCommandBuffer cmdbuf, uint32_t mipLevels, uint32_t trnQueue, uint32_t gfxQueue )
 {
     VkImageMemoryBarrier2 barrier = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
@@ -192,7 +235,7 @@ void Texture::ReadBarrierGfx( VkCommandBuffer cmdbuf, uint32_t trnQueue, uint32_
         .srcQueueFamilyIndex = trnQueue,
         .dstQueueFamilyIndex = gfxQueue,
         .image = *m_image,
-        .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 }
+        .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, mipLevels, 0, 1 }
     };
     VkDependencyInfo deps = {
         .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,

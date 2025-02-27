@@ -16,7 +16,7 @@ class VlkFence;
 class Texture : public VlkBase
 {
 public:
-    Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format, std::vector<std::shared_ptr<VlkFence>>& fencesOut );
+    Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format, bool mips, std::vector<std::shared_ptr<VlkFence>>& fencesOut );
 
     NoCopy( Texture );
 
@@ -24,10 +24,10 @@ public:
     operator VkImageView() const { return *m_imageView; }
 
 private:
-    void WriteBarrier( VkCommandBuffer cmdbuf );
-    void ReadBarrier( VkCommandBuffer cmdbuf );
-    void ReadBarrierTrn( VkCommandBuffer cmdbuf, uint32_t trnQueue, uint32_t gfxQueue );
-    void ReadBarrierGfx( VkCommandBuffer cmdbuf, uint32_t trnQueue, uint32_t gfxQueue );
+    void WriteBarrier( VkCommandBuffer cmdbuf, uint32_t mip );
+    void ReadBarrier( VkCommandBuffer cmdbuf, uint32_t mipLevels );
+    void ReadBarrierTrn( VkCommandBuffer cmdbuf, uint32_t mipLevels, uint32_t trnQueue, uint32_t gfxQueue );
+    void ReadBarrierGfx( VkCommandBuffer cmdbuf, uint32_t mipLevels, uint32_t trnQueue, uint32_t gfxQueue );
 
     std::shared_ptr<VlkImage> m_image;
     std::unique_ptr<VlkImageView> m_imageView;

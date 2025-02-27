@@ -265,7 +265,7 @@ void ImageView::SetBitmap( const std::shared_ptr<Bitmap>& bitmap )
     }
 
     std::vector<std::shared_ptr<VlkFence>> texFences;
-    auto texture = std::make_shared<Texture>( *m_device, *bitmap, VK_FORMAT_R8G8B8A8_SRGB, texFences );
+    auto texture = std::make_shared<Texture>( *m_device, *bitmap, VK_FORMAT_R8G8B8A8_SRGB, true, texFences );
 
     constexpr VkBufferCreateInfo vinfo = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,

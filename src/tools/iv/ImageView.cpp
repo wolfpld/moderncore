@@ -19,12 +19,13 @@
 #include "vulkan/ext/Texture.hpp"
 #include "vulkan/ext/Tracy.hpp"
 
-#include "shader/TexturingFrag.hpp"
+#include "shader/SupersampleFrag.hpp"
 #include "shader/TexturingVert.hpp"
 
 struct PushConstant
 {
     float screenSize[2];
+    float texDelta;
 };
 
 ImageView::ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, const VkExtent2D& extent )
@@ -39,6 +40,7 @@ ImageView::ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, 
         .mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
         .addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
         .addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .mipLodBias = -1.f,
         .maxLod = VK_LOD_CLAMP_NONE
     };
     m_sampler = std::make_unique<VlkSampler>( *m_device, samplerInfo );
@@ -58,11 +60,11 @@ ImageView::ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, 
 
 
     Unembed( TexturingVert );
-    Unembed( TexturingFrag );
+    Unembed( SupersampleFrag );
 
     std::array stages = {
         VlkShader::Stage { std::make_shared<VlkShaderModule>( *m_device, *TexturingVert ), VK_SHADER_STAGE_VERTEX_BIT },
-        VlkShader::Stage { std::make_shared<VlkShaderModule>( *m_device, *TexturingFrag ), VK_SHADER_STAGE_FRAGMENT_BIT }
+        VlkShader::Stage { std::make_shared<VlkShaderModule>( *m_device, *SupersampleFrag ), VK_SHADER_STAGE_FRAGMENT_BIT }
     };
     m_shader = std::make_shared<VlkShader>( stages );
 
@@ -80,17 +82,24 @@ ImageView::ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, 
 
 
     const std::array<VkDescriptorSetLayout, 1> sets = { *m_setLayout };
-    static constexpr VkPushConstantRange pushConstantRange = {
-        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-        .offset = 0,
-        .size = sizeof( PushConstant )
+    static constexpr std::array pushConstantRange = {
+        VkPushConstantRange {
+            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+            .offset = offsetof( PushConstant, screenSize ),
+            .size = sizeof( float ) * 2
+        },
+        VkPushConstantRange {
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .offset = offsetof( PushConstant, texDelta ),
+            .size = sizeof( float )
+        }
     };
     const VkPipelineLayoutCreateInfo pipelineLayoutInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .setLayoutCount = sets.size(),
         .pSetLayouts = sets.data(),
-        .pushConstantRangeCount = 1,
-        .pPushConstantRanges = &pushConstantRange
+        .pushConstantRangeCount = pushConstantRange.size(),
+        .pPushConstantRanges = pushConstantRange.data()
     };
     m_pipelineLayout = std::make_shared<VlkPipelineLayout>( *m_device, pipelineLayoutInfo );
 
@@ -217,7 +226,8 @@ void ImageView::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
 
     PushConstant pushConstant = {
         float( extent.width ),
-        float( extent.height )
+        float( extent.height ),
+        1.f / float( m_bitmapExtent.width ),
     };
 
     std::array<VkBuffer, 1> vertexBuffers = { *m_vertexBuffer };
@@ -227,7 +237,8 @@ void ImageView::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
 
     ZoneVk( *m_device, cmdbuf, "ImageView", true );
     vkCmdBindPipeline( cmdbuf, VK_PIPELINE_BIND_POINT_GRAPHICS, *m_pipeline );
-    vkCmdPushConstants( cmdbuf, *m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof( PushConstant ), &pushConstant );
+    vkCmdPushConstants( cmdbuf, *m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, offsetof( PushConstant, screenSize ), sizeof( float ) * 2, &pushConstant );
+    vkCmdPushConstants( cmdbuf, *m_pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, offsetof( PushConstant, texDelta ), sizeof( float ), &pushConstant.texDelta );
     vkCmdSetViewport( cmdbuf, 0, 1, &viewport );
     vkCmdSetScissor( cmdbuf, 0, 1, &scissor );
     vkCmdBindVertexBuffers( cmdbuf, 0, 1, vertexBuffers.data(), offsets.data() );

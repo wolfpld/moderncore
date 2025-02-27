@@ -14,13 +14,16 @@ public:
 
     NoCopy( VlkCommandBuffer );
 
-    void Begin( VkCommandBufferUsageFlags flags = 0 );
-    void End();
+    void Begin( VkCommandBufferUsageFlags flags = 0, bool lock = true );
+    void End( bool unlock = true );
 
     void Reset( VkCommandBufferResetFlags flags = 0 );
 
     operator VkCommandBuffer() const { return m_commandBuffer; }
     operator QueueType() const { return m_commandPool; }
+
+    void lock() { m_commandPool.lock(); }
+    void unlock() { m_commandPool.unlock(); }
 
 private:
     VkCommandBuffer m_commandBuffer;

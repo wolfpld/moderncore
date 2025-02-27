@@ -21,18 +21,18 @@ VlkCommandBuffer::~VlkCommandBuffer()
     vkFreeCommandBuffers( m_device, m_commandPool, 1, &m_commandBuffer );
 }
 
-void VlkCommandBuffer::Begin( VkCommandBufferUsageFlags flags )
+void VlkCommandBuffer::Begin( VkCommandBufferUsageFlags flags, bool _lock )
 {
     VkCommandBufferBeginInfo begin = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
     begin.flags = flags;
-    m_commandPool.lock();
+    if( _lock ) lock();
     VkVerify( vkBeginCommandBuffer( m_commandBuffer, &begin ) );
 }
 
-void VlkCommandBuffer::End()
+void VlkCommandBuffer::End( bool _unlock )
 {
     VkVerify( vkEndCommandBuffer( m_commandBuffer ) );
-    m_commandPool.unlock();
+    if( _unlock ) m_commandPool.unlock();
 }
 
 void VlkCommandBuffer::Reset( VkCommandBufferResetFlags flags )

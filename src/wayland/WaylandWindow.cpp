@@ -197,8 +197,6 @@ VlkCommandBuffer& WaylandWindow::BeginFrame()
     const bool resized = m_staged.width != m_extent.width || m_staged.height != m_extent.height;
     if( resized || m_scale != m_prevScale )
     {
-        if( resized ) Invoke( OnResize, this, m_staged.width, m_staged.height );
-
         m_extent = m_staged;
         m_prevScale = m_scale;
 
@@ -206,6 +204,8 @@ VlkCommandBuffer& WaylandWindow::BeginFrame()
 
         wp_viewport_set_source( m_viewport, 0, 0, wl_fixed_from_double( m_extent.width * m_scale / 120.f ), wl_fixed_from_double( m_extent.height * m_scale / 120.f ) );
         wp_viewport_set_destination( m_viewport, m_extent.width, m_extent.height );
+
+        if( resized ) Invoke( OnResize, this, m_extent.width, m_extent.height );
     }
 
     {

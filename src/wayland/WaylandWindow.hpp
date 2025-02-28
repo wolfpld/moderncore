@@ -41,7 +41,7 @@ public:
         void (*OnClose)( void* ptr, WaylandWindow* window );
         bool (*OnRender)( void* ptr, WaylandWindow* window );
         void (*OnScale)( void* ptr, WaylandWindow* window, uint32_t scale );
-        void (*OnResize)( void* ptr, WaylandWindow* window, uint32_t width, uint32_t height );
+        void (*OnResize)( void* ptr, WaylandWindow* window, uint32_t width, uint32_t height );  // Logical pixels
     };
 
     WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance );
@@ -52,7 +52,7 @@ public:
     void SetAppId( const char* appId );
     void SetTitle( const char* title );
     void SetIcon( const SvgImage& icon );
-    void Resize( uint32_t width, uint32_t height );
+    void Resize( uint32_t width, uint32_t height );     // Window size in logical pixels (1.0 scale)
     void LockSize();
     void Commit();
     void Close();
@@ -71,7 +71,8 @@ public:
 
     void SetCursor( WaylandCursor cursor );
 
-    [[nodiscard]] const VkExtent2D& GetExtent() const { return m_swapchain->GetExtent(); }
+    [[nodiscard]] const VkExtent2D& GetExtent() const { return m_swapchain->GetExtent(); }                  // Swapchain extent, i.e. render area in real pixels
+    [[nodiscard]] VkExtent2D GetSize() const { return VkExtent2D( m_extent.width, m_extent.height ); }      // Logical window size, i.e. pixels at 1.0 DPI scaling
     [[nodiscard]] const char* GetTitle() const { return m_title.c_str(); }
 
     [[nodiscard]] wl_surface* Surface() { return m_surface; }

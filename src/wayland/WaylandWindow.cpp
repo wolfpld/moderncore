@@ -330,7 +330,7 @@ void WaylandWindow::SetDevice( std::shared_ptr<VlkDevice> device, const VkExtent
 {
     CheckPanic( !m_vkDevice, "Vulkan device already set" );
     m_vkDevice = std::move( device );
-    m_staged = extent;
+    m_staged = m_extent = extent;
     CreateSwapchain( extent );
 
     wp_viewport_set_source( m_viewport, 0, 0, wl_fixed_from_double( m_extent.width * m_scale / 120.f ), wl_fixed_from_double( m_extent.height * m_scale / 120.f ) );
@@ -394,8 +394,6 @@ void WaylandWindow::CreateSwapchain( const VkExtent2D& extent )
             .presentFence = std::make_shared<VlkFence>( *m_vkDevice, VK_FENCE_CREATE_SIGNALED_BIT )
         } );
     }
-
-    m_extent = extent;
 }
 
 void WaylandWindow::CleanupSwapchain( bool withSurface )

@@ -195,7 +195,8 @@ VlkCommandBuffer& WaylandWindow::BeginFrame()
 {
     if( m_prevScale == 0 ) m_prevScale = m_scale;
     const bool resized = m_staged.width != m_extent.width || m_staged.height != m_extent.height;
-    if( resized || m_scale != m_prevScale )
+    const bool dpiChange = m_scale != m_prevScale;
+    if( resized || dpiChange )
     {
         m_extent = m_staged;
         m_prevScale = m_scale;
@@ -205,7 +206,8 @@ VlkCommandBuffer& WaylandWindow::BeginFrame()
         wp_viewport_set_source( m_viewport, 0, 0, wl_fixed_from_double( m_extent.width * m_scale / 120.f ), wl_fixed_from_double( m_extent.height * m_scale / 120.f ) );
         wp_viewport_set_destination( m_viewport, m_extent.width, m_extent.height );
 
-        if( resized ) Invoke( OnResize, this, m_extent.width, m_extent.height );
+        if( dpiChange ) Invoke( OnScale, this, m_scale );
+        if( resized || dpiChange ) Invoke( OnResize, this, m_extent.width, m_extent.height );
     }
 
     {
@@ -450,9 +452,7 @@ void WaylandWindow::DecorationConfigure( zxdg_toplevel_decoration_v1* tldec, uin
 
 void WaylandWindow::FractionalScalePreferredScale( wp_fractional_scale_v1* scale, uint32_t scaleValue )
 {
-    if( m_scale == scaleValue ) return;
     m_scale = scaleValue;
-    Invoke( OnScale, this, scaleValue );
 }
 
 void WaylandWindow::FrameDone( struct wl_callback* cb, uint32_t time )

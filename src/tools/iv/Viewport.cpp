@@ -186,7 +186,6 @@ void Viewport::Resize( WaylandWindow* window, uint32_t width, uint32_t height )
     ZoneTextF( "width %u, height %u", width, height );
 
     CheckPanic( window == m_window.get(), "Invalid window" );
-    window->Resize( width, height );
     m_view->Resize( window->GetExtent() );
 }
 

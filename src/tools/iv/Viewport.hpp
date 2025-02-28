@@ -42,7 +42,6 @@ private:
     std::shared_ptr<ImageProvider> m_provider;
     std::shared_ptr<ImageView> m_view;
 
-    float m_scale = 1.f;
     uint64_t m_lastTime = 0;
 
     std::mutex m_lock;

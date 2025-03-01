@@ -51,6 +51,7 @@ private:
     void DataOfferAction( wl_data_offer* offer, uint32_t dndAction );
 
     [[nodiscard]] WaylandWindow* GetFocusedWindow() const;
+    [[nodiscard]] WaylandWindow* GetWindow( wl_surface* surf ) const;
 
     wl_seat* m_seat;
     std::unique_ptr<WaylandPointer> m_pointer;

@@ -69,7 +69,7 @@ void WaylandSeat::KeyboardLeave( wl_surface* surf )
     m_dataOffer = nullptr;
     m_offerMimeTypes.clear();
 
-    GetFocusedWindow()->InvokeClipboard( m_offerMimeTypes );
+    GetWindow( surf )->InvokeClipboard( m_offerMimeTypes );
 }
 
 void WaylandSeat::Capabilities( wl_seat* seat, uint32_t caps )
@@ -165,7 +165,12 @@ WaylandWindow* WaylandSeat::GetFocusedWindow() const
 {
     auto kbdFocus = m_keyboard->ActiveWindow();
     CheckPanic( kbdFocus, "No keyboard focus!" );
-    auto it = m_windows.find( kbdFocus );
+    return GetWindow( kbdFocus );
+}
+
+WaylandWindow* WaylandSeat::GetWindow( wl_surface* surf ) const
+{
+    auto it = m_windows.find( surf );
     CheckPanic( it != m_windows.end(), "Window not found!" );
     return it->second;
 }

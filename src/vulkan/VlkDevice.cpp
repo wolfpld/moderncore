@@ -379,6 +379,11 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
             m_commandPool[(int)QueueType::Transfer] = m_commandPool[(int)QueueType::Graphic];
             m_queueLock[(int)QueueType::Transfer] = m_queueLock[(int)QueueType::Graphic];
         }
+
+        if( m_queueInfo[(int)QueueType::Graphic].sharePresent )
+        {
+            m_queueLock[(int)QueueType::Present] = m_queueLock[(int)QueueType::Graphic];
+        }
     }
     if( m_queueInfo[(int)QueueType::Compute].idx >= 0 )
     {
@@ -392,6 +397,10 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
             m_commandPool[(int)QueueType::Transfer] = m_commandPool[(int)QueueType::Compute];
             m_queueLock[(int)QueueType::Transfer] = m_queueLock[(int)QueueType::Compute];
         }
+        if( !m_queueLock[(int)QueueType::Present] && m_queueInfo[(int)QueueType::Compute].sharePresent )
+        {
+            m_queueLock[(int)QueueType::Present] = m_queueLock[(int)QueueType::Compute];
+        }
     }
     if( m_queueInfo[(int)QueueType::Transfer].idx >= 0 )
     {
@@ -399,6 +408,17 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
         {
             m_commandPool[(int)QueueType::Transfer] = std::make_shared<VlkCommandPool>( *this, m_queueInfo[(int)QueueType::Transfer].idx, QueueType::Transfer );
             m_queueLock[(int)QueueType::Transfer] = std::make_shared<std::mutex>();
+        }
+        if( !m_queueLock[(int)QueueType::Present] && m_queueInfo[(int)QueueType::Transfer].sharePresent )
+        {
+            m_queueLock[(int)QueueType::Present] = m_queueLock[(int)QueueType::Transfer];
+        }
+    }
+    if( m_queueInfo[(int)QueueType::Present].idx >= 0 )
+    {
+        if( !m_queueLock[(int)QueueType::Present] )
+        {
+            m_queueLock[(int)QueueType::Present] = std::make_shared<std::mutex>();
         }
     }
 

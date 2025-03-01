@@ -62,6 +62,7 @@ private:
     wp_viewporter* m_viewporter = nullptr;
     wp_cursor_shape_manager_v1* m_cursorShapeManager = nullptr;
     xdg_toplevel_icon_manager_v1* m_iconManager = nullptr;
+    wl_data_device_manager* m_dataDeviceManager = nullptr;
 
     bool m_keepRunning = true;
 

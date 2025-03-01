@@ -29,11 +29,13 @@ WaylandDisplay::WaylandDisplay()
     CheckPanic( m_viewporter, "Failed to create Wayland viewporter" );
     CheckPanic( m_fractionalScaleManager, "Failed to create Wayland fractional scale manager" );
     CheckPanic( m_cursorShapeManager, "Failed to create Wayland cursor shape manager" );
+    CheckPanic( m_dataDeviceManager, "Failed to create Wayland data device manager" );
 }
 
 WaylandDisplay::~WaylandDisplay()
 {
     m_seat.reset();
+    if( m_dataDeviceManager ) wl_data_device_manager_destroy( m_dataDeviceManager );
     if( m_iconManager ) xdg_toplevel_icon_manager_v1_destroy( m_iconManager );
     if( m_cursorShapeManager ) wp_cursor_shape_manager_v1_destroy( m_cursorShapeManager );
     if( m_viewporter ) wp_viewporter_destroy( m_viewporter );
@@ -125,6 +127,10 @@ void WaylandDisplay::RegistryGlobal( wl_registry* reg, uint32_t name, const char
         m_iconManager = RegistryBind( xdg_toplevel_icon_manager_v1 );
         xdg_toplevel_icon_manager_v1_add_listener( m_iconManager, &listener, this );
         wl_display_roundtrip( m_dpy );
+    }
+    else if( strcmp( interface, wl_data_device_manager_interface.name ) == 0 )
+    {
+        m_dataDeviceManager = RegistryBind( wl_data_device_manager, 3, 3 );
     }
 }
 

@@ -78,7 +78,7 @@ void WaylandSeat::Capabilities( wl_seat* seat, uint32_t caps )
 
     if( hasKeyboard && !m_keyboard )
     {
-        m_keyboard = std::make_unique<WaylandKeyboard>( wl_seat_get_keyboard( seat ) );
+        m_keyboard = std::make_unique<WaylandKeyboard>( wl_seat_get_keyboard( seat ), *this );
     }
     else if( !hasKeyboard && m_keyboard )
     {

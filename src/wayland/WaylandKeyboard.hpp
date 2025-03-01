@@ -4,10 +4,12 @@
 
 #include "util/NoCopy.hpp"
 
+class WaylandSeat;
+
 class WaylandKeyboard
 {
 public:
-    explicit WaylandKeyboard( wl_keyboard* keyboard );
+    WaylandKeyboard( wl_keyboard* keyboard, WaylandSeat& seat );
     ~WaylandKeyboard();
 
     NoCopy( WaylandKeyboard );
@@ -16,6 +18,7 @@ public:
 
 private:
     wl_keyboard* m_keyboard;
+    WaylandSeat& m_seat;
 
     void Keymap( wl_keyboard* kbd, uint32_t format, int32_t fd, uint32_t size );
     void Enter( wl_keyboard* kbd, uint32_t serial, wl_surface* surf, wl_array* keys );

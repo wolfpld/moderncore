@@ -1,8 +1,10 @@
 #include "WaylandKeyboard.hpp"
+#include "WaylandSeat.hpp"
 #include "util/Invoke.hpp"
 
-WaylandKeyboard::WaylandKeyboard( wl_keyboard *keyboard )
+WaylandKeyboard::WaylandKeyboard( wl_keyboard *keyboard, WaylandSeat &seat )
     : m_keyboard( keyboard )
+    , m_seat( seat )
 {
     static constexpr wl_keyboard_listener listener = {
         .keymap = Method( Keymap ),

@@ -146,3 +146,12 @@ void WaylandSeat::DataOfferSourceActions( wl_data_offer* offer, uint32_t sourceA
 void WaylandSeat::DataOfferAction( wl_data_offer* offer, uint32_t dndAction )
 {
 }
+
+WaylandWindow* WaylandSeat::GetFocusedWindow() const
+{
+    auto kbdFocus = m_keyboard->ActiveWindow();
+    CheckPanic( kbdFocus, "No keyboard focus!" );
+    auto it = m_windows.find( kbdFocus );
+    CheckPanic( it != m_windows.end(), "Window not found!" );
+    return it->second;
+}

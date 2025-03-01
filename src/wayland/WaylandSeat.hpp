@@ -50,6 +50,8 @@ private:
     void DataOfferSourceActions( wl_data_offer* offer, uint32_t sourceActions );
     void DataOfferAction( wl_data_offer* offer, uint32_t dndAction );
 
+    [[nodiscard]] WaylandWindow* GetFocusedWindow() const;
+
     wl_seat* m_seat;
     std::unique_ptr<WaylandPointer> m_pointer;
     std::unique_ptr<WaylandKeyboard> m_keyboard;

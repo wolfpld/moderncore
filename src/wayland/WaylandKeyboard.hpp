@@ -39,4 +39,6 @@ private:
     xkb_compose_state* m_composeState = nullptr;
 
     xkb_mod_index_t m_ctrl, m_alt, m_shift, m_super;
+
+    int m_modState = 0;
 };

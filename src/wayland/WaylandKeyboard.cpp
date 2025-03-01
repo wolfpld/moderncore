@@ -2,6 +2,7 @@
 #include <xkbcommon/xkbcommon-compose.h>
 
 #include "WaylandKeyboard.hpp"
+#include "WaylandKeys.hpp"
 #include "WaylandSeat.hpp"
 #include "util/Invoke.hpp"
 
@@ -94,6 +95,13 @@ void WaylandKeyboard::Key( wl_keyboard* kbd, uint32_t serial, uint32_t time, uin
 
 void WaylandKeyboard::Modifiers( wl_keyboard* kbd, uint32_t serial, uint32_t mods_depressed, uint32_t mods_latched, uint32_t mods_locked, uint32_t group )
 {
+    xkb_state_update_mask( m_state, mods_depressed, mods_latched, mods_locked, 0, 0, group );
+
+    m_modState = 0;
+    if( xkb_state_mod_index_is_active( m_state, m_ctrl, XKB_STATE_MODS_EFFECTIVE ) ) m_modState |= CtrlBit;
+    if( xkb_state_mod_index_is_active( m_state, m_alt, XKB_STATE_MODS_EFFECTIVE ) ) m_modState |= AltBit;
+    if( xkb_state_mod_index_is_active( m_state, m_shift, XKB_STATE_MODS_EFFECTIVE ) ) m_modState |= ShiftBit;
+    if( xkb_state_mod_index_is_active( m_state, m_super, XKB_STATE_MODS_EFFECTIVE ) ) m_modState |= SuperBit;
 }
 
 void WaylandKeyboard::RepeatInfo( wl_keyboard* kbd, int32_t rate, int32_t delay )

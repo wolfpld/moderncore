@@ -8,7 +8,7 @@
 #include "util/Panic.hpp"
 
 PngLoader::PngLoader( std::shared_ptr<FileWrapper> file )
-    : ImageLoader( std::move( file ) )
+    : m_file( std::move( file ) )
 {
     fseek( *m_file, 0, SEEK_SET );
     char hdr[8];

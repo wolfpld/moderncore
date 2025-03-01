@@ -26,13 +26,16 @@ struct PushConstant
 {
     float screenSize[2];
     float texDelta;
+    float div;
 };
 
-ImageView::ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, const VkExtent2D& extent )
+ImageView::ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, const VkExtent2D& extent, float scale )
     : m_garbage( garbage )
     , m_device( device )
     , m_extent( extent )
 {
+    SetScale( scale );
+
     constexpr VkSamplerCreateInfo samplerInfo = {
         .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
         .magFilter = VK_FILTER_LINEAR,
@@ -91,7 +94,7 @@ ImageView::ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, 
         VkPushConstantRange {
             .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
             .offset = offsetof( PushConstant, texDelta ),
-            .size = sizeof( float )
+            .size = sizeof( float ) * 2
         }
     };
     const VkPipelineLayoutCreateInfo pipelineLayoutInfo = {
@@ -228,6 +231,7 @@ void ImageView::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
         float( extent.width ),
         float( extent.height ),
         1.f / float( m_bitmapExtent.width ),
+        m_div
     };
 
     std::array<VkBuffer, 1> vertexBuffers = { *m_vertexBuffer };
@@ -238,7 +242,7 @@ void ImageView::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
     ZoneVk( *m_device, cmdbuf, "ImageView", true );
     vkCmdBindPipeline( cmdbuf, VK_PIPELINE_BIND_POINT_GRAPHICS, *m_pipeline );
     vkCmdPushConstants( cmdbuf, *m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, offsetof( PushConstant, screenSize ), sizeof( float ) * 2, &pushConstant );
-    vkCmdPushConstants( cmdbuf, *m_pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, offsetof( PushConstant, texDelta ), sizeof( float ), &pushConstant.texDelta );
+    vkCmdPushConstants( cmdbuf, *m_pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, offsetof( PushConstant, texDelta ), sizeof( float ) * 2, &pushConstant.texDelta );
     vkCmdSetViewport( cmdbuf, 0, 1, &viewport );
     vkCmdSetScissor( cmdbuf, 0, 1, &scissor );
     vkCmdBindVertexBuffers( cmdbuf, 0, 1, vertexBuffers.data(), offsets.data() );

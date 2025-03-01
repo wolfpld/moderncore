@@ -26,13 +26,14 @@ class ImageView
     };
 
 public:
-    ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, const VkExtent2D& extent );
+    ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, const VkExtent2D& extent, float scale );
     ~ImageView();
 
     void Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent );
     void Resize( const VkExtent2D& extent );
 
     void SetBitmap( const std::shared_ptr<Bitmap>& bitmap );
+    void SetScale( float scale ) { m_div = 1.f / 8.f / scale; }
 
     [[nodiscard]] bool HasBitmap();
 
@@ -57,6 +58,8 @@ private:
 
     VkDescriptorImageInfo m_imageInfo;
     VkWriteDescriptorSet m_descWrite;
+
+    float m_div;
 
     std::mutex m_lock;
 };

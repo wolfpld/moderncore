@@ -20,6 +20,7 @@ WaylandSeat::~WaylandSeat()
 {
     m_pointer.reset();
     m_keyboard.reset();
+    if( m_dataOffer ) wl_data_offer_destroy( m_dataOffer );
     if( m_dataDevice ) wl_data_device_destroy( m_dataDevice );
     wl_seat_destroy( m_seat );
 }
@@ -76,6 +77,17 @@ void WaylandSeat::Name( wl_seat* seat, const char* name )
 
 void WaylandSeat::DataOffer( wl_data_device* dev, wl_data_offer* offer )
 {
+    if( m_dataOffer ) wl_data_offer_destroy( m_dataOffer );
+    m_offerMimeTypes.clear();
+    m_dataOffer = offer;
+
+    static constexpr wl_data_offer_listener listener = {
+        .offer = Method( DataOfferOffer ),
+        .source_actions = Method( DataOfferSourceActions ),
+        .action = Method( DataOfferAction )
+    };
+
+    wl_data_offer_add_listener( offer, &listener, this );
 }
 
 void WaylandSeat::DataEnter( wl_data_device* dev, uint32_t serial, wl_surface* surf, wl_fixed_t x, wl_fixed_t y, wl_data_offer* offer )
@@ -84,6 +96,11 @@ void WaylandSeat::DataEnter( wl_data_device* dev, uint32_t serial, wl_surface* s
 
 void WaylandSeat::DataLeave( wl_data_device* dev )
 {
+    if( m_dataOffer )
+    {
+        wl_data_offer_destroy( m_dataOffer );
+        m_dataOffer = nullptr;
+    }
 }
 
 void WaylandSeat::DataMotion( wl_data_device* dev, uint32_t time, wl_fixed_t x, wl_fixed_t y )
@@ -95,5 +112,18 @@ void WaylandSeat::DataDrop( wl_data_device* dev )
 }
 
 void WaylandSeat::DataSelection( wl_data_device* dev, wl_data_offer* offer )
+{
+}
+
+void WaylandSeat::DataOfferOffer( wl_data_offer* offer, const char* mimeType )
+{
+    m_offerMimeTypes.emplace( mimeType );
+}
+
+void WaylandSeat::DataOfferSourceActions( wl_data_offer* offer, uint32_t sourceActions )
+{
+}
+
+void WaylandSeat::DataOfferAction( wl_data_offer* offer, uint32_t dndAction )
 {
 }

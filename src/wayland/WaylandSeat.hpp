@@ -1,9 +1,11 @@
 #pragma once
 
 #include <memory>
+#include <string>
 #include <wayland-client.h>
 
 #include "util/NoCopy.hpp"
+#include "util/RobinHood.hpp"
 
 #include "wayland-cursor-shape-client-protocol.h"
 
@@ -36,12 +38,19 @@ private:
     void DataDrop( wl_data_device* dev );
     void DataSelection( wl_data_device* dev, wl_data_offer* offer );
 
+    void DataOfferOffer( wl_data_offer* offer, const char* mimeType );
+    void DataOfferSourceActions( wl_data_offer* offer, uint32_t sourceActions );
+    void DataOfferAction( wl_data_offer* offer, uint32_t dndAction );
+
     wl_seat* m_seat;
     std::unique_ptr<WaylandPointer> m_pointer;
     std::unique_ptr<WaylandKeyboard> m_keyboard;
 
     wp_cursor_shape_manager_v1* m_cursorShapeManager = nullptr;
     wl_data_device* m_dataDevice = nullptr;
+
+    wl_data_offer* m_dataOffer = nullptr;
+    unordered_flat_set<std::string> m_offerMimeTypes;
 
     WaylandDisplay& m_dpy;
 };

@@ -27,10 +27,12 @@ void WaylandKeyboard::Keymap( wl_keyboard* kbd, uint32_t format, int32_t fd, uin
 
 void WaylandKeyboard::Enter( wl_keyboard* kbd, uint32_t serial, wl_surface* surf, wl_array* keys )
 {
+    m_activeWindow = surf;
 }
 
 void WaylandKeyboard::Leave( wl_keyboard* kbd, uint32_t serial, wl_surface* surf )
 {
+    m_activeWindow = nullptr;
 }
 
 void WaylandKeyboard::Key( wl_keyboard* kbd, uint32_t serial, uint32_t time, uint32_t key, uint32_t state )

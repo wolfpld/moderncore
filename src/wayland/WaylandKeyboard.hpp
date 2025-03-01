@@ -21,4 +21,6 @@ private:
     void Key( wl_keyboard* kbd, uint32_t serial, uint32_t time, uint32_t key, uint32_t state );
     void Modifiers( wl_keyboard* kbd, uint32_t serial, uint32_t mods_depressed, uint32_t mods_latched, uint32_t mods_locked, uint32_t group );
     void RepeatInfo( wl_keyboard* kbd, int32_t rate, int32_t delay );
+
+    wl_surface* m_activeWindow = nullptr;
 };

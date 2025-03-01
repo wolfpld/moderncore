@@ -10,6 +10,7 @@
 
 #include "WaylandDisplay.hpp"
 #include "WaylandPointer.hpp"
+#include "WaylandSeat.hpp"
 #include "WaylandWindow.hpp"
 #include "image/vector/SvgImage.hpp"
 #include "util/Bitmap.hpp"
@@ -34,7 +35,7 @@ WaylandWindow::WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance )
 
     m_surface = wl_compositor_create_surface( display.Compositor() );
     CheckPanic( m_surface, "Failed to create Wayland surface" );
-    m_display.Pointer().AddWindow( m_surface );
+    m_display.Seat().AddWindow( this );
 
     static constexpr wp_fractional_scale_v1_listener listener = {
         .preferred_scale = Method( FractionalScalePreferredScale )
@@ -87,7 +88,7 @@ WaylandWindow::~WaylandWindow()
     if( m_xdgToplevelDecoration ) zxdg_toplevel_decoration_v1_destroy( m_xdgToplevelDecoration );
     xdg_toplevel_destroy( m_xdgToplevel );
     xdg_surface_destroy( m_xdgSurface );
-    m_display.Pointer().RemoveWindow( m_surface );
+    m_display.Seat().RemoveWindow( this );
     wl_surface_destroy( m_surface );
 }
 
@@ -211,8 +212,9 @@ VlkCommandBuffer& WaylandWindow::BeginFrame()
     }
 
     {
+        auto& pointer = m_display.Seat().Pointer();
         std::lock_guard lock( m_cursorLock );
-        if( m_cursor != m_display.Pointer().GetCursor( m_surface ) ) m_display.Pointer().SetCursor( m_surface, m_cursor );
+        if( m_cursor != pointer.GetCursor( m_surface ) ) pointer.SetCursor( m_surface, m_cursor );
     }
 
     m_frameIdx = ( m_frameIdx + 1 ) % m_frameData.size();

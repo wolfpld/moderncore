@@ -2,6 +2,7 @@
 #include "WaylandKeyboard.hpp"
 #include "WaylandPointer.hpp"
 #include "WaylandSeat.hpp"
+#include "WaylandWindow.hpp"
 #include "util/Invoke.hpp"
 
 WaylandSeat::WaylandSeat( wl_seat* seat, WaylandDisplay& dpy )
@@ -44,6 +45,20 @@ void WaylandSeat::SetDataDeviceManager( wl_data_device_manager* dataDeviceManage
 
     m_dataDevice = wl_data_device_manager_get_data_device( dataDeviceManager, m_seat );
     wl_data_device_add_listener( m_dataDevice, &listener, this );
+}
+
+void WaylandSeat::AddWindow( WaylandWindow* window )
+{
+    CheckPanic( m_windows.find( window->Surface() ) == m_windows.end(), "Window already added!" );
+    m_windows.emplace( window->Surface(), window );
+    m_pointer->AddWindow( window->Surface() );
+}
+
+void WaylandSeat::RemoveWindow( WaylandWindow* window )
+{
+    CheckPanic( m_windows.find( window->Surface() ) != m_windows.end(), "Window not found!" );
+    m_windows.erase( window->Surface() );
+    m_pointer->RemoveWindow( window->Surface() );
 }
 
 void WaylandSeat::Capabilities( wl_seat* seat, uint32_t caps )

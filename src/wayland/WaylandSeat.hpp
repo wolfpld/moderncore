@@ -12,6 +12,7 @@
 class WaylandDisplay;
 class WaylandKeyboard;
 class WaylandPointer;
+class WaylandWindow;
 
 class WaylandSeat
 {
@@ -23,6 +24,9 @@ public:
 
     void SetCursorShapeManager( wp_cursor_shape_manager_v1* cursorShapeManager );
     void SetDataDeviceManager( wl_data_device_manager* dataDeviceManager );
+
+    void AddWindow( WaylandWindow* window );
+    void RemoveWindow( WaylandWindow* window );
 
     [[nodiscard]] WaylandPointer& Pointer() { return *m_pointer; }
     [[nodiscard]] const WaylandPointer& Pointer() const { return *m_pointer; }
@@ -51,6 +55,8 @@ private:
 
     wl_data_offer* m_dataOffer = nullptr;
     unordered_flat_set<std::string> m_offerMimeTypes;
+
+    unordered_flat_map<wl_surface*, WaylandWindow*> m_windows;
 
     WaylandDisplay& m_dpy;
 };

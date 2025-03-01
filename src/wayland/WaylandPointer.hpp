@@ -12,6 +12,8 @@ enum class WaylandCursor;
 
 class WaylandPointer
 {
+    friend class WaylandSeat;
+
 public:
     explicit WaylandPointer( wl_pointer* pointer, WaylandSeat& seat );
     ~WaylandPointer();
@@ -23,10 +25,10 @@ public:
     [[nodiscard]] WaylandCursor GetCursor( wl_surface* window );
     void SetCursor( wl_surface* window, WaylandCursor cursor );
 
+private:
     void AddWindow( wl_surface* window );
     void RemoveWindow( wl_surface* window );
 
-private:
     void Enter( wl_pointer* pointer, uint32_t serial, wl_surface* window, wl_fixed_t sx, wl_fixed_t sy );
     void Leave( wl_pointer* pointer, uint32_t serial, wl_surface* window );
     void Motion( wl_pointer* pointer, uint32_t time, wl_fixed_t sx, wl_fixed_t sy );

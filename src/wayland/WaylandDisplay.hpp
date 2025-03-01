@@ -39,8 +39,8 @@ public:
 
     [[nodiscard]] const std::vector<int32_t>& IconSizes() const { return m_iconSizes; }
 
-    [[nodiscard]] WaylandPointer& Pointer();
-    [[nodiscard]] const WaylandPointer& Pointer() const;
+    [[nodiscard]] WaylandSeat& Seat() { return *m_seat; }
+    [[nodiscard]] const WaylandSeat& Seat() const { return *m_seat; }
 
 protected:
     void RegistryGlobal( wl_registry* reg, uint32_t name, const char* interface, uint32_t version );

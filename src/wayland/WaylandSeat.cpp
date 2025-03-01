@@ -63,6 +63,13 @@ void WaylandSeat::RemoveWindow( WaylandWindow* window )
 
 void WaylandSeat::KeyboardLeave( wl_surface* surf )
 {
+    if( !m_dataOffer ) return;
+
+    wl_data_offer_destroy( m_dataOffer );
+    m_dataOffer = nullptr;
+    m_offerMimeTypes.clear();
+
+    GetFocusedWindow()->InvokeClipboard( m_offerMimeTypes );
 }
 
 void WaylandSeat::Capabilities( wl_seat* seat, uint32_t caps )
@@ -132,6 +139,13 @@ void WaylandSeat::DataDrop( wl_data_device* dev )
 
 void WaylandSeat::DataSelection( wl_data_device* dev, wl_data_offer* offer )
 {
+    if( !offer && m_dataOffer )
+    {
+        wl_data_offer_destroy( m_dataOffer );
+        m_dataOffer = nullptr;
+        m_offerMimeTypes.clear();
+    }
+    GetFocusedWindow()->InvokeClipboard( m_offerMimeTypes );
 }
 
 void WaylandSeat::DataOfferOffer( wl_data_offer* offer, const char* mimeType )

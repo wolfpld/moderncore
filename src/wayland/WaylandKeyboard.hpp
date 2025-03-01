@@ -12,6 +12,8 @@ public:
 
     NoCopy( WaylandKeyboard );
 
+    [[nodiscard]] wl_surface* ActiveWindow() const { return m_activeWindow; }
+
 private:
     wl_keyboard* m_keyboard;
 

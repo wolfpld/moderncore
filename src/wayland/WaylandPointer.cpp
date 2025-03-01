@@ -76,8 +76,6 @@ void WaylandPointer::Enter( wl_pointer* pointer, uint32_t serial, wl_surface* wi
 
     m_enterSerial = serial;
     m_activeWindow = window;
-
-    m_seat.PointerMotion( wl_fixed_to_double( sx ), wl_fixed_to_double( sy ) );
 }
 
 void WaylandPointer::Leave( wl_pointer* pointer, uint32_t serial, wl_surface* window )
@@ -88,7 +86,6 @@ void WaylandPointer::Leave( wl_pointer* pointer, uint32_t serial, wl_surface* wi
 
 void WaylandPointer::Motion( wl_pointer* pointer, uint32_t time, wl_fixed_t sx, wl_fixed_t sy )
 {
-    m_seat.PointerMotion( wl_fixed_to_double( sx ), wl_fixed_to_double( sy ) );
 }
 
 void WaylandPointer::Button( wl_pointer* pointer, uint32_t serial, uint32_t time, uint32_t button, uint32_t state )

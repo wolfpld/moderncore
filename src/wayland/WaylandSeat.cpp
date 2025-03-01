@@ -74,11 +74,11 @@ void WaylandSeat::Name( wl_seat* seat, const char* name )
 {
 }
 
-void WaylandSeat::DataOffer( wl_data_device* dev, wl_data_offer* id )
+void WaylandSeat::DataOffer( wl_data_device* dev, wl_data_offer* offer )
 {
 }
 
-void WaylandSeat::DataEnter( wl_data_device* dev, uint32_t serial, wl_surface* surf, wl_fixed_t x, wl_fixed_t y, wl_data_offer* id )
+void WaylandSeat::DataEnter( wl_data_device* dev, uint32_t serial, wl_surface* surf, wl_fixed_t x, wl_fixed_t y, wl_data_offer* offer )
 {
 }
 
@@ -94,11 +94,6 @@ void WaylandSeat::DataDrop( wl_data_device* dev )
 {
 }
 
-void WaylandSeat::DataSelection( wl_data_device* dev, wl_data_offer* id )
+void WaylandSeat::DataSelection( wl_data_device* dev, wl_data_offer* offer )
 {
-}
-
-void WaylandSeat::PointerMotion( double x, double y )
-{
-    //m_backend.PointerMotion( x, y );
 }

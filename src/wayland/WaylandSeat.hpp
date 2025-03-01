@@ -19,7 +19,6 @@ public:
 
     NoCopy( WaylandSeat );
 
-    void PointerMotion( double x, double y );
     void SetCursorShapeManager( wp_cursor_shape_manager_v1* cursorShapeManager );
     void SetDataDeviceManager( wl_data_device_manager* dataDeviceManager );
 

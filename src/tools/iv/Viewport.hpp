@@ -23,10 +23,10 @@ public:
     void LoadImage( const char* path );
 
 private:
-    void Close( WaylandWindow* window );
-    bool Render( WaylandWindow* window );
-    void Scale( WaylandWindow* window, uint32_t scale );
-    void Resize( WaylandWindow* window, uint32_t width, uint32_t height );
+    void Close();
+    bool Render();
+    void Scale( uint32_t scale );
+    void Resize( uint32_t width, uint32_t height );
 
     void ImageHandler( int64_t id, int result, std::shared_ptr<Bitmap> bitmap );
 

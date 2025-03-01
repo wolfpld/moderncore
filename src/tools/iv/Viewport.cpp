@@ -111,34 +111,32 @@ void Viewport::LoadImage( const char* path )
     }
 }
 
-void Viewport::Close( WaylandWindow* window )
+void Viewport::Close()
 {
-    CheckPanic( window == m_window.get(), "Invalid window" );
     m_display.Stop();
 }
 
-bool Viewport::Render( WaylandWindow* window )
+bool Viewport::Render()
 {
     ZoneScoped;
-    CheckPanic( window == m_window.get(), "Invalid window" );
 
     const auto now = Now();
     const auto delta = std::min( now - m_lastTime, uint64_t( 1000000000 ) );
     m_lastTime = now;
 
     FrameMark;
-    auto& cmdbuf = window->BeginFrame();
+    auto& cmdbuf = m_window->BeginFrame();
 
     const VkRenderingAttachmentInfo attachmentInfo = {
         .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-        .imageView = window->GetImageView(),
+        .imageView = m_window->GetImageView(),
         .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
         .loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
         .storeOp = VK_ATTACHMENT_STORE_OP_STORE
     };
     const VkRenderingInfo renderingInfo = {
         .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
-        .renderArea = { { 0, 0 }, window->GetExtent() },
+        .renderArea = { { 0, 0 }, m_window->GetExtent() },
         .layerCount = 1,
         .colorAttachmentCount = 1,
         .pColorAttachments = &attachmentInfo
@@ -148,25 +146,24 @@ bool Viewport::Render( WaylandWindow* window )
     {
         std::lock_guard lock( m_lock );
         ZoneVk( *m_device, cmdbuf, "Viewport", true );
-        m_background->Render( cmdbuf, window->GetExtent() );
-        if( m_view->HasBitmap() ) m_view->Render( cmdbuf, window->GetExtent() );
+        m_background->Render( cmdbuf, m_window->GetExtent() );
+        if( m_view->HasBitmap() ) m_view->Render( cmdbuf, m_window->GetExtent() );
         if( m_isBusy )
         {
             m_busyIndicator->Update( delta / 1000000000.f );
-            m_busyIndicator->Render( cmdbuf, window->GetExtent() );
+            m_busyIndicator->Render( cmdbuf, m_window->GetExtent() );
         }
     }
     vkCmdEndRendering( cmdbuf );
-    window->EndFrame();
+    m_window->EndFrame();
 
     return true;
 }
 
-void Viewport::Scale( WaylandWindow* window, uint32_t scale )
+void Viewport::Scale( uint32_t scale )
 {
     ZoneScoped;
     ZoneValue( scale );
-    CheckPanic( window == m_window.get(), "Invalid window" );
 
     mclog( LogLevel::Info, "Preferred window scale: %g", scale / 120.f );
 
@@ -174,13 +171,12 @@ void Viewport::Scale( WaylandWindow* window, uint32_t scale )
     m_view->SetScale( scale / 120.f );
 }
 
-void Viewport::Resize( WaylandWindow* window, uint32_t width, uint32_t height )
+void Viewport::Resize( uint32_t width, uint32_t height )
 {
     ZoneScoped;
     ZoneTextF( "width %u, height %u", width, height );
 
-    CheckPanic( window == m_window.get(), "Invalid window" );
-    m_view->Resize( window->GetExtent() );
+    m_view->Resize( m_window->GetExtent() );
 }
 
 void Viewport::ImageHandler( int64_t id, int result, std::shared_ptr<Bitmap> bitmap )

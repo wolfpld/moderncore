@@ -142,14 +142,15 @@ void BackendWayland::OpenWindow( int physDev, uint32_t width, uint32_t height, c
     m_windows.emplace_back( std::move( window ) );
 }
 
-void BackendWayland::Close( WaylandWindow* )
+void BackendWayland::Close()
 {
     // TODO
     m_dpy->Stop();
 }
 
-bool BackendWayland::Render( WaylandWindow* window )
+bool BackendWayland::Render()
 {
+#if 0
     ZoneScoped;
     ZoneNameF( "Render %s", window->GetTitle() );
 
@@ -181,6 +182,7 @@ bool BackendWayland::Render( WaylandWindow* window )
     }
     vkCmdEndRendering( cmdbuf );
     window->EndFrame();
+#endif
 
     return true;
 }

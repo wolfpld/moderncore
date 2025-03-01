@@ -207,8 +207,8 @@ VlkCommandBuffer& WaylandWindow::BeginFrame()
         wp_viewport_set_source( m_viewport, 0, 0, wl_fixed_from_double( m_extent.width * m_scale / 120.f ), wl_fixed_from_double( m_extent.height * m_scale / 120.f ) );
         wp_viewport_set_destination( m_viewport, m_extent.width, m_extent.height );
 
-        if( dpiChange ) Invoke( OnScale, this, m_scale );
-        if( resized || dpiChange ) Invoke( OnResize, this, m_extent.width, m_extent.height );
+        if( dpiChange ) Invoke( OnScale, m_scale );
+        if( resized || dpiChange ) Invoke( OnResize, m_extent.width, m_extent.height );
     }
 
     {
@@ -352,7 +352,7 @@ void WaylandWindow::InvokeRender()
     auto cb = wl_surface_frame( m_surface );
     wl_callback_add_listener( cb, &listener, this );
 
-    if( !InvokeRet( OnRender, false, this ) ) wl_surface_commit( m_surface );
+    if( !InvokeRet( OnRender, false ) ) wl_surface_commit( m_surface );
 }
 
 void WaylandWindow::SetCursor( WaylandCursor cursor )
@@ -447,7 +447,7 @@ void WaylandWindow::XdgToplevelConfigure( struct xdg_toplevel* toplevel, int32_t
 
 void WaylandWindow::XdgToplevelClose( struct xdg_toplevel* toplevel )
 {
-    Invoke( OnClose, this );
+    Invoke( OnClose );
 }
 
 void WaylandWindow::DecorationConfigure( zxdg_toplevel_decoration_v1* tldec, uint32_t mode )

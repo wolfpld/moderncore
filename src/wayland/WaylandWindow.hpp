@@ -38,10 +38,10 @@ class WaylandWindow : public GarbageChute
 public:
     struct Listener
     {
-        void (*OnClose)( void* ptr, WaylandWindow* window );
-        bool (*OnRender)( void* ptr, WaylandWindow* window );
-        void (*OnScale)( void* ptr, WaylandWindow* window, uint32_t scale );
-        void (*OnResize)( void* ptr, WaylandWindow* window, uint32_t width, uint32_t height );  // Logical pixels
+        void (*OnClose)( void* ptr );
+        bool (*OnRender)( void* ptr );
+        void (*OnScale)( void* ptr, uint32_t scale );
+        void (*OnResize)( void* ptr, uint32_t width, uint32_t height );  // Logical pixels
     };
 
     WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance );

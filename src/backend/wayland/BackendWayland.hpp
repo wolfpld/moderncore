@@ -28,8 +28,8 @@ public:
 private:
     void OpenWindow( int physDev, uint32_t width, uint32_t height, const char* title );
 
-    void Close( WaylandWindow* );
-    bool Render( WaylandWindow* );
+    void Close();
+    bool Render();
 
     std::unique_ptr<WaylandDisplay> m_dpy;
     std::vector<std::unique_ptr<WaylandWindow>> m_windows;

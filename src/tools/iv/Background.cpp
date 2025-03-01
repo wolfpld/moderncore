@@ -22,12 +22,10 @@ struct Vertex
     float x, y;
 };
 
-Background::Background( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, float scale )
+Background::Background( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format )
     : m_garbage( garbage )
     , m_device( std::move( device ) )
 {
-    SetScale( scale );
-
     Unembed( BackgroundVert );
     Unembed( BackgroundFrag );
 
@@ -38,15 +36,8 @@ Background::Background( GarbageChute& garbage, std::shared_ptr<VlkDevice> device
     m_shader = std::make_shared<VlkShader>( stages );
 
 
-    static constexpr VkPushConstantRange pushConstantRange = {
-        .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-        .offset = 0,
-        .size = sizeof( float )
-    };
     constexpr VkPipelineLayoutCreateInfo pipelineLayoutInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .pushConstantRangeCount = 1,
-        .pPushConstantRanges = &pushConstantRange
     };
     m_pipelineLayout = std::make_shared<VlkPipelineLayout>( *m_device, pipelineLayoutInfo );
 
@@ -167,7 +158,6 @@ void Background::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
 
     ZoneVk( *m_device, cmdbuf, "Background", true );
     vkCmdBindPipeline( cmdbuf, VK_PIPELINE_BIND_POINT_GRAPHICS, *m_pipeline );
-    vkCmdPushConstants( cmdbuf, *m_pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof( float ), &m_div );
     vkCmdSetViewport( cmdbuf, 0, 1, &viewport );
     vkCmdSetScissor( cmdbuf, 0, 1, &scissor );
     vkCmdBindVertexBuffers( cmdbuf, 0, 1, vertexBuffers.data(), offsets.data() );

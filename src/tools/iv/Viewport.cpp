@@ -80,7 +80,7 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
 
     const auto format = m_window->GetFormat();
     const auto scale = m_window->GetScale() / 120.f;
-    m_background = std::make_shared<Background>( *m_window, m_device, format, scale );
+    m_background = std::make_shared<Background>( *m_window, m_device, format );
     m_busyIndicator = std::make_shared<BusyIndicator>( *m_window, m_device, format, scale );
     m_view = std::make_shared<ImageView>( *m_window, m_device, format, m_window->GetExtent() );
 
@@ -170,7 +170,6 @@ void Viewport::Scale( WaylandWindow* window, uint32_t scale )
 
     mclog( LogLevel::Info, "Preferred window scale: %g", scale / 120.f );
 
-    m_background->SetScale( scale / 120.f );
     m_busyIndicator->SetScale( scale / 120.f );
 }
 

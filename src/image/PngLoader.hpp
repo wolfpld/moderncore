@@ -6,12 +6,14 @@
 #include "util/NoCopy.hpp"
 
 class Bitmap;
+class DataBuffer;
 class FileWrapper;
 
 class PngLoader : public ImageLoader
 {
 public:
-    explicit PngLoader( std::shared_ptr<FileWrapper> file );
+    explicit PngLoader( const std::shared_ptr<FileWrapper>& file );
+    explicit PngLoader( std::shared_ptr<DataBuffer> buf );
 
     NoCopy( PngLoader );
 
@@ -19,6 +21,6 @@ public:
     [[nodiscard]] std::unique_ptr<Bitmap> Load() override;
 
 private:
-    bool m_valid;
-    std::shared_ptr<FileWrapper> m_file;
+    std::shared_ptr<DataBuffer> m_buf;
+    size_t m_offset;
 };

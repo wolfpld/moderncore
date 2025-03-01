@@ -20,6 +20,7 @@ WaylandSeat::~WaylandSeat()
 {
     m_pointer.reset();
     m_keyboard.reset();
+    if( m_dataDevice ) wl_data_device_destroy( m_dataDevice );
     wl_seat_destroy( m_seat );
 }
 
@@ -27,6 +28,21 @@ void WaylandSeat::SetCursorShapeManager( wp_cursor_shape_manager_v1* cursorShape
 {
     m_cursorShapeManager = cursorShapeManager;
     if( m_pointer ) m_pointer->SetCursorShapeManager( cursorShapeManager );
+}
+
+void WaylandSeat::SetDataDeviceManager( wl_data_device_manager* dataDeviceManager )
+{
+    static constexpr wl_data_device_listener listener = {
+        .data_offer = Method( DataOffer ),
+        .enter = Method( DataEnter ),
+        .leave = Method( DataLeave ),
+        .motion = Method( DataMotion ),
+        .drop = Method( DataDrop ),
+        .selection = Method( DataSelection )
+    };
+
+    m_dataDevice = wl_data_device_manager_get_data_device( dataDeviceManager, m_seat );
+    wl_data_device_add_listener( m_dataDevice, &listener, this );
 }
 
 void WaylandSeat::Capabilities( wl_seat* seat, uint32_t caps )
@@ -55,6 +71,30 @@ void WaylandSeat::Capabilities( wl_seat* seat, uint32_t caps )
 }
 
 void WaylandSeat::Name( wl_seat* seat, const char* name )
+{
+}
+
+void WaylandSeat::DataOffer( wl_data_device* dev, wl_data_offer* id )
+{
+}
+
+void WaylandSeat::DataEnter( wl_data_device* dev, uint32_t serial, wl_surface* surf, wl_fixed_t x, wl_fixed_t y, wl_data_offer* id )
+{
+}
+
+void WaylandSeat::DataLeave( wl_data_device* dev )
+{
+}
+
+void WaylandSeat::DataMotion( wl_data_device* dev, uint32_t time, wl_fixed_t x, wl_fixed_t y )
+{
+}
+
+void WaylandSeat::DataDrop( wl_data_device* dev )
+{
+}
+
+void WaylandSeat::DataSelection( wl_data_device* dev, wl_data_offer* id )
 {
 }
 

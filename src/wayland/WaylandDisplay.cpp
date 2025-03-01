@@ -131,7 +131,9 @@ void WaylandDisplay::RegistryGlobal( wl_registry* reg, uint32_t name, const char
     }
     else if( strcmp( interface, wl_data_device_manager_interface.name ) == 0 )
     {
+        CheckPanic( m_seat, "Data device manager created before seat" );
         m_dataDeviceManager = RegistryBind( wl_data_device_manager, 3, 3 );
+        m_seat->SetDataDeviceManager( m_dataDeviceManager );
     }
 }
 

@@ -72,6 +72,10 @@ void WaylandSeat::KeyboardLeave( wl_surface* surf )
     GetWindow( surf )->InvokeClipboard( m_offerMimeTypes );
 }
 
+void WaylandSeat::KeyEntered( wl_surface* surf, const char* key, int mods )
+{
+}
+
 void WaylandSeat::Capabilities( wl_seat* seat, uint32_t caps )
 {
     const bool hasPointer = caps & WL_SEAT_CAPABILITY_POINTER;

@@ -35,6 +35,7 @@ public:
 
 private:
     void KeyboardLeave( wl_surface* surf );
+    void KeyEntered( wl_surface* surf, const char* key, int mods );
 
     void Capabilities( wl_seat* seat, uint32_t caps );
     void Name( wl_seat* seat, const char* name );

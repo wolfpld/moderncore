@@ -91,6 +91,18 @@ void WaylandKeyboard::Leave( wl_keyboard* kbd, uint32_t serial, wl_surface* surf
 
 void WaylandKeyboard::Key( wl_keyboard* kbd, uint32_t serial, uint32_t time, uint32_t key, uint32_t state )
 {
+    if( state == WL_KEYBOARD_KEY_STATE_RELEASED ) return;
+
+    const xkb_keysym_t* keysyms;
+    if( xkb_state_key_get_syms( m_state, key + 8, &keysyms ) == 1 )
+    {
+        const auto sym = Compose( keysyms[0] );
+        char txt[8];
+        if( xkb_keysym_to_utf8( sym, txt, sizeof( txt ) ) > 0 )
+        {
+            m_seat.KeyEntered( m_activeWindow, txt, m_modState );
+        }
+    }
 }
 
 void WaylandKeyboard::Modifiers( wl_keyboard* kbd, uint32_t serial, uint32_t mods_depressed, uint32_t mods_latched, uint32_t mods_locked, uint32_t group )
@@ -106,4 +118,20 @@ void WaylandKeyboard::Modifiers( wl_keyboard* kbd, uint32_t serial, uint32_t mod
 
 void WaylandKeyboard::RepeatInfo( wl_keyboard* kbd, int32_t rate, int32_t delay )
 {
+}
+
+xkb_keysym_t WaylandKeyboard::Compose( const xkb_keysym_t sym )
+{
+    if( sym == XKB_KEY_NoSymbol ) return sym;
+    if( xkb_compose_state_feed( m_composeState, sym ) != XKB_COMPOSE_FEED_ACCEPTED ) return sym;
+    switch( xkb_compose_state_get_status( m_composeState ) )
+    {
+    case XKB_COMPOSE_COMPOSED:
+        return xkb_compose_state_get_one_sym( m_composeState );
+    case XKB_COMPOSE_COMPOSING:
+    case XKB_COMPOSE_CANCELLED:
+        return XKB_KEY_NoSymbol;
+    case XKB_COMPOSE_NOTHING:
+        return sym;
+    }
 }

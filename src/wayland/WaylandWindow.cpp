@@ -303,7 +303,9 @@ void WaylandWindow::EndFrame()
         .pSwapchains = &swapchain,
         .pImageIndices = &m_imageIdx
     };
+    m_vkDevice->lock( QueueType::Present );
     const auto res = vkQueuePresentKHR( m_vkDevice->GetQueue( QueueType::Present ), &presentInfo );
+    m_vkDevice->unlock( QueueType::Present );
     CheckPanic( res == VK_SUCCESS || res == VK_SUBOPTIMAL_KHR || res == VK_ERROR_OUT_OF_DATE_KHR, "Failed to present swapchain image (%s)", string_VkResult( res ) );
 }
 

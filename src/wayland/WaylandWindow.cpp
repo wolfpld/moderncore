@@ -355,6 +355,11 @@ void WaylandWindow::InvokeRender()
     if( !InvokeRet( OnRender, false ) ) wl_surface_commit( m_surface );
 }
 
+void WaylandWindow::InvokeClipboard( const unordered_flat_set<std::string>& mimeTypes )
+{
+    Invoke( OnClipboard, mimeTypes );
+}
+
 void WaylandWindow::SetCursor( WaylandCursor cursor )
 {
     std::lock_guard lock( m_cursorLock );

@@ -1,11 +1,13 @@
 #pragma once
 
 #include <memory>
+#include <string>
 #include <vector>
 #include <vulkan/vulkan.h>
 #include <wayland-client.h>
 
 #include "util/NoCopy.hpp"
+#include "util/RobinHood.hpp"
 #include "vulkan/VlkSurface.hpp"
 #include "vulkan/VlkSwapchain.hpp"
 #include "vulkan/ext/GarbageChute.hpp"
@@ -42,6 +44,7 @@ public:
         bool (*OnRender)( void* ptr );
         void (*OnScale)( void* ptr, uint32_t scale );
         void (*OnResize)( void* ptr, uint32_t width, uint32_t height );  // Logical pixels
+        void (*OnClipboard)( void* ptr, const unordered_flat_set<std::string>& mimeTypes );
     };
 
     WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance );
@@ -68,6 +71,7 @@ public:
     void SetDevice( std::shared_ptr<VlkDevice> device, const VkExtent2D& extent );
 
     void InvokeRender();
+    void InvokeClipboard( const unordered_flat_set<std::string>& mimeTypes );
 
     void SetCursor( WaylandCursor cursor );
 

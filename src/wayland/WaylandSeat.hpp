@@ -16,6 +16,8 @@ class WaylandWindow;
 
 class WaylandSeat
 {
+    friend class WaylandKeyboard;
+
 public:
     explicit WaylandSeat( wl_seat* seat, WaylandDisplay& dpy );
     ~WaylandSeat();
@@ -32,6 +34,8 @@ public:
     [[nodiscard]] const WaylandPointer& Pointer() const { return *m_pointer; }
 
 private:
+    void KeyboardLeave( wl_surface* surf );
+
     void Capabilities( wl_seat* seat, uint32_t caps );
     void Name( wl_seat* seat, const char* name );
 

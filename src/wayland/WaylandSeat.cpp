@@ -61,6 +61,10 @@ void WaylandSeat::RemoveWindow( WaylandWindow* window )
     m_pointer->RemoveWindow( window->Surface() );
 }
 
+void WaylandSeat::KeyboardLeave( wl_surface* surf )
+{
+}
+
 void WaylandSeat::Capabilities( wl_seat* seat, uint32_t caps )
 {
     const bool hasPointer = caps & WL_SEAT_CAPABILITY_POINTER;

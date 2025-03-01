@@ -29,11 +29,14 @@ void WaylandKeyboard::Keymap( wl_keyboard* kbd, uint32_t format, int32_t fd, uin
 
 void WaylandKeyboard::Enter( wl_keyboard* kbd, uint32_t serial, wl_surface* surf, wl_array* keys )
 {
+    CheckPanic( m_activeWindow == nullptr, "Window already entered!" );
     m_activeWindow = surf;
 }
 
 void WaylandKeyboard::Leave( wl_keyboard* kbd, uint32_t serial, wl_surface* surf )
 {
+    CheckPanic( m_activeWindow == surf, "Unknown window left!" );
+    m_seat.KeyboardLeave( surf );
     m_activeWindow = nullptr;
 }
 

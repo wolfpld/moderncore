@@ -45,7 +45,8 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
         .OnClose = Method( Close ),
         .OnRender = Method( Render ),
         .OnScale = Method( Scale ),
-        .OnResize = Method( Resize )
+        .OnResize = Method( Resize ),
+        .OnClipboard = Method( Clipboard )
     };
 
     Unembed( IconSvg );
@@ -177,6 +178,11 @@ void Viewport::Resize( uint32_t width, uint32_t height )
     ZoneTextF( "width %u, height %u", width, height );
 
     m_view->Resize( m_window->GetExtent() );
+}
+
+void Viewport::Clipboard( const unordered_flat_set<std::string>& mimeTypes )
+{
+    m_clipboardOffer = mimeTypes;
 }
 
 void Viewport::ImageHandler( int64_t id, int result, std::shared_ptr<Bitmap> bitmap )

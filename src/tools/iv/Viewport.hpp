@@ -3,6 +3,9 @@
 #include <memory>
 #include <mutex>
 #include <stdint.h>
+#include <string>
+
+#include "util/RobinHood.hpp"
 
 class Background;
 class Bitmap;
@@ -27,6 +30,7 @@ private:
     bool Render();
     void Scale( uint32_t scale );
     void Resize( uint32_t width, uint32_t height );
+    void Clipboard( const unordered_flat_set<std::string>& mimeTypes );
 
     void ImageHandler( int64_t id, int result, std::shared_ptr<Bitmap> bitmap );
 
@@ -43,6 +47,8 @@ private:
     std::shared_ptr<ImageView> m_view;
 
     uint64_t m_lastTime = 0;
+
+    unordered_flat_set<std::string> m_clipboardOffer;
 
     std::mutex m_lock;
     bool m_isBusy = false;

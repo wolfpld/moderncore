@@ -1,10 +1,13 @@
 #pragma once
 
+#include <xkbcommon/xkbcommon.h>
 #include <wayland-client.h>
 
 #include "util/NoCopy.hpp"
 
 class WaylandSeat;
+struct xkb_compose_table;
+struct xkb_compose_state;
 
 class WaylandKeyboard
 {
@@ -28,4 +31,12 @@ private:
     void RepeatInfo( wl_keyboard* kbd, int32_t rate, int32_t delay );
 
     wl_surface* m_activeWindow = nullptr;
+
+    xkb_context* m_ctx;
+    xkb_keymap* m_keymap = nullptr;
+    xkb_state* m_state = nullptr;
+    xkb_compose_table* m_composeTable = nullptr;
+    xkb_compose_state* m_composeState = nullptr;
+
+    xkb_mod_index_t m_ctrl, m_alt, m_shift, m_super;
 };

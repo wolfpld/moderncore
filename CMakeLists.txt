@@ -86,6 +86,7 @@ pkg_check_modules(WAYLAND_CLIENT REQUIRED wayland-client)
 pkg_check_modules(WAYLAND_PROTOCOLS REQUIRED wayland-protocols)
 pkg_check_modules(WAYLAND_SERVER REQUIRED wayland-server)
 pkg_check_modules(WEBP REQUIRED libwebpdemux)
+pkg_check_modules(XKB REQUIRED xkbcommon)
 pkg_check_modules(ZLIB REQUIRED zlib)
 
 pkg_get_variable(WAYLAND_PROTOCOLS_PKGDATADIR wayland-protocols pkgdatadir)
@@ -335,9 +336,11 @@ target_link_libraries(mcorewayland PRIVATE
 )
 target_link_libraries(mcorewayland PUBLIC
     ${WAYLAND_CLIENT_LINK_LIBRARIES}
+    ${XKB_LINK_LIBRARIES}
 )
 target_include_directories(mcorewayland PUBLIC
     ${WAYLAND_CLIENT_INCLUDE_DIRS}
+    ${XKB_INCLUDE_DIRS}
 )
 
 # mcore

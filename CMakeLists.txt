@@ -163,6 +163,7 @@ set(MCOREUTIL_SRC
     src/util/FileBuffer.cpp
     src/util/Home.cpp
     src/util/Logs.cpp
+    src/util/MemoryBuffer.cpp
     src/util/TaskDispatch.cpp
     src/util/Tonemapper.cpp
     src/util/TonemapperAgx.cpp

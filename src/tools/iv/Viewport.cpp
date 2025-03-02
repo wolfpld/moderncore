@@ -241,26 +241,6 @@ void Viewport::PasteClipboard()
     ZoneScoped;
     mclog( LogLevel::Info, "Clipboard paste" );
 
-    if( m_clipboardOffer.contains( "text/plain;charset=utf-8" ) )
-    {
-        auto fn = MemoryBuffer( m_window->GetClipboard( "text/plain;charset=utf-8" ) ).AsString();
-        struct stat st;
-        if( stat( fn.c_str(), &st ) == 0 && S_ISREG( st.st_mode ) )
-        {
-            LoadImage( fn.c_str() );
-            return;
-        }
-    }
-    if( m_clipboardOffer.contains( "text/plain" ) )
-    {
-        auto fn = MemoryBuffer( m_window->GetClipboard( "text/plain" ) ).AsString();
-        struct stat st;
-        if( stat( fn.c_str(), &st ) == 0 && S_ISREG( st.st_mode ) )
-        {
-            LoadImage( fn.c_str() );
-            return;
-        }
-    }
     if( m_clipboardOffer.contains( "text/uri-list" ) )
     {
         auto fn = MemoryBuffer( m_window->GetClipboard( "text/uri-list" ) ).AsString();

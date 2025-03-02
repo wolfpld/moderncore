@@ -26,7 +26,7 @@ public:
 
     void LoadImage( const char* path );
     void LoadImage( std::unique_ptr<DataBuffer>&& data );
-    void LoadImage( int fd );
+    void LoadImage( int fd, int flags = 0 );
 
 private:
     void SetBusy( int64_t job );

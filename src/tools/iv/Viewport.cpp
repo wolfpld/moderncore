@@ -15,6 +15,7 @@
 #include "util/Invoke.hpp"
 #include "util/MemoryBuffer.hpp"
 #include "util/Panic.hpp"
+#include "util/Url.hpp"
 #include "vulkan/VlkCommandBuffer.hpp"
 #include "vulkan/VlkDevice.hpp"
 #include "vulkan/VlkInstance.hpp"
@@ -261,6 +262,7 @@ void Viewport::PasteClipboard()
             fn.erase( 0, 7 );
             auto pos = fn.find_first_of( "\r\n" );
             if( pos != std::string::npos ) fn.resize( pos );
+            UrlDecode( fn );
             struct stat st;
             if( stat( fn.c_str(), &st ) == 0 && S_ISREG( st.st_mode ) )
             {

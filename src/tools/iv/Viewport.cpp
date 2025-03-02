@@ -233,8 +233,7 @@ void Viewport::PasteClipboard()
 
     if( m_clipboardOffer.contains( "text/plain;charset=utf-8" ) )
     {
-        auto data = m_window->GetClipboard( "text/plain;charset=utf-8" );
-        std::string fn { data->data(), data->size() };
+        auto fn = MemoryBuffer( m_window->GetClipboard( "text/plain;charset=utf-8" ) ).AsString();
         struct stat st;
         if( stat( fn.c_str(), &st ) == 0 && S_ISREG( st.st_mode ) )
         {
@@ -244,8 +243,7 @@ void Viewport::PasteClipboard()
     }
     if( m_clipboardOffer.contains( "text/plain" ) )
     {
-        auto data = m_window->GetClipboard( "text/plain" );
-        std::string fn { data->data(), data->size() };
+        auto fn = MemoryBuffer( m_window->GetClipboard( "text/plain" ) ).AsString();
         struct stat st;
         if( stat( fn.c_str(), &st ) == 0 && S_ISREG( st.st_mode ) )
         {
@@ -255,8 +253,7 @@ void Viewport::PasteClipboard()
     }
     if( m_clipboardOffer.contains( "text/uri-list" ) )
     {
-        auto data = m_window->GetClipboard( "text/uri-list" );
-        std::string fn { data->data(), data->size() };
+        auto fn = MemoryBuffer( m_window->GetClipboard( "text/uri-list" ) ).AsString();
         if( fn.starts_with( "file://" ) )
         {
             fn.erase( 0, 7 );
@@ -273,7 +270,7 @@ void Viewport::PasteClipboard()
     }
     if( m_clipboardOffer.contains( "image/png" ) )
     {
-        auto data = m_window->GetClipboard( "image/png" );
+        auto data = std::make_unique<MemoryBuffer>( m_window->GetClipboard( "image/png" ) );
         LoadImage( std::move( data ) );
     }
 }

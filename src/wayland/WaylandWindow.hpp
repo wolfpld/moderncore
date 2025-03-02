@@ -17,7 +17,6 @@
 #include "wayland-fractional-scale-client-protocol.h"
 #include "wayland-viewporter-client-protocol.h"
 
-class MemoryBuffer;
 class SvgImage;
 class VlkCommandBuffer;
 class VlkDevice;
@@ -88,7 +87,7 @@ public:
     [[nodiscard]] VkSurfaceKHR VkSurface() { return *m_vkSurface; }
     [[nodiscard]] VlkDevice& Device() { return *m_vkDevice; }
 
-    [[nodiscard]] std::unique_ptr<MemoryBuffer> GetClipboard( const char* mime );
+    [[nodiscard]] int GetClipboard( const char* mime );
 
     void Recycle( std::shared_ptr<VlkBase>&& garbage ) override;
     void Recycle( std::vector<std::shared_ptr<VlkBase>>&& garbage ) override;

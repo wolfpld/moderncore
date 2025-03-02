@@ -15,7 +15,6 @@
 #include "image/vector/SvgImage.hpp"
 #include "util/Bitmap.hpp"
 #include "util/Invoke.hpp"
-#include "util/MemoryBuffer.hpp"
 #include "util/Panic.hpp"
 #include "vulkan/VlkCommandBuffer.hpp"
 #include "vulkan/VlkDevice.hpp"
@@ -372,7 +371,7 @@ void WaylandWindow::SetCursor( WaylandCursor cursor )
     m_cursor = cursor;
 }
 
-std::unique_ptr<MemoryBuffer> WaylandWindow::GetClipboard( const char* mime )
+int WaylandWindow::GetClipboard( const char* mime )
 {
     return m_display.Seat().GetClipboard( mime );
 }

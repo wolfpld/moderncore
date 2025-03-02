@@ -9,13 +9,14 @@
 #include "util/DataBuffer.hpp"
 #include "util/Logs.hpp"
 #include "util/MemoryBuffer.hpp"
+#include "util/TaskDispatch.hpp"
 
-ImageProvider::ImageProvider()
-    : m_td( std::max( 1u, std::thread::hardware_concurrency() - 1 ), "Image Provider" )
-    , m_shutdown( false )
+ImageProvider::ImageProvider( TaskDispatch& td )
+    : m_shutdown( false )
     , m_currentJob( -1 )
     , m_nextId( 0 )
     , m_thread( [this] { Worker(); } )
+    , m_td( td )
 {
 }
 

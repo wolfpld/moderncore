@@ -9,10 +9,9 @@
 #include <thread>
 #include <vector>
 
-#include "util/TaskDispatch.hpp"
-
 class Bitmap;
 class DataBuffer;
+class TaskDispatch;
 
 class ImageProvider
 {
@@ -26,7 +25,7 @@ public:
 
     typedef void(*Callback)( void* userData, int64_t id, Result result, int flags, std::shared_ptr<Bitmap> bitmap );
 
-    ImageProvider();
+    ImageProvider( TaskDispatch& td );
     ~ImageProvider();
 
     int64_t LoadImage( const char* path, Callback callback, void* userData, int flags = 0 );
@@ -59,5 +58,5 @@ private:
     std::condition_variable m_cv;
     std::thread m_thread;
 
-    TaskDispatch m_td;
+    TaskDispatch& m_td;
 };

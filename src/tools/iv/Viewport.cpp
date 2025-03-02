@@ -14,6 +14,7 @@
 #include "util/Invoke.hpp"
 #include "util/MemoryBuffer.hpp"
 #include "util/Panic.hpp"
+#include "util/TaskDispatch.hpp"
 #include "util/Url.hpp"
 #include "vulkan/VlkCommandBuffer.hpp"
 #include "vulkan/VlkDevice.hpp"
@@ -39,8 +40,9 @@ static uint64_t Now()
 Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
     : m_display( display )
     , m_vkInstance( vkInstance )
+    , m_td( std::make_unique<TaskDispatch>( std::thread::hardware_concurrency() - 1, "Worker" ) )
     , m_window( std::make_shared<WaylandWindow>( display, vkInstance ) )
-    , m_provider( std::make_shared<ImageProvider>() )
+    , m_provider( std::make_shared<ImageProvider>( *m_td ) )
 {
     ZoneScoped;
 

@@ -13,6 +13,7 @@ class Bitmap;
 class BusyIndicator;
 class DataBuffer;
 class ImageView;
+class TaskDispatch;
 class VlkDevice;
 class VlkInstance;
 class WaylandDisplay;
@@ -47,6 +48,8 @@ private:
 
     WaylandDisplay& m_display;
     VlkInstance& m_vkInstance;
+
+    std::unique_ptr<TaskDispatch> m_td;
 
     std::shared_ptr<WaylandWindow> m_window;
     std::shared_ptr<VlkDevice> m_device;

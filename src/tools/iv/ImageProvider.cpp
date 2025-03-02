@@ -3,8 +3,10 @@
 
 #include "ImageProvider.hpp"
 #include "image/ImageLoader.hpp"
+#include "image/PngLoader.hpp"
 #include "util/Bitmap.hpp"
 #include "util/BitmapHdr.hpp"
+#include "util/DataBuffer.hpp"
 #include "util/Logs.hpp"
 
 ImageProvider::ImageProvider()
@@ -34,6 +36,21 @@ int64_t ImageProvider::LoadImage( const char* path, Callback callback, void* use
     m_jobs.emplace_back( Job {
         .id = id,
         .path = path,
+        .callback = callback,
+        .userData = userData
+    } );
+    m_cv.notify_one();
+    return id;
+}
+
+int64_t ImageProvider::LoadImage( std::unique_ptr<DataBuffer>&& buffer, Callback callback, void* userData )
+{
+    ZoneScoped;
+    const auto id = m_nextId++;
+    std::lock_guard lock( m_lock );
+    m_jobs.emplace_back( Job {
+        .id = id,
+        .buffer = std::move( buffer ),
         .callback = callback,
         .userData = userData
     } );
@@ -93,33 +110,42 @@ void ImageProvider::Worker()
         ZoneScopedN( "Image load" );
         std::unique_ptr<Bitmap> bitmap;
 
-        mclog( LogLevel::Info, "Loading image %s", job.path.c_str() );
-        auto loader = GetImageLoader( job.path.c_str(), ToneMap::Operator::PbrNeutral, &m_td );
-        if( loader )
+        if( job.buffer )
         {
-            if( loader->IsHdr() && loader->PreferHdr() )
+            mclog( LogLevel::Info, "Loading image from buffer" );
+            PngLoader loader( std::move( job.buffer ) );
+            if( loader.IsValid() ) bitmap = loader.Load();
+        }
+        else
+        {
+            mclog( LogLevel::Info, "Loading image %s", job.path.c_str() );
+            auto loader = GetImageLoader( job.path.c_str(), ToneMap::Operator::PbrNeutral, &m_td );
+            if( loader )
             {
-                auto hdr = loader->LoadHdr();
-                bitmap = std::make_unique<Bitmap>( hdr->Width(), hdr->Height() );
-
-                auto src = hdr->Data();
-                auto dst = bitmap->Data();
-                size_t sz = hdr->Width() * hdr->Height();
-                while( sz > 0 )
+                if( loader->IsHdr() && loader->PreferHdr() )
                 {
-                    const auto chunk = std::min( sz, size_t( 16 * 1024 ) );
-                    m_td.Queue( [src, dst, chunk] {
-                        ToneMap::Process( ToneMap::Operator::PbrNeutral, (uint32_t*)dst, src, chunk );
-                    } );
-                    src += chunk * 4;
-                    dst += chunk * 4;
-                    sz -= chunk;
+                    auto hdr = loader->LoadHdr();
+                    bitmap = std::make_unique<Bitmap>( hdr->Width(), hdr->Height() );
+
+                    auto src = hdr->Data();
+                    auto dst = bitmap->Data();
+                    size_t sz = hdr->Width() * hdr->Height();
+                    while( sz > 0 )
+                    {
+                        const auto chunk = std::min( sz, size_t( 16 * 1024 ) );
+                        m_td.Queue( [src, dst, chunk] {
+                            ToneMap::Process( ToneMap::Operator::PbrNeutral, (uint32_t*)dst, src, chunk );
+                        } );
+                        src += chunk * 4;
+                        dst += chunk * 4;
+                        sz -= chunk;
+                    }
+                    m_td.Sync();
                 }
-                m_td.Sync();
-            }
-            else
-            {
-                bitmap = loader->Load();
+                else
+                {
+                    bitmap = loader->Load();
+                }
             }
         }
 

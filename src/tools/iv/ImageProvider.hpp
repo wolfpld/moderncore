@@ -12,6 +12,7 @@
 #include "util/TaskDispatch.hpp"
 
 class Bitmap;
+class DataBuffer;
 
 class ImageProvider
 {
@@ -29,6 +30,7 @@ public:
     ~ImageProvider();
 
     int64_t LoadImage( const char* path, Callback callback, void* userData );
+    int64_t LoadImage( std::unique_ptr<DataBuffer>&& buffer, Callback callback, void* userData );
 
     void Cancel( int64_t id );
     void CancelAll();
@@ -38,6 +40,7 @@ private:
     {
         int64_t id;
         std::string path;
+        std::unique_ptr<DataBuffer> buffer;
         Callback callback;
         void* userData;
     };

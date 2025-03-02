@@ -168,6 +168,7 @@ set(MCOREUTIL_SRC
     src/util/Tonemapper.cpp
     src/util/TonemapperAgx.cpp
     src/util/TonemapperPbr.cpp
+    src/util/Url.cpp
     src/util/stb_image_resize_impl.cpp
 )
 

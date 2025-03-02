@@ -33,8 +33,11 @@ private:
     void Scale( uint32_t scale );
     void Resize( uint32_t width, uint32_t height );
     void Clipboard( const unordered_flat_set<std::string>& mimeTypes );
+    void Key( const char* key, int mods );
 
     void ImageHandler( int64_t id, int result, std::shared_ptr<Bitmap> bitmap );
+
+    void PasteClipboard();
 
     WaylandDisplay& m_display;
     VlkInstance& m_vkInstance;

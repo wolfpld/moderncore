@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <sys/stat.h>
 #include <time.h>
 #include <tracy/Tracy.hpp>
 #include <vulkan/vulkan.h>
@@ -12,6 +13,7 @@
 #include "util/DataBuffer.hpp"
 #include "util/EmbedData.hpp"
 #include "util/Invoke.hpp"
+#include "util/MemoryBuffer.hpp"
 #include "util/Panic.hpp"
 #include "vulkan/VlkCommandBuffer.hpp"
 #include "vulkan/VlkDevice.hpp"
@@ -22,6 +24,7 @@
 #include "vulkan/ext/Tracy.hpp"
 #include "wayland/WaylandCursor.hpp"
 #include "wayland/WaylandDisplay.hpp"
+#include "wayland/WaylandKeys.hpp"
 #include "wayland/WaylandWindow.hpp"
 
 #include "data/IconSvg.hpp"
@@ -46,7 +49,8 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
         .OnRender = Method( Render ),
         .OnScale = Method( Scale ),
         .OnResize = Method( Resize ),
-        .OnClipboard = Method( Clipboard )
+        .OnClipboard = Method( Clipboard ),
+        .OnKey = Method( Key )
     };
 
     Unembed( IconSvg );
@@ -201,6 +205,14 @@ void Viewport::Clipboard( const unordered_flat_set<std::string>& mimeTypes )
     m_clipboardOffer = mimeTypes;
 }
 
+void Viewport::Key( const char* key, int mods )
+{
+    ZoneScoped;
+    ZoneText( key, strlen( key ) );
+
+    if( mods & CtrlBit && strcmp( key, "v" ) == 0 ) PasteClipboard();
+}
+
 void Viewport::ImageHandler( int64_t id, int result, std::shared_ptr<Bitmap> bitmap )
 {
     ZoneScoped;
@@ -211,4 +223,55 @@ void Viewport::ImageHandler( int64_t id, int result, std::shared_ptr<Bitmap> bit
     std::lock_guard lock( m_lock );
     m_isBusy = false;
     m_window->SetCursor( WaylandCursor::Default );
+}
+
+void Viewport::PasteClipboard()
+{
+    ZoneScoped;
+    mclog( LogLevel::Info, "Clipboard paste" );
+
+    if( m_clipboardOffer.contains( "text/plain;charset=utf-8" ) )
+    {
+        auto data = m_window->GetClipboard( "text/plain;charset=utf-8" );
+        std::string fn { data->data(), data->size() };
+        struct stat st;
+        if( stat( fn.c_str(), &st ) == 0 && S_ISREG( st.st_mode ) )
+        {
+            LoadImage( fn.c_str() );
+            return;
+        }
+    }
+    if( m_clipboardOffer.contains( "text/plain" ) )
+    {
+        auto data = m_window->GetClipboard( "text/plain" );
+        std::string fn { data->data(), data->size() };
+        struct stat st;
+        if( stat( fn.c_str(), &st ) == 0 && S_ISREG( st.st_mode ) )
+        {
+            LoadImage( fn.c_str() );
+            return;
+        }
+    }
+    if( m_clipboardOffer.contains( "text/uri-list" ) )
+    {
+        auto data = m_window->GetClipboard( "text/uri-list" );
+        std::string fn { data->data(), data->size() };
+        if( fn.starts_with( "file://" ) )
+        {
+            fn.erase( 0, 7 );
+            auto pos = fn.find_first_of( "\r\n" );
+            if( pos != std::string::npos ) fn.resize( pos );
+            struct stat st;
+            if( stat( fn.c_str(), &st ) == 0 && S_ISREG( st.st_mode ) )
+            {
+                LoadImage( fn.c_str() );
+                return;
+            }
+        }
+    }
+    if( m_clipboardOffer.contains( "image/png" ) )
+    {
+        auto data = m_window->GetClipboard( "image/png" );
+        LoadImage( std::move( data ) );
+    }
 }

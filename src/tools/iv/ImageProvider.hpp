@@ -17,14 +17,14 @@ class DataBuffer;
 class ImageProvider
 {
 public:
-    enum Result
+    enum class Result
     {
         Success,
         Error,
         Cancelled
     };
 
-    typedef void(*Callback)( void* userData, int64_t id, int result, std::shared_ptr<Bitmap> bitmap );
+    typedef void(*Callback)( void* userData, int64_t id, Result result, std::shared_ptr<Bitmap> bitmap );
 
     ImageProvider();
     ~ImageProvider();

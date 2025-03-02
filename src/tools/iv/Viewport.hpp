@@ -5,13 +5,13 @@
 #include <stdint.h>
 #include <string>
 
+#include "ImageProvider.hpp"
 #include "util/RobinHood.hpp"
 
 class Background;
 class Bitmap;
 class BusyIndicator;
 class DataBuffer;
-class ImageProvider;
 class ImageView;
 class VlkDevice;
 class VlkInstance;
@@ -38,7 +38,7 @@ private:
     void Clipboard( const unordered_flat_set<std::string>& mimeTypes );
     void Key( const char* key, int mods );
 
-    void ImageHandler( int64_t id, int result, std::shared_ptr<Bitmap> bitmap );
+    void ImageHandler( int64_t id, ImageProvider::Result result, std::shared_ptr<Bitmap> bitmap );
 
     void PasteClipboard();
 

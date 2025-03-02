@@ -6,7 +6,6 @@
 
 #include "Background.hpp"
 #include "BusyIndicator.hpp"
-#include "ImageProvider.hpp"
 #include "ImageView.hpp"
 #include "Viewport.hpp"
 #include "image/vector/SvgImage.hpp"
@@ -217,7 +216,7 @@ void Viewport::Key( const char* key, int mods )
     if( mods & CtrlBit && strcmp( key, "v" ) == 0 ) PasteClipboard();
 }
 
-void Viewport::ImageHandler( int64_t id, int result, std::shared_ptr<Bitmap> bitmap )
+void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, std::shared_ptr<Bitmap> bitmap )
 {
     ZoneScoped;
     ZoneTextF( "id %ld, result %d", id, result );

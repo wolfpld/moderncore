@@ -3,6 +3,8 @@
 #include <memory>
 #include <stdint.h>
 
+class TaskDispatch;
+
 class Bitmap
 {
 public:
@@ -14,8 +16,8 @@ public:
     Bitmap& operator=( const Bitmap& ) = delete;
     Bitmap& operator=( Bitmap&& other ) noexcept;
 
-    void Resize( uint32_t width, uint32_t height );
-    [[nodiscard]] std::unique_ptr<Bitmap> ResizeNew( uint32_t width, uint32_t height ) const;
+    void Resize( uint32_t width, uint32_t height, TaskDispatch* td = nullptr );
+    [[nodiscard]] std::unique_ptr<Bitmap> ResizeNew( uint32_t width, uint32_t height, TaskDispatch* td = nullptr ) const;
     void Extend( uint32_t width, uint32_t height );
     void SetAlpha( uint8_t alpha );
     void NormalizeOrientation();

@@ -7,6 +7,7 @@
 #include "Alloca.h"
 #include "Bitmap.hpp"
 #include "Panic.hpp"
+#include "TaskDispatch.hpp"
 
 #if defined __SSE2__
 #  include <x86intrin.h>
@@ -41,26 +42,58 @@ Bitmap& Bitmap::operator=( Bitmap&& other ) noexcept
     return *this;
 }
 
-void Bitmap::Resize( uint32_t width, uint32_t height )
+void Bitmap::Resize( uint32_t width, uint32_t height, TaskDispatch* td )
 {
     auto newData = new uint8_t[width*height*4];
     STBIR_RESIZE resize;
     stbir_resize_init( &resize, m_data, m_width, m_height, 0, newData, width, height, 0, STBIR_RGBA, STBIR_TYPE_UINT8_SRGB );
     stbir_set_non_pm_alpha_speed_over_quality( &resize, 1 );
-    stbir_resize_extended( &resize );
+    if( td )
+    {
+        auto threads = td->NumWorkers();
+        threads = stbir_build_samplers_with_splits( &resize, threads );
+        for( size_t i=0; i<threads; i++ )
+        {
+            td->Queue( [i, &resize, threads] {
+                stbir_resize_extended_split( &resize, i, 1 );
+            } );
+        }
+        td->Sync();
+        stbir_free_samplers( &resize );
+    }
+    else
+    {
+        stbir_resize_extended( &resize );
+    }
     delete[] m_data;
     m_data = newData;
     m_width = width;
     m_height = height;
 }
 
-std::unique_ptr<Bitmap> Bitmap::ResizeNew( uint32_t width, uint32_t height ) const
+std::unique_ptr<Bitmap> Bitmap::ResizeNew( uint32_t width, uint32_t height, TaskDispatch* td ) const
 {
     auto ret = std::make_unique<Bitmap>( width, height );
     STBIR_RESIZE resize;
     stbir_resize_init( &resize, m_data, m_width, m_height, 0, ret->m_data, width, height, 0, STBIR_RGBA, STBIR_TYPE_UINT8_SRGB );
     stbir_set_non_pm_alpha_speed_over_quality( &resize, 1 );
-    stbir_resize_extended( &resize );
+    if( td )
+    {
+        auto threads = td->NumWorkers();
+        threads = stbir_build_samplers_with_splits( &resize, threads );
+        for( size_t i=0; i<threads; i++ )
+        {
+            td->Queue( [i, &resize, threads] {
+                stbir_resize_extended_split( &resize, i, 1 );
+            } );
+        }
+        td->Sync();
+        stbir_free_samplers( &resize );
+    }
+    else
+    {
+        stbir_resize_extended( &resize );
+    }
     return ret;
 }
 

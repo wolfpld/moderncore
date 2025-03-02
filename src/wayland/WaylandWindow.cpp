@@ -360,6 +360,16 @@ void WaylandWindow::InvokeClipboard( const unordered_flat_set<std::string>& mime
     Invoke( OnClipboard, mimeTypes );
 }
 
+void WaylandWindow::InvokeDrag( const unordered_flat_set<std::string>& mimeTypes )
+{
+    Invoke( OnDrag, mimeTypes );
+}
+
+void WaylandWindow::InvokeDrop( int fd, const char* mime )
+{
+    Invoke( OnDrop, fd, mime );
+}
+
 void WaylandWindow::InvokeKey( const char* key, int mods )
 {
     Invoke( OnKey, key, mods );

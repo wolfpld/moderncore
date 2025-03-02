@@ -45,6 +45,8 @@ public:
         void (*OnScale)( void* ptr, uint32_t scale );
         void (*OnResize)( void* ptr, uint32_t width, uint32_t height );  // Logical pixels
         void (*OnClipboard)( void* ptr, const unordered_flat_set<std::string>& mimeTypes );
+        void (*OnDrag)( void* ptr, const unordered_flat_set<std::string>& mimeTypes );
+        void (*OnDrop)( void* ptr, int fd, const char* mime );
         void (*OnKey)( void* ptr, const char* key, int mods );
     };
 
@@ -73,6 +75,8 @@ public:
 
     void InvokeRender();
     void InvokeClipboard( const unordered_flat_set<std::string>& mimeTypes );
+    void InvokeDrag( const unordered_flat_set<std::string>& mimeTypes );
+    void InvokeDrop( int fd, const char* mime );
     void InvokeKey( const char* key, int mods );
 
     void SetCursor( WaylandCursor cursor );

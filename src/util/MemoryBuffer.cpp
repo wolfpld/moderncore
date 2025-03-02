@@ -25,3 +25,8 @@ MemoryBuffer::MemoryBuffer( int fd )
     m_data = m_buf.data();
     m_size = m_buf.size();
 }
+
+std::string MemoryBuffer::AsString() const
+{
+    return std::string( m_buf.data(), m_buf.size() );
+}

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <vector>
 
 #include "DataBuffer.hpp"
@@ -11,6 +12,8 @@ public:
     MemoryBuffer() = default;
     explicit MemoryBuffer( std::vector<char>&& buf );
     explicit MemoryBuffer( int fd );
+
+    [[nodiscard]] std::string AsString() const;
 
     NoCopy( MemoryBuffer );
 

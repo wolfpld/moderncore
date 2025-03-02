@@ -220,7 +220,7 @@ void Viewport::Key( const char* key, int mods )
     if( mods & CtrlBit && strcmp( key, "v" ) == 0 ) PasteClipboard();
 }
 
-void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, std::shared_ptr<Bitmap> bitmap )
+void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, int flags, std::shared_ptr<Bitmap> bitmap )
 {
     ZoneScoped;
     ZoneTextF( "id %ld, result %d", id, result );

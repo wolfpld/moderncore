@@ -24,14 +24,14 @@ public:
         Cancelled
     };
 
-    typedef void(*Callback)( void* userData, int64_t id, Result result, std::shared_ptr<Bitmap> bitmap );
+    typedef void(*Callback)( void* userData, int64_t id, Result result, int flags, std::shared_ptr<Bitmap> bitmap );
 
     ImageProvider();
     ~ImageProvider();
 
-    int64_t LoadImage( const char* path, Callback callback, void* userData );
-    int64_t LoadImage( std::unique_ptr<DataBuffer>&& buffer, Callback callback, void* userData );
-    int64_t LoadImage( int fd, Callback callback, void* userData );
+    int64_t LoadImage( const char* path, Callback callback, void* userData, int flags = 0 );
+    int64_t LoadImage( std::unique_ptr<DataBuffer>&& buffer, Callback callback, void* userData, int flags = 0 );
+    int64_t LoadImage( int fd, Callback callback, void* userData, int flags = 0 );
 
     void Cancel( int64_t id );
     void CancelAll();
@@ -45,6 +45,7 @@ private:
         int fd;
         Callback callback;
         void* userData;
+        int flags;
     };
 
     void Worker();

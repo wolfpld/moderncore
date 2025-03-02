@@ -38,7 +38,7 @@ private:
     void Clipboard( const unordered_flat_set<std::string>& mimeTypes );
     void Key( const char* key, int mods );
 
-    void ImageHandler( int64_t id, ImageProvider::Result result, std::shared_ptr<Bitmap> bitmap );
+    void ImageHandler( int64_t id, ImageProvider::Result result, int flags, std::shared_ptr<Bitmap> bitmap );
 
     void PasteClipboard();
 

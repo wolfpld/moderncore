@@ -10,6 +10,7 @@ class MemoryBuffer : public DataBuffer
 public:
     MemoryBuffer() = default;
     explicit MemoryBuffer( std::vector<char>&& buf );
+    explicit MemoryBuffer( int fd );
 
     NoCopy( MemoryBuffer );
 

@@ -77,17 +77,7 @@ std::unique_ptr<MemoryBuffer> WaylandSeat::GetClipboard( const char* mime )
     close( fd[1] );
     wl_display_roundtrip( m_dpy.Display() );
 
-    std::vector<char> ret;
-    char buf[64*1024];
-    while( true )
-    {
-        auto len = read( fd[0], buf, sizeof( buf ) );
-        if( len <= 0 ) break;
-        ret.insert( ret.end(), buf, buf + len );
-    }
-
-    close( fd[0] );
-    return std::make_unique<MemoryBuffer>( std::move( ret ) );
+    return std::make_unique<MemoryBuffer>( fd[0] );
 }
 
 void WaylandSeat::KeyboardLeave( wl_surface* surf )

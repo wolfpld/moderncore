@@ -29,7 +29,7 @@ public:
     void LoadImage( int fd );
 
 private:
-    void SetBusy();
+    void SetBusy( int64_t job );
 
     void Close();
     bool Render();
@@ -60,4 +60,5 @@ private:
 
     std::mutex m_lock;
     bool m_isBusy = false;
+    int m_currentJob = -1;
 };

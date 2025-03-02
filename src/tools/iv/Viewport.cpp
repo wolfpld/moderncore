@@ -105,7 +105,7 @@ void Viewport::LoadImage( const char* path )
     ZoneScoped;
     const auto id = m_provider->LoadImage( path, Method( ImageHandler ), this );
     ZoneTextF( "id %ld", id );
-    SetBusy();
+    SetBusy( id );
 }
 
 void Viewport::LoadImage( std::unique_ptr<DataBuffer>&& buffer )
@@ -113,7 +113,7 @@ void Viewport::LoadImage( std::unique_ptr<DataBuffer>&& buffer )
     ZoneScoped;
     const auto id = m_provider->LoadImage( std::move( buffer ), Method( ImageHandler ), this );
     ZoneTextF( "id %ld", id );
-    SetBusy();
+    SetBusy( id );
 }
 
 void Viewport::LoadImage( int fd )
@@ -121,12 +121,16 @@ void Viewport::LoadImage( int fd )
     ZoneScoped;
     const auto id = m_provider->LoadImage( fd, Method( ImageHandler ), this );
     ZoneTextF( "id %ld", id );
-    SetBusy();
+    SetBusy( id );
 }
 
-void Viewport::SetBusy()
+void Viewport::SetBusy( int64_t job )
 {
     std::lock_guard lock( m_lock );
+
+    if( m_currentJob != -1 ) m_provider->Cancel( m_currentJob );
+    m_currentJob = job;
+
     if( !m_isBusy )
     {
         m_isBusy = true;
@@ -224,8 +228,12 @@ void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, std::shar
     if( result == ImageProvider::Result::Success ) m_view->SetBitmap( bitmap );
 
     std::lock_guard lock( m_lock );
-    m_isBusy = false;
-    m_window->SetCursor( WaylandCursor::Default );
+    if( m_currentJob == id )
+    {
+        m_currentJob = -1;
+        m_isBusy = false;
+        m_window->SetCursor( WaylandCursor::Default );
+    }
 }
 
 void Viewport::PasteClipboard()

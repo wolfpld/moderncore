@@ -9,6 +9,7 @@
 
 #include "wayland-cursor-shape-client-protocol.h"
 
+class WaylandDataOffer;
 class WaylandDisplay;
 class WaylandKeyboard;
 class WaylandPointer;
@@ -49,10 +50,6 @@ private:
     void DataDrop( wl_data_device* dev );
     void DataSelection( wl_data_device* dev, wl_data_offer* offer );
 
-    void DataOfferOffer( wl_data_offer* offer, const char* mimeType );
-    void DataOfferSourceActions( wl_data_offer* offer, uint32_t sourceActions );
-    void DataOfferAction( wl_data_offer* offer, uint32_t dndAction );
-
     [[nodiscard]] WaylandWindow* GetFocusedWindow() const;
     [[nodiscard]] WaylandWindow* GetWindow( wl_surface* surf ) const;
 
@@ -63,8 +60,8 @@ private:
     wp_cursor_shape_manager_v1* m_cursorShapeManager = nullptr;
     wl_data_device* m_dataDevice = nullptr;
 
-    wl_data_offer* m_dataOffer = nullptr;
-    unordered_flat_set<std::string> m_offerMimeTypes;
+    std::unique_ptr<WaylandDataOffer> m_nextOffer;
+    std::unique_ptr<WaylandDataOffer> m_selectionOffer;
 
     unordered_flat_map<wl_surface*, WaylandWindow*> m_windows;
 

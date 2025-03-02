@@ -287,6 +287,7 @@ target_include_directories(mcorevulkan PUBLIC
 # mcorewayland
 
 set(MCOREWAYLAND_SRC
+    src/wayland/WaylandDataOffer.cpp
     src/wayland/WaylandDisplay.cpp
     src/wayland/WaylandKeyboard.cpp
     src/wayland/WaylandPointer.cpp

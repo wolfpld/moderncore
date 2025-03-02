@@ -1,6 +1,7 @@
 #include <tracy/Tracy.hpp>
 #include <unistd.h>
 
+#include "WaylandDataOffer.hpp"
 #include "WaylandDisplay.hpp"
 #include "WaylandKeyboard.hpp"
 #include "WaylandPointer.hpp"
@@ -24,7 +25,8 @@ WaylandSeat::~WaylandSeat()
 {
     m_pointer.reset();
     m_keyboard.reset();
-    if( m_dataOffer ) wl_data_offer_destroy( m_dataOffer );
+    m_nextOffer.reset();
+    m_selectionOffer.reset();
     if( m_dataDevice ) wl_data_device_destroy( m_dataDevice );
     wl_seat_destroy( m_seat );
 }
@@ -67,11 +69,11 @@ void WaylandSeat::RemoveWindow( WaylandWindow* window )
 int WaylandSeat::GetClipboard( const char* mime )
 {
     ZoneScoped;
-    CheckPanic( m_dataOffer, "No data offer!" );
+    CheckPanic( m_selectionOffer, "No data offer!" );
 
     int fd[2];
     if( pipe( fd ) != 0 ) return -1;
-    wl_data_offer_receive( m_dataOffer, mime, fd[1] );
+    wl_data_offer_receive( *m_selectionOffer, mime, fd[1] );
     close( fd[1] );
     wl_display_roundtrip( m_dpy.Display() );
     return fd[0];
@@ -79,13 +81,11 @@ int WaylandSeat::GetClipboard( const char* mime )
 
 void WaylandSeat::KeyboardLeave( wl_surface* surf )
 {
-    if( !m_dataOffer ) return;
-
-    wl_data_offer_destroy( m_dataOffer );
-    m_dataOffer = nullptr;
-    m_offerMimeTypes.clear();
-
-    GetWindow( surf )->InvokeClipboard( m_offerMimeTypes );
+    if( m_selectionOffer )
+    {
+        m_selectionOffer.reset();
+        GetWindow( surf )->InvokeClipboard( {} );
+    }
 }
 
 void WaylandSeat::KeyEntered( wl_surface* surf, const char* key, int mods )
@@ -124,17 +124,7 @@ void WaylandSeat::Name( wl_seat* seat, const char* name )
 
 void WaylandSeat::DataOffer( wl_data_device* dev, wl_data_offer* offer )
 {
-    if( m_dataOffer ) wl_data_offer_destroy( m_dataOffer );
-    m_offerMimeTypes.clear();
-    m_dataOffer = offer;
-
-    static constexpr wl_data_offer_listener listener = {
-        .offer = Method( DataOfferOffer ),
-        .source_actions = Method( DataOfferSourceActions ),
-        .action = Method( DataOfferAction )
-    };
-
-    wl_data_offer_add_listener( offer, &listener, this );
+    m_nextOffer = std::make_unique<WaylandDataOffer>( offer );
 }
 
 void WaylandSeat::DataEnter( wl_data_device* dev, uint32_t serial, wl_surface* surf, wl_fixed_t x, wl_fixed_t y, wl_data_offer* offer )
@@ -143,11 +133,6 @@ void WaylandSeat::DataEnter( wl_data_device* dev, uint32_t serial, wl_surface* s
 
 void WaylandSeat::DataLeave( wl_data_device* dev )
 {
-    if( m_dataOffer )
-    {
-        wl_data_offer_destroy( m_dataOffer );
-        m_dataOffer = nullptr;
-    }
 }
 
 void WaylandSeat::DataMotion( wl_data_device* dev, uint32_t time, wl_fixed_t x, wl_fixed_t y )
@@ -160,26 +145,11 @@ void WaylandSeat::DataDrop( wl_data_device* dev )
 
 void WaylandSeat::DataSelection( wl_data_device* dev, wl_data_offer* offer )
 {
-    if( !offer && m_dataOffer )
-    {
-        wl_data_offer_destroy( m_dataOffer );
-        m_dataOffer = nullptr;
-        m_offerMimeTypes.clear();
-    }
-    GetFocusedWindow()->InvokeClipboard( m_offerMimeTypes );
-}
+    m_selectionOffer = std::move( m_nextOffer );
+    m_nextOffer.reset();
 
-void WaylandSeat::DataOfferOffer( wl_data_offer* offer, const char* mimeType )
-{
-    m_offerMimeTypes.emplace( mimeType );
-}
-
-void WaylandSeat::DataOfferSourceActions( wl_data_offer* offer, uint32_t sourceActions )
-{
-}
-
-void WaylandSeat::DataOfferAction( wl_data_offer* offer, uint32_t dndAction )
-{
+    mclog( LogLevel::Debug, "Data selection offer with %zu mime types", m_selectionOffer->MimeTypes().size() );
+    GetFocusedWindow()->InvokeClipboard( m_selectionOffer->MimeTypes() );
 }
 
 WaylandWindow* WaylandSeat::GetFocusedWindow() const

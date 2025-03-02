@@ -32,10 +32,20 @@ private:
     std::shared_ptr<FileWrapper> m_file;
 };
 
+struct ExrThreadSetter
+{
+    ExrThreadSetter()
+    {
+        Imf::setGlobalThreadCount( std::max( 1u, std::thread::hardware_concurrency() ) );
+    }
+};
+
 ExrLoader::ExrLoader( std::shared_ptr<FileWrapper> file, ToneMap::Operator tonemap, TaskDispatch* td )
     : m_td( td )
     , m_tonemap( tonemap )
 {
+    static ExrThreadSetter setter;
+
     try
     {
         m_stream = std::make_unique<ExrStream>( std::move( file ) );

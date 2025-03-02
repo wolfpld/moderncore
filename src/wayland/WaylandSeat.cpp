@@ -145,11 +145,20 @@ void WaylandSeat::DataDrop( wl_data_device* dev )
 
 void WaylandSeat::DataSelection( wl_data_device* dev, wl_data_offer* offer )
 {
-    m_selectionOffer = std::move( m_nextOffer );
-    m_nextOffer.reset();
+    if( offer )
+    {
+        m_selectionOffer = std::move( m_nextOffer );
+        m_nextOffer.reset();
 
-    mclog( LogLevel::Debug, "Data selection offer with %zu mime types", m_selectionOffer->MimeTypes().size() );
-    GetFocusedWindow()->InvokeClipboard( m_selectionOffer->MimeTypes() );
+        mclog( LogLevel::Debug, "Data selection offer with %zu mime types", m_selectionOffer->MimeTypes().size() );
+        GetFocusedWindow()->InvokeClipboard( m_selectionOffer->MimeTypes() );
+    }
+    else
+    {
+        mclog( LogLevel::Debug, "Data selection clear" );
+        m_selectionOffer.reset();
+        GetFocusedWindow()->InvokeClipboard( {} );
+    }
 }
 
 WaylandWindow* WaylandSeat::GetFocusedWindow() const

@@ -36,6 +36,8 @@ private:
     void Scale( uint32_t scale );
     void Resize( uint32_t width, uint32_t height );
     void Clipboard( const unordered_flat_set<std::string>& mimeTypes );
+    void Drag( const unordered_flat_set<std::string>& mimeTypes );
+    void Drop( int fd, const char* mime );
     void Key( const char* key, int mods );
 
     void ImageHandler( int64_t id, ImageProvider::Result result, int flags, std::shared_ptr<Bitmap> bitmap );

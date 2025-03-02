@@ -50,6 +50,8 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
         .OnScale = Method( Scale ),
         .OnResize = Method( Resize ),
         .OnClipboard = Method( Clipboard ),
+        .OnDrag = Method( Drag ),
+        .OnDrop = Method( Drop ),
         .OnKey = Method( Key )
     };
 
@@ -212,6 +214,45 @@ void Viewport::Clipboard( const unordered_flat_set<std::string>& mimeTypes )
     m_clipboardOffer = mimeTypes;
 }
 
+void Viewport::Drag( const unordered_flat_set<std::string>& mimeTypes )
+{
+    if( mimeTypes.empty() ) return;
+
+    static constexpr std::array mimes = {
+        "image/png",
+        "text/uri-list"
+    };
+
+    for( const auto& mime : mimes )
+    {
+        if( mimeTypes.contains( mime ) )
+        {
+            m_window->AcceptDndMime( mime );
+            return;
+        }
+    }
+
+    m_window->AcceptDndMime( nullptr );
+}
+
+void Viewport::Drop( int fd, const char* mime )
+{
+    if( strcmp( mime, "text/uri-list" ) == 0 )
+    {
+        auto fn = MemoryBuffer( fd ).AsString();
+        m_window->FinishDnd( fd );
+        ProcessUriList( std::move( fn ) );
+    }
+    else if( strcmp( mime, "image/png" ) == 0 )
+    {
+        LoadImage( fd, fd + 1 );
+    }
+    else
+    {
+        Panic( "Unsupported MIME type: %s", mime );
+    }
+}
+
 void Viewport::Key( const char* key, int mods )
 {
     ZoneScoped;
@@ -224,6 +265,8 @@ void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, int flags
 {
     ZoneScoped;
     ZoneTextF( "id %ld, result %d", id, result );
+
+    if( flags != 0 ) m_window->FinishDnd( flags - 1 );
 
     if( result == ImageProvider::Result::Success ) m_view->SetBitmap( bitmap );
 

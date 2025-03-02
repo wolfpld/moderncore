@@ -69,16 +69,15 @@ std::unique_ptr<MemoryBuffer> WaylandSeat::GetClipboard( const char* mime )
 {
     ZoneScoped;
 
-    std::vector<char> ret;
-
     CheckPanic( m_dataOffer, "No data offer!" );
 
     int fd[2];
-    if( pipe( fd ) != 0 ) return std::make_unique<MemoryBuffer>( std::move( ret ) );
+    if( pipe( fd ) != 0 ) return std::make_unique<MemoryBuffer>();
     wl_data_offer_receive( m_dataOffer, mime, fd[1] );
     close( fd[1] );
     wl_display_roundtrip( m_dpy.Display() );
 
+    std::vector<char> ret;
     char buf[64*1024];
     while( true )
     {

@@ -243,23 +243,28 @@ void Viewport::PasteClipboard()
 
     if( m_clipboardOffer.contains( "text/uri-list" ) )
     {
-        auto fn = MemoryBuffer( m_window->GetClipboard( "text/uri-list" ) ).AsString();
-        if( fn.starts_with( "file://" ) )
-        {
-            fn.erase( 0, 7 );
-            auto pos = fn.find_first_of( "\r\n" );
-            if( pos != std::string::npos ) fn.resize( pos );
-            UrlDecode( fn );
-            struct stat st;
-            if( stat( fn.c_str(), &st ) == 0 && S_ISREG( st.st_mode ) )
-            {
-                LoadImage( fn.c_str() );
-                return;
-            }
-        }
+        if( ProcessUriList( MemoryBuffer( m_window->GetClipboard( "text/uri-list" ) ).AsString() ) ) return;
     }
     if( m_clipboardOffer.contains( "image/png" ) )
     {
         LoadImage( m_window->GetClipboard( "image/png" ) );
     }
+}
+
+bool Viewport::ProcessUriList( std::string uriList )
+{
+    if( uriList.starts_with( "file://" ) )
+    {
+        uriList.erase( 0, 7 );
+        auto pos = uriList.find_first_of( "\r\n" );
+        if( pos != std::string::npos ) uriList.resize( pos );
+        UrlDecode( uriList );
+        struct stat st;
+        if( stat( uriList.c_str(), &st ) == 0 && S_ISREG( st.st_mode ) )
+        {
+            LoadImage( uriList.c_str() );
+            return true;
+        }
+    }
+    return false;
 }

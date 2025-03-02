@@ -41,6 +41,7 @@ private:
     void ImageHandler( int64_t id, ImageProvider::Result result, int flags, std::shared_ptr<Bitmap> bitmap );
 
     void PasteClipboard();
+    bool ProcessUriList( std::string uriList );
 
     WaylandDisplay& m_display;
     VlkInstance& m_vkInstance;

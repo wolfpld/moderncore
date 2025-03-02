@@ -8,6 +8,7 @@
 #include "util/BitmapHdr.hpp"
 #include "util/DataBuffer.hpp"
 #include "util/Logs.hpp"
+#include "util/MemoryBuffer.hpp"
 
 ImageProvider::ImageProvider()
     : m_td( std::max( 1u, std::thread::hardware_concurrency() - 1 ), "Image Provider" )
@@ -36,6 +37,7 @@ int64_t ImageProvider::LoadImage( const char* path, Callback callback, void* use
     m_jobs.emplace_back( Job {
         .id = id,
         .path = path,
+        .fd = -1,
         .callback = callback,
         .userData = userData
     } );
@@ -51,6 +53,22 @@ int64_t ImageProvider::LoadImage( std::unique_ptr<DataBuffer>&& buffer, Callback
     m_jobs.emplace_back( Job {
         .id = id,
         .buffer = std::move( buffer ),
+        .fd = -1,
+        .callback = callback,
+        .userData = userData
+    } );
+    m_cv.notify_one();
+    return id;
+}
+
+int64_t ImageProvider::LoadImage( int fd, Callback callback, void* userData )
+{
+    ZoneScoped;
+    const auto id = m_nextId++;
+    std::lock_guard lock( m_lock );
+    m_jobs.emplace_back( Job {
+        .id = id,
+        .fd = fd,
         .callback = callback,
         .userData = userData
     } );
@@ -110,7 +128,14 @@ void ImageProvider::Worker()
         ZoneScopedN( "Image load" );
         std::unique_ptr<Bitmap> bitmap;
 
-        if( job.buffer )
+        if( job.fd >= 0 )
+        {
+            mclog( LogLevel::Info, "Loading image from file descriptor" );
+            auto buffer = std::make_shared<MemoryBuffer>( job.fd );
+            PngLoader loader( std::move( buffer ) );
+            if( loader.IsValid() ) bitmap = loader.Load();
+        }
+        else if( job.buffer )
         {
             mclog( LogLevel::Info, "Loading image from buffer" );
             PngLoader loader( std::move( job.buffer ) );

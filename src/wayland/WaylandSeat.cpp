@@ -79,6 +79,31 @@ int WaylandSeat::GetClipboard( const char* mime )
     return fd[0];
 }
 
+void WaylandSeat::AcceptDndMime( const char* mime )
+{
+    CheckPanic( m_dndOffer, "No drag and drop offer!" );
+    mclog( LogLevel::Debug, "Drag and drop accept mime %s", mime ? mime : "none" );
+    wl_data_offer_accept( *m_dndOffer, m_dndSerial, mime );
+    if( mime )
+    {
+        m_dndMime = mime;
+    }
+    else
+    {
+        m_dndMime.clear();
+    }
+}
+
+void WaylandSeat::FinishDnd( int fd )
+{
+    auto it = m_pendingDnd.find( fd );
+    CheckPanic( it != m_pendingDnd.end(), "DnD not pending!" );
+
+    close( it->first );
+    wl_data_offer_finish( *it->second );
+    m_pendingDnd.erase( it );
+}
+
 void WaylandSeat::KeyboardLeave( wl_surface* surf )
 {
     if( m_selectionOffer )
@@ -129,10 +154,34 @@ void WaylandSeat::DataOffer( wl_data_device* dev, wl_data_offer* offer )
 
 void WaylandSeat::DataEnter( wl_data_device* dev, uint32_t serial, wl_surface* surf, wl_fixed_t x, wl_fixed_t y, wl_data_offer* offer )
 {
+    m_dndSerial = serial;
+    m_dndSurface = surf;
+    m_dndMime.clear();
+
+    if( offer )
+    {
+        m_dndOffer = std::move( m_nextOffer );
+        m_nextOffer.reset();
+
+        wl_data_offer_set_actions( *m_dndOffer, WL_DATA_DEVICE_MANAGER_DND_ACTION_COPY, WL_DATA_DEVICE_MANAGER_DND_ACTION_COPY );
+
+        mclog( LogLevel::Debug, "Drag and drop enter offer with %zu mime types", m_dndOffer->MimeTypes().size() );
+        GetWindow( surf )->InvokeDrag( m_dndOffer->MimeTypes() );
+    }
+    else
+    {
+        mclog( LogLevel::Debug, "Drag and drop clear" );
+        m_dndOffer.reset();
+        GetWindow( surf )->InvokeDrag( {} );
+    }
 }
 
 void WaylandSeat::DataLeave( wl_data_device* dev )
 {
+    mclog( LogLevel::Debug, "Drag and drop leave" );
+    m_dndMime.clear();
+    m_dndOffer.reset();
+    GetWindow( m_dndSurface )->InvokeDrag( {} );
 }
 
 void WaylandSeat::DataMotion( wl_data_device* dev, uint32_t time, wl_fixed_t x, wl_fixed_t y )
@@ -141,6 +190,34 @@ void WaylandSeat::DataMotion( wl_data_device* dev, uint32_t time, wl_fixed_t x, 
 
 void WaylandSeat::DataDrop( wl_data_device* dev )
 {
+    // Should not happen. Happens on KDE.
+    // https://bugs.kde.org/show_bug.cgi?id=500962
+    if( m_dndMime.empty() )
+    {
+        mclog( LogLevel::Error, "No mime type accepted for drop, but drop happened anyways!" );
+        m_dndOffer.reset();
+        return;
+    }
+
+    mclog( LogLevel::Debug, "Drag and drop drop" );
+    CheckPanic( !m_dndMime.empty(), "No drag and drop mime!" );
+
+    int fd[2];
+    if( pipe( fd ) != 0 )
+    {
+        m_dndOffer.reset();
+        return;
+    }
+    wl_data_offer_receive( *m_dndOffer, m_dndMime.c_str(), fd[1] );
+    close( fd[1] );
+    wl_display_roundtrip( m_dpy.Display() );
+
+    CheckPanic( !m_pendingDnd.contains( fd[0] ), "DnD already pending!" );
+    m_pendingDnd.emplace( fd[0], std::move( m_dndOffer ) );
+    m_dndOffer.reset();
+
+    GetWindow( m_dndSurface )->InvokeDrop( fd[0], m_dndMime.c_str() );
+    m_dndMime.clear();
 }
 
 void WaylandSeat::DataSelection( wl_data_device* dev, wl_data_offer* offer )

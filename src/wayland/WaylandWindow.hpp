@@ -92,6 +92,8 @@ public:
     [[nodiscard]] VlkDevice& Device() { return *m_vkDevice; }
 
     [[nodiscard]] int GetClipboard( const char* mime );
+    void AcceptDndMime( const char* mime );
+    void FinishDnd( int fd );
 
     void Recycle( std::shared_ptr<VlkBase>&& garbage ) override;
     void Recycle( std::vector<std::shared_ptr<VlkBase>>&& garbage ) override;

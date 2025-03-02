@@ -35,6 +35,8 @@ public:
     [[nodiscard]] const WaylandPointer& Pointer() const { return *m_pointer; }
 
     [[nodiscard]] int GetClipboard( const char* mime );
+    void AcceptDndMime( const char* mime );
+    void FinishDnd( int fd );
 
 private:
     void KeyboardLeave( wl_surface* surf );
@@ -62,8 +64,13 @@ private:
 
     std::unique_ptr<WaylandDataOffer> m_nextOffer;
     std::unique_ptr<WaylandDataOffer> m_selectionOffer;
+    std::unique_ptr<WaylandDataOffer> m_dndOffer;
+    uint32_t m_dndSerial = 0;
+    wl_surface* m_dndSurface = nullptr;
+    std::string m_dndMime;
 
     unordered_flat_map<wl_surface*, WaylandWindow*> m_windows;
+    unordered_flat_map<int, std::unique_ptr<WaylandDataOffer>> m_pendingDnd;
 
     WaylandDisplay& m_dpy;
 };

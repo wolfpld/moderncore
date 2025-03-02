@@ -386,6 +386,16 @@ int WaylandWindow::GetClipboard( const char* mime )
     return m_display.Seat().GetClipboard( mime );
 }
 
+void WaylandWindow::AcceptDndMime( const char* mime )
+{
+    m_display.Seat().AcceptDndMime( mime );
+}
+
+void WaylandWindow::FinishDnd( int fd )
+{
+    m_display.Seat().FinishDnd( fd );
+}
+
 void WaylandWindow::Recycle( std::shared_ptr<VlkBase>&& garbage )
 {
     auto& current = m_frameData[m_frameIdx];

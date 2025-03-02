@@ -89,6 +89,7 @@ void ImageProvider::Cancel( int64_t id )
         auto it = std::find_if( m_jobs.begin(), m_jobs.end(), [id]( const auto& job ) { return job.id == id; } );
         if( it != m_jobs.end() )
         {
+            it->callback( it->userData, it->id, Result::Cancelled, nullptr );
             m_jobs.erase( it );
         }
     }

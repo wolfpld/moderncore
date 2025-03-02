@@ -39,7 +39,7 @@ static std::vector<MipData> CalcMipLevels( uint32_t width, uint32_t height, uint
     return levels;
 }
 
-Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format, bool mips, std::vector<std::shared_ptr<VlkFence>>& fencesOut )
+Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format, bool mips, std::vector<std::shared_ptr<VlkFence>>& fencesOut, TaskDispatch* td )
 {
     ZoneScoped;
 
@@ -103,7 +103,7 @@ Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format, bool
             ZoneScopedN( "Mip downscale" );
             ZoneTextF( "Level %u, %u x %u, %u bytes", level, mipChain[level+1].width, mipChain[level+1].height, mipChain[level+1].size );
 
-            tmp = bmpptr->ResizeNew( mipChain[level+1].width, mipChain[level+1].height );
+            tmp = bmpptr->ResizeNew( mipChain[level+1].width, mipChain[level+1].height, td );
             bmpptr = tmp.get();
         }
     }

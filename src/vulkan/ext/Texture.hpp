@@ -10,13 +10,14 @@
 #include "vulkan/VlkImageView.hpp"
 
 class Bitmap;
+class TaskDispatch;
 class VlkDevice;
 class VlkFence;
 
 class Texture : public VlkBase
 {
 public:
-    Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format, bool mips, std::vector<std::shared_ptr<VlkFence>>& fencesOut );
+    Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format, bool mips, std::vector<std::shared_ptr<VlkFence>>& fencesOut, TaskDispatch* td = nullptr );
 
     NoCopy( Texture );
 

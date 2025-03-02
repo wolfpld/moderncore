@@ -28,6 +28,8 @@ public:
     void LoadImage( std::unique_ptr<DataBuffer>&& data );
 
 private:
+    void SetBusy();
+
     void Close();
     bool Render();
     void Scale( uint32_t scale );

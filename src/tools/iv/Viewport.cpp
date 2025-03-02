@@ -104,26 +104,21 @@ Viewport::~Viewport()
 void Viewport::LoadImage( const char* path )
 {
     ZoneScoped;
-
     const auto id = m_provider->LoadImage( path, Method( ImageHandler ), this );
     ZoneTextF( "id %ld", id );
-
-    std::lock_guard lock( m_lock );
-    if( !m_isBusy )
-    {
-        m_isBusy = true;
-        m_busyIndicator->ResetTime();
-        m_window->SetCursor( WaylandCursor::Wait );
-    }
+    SetBusy();
 }
 
 void Viewport::LoadImage( std::unique_ptr<DataBuffer>&& buffer )
 {
     ZoneScoped;
-
     const auto id = m_provider->LoadImage( std::move( buffer ), Method( ImageHandler ), this );
     ZoneTextF( "id %ld", id );
+    SetBusy();
+}
 
+void Viewport::SetBusy()
+{
     std::lock_guard lock( m_lock );
     if( !m_isBusy )
     {

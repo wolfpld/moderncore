@@ -117,6 +117,14 @@ void Viewport::LoadImage( std::unique_ptr<DataBuffer>&& buffer )
     SetBusy();
 }
 
+void Viewport::LoadImage( int fd )
+{
+    ZoneScoped;
+    const auto id = m_provider->LoadImage( fd, Method( ImageHandler ), this );
+    ZoneTextF( "id %ld", id );
+    SetBusy();
+}
+
 void Viewport::SetBusy()
 {
     std::lock_guard lock( m_lock );
@@ -265,7 +273,6 @@ void Viewport::PasteClipboard()
     }
     if( m_clipboardOffer.contains( "image/png" ) )
     {
-        auto data = std::make_unique<MemoryBuffer>( m_window->GetClipboard( "image/png" ) );
-        LoadImage( std::move( data ) );
+        LoadImage( m_window->GetClipboard( "image/png" ) );
     }
 }

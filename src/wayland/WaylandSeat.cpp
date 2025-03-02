@@ -74,6 +74,7 @@ void WaylandSeat::KeyboardLeave( wl_surface* surf )
 
 void WaylandSeat::KeyEntered( wl_surface* surf, const char* key, int mods )
 {
+    GetWindow( surf )->InvokeKey( key, mods );
 }
 
 void WaylandSeat::Capabilities( wl_seat* seat, uint32_t caps )

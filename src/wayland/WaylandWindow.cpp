@@ -360,6 +360,11 @@ void WaylandWindow::InvokeClipboard( const unordered_flat_set<std::string>& mime
     Invoke( OnClipboard, mimeTypes );
 }
 
+void WaylandWindow::InvokeKey( const char* key, int mods )
+{
+    Invoke( OnKey, key, mods );
+}
+
 void WaylandWindow::SetCursor( WaylandCursor cursor )
 {
     std::lock_guard lock( m_cursorLock );

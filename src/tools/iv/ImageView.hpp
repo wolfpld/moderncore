@@ -7,6 +7,7 @@
 
 class Bitmap;
 class GarbageChute;
+class TaskDispatch;
 class Texture;
 class VlkBuffer;
 class VlkCommandBuffer;
@@ -32,7 +33,7 @@ public:
     void Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent );
     void Resize( const VkExtent2D& extent );
 
-    void SetBitmap( const std::shared_ptr<Bitmap>& bitmap );
+    void SetBitmap( const std::shared_ptr<Bitmap>& bitmap, TaskDispatch& td );
     void SetScale( float scale ) { m_div = 1.f / 8.f / scale; }
 
     [[nodiscard]] bool HasBitmap();

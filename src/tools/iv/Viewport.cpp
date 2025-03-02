@@ -270,7 +270,7 @@ void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, int flags
 
     if( flags != 0 ) m_window->FinishDnd( flags - 1 );
 
-    if( result == ImageProvider::Result::Success ) m_view->SetBitmap( bitmap );
+    if( result == ImageProvider::Result::Success ) m_view->SetBitmap( bitmap, *m_td );
 
     std::lock_guard lock( m_lock );
     if( m_currentJob == id )

@@ -24,6 +24,8 @@ public:
 
     void Sync();
 
+    [[nodiscard]] size_t NumWorkers() const { return m_workers.size(); }
+
 private:
     void Worker();
     void SetName( const char* name, size_t num );

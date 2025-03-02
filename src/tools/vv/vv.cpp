@@ -54,7 +54,7 @@ enum class ScaleMode
     Scale2x,
 };
 
-void AdjustBitmap( std::unique_ptr<Bitmap>& bitmap, std::unique_ptr<BitmapAnim>& anim, const std::unique_ptr<VectorImage>& vector, uint32_t col, uint32_t row, ScaleMode scale )
+void AdjustBitmap( std::unique_ptr<Bitmap>& bitmap, std::unique_ptr<BitmapAnim>& anim, const std::unique_ptr<VectorImage>& vector, TaskDispatch& td, uint32_t col, uint32_t row, ScaleMode scale )
 {
     if( anim )
     {
@@ -86,12 +86,12 @@ void AdjustBitmap( std::unique_ptr<Bitmap>& bitmap, std::unique_ptr<BitmapAnim>&
         if( scale == ScaleMode::Fit || w > col || h > row )
         {
             const auto ratio = std::min( float( col ) / w, float( row ) / h );
-            bitmap->Resize( w * ratio, h * ratio );
+            bitmap->Resize( w * ratio, h * ratio, &td );
             mclog( LogLevel::Info, "Image resized: %ux%u", bitmap->Width(), bitmap->Height() );
         }
         else if( scale == ScaleMode::Scale2x && w * 2 <= col && h * 2 <= row )
         {
-            bitmap->Resize( w * 2, h * 2 );
+            bitmap->Resize( w * 2, h * 2, &td );
             mclog( LogLevel::Info, "Image upscaled: %ux%u", bitmap->Width(), bitmap->Height() );
         }
     }
@@ -592,7 +592,7 @@ int main( int argc, char** argv )
         uint32_t row = std::max<uint16_t>( 1, ws.ws_row - 1 ) * 2;
 
         mclog( LogLevel::Info, "Virtual pixels: %ux%u", col, row );
-        AdjustBitmap( bitmap, anim, vectorImage, col, row, scale );
+        AdjustBitmap( bitmap, anim, vectorImage, td, col, row, scale );
 
         if( anim )
         {
@@ -639,7 +639,7 @@ int main( int argc, char** argv )
         uint32_t row = std::max<uint16_t>( 1, ws.ws_row - 1 ) * ch;
 
         mclog( LogLevel::Info, "Pixels available: %ux%u", col, row );
-        AdjustBitmap( bitmap, anim, vectorImage, col, row, scale );
+        AdjustBitmap( bitmap, anim, vectorImage, td, col, row, scale );
 
         if( bg >= 0 ) FillBackground( *bitmap, bg );
         else if( bg == -1 ) FillCheckerboard( *bitmap );
@@ -664,7 +664,7 @@ int main( int argc, char** argv )
         uint32_t row = std::max<uint16_t>( 1, ws.ws_row - 1 ) * ch;
 
         mclog( LogLevel::Info, "Pixels available: %ux%u", col, row );
-        AdjustBitmap( bitmap, anim, vectorImage, col, row, scale );
+        AdjustBitmap( bitmap, anim, vectorImage, td, col, row, scale );
 
         if( anim )
         {

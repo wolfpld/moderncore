@@ -221,7 +221,7 @@ void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, std::shar
     ZoneScoped;
     ZoneTextF( "id %ld, result %d", id, result );
 
-    m_view->SetBitmap( bitmap );
+    if( result == ImageProvider::Result::Success ) m_view->SetBitmap( bitmap );
 
     std::lock_guard lock( m_lock );
     m_isBusy = false;

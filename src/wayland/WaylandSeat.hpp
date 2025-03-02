@@ -9,6 +9,7 @@
 
 #include "wayland-cursor-shape-client-protocol.h"
 
+class MemoryBuffer;
 class WaylandDisplay;
 class WaylandKeyboard;
 class WaylandPointer;
@@ -32,6 +33,8 @@ public:
 
     [[nodiscard]] WaylandPointer& Pointer() { return *m_pointer; }
     [[nodiscard]] const WaylandPointer& Pointer() const { return *m_pointer; }
+
+    [[nodiscard]] std::unique_ptr<MemoryBuffer> GetClipboard( const char* mime );
 
 private:
     void KeyboardLeave( wl_surface* surf );

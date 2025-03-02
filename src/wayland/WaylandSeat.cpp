@@ -1,9 +1,13 @@
+#include <tracy/Tracy.hpp>
+#include <unistd.h>
+
 #include "WaylandDisplay.hpp"
 #include "WaylandKeyboard.hpp"
 #include "WaylandPointer.hpp"
 #include "WaylandSeat.hpp"
 #include "WaylandWindow.hpp"
 #include "util/Invoke.hpp"
+#include "util/MemoryBuffer.hpp"
 
 WaylandSeat::WaylandSeat( wl_seat* seat, WaylandDisplay& dpy )
     : m_seat( seat )
@@ -59,6 +63,32 @@ void WaylandSeat::RemoveWindow( WaylandWindow* window )
     CheckPanic( m_windows.find( window->Surface() ) != m_windows.end(), "Window not found!" );
     m_windows.erase( window->Surface() );
     m_pointer->RemoveWindow( window->Surface() );
+}
+
+std::unique_ptr<MemoryBuffer> WaylandSeat::GetClipboard( const char* mime )
+{
+    ZoneScoped;
+
+    std::vector<char> ret;
+
+    CheckPanic( m_dataOffer, "No data offer!" );
+
+    int fd[2];
+    if( pipe( fd ) != 0 ) return std::make_unique<MemoryBuffer>( std::move( ret ) );
+    wl_data_offer_receive( m_dataOffer, mime, fd[1] );
+    close( fd[1] );
+    wl_display_roundtrip( m_dpy.Display() );
+
+    char buf[4096];
+    while( true )
+    {
+        auto len = read( fd[0], buf, sizeof( buf ) );
+        if( len <= 0 ) break;
+        ret.insert( ret.end(), buf, buf + len );
+    }
+
+    close( fd[0] );
+    return std::make_unique<MemoryBuffer>( std::move( ret ) );
 }
 
 void WaylandSeat::KeyboardLeave( wl_surface* surf )

@@ -10,6 +10,7 @@
 class Background;
 class Bitmap;
 class BusyIndicator;
+class DataBuffer;
 class ImageProvider;
 class ImageView;
 class VlkDevice;
@@ -24,6 +25,7 @@ public:
     ~Viewport();
 
     void LoadImage( const char* path );
+    void LoadImage( std::unique_ptr<DataBuffer>&& data );
 
 private:
     void Close();

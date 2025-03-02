@@ -112,6 +112,22 @@ void Viewport::LoadImage( const char* path )
     }
 }
 
+void Viewport::LoadImage( std::unique_ptr<DataBuffer>&& buffer )
+{
+    ZoneScoped;
+
+    const auto id = m_provider->LoadImage( std::move( buffer ), Method( ImageHandler ), this );
+    ZoneTextF( "id %ld", id );
+
+    std::lock_guard lock( m_lock );
+    if( !m_isBusy )
+    {
+        m_isBusy = true;
+        m_busyIndicator->ResetTime();
+        m_window->SetCursor( WaylandCursor::Wait );
+    }
+}
+
 void Viewport::Close()
 {
     m_display.Stop();

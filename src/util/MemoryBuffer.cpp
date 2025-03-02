@@ -11,6 +11,8 @@ MemoryBuffer::MemoryBuffer( std::vector<char>&& buf )
 
 MemoryBuffer::MemoryBuffer( int fd )
 {
+    if( fd < 0 ) return;
+
     char buf[64*1024];
     while( true )
     {

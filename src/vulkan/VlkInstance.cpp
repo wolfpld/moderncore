@@ -134,6 +134,11 @@ VlkInstance::VlkInstance( VlkInstanceType instanceType, bool enableValidation )
         instanceExtensions.emplace_back( VK_EXT_DEBUG_UTILS_EXTENSION_NAME );
     }
 
+    if( HasExtension( extensions, VK_EXT_SWAPCHAIN_COLOR_SPACE_EXTENSION_NAME ) )
+    {
+        instanceExtensions.emplace_back( VK_EXT_SWAPCHAIN_COLOR_SPACE_EXTENSION_NAME );
+    }
+
     createInfo.enabledExtensionCount = (uint32_t)instanceExtensions.size();
     createInfo.ppEnabledExtensionNames = instanceExtensions.data();
 

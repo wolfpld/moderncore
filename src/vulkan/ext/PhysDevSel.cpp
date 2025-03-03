@@ -27,6 +27,8 @@ std::shared_ptr<VlkPhysicalDevice> PickBest( const std::vector<std::shared_ptr<V
     int bestScore = 0;
     for( auto& dev : list )
     {
+        bool hdr = false;
+
         if( flags != 0 || presentSurface != VK_NULL_HANDLE )
         {
             if( flags & RequireGraphic && !dev->IsGraphicCapable() ) continue;
@@ -51,11 +53,13 @@ std::shared_ptr<VlkPhysicalDevice> PickBest( const std::vector<std::shared_ptr<V
 
                 VlkSwapchainProperties swapchainProps( *dev, presentSurface );
                 if( !CheckFormatSupport( swapchainProps, SdrSwapchainFormats ) ) continue;
+                hdr = CheckFormatSupport( swapchainProps, HdrSwapchainFormats );
             }
         }
 
         auto properties = dev->Properties();
         int score = properties.limits.maxImageDimension2D;
+        if( hdr ) score += 1000000;
         switch( properties.deviceType )
         {
         case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:

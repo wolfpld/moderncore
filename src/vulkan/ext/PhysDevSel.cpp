@@ -7,6 +7,19 @@
 namespace PhysDevSel
 {
 
+template<size_t Size>
+static bool CheckFormatSupport( const VlkSwapchainProperties& swapchainProps, const std::array<VkSurfaceFormatKHR, Size>& formats )
+{
+    for( auto& format : swapchainProps.GetFormats() )
+    {
+        for( auto& valid : formats )
+        {
+            if( format.format == valid.format && format.colorSpace == valid.colorSpace ) return true;
+        }
+    }
+    return false;
+}
+
 std::shared_ptr<VlkPhysicalDevice> PickBest( const std::vector<std::shared_ptr<VlkPhysicalDevice>>& list, VkSurfaceKHR presentSurface, int flags )
 {
     std::shared_ptr<VlkPhysicalDevice> best;
@@ -37,20 +50,7 @@ std::shared_ptr<VlkPhysicalDevice> PickBest( const std::vector<std::shared_ptr<V
                 if( !support ) continue;
 
                 VlkSwapchainProperties swapchainProps( *dev, presentSurface );
-                support = false;
-                for( auto& format : swapchainProps.GetFormats() )
-                {
-                    for( auto& valid : SdrSwapchainFormats )
-                    {
-                        if( format.format == valid.format && format.colorSpace == valid.colorSpace )
-                        {
-                            support = true;
-                            break;
-                        }
-                    }
-                    if( support ) break;
-                }
-                if( !support ) continue;
+                if( !CheckFormatSupport( swapchainProps, SdrSwapchainFormats ) ) continue;
             }
         }
 

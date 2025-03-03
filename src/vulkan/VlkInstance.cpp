@@ -113,6 +113,11 @@ VlkInstance::VlkInstance( VlkInstanceType instanceType, bool enableValidation )
         break;
     }
 
+    for( auto& ext : instanceExtensions )
+    {
+        CheckPanic( HasExtension( extensions, ext ), "Required Vulkan instance extension '%s' is not available", ext );
+    }
+
     VkDebugUtilsMessengerCreateInfoEXT dbgInfo = { VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT };
 
     const bool hasValidationLayers = enableValidation && HasValidationLayers() && HasExtension( extensions, VK_EXT_DEBUG_UTILS_EXTENSION_NAME );

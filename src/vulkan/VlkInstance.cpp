@@ -34,6 +34,11 @@ static bool HasValidationLayers()
     return true;
 }
 
+static bool HasExtension( const std::vector<VkExtensionProperties>& extensions, const char* search )
+{
+    return std::any_of( extensions.begin(), extensions.end(), [&search](auto& ext){ return strcmp( ext.extensionName, search ) == 0; } );
+}
+
 [[maybe_unused]] static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback( VkDebugUtilsMessageSeverityFlagBitsEXT severity,
                                                                       VkDebugUtilsMessageTypeFlagsEXT type,
                                                                       const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
@@ -79,6 +84,11 @@ VlkInstance::VlkInstance( VlkInstanceType instanceType, bool enableValidation )
 {
     ZoneScoped;
 
+    uint32_t numExtensions;
+    VkVerify( vkEnumerateInstanceExtensionProperties( nullptr, &numExtensions, nullptr ) );
+    std::vector<VkExtensionProperties> extensions( numExtensions );
+    VkVerify( vkEnumerateInstanceExtensionProperties( nullptr, &numExtensions, extensions.data() ) );
+
     VkApplicationInfo appInfo = { VK_STRUCTURE_TYPE_APPLICATION_INFO };
     appInfo.pApplicationName = "Modern Core";
     appInfo.applicationVersion = VK_MAKE_API_VERSION( 0, 1, 0, 0 );
@@ -105,7 +115,7 @@ VlkInstance::VlkInstance( VlkInstanceType instanceType, bool enableValidation )
 
     VkDebugUtilsMessengerCreateInfoEXT dbgInfo = { VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT };
 
-    const bool hasValidationLayers = enableValidation && HasValidationLayers();
+    const bool hasValidationLayers = enableValidation && HasValidationLayers() && HasExtension( extensions, VK_EXT_DEBUG_UTILS_EXTENSION_NAME );
     if( hasValidationLayers )
     {
         dbgInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;

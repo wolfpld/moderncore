@@ -37,7 +37,7 @@ VlkSwapchain::VlkSwapchain( const VlkDevice& device, VkSurfaceKHR surface, const
 
     for( auto& format: m_properties.GetFormats() )
     {
-        for( auto& valid : SupportedSwapchainFormats )
+        for( auto& valid : SdrSwapchainFormats )
         {
             if( format.format == valid.format && format.colorSpace == valid.colorSpace )
             {

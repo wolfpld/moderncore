@@ -40,7 +40,7 @@ std::shared_ptr<VlkPhysicalDevice> PickBest( const std::vector<std::shared_ptr<V
                 support = false;
                 for( auto& format : swapchainProps.GetFormats() )
                 {
-                    for( auto& valid : SupportedSwapchainFormats )
+                    for( auto& valid : SdrSwapchainFormats )
                     {
                         if( format.format == valid.format && format.colorSpace == valid.colorSpace )
                         {

@@ -94,7 +94,7 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
     const auto scale = m_window->GetScale() / 120.f;
     m_background = std::make_shared<Background>( *m_window, m_device, format );
     m_busyIndicator = std::make_shared<BusyIndicator>( *m_window, m_device, format, scale );
-    m_view = std::make_shared<ImageView>( *m_window, m_device, format, m_window->GetExtent(), scale );
+    m_view = std::make_shared<ImageView>( *m_window, m_device, format, m_window->GetSize(), scale );
 
     m_lastTime = Now();
     m_window->InvokeRender();
@@ -171,7 +171,7 @@ bool Viewport::Render()
     };
     const VkRenderingInfo renderingInfo = {
         .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
-        .renderArea = { { 0, 0 }, m_window->GetExtent() },
+        .renderArea = { { 0, 0 }, m_window->GetSize() },
         .layerCount = 1,
         .colorAttachmentCount = 1,
         .pColorAttachments = &attachmentInfo
@@ -181,12 +181,12 @@ bool Viewport::Render()
     {
         std::lock_guard lock( m_lock );
         ZoneVk( *m_device, cmdbuf, "Viewport", true );
-        m_background->Render( cmdbuf, m_window->GetExtent() );
-        if( m_view->HasBitmap() ) m_view->Render( cmdbuf, m_window->GetExtent() );
+        m_background->Render( cmdbuf, m_window->GetSize() );
+        if( m_view->HasBitmap() ) m_view->Render( cmdbuf, m_window->GetSize() );
         if( m_isBusy )
         {
             m_busyIndicator->Update( delta / 1000000000.f );
-            m_busyIndicator->Render( cmdbuf, m_window->GetExtent() );
+            m_busyIndicator->Render( cmdbuf, m_window->GetSize() );
         }
     }
     vkCmdEndRendering( cmdbuf );
@@ -211,7 +211,7 @@ void Viewport::Resize( uint32_t width, uint32_t height )
     ZoneScoped;
     ZoneTextF( "width %u, height %u", width, height );
 
-    m_view->Resize( m_window->GetExtent() );
+    m_view->Resize( m_window->GetSize() );
 }
 
 void Viewport::Clipboard( const unordered_flat_set<std::string>& mimeTypes )

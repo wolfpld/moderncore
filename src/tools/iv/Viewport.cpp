@@ -10,6 +10,7 @@
 #include "Viewport.hpp"
 #include "image/vector/SvgImage.hpp"
 #include "util/Bitmap.hpp"
+#include "util/BitmapHdr.hpp"
 #include "util/DataBuffer.hpp"
 #include "util/EmbedData.hpp"
 #include "util/Invoke.hpp"
@@ -282,6 +283,12 @@ void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, int flags
             m_view->SetBitmap( data.bitmap, *m_td );
             width = data.bitmap->Width();
             height = data.bitmap->Height();
+        }
+        else
+        {
+            m_view->SetBitmap( data.bitmapHdr, *m_td );
+            width = data.bitmapHdr->Width();
+            height = data.bitmapHdr->Height();
         }
 
         if( !m_window->Maximized() )

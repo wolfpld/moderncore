@@ -283,12 +283,14 @@ void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, int flags
             m_view->SetBitmap( data.bitmap, *m_td );
             width = data.bitmap->Width();
             height = data.bitmap->Height();
+            m_window->EnableHdr( false );
         }
         else
         {
             m_view->SetBitmap( data.bitmapHdr, *m_td );
             width = data.bitmapHdr->Width();
             height = data.bitmapHdr->Height();
+            m_window->EnableHdr( true );
         }
 
         if( !m_window->Maximized() )

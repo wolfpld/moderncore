@@ -88,6 +88,8 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
     m_window->SetDevice( m_device );
     m_window->Resize( 1650, 900 );
 
+    if( m_window->HdrCapable() ) mclog( LogLevel::Info, "HDR capable" );
+
     const auto format = m_window->GetFormat();
     const auto scale = m_window->GetScale() / 120.f;
     m_background = std::make_shared<Background>( *m_window, m_device, format );

@@ -3,6 +3,7 @@
 
 #include "ImageView.hpp"
 #include "util/Bitmap.hpp"
+#include "util/BitmapHdr.hpp"
 #include "util/EmbedData.hpp"
 #include "vulkan/VlkBuffer.hpp"
 #include "vulkan/VlkCommandBuffer.hpp"
@@ -283,6 +284,30 @@ void ImageView::SetBitmap( const std::shared_ptr<Bitmap>& bitmap, TaskDispatch& 
 
     std::vector<std::shared_ptr<VlkFence>> texFences;
     auto texture = std::make_shared<Texture>( *m_device, *bitmap, VK_FORMAT_R8G8B8A8_SRGB, true, texFences, &td );
+
+    constexpr VkBufferCreateInfo vinfo = {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .size = sizeof( Vertex ) * 4,
+        .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE
+    };
+    auto vb = std::make_shared<VlkBuffer>( *m_device, vinfo, VlkBuffer::PreferDevice | VlkBuffer::WillWrite );
+
+    for( auto& fence : texFences ) fence->Wait();
+    FinishSetBitmap( std::move( texture ), std::move( vb ), bitmap->Width(), bitmap->Height() );
+}
+
+void ImageView::SetBitmap( const std::shared_ptr<BitmapHdr>& bitmap, TaskDispatch& td )
+{
+    if( !bitmap )
+    {
+        std::lock_guard lock( m_lock );
+        Cleanup();
+        return;
+    }
+
+    std::vector<std::shared_ptr<VlkFence>> texFences;
+    auto texture = std::make_shared<Texture>( *m_device, *bitmap, VK_FORMAT_R32G32B32A32_SFLOAT, true, texFences, &td );
 
     constexpr VkBufferCreateInfo vinfo = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,

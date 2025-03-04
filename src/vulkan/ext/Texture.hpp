@@ -10,6 +10,7 @@
 #include "vulkan/VlkImageView.hpp"
 
 class Bitmap;
+struct MipData;
 class TaskDispatch;
 class VlkDevice;
 class VlkFence;
@@ -25,6 +26,8 @@ public:
     operator VkImageView() const { return *m_imageView; }
 
 private:
+    std::vector<MipData> GetMipChain( bool mips, uint32_t width, uint32_t height, uint64_t& bufsize );
+
     void WriteBarrier( VkCommandBuffer cmdbuf, uint32_t mip );
     void ReadBarrier( VkCommandBuffer cmdbuf, uint32_t mipLevels );
     void ReadBarrierTrn( VkCommandBuffer cmdbuf, uint32_t mipLevels, uint32_t trnQueue, uint32_t gfxQueue );

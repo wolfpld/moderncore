@@ -44,16 +44,7 @@ Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format, bool
     ZoneScoped;
 
     uint64_t bufsize;
-    std::vector<MipData> mipChain;
-    if( mips )
-    {
-        mipChain = CalcMipLevels( bitmap.Width(), bitmap.Height(), bufsize );
-    }
-    else
-    {
-        bufsize = bitmap.Width() * bitmap.Height() * 4;
-        mipChain.emplace_back( bitmap.Width(), bitmap.Height(), 0, bufsize );
-    }
+    const auto mipChain = GetMipChain( mips, bitmap.Width(), bitmap.Height(), bufsize );
     const auto mipLevels = (uint32_t)mipChain.size();
 
     VkImageCreateInfo imageInfo = {
@@ -161,6 +152,21 @@ Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format, bool
         } );
         fencesOut.emplace_back( std::move( fenceGfx ) );
     }
+}
+
+std::vector<MipData> Texture::GetMipChain( bool mips, uint32_t width, uint32_t height, uint64_t& bufsize )
+{
+    std::vector<MipData> mipChain;
+    if( mips )
+    {
+        mipChain = CalcMipLevels( width, height, bufsize );
+    }
+    else
+    {
+        bufsize = width * height * 4;
+        mipChain.emplace_back( width, height, 0, bufsize );
+    }
+    return mipChain;
 }
 
 void Texture::WriteBarrier( VkCommandBuffer cmdbuf, uint32_t mip )

@@ -170,6 +170,11 @@ void WaylandWindow::SetIcon( const SvgImage& icon )
 
 void WaylandWindow::Resize( uint32_t width, uint32_t height )
 {
+    ResizeNoScale( width * 120 / m_scale, height * 120 / m_scale );
+}
+
+void WaylandWindow::ResizeNoScale( uint32_t width, uint32_t height )
+{
     if( m_swapchain )
     {
         m_staged = {

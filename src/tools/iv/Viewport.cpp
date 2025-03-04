@@ -86,7 +86,7 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
     m_device = std::make_shared<VlkDevice>( m_vkInstance, physDevice, VlkDevice::RequireGraphic | VlkDevice::RequirePresent, m_window->VkSurface() );
     PrintQueueConfig( *m_device );
     m_window->SetDevice( m_device );
-    m_window->Resize( 1650, 900 );
+    m_window->ResizeNoScale( 1280, 720 );
 
     if( m_window->HdrCapable() ) mclog( LogLevel::Info, "HDR capable" );
 

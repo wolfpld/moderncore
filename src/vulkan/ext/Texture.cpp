@@ -65,7 +65,7 @@ Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format, bool
     ZoneScoped;
 
     uint64_t bufsize;
-    const auto mipChain = GetMipChain( mips, bitmap.Width(), bitmap.Height(), bufsize );
+    const auto mipChain = GetMipChain( mips, bitmap.Width(), bitmap.Height(), 4, bufsize );
     const auto mipLevels = (uint32_t)mipChain.size();
 
     m_image = std::make_shared<VlkImage>( device, GetImageCreateInfo( format, bitmap.Width(), bitmap.Height(), mipLevels ) );
@@ -154,14 +154,14 @@ void Texture::Upload( VlkDevice& device, const std::vector<MipData>& mipChain, s
     }
 }
 
-static std::vector<MipData> CalcMipLevels( uint32_t width, uint32_t height, uint64_t& total )
+static std::vector<MipData> CalcMipLevels( uint32_t width, uint32_t height, uint32_t bpp, uint64_t& total )
 {
     const auto mipLevels = (uint32_t)std::floor( std::log2( std::max( width, height ) ) ) + 1;
     uint64_t offset = 0;
     std::vector<MipData> levels( mipLevels );
     for( uint32_t i=0; i<mipLevels; i++ )
     {
-        const uint64_t size = width * height * 4;
+        const uint64_t size = width * height * bpp;
         levels[i] = { width, height, offset, size };
         width = std::max( 1u, width / 2 );
         height = std::max( 1u, height / 2 );
@@ -171,16 +171,16 @@ static std::vector<MipData> CalcMipLevels( uint32_t width, uint32_t height, uint
     return levels;
 }
 
-std::vector<MipData> Texture::GetMipChain( bool mips, uint32_t width, uint32_t height, uint64_t& bufsize )
+std::vector<MipData> Texture::GetMipChain( bool mips, uint32_t width, uint32_t height, uint32_t bpp, uint64_t& bufsize )
 {
     std::vector<MipData> mipChain;
     if( mips )
     {
-        mipChain = CalcMipLevels( width, height, bufsize );
+        mipChain = CalcMipLevels( width, height, bpp, bufsize );
     }
     else
     {
-        bufsize = width * height * 4;
+        bufsize = width * height * bpp;
         mipChain.emplace_back( width, height, 0, bufsize );
     }
     return mipChain;

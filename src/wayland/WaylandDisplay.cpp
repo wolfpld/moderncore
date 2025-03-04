@@ -69,7 +69,7 @@ void WaylandDisplay::RegistryGlobal( wl_registry* reg, uint32_t name, const char
 {
     if( strcmp( interface, wl_compositor_interface.name ) == 0 )
     {
-        m_compositor = RegistryBind( wl_compositor, 3, 3 );
+        m_compositor = RegistryBind( wl_compositor, 5, 5 );
     }
     else if( strcmp( interface, wl_shm_interface.name ) == 0 )
     {

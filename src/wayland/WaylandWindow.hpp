@@ -58,8 +58,8 @@ public:
     void SetAppId( const char* appId );
     void SetTitle( const char* title );
     void SetIcon( const SvgImage& icon );
-    void Resize( uint32_t width, uint32_t height );             // Window size in real pixels
-    void ResizeNoScale( uint32_t width, uint32_t height );      // Window size in logical pixels (1.0 scale)
+    void Resize( uint32_t width, uint32_t height, bool reposition = false );             // Window size in real pixels
+    void ResizeNoScale( uint32_t width, uint32_t height, bool reposition = false );      // Window size in logical pixels (1.0 scale)
     void LockSize();
     void Commit();
     void Close();

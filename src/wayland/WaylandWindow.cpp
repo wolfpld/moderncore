@@ -168,15 +168,23 @@ void WaylandWindow::SetIcon( const SvgImage& icon )
     wl_shm_pool_destroy( pool );
 }
 
-void WaylandWindow::Resize( uint32_t width, uint32_t height )
+void WaylandWindow::Resize( uint32_t width, uint32_t height, bool reposition )
 {
-    ResizeNoScale( width * 120 / m_scale, height * 120 / m_scale );
+    ResizeNoScale( width * 120 / m_scale, height * 120 / m_scale, reposition );
 }
 
-void WaylandWindow::ResizeNoScale( uint32_t width, uint32_t height )
+void WaylandWindow::ResizeNoScale( uint32_t width, uint32_t height, bool reposition )
 {
     if( m_swapchain )
     {
+        if( reposition && ( m_staged.width != width || m_staged.height != height ) )
+        {
+            // Does not work on KDE?
+            const auto x = int32_t( m_staged.width - width ) / 2;
+            const auto y = int32_t( m_staged.height - height ) / 2;
+            wl_surface_offset( m_surface, x, y );
+        }
+
         m_staged = {
             .width = width,
             .height = height

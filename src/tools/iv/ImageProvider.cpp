@@ -30,7 +30,7 @@ ImageProvider::~ImageProvider()
     m_thread.join();
 }
 
-int64_t ImageProvider::LoadImage( const char* path, Callback callback, void* userData, int flags )
+int64_t ImageProvider::LoadImage( const char* path, bool hdr, Callback callback, void* userData, int flags )
 {
     ZoneScoped;
     const auto id = m_nextId++;
@@ -39,6 +39,7 @@ int64_t ImageProvider::LoadImage( const char* path, Callback callback, void* use
         .id = id,
         .path = path,
         .fd = -1,
+        .hdr = hdr,
         .callback = callback,
         .userData = userData,
         .flags = flags
@@ -47,7 +48,7 @@ int64_t ImageProvider::LoadImage( const char* path, Callback callback, void* use
     return id;
 }
 
-int64_t ImageProvider::LoadImage( std::unique_ptr<DataBuffer>&& buffer, Callback callback, void* userData, int flags )
+int64_t ImageProvider::LoadImage( std::unique_ptr<DataBuffer>&& buffer, bool hdr, Callback callback, void* userData, int flags )
 {
     ZoneScoped;
     const auto id = m_nextId++;
@@ -56,6 +57,7 @@ int64_t ImageProvider::LoadImage( std::unique_ptr<DataBuffer>&& buffer, Callback
         .id = id,
         .buffer = std::move( buffer ),
         .fd = -1,
+        .hdr = hdr,
         .callback = callback,
         .userData = userData,
         .flags = flags
@@ -64,7 +66,7 @@ int64_t ImageProvider::LoadImage( std::unique_ptr<DataBuffer>&& buffer, Callback
     return id;
 }
 
-int64_t ImageProvider::LoadImage( int fd, Callback callback, void* userData, int flags )
+int64_t ImageProvider::LoadImage( int fd, bool hdr, Callback callback, void* userData, int flags )
 {
     ZoneScoped;
     const auto id = m_nextId++;
@@ -72,6 +74,7 @@ int64_t ImageProvider::LoadImage( int fd, Callback callback, void* userData, int
     m_jobs.emplace_back( Job {
         .id = id,
         .fd = fd,
+        .hdr = hdr,
         .callback = callback,
         .userData = userData,
         .flags = flags
@@ -93,7 +96,7 @@ void ImageProvider::Cancel( int64_t id )
         auto it = std::find_if( m_jobs.begin(), m_jobs.end(), [id]( const auto& job ) { return job.id == id; } );
         if( it != m_jobs.end() )
         {
-            it->callback( it->userData, it->id, Result::Cancelled, it->flags, nullptr );
+            it->callback( it->userData, it->id, Result::Cancelled, it->flags, {} );
             m_jobs.erase( it );
         }
     }
@@ -111,7 +114,7 @@ void ImageProvider::CancelAll()
 
     for( auto& job : tmp )
     {
-        job.callback( job.userData, job.id, Result::Cancelled, job.flags, nullptr );
+        job.callback( job.userData, job.id, Result::Cancelled, job.flags, {} );
     }
 }
 
@@ -182,18 +185,20 @@ void ImageProvider::Worker()
         lock.lock();
         if( m_currentJob == -1 )
         {
-            job.callback( job.userData, job.id, Result::Cancelled, job.flags, nullptr );
+            job.callback( job.userData, job.id, Result::Cancelled, job.flags, {} );
         }
         else if( bitmap )
         {
             bitmap->NormalizeOrientation();
             mclog( LogLevel::Info, "Image loaded: %ux%u", bitmap->Width(), bitmap->Height() );
-            job.callback( job.userData, job.id, Result::Success, job.flags, std::move( bitmap ) );
+            job.callback( job.userData, job.id, Result::Success, job.flags, {
+                .bitmap = std::move( bitmap )
+            } );
         }
         else
         {
             mclog( LogLevel::Error, "Failed to load image %s", job.path.c_str() );
-            job.callback( job.userData, job.id, Result::Error, job.flags, nullptr );
+            job.callback( job.userData, job.id, Result::Error, job.flags, {} );
         }
     }
 }

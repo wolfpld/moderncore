@@ -10,6 +10,7 @@
 #include <vector>
 
 class Bitmap;
+class BitmapHdr;
 class DataBuffer;
 class TaskDispatch;
 
@@ -23,14 +24,20 @@ public:
         Cancelled
     };
 
-    typedef void(*Callback)( void* userData, int64_t id, Result result, int flags, std::shared_ptr<Bitmap> bitmap );
+    struct ReturnData
+    {
+        std::shared_ptr<Bitmap> bitmap;
+        std::shared_ptr<BitmapHdr> bitmapHdr;
+    };
+
+    typedef void(*Callback)( void* userData, int64_t id, Result result, int flags, ReturnData data );
 
     ImageProvider( TaskDispatch& td );
     ~ImageProvider();
 
-    int64_t LoadImage( const char* path, Callback callback, void* userData, int flags = 0 );
-    int64_t LoadImage( std::unique_ptr<DataBuffer>&& buffer, Callback callback, void* userData, int flags = 0 );
-    int64_t LoadImage( int fd, Callback callback, void* userData, int flags = 0 );
+    int64_t LoadImage( const char* path, bool hdr, Callback callback, void* userData, int flags = 0 );
+    int64_t LoadImage( std::unique_ptr<DataBuffer>&& buffer, bool hdr, Callback callback, void* userData, int flags = 0 );
+    int64_t LoadImage( int fd, bool hdr, Callback callback, void* userData, int flags = 0 );
 
     void Cancel( int64_t id );
     void CancelAll();
@@ -42,6 +49,7 @@ private:
         std::string path;
         std::unique_ptr<DataBuffer> buffer;
         int fd;
+        bool hdr;
         Callback callback;
         void* userData;
         int flags;

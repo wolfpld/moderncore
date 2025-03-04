@@ -111,7 +111,7 @@ Viewport::~Viewport()
 void Viewport::LoadImage( const char* path )
 {
     ZoneScoped;
-    const auto id = m_provider->LoadImage( path, Method( ImageHandler ), this );
+    const auto id = m_provider->LoadImage( path, m_window->HdrCapable(), Method( ImageHandler ), this );
     ZoneTextF( "id %ld", id );
     SetBusy( id );
 }
@@ -119,7 +119,7 @@ void Viewport::LoadImage( const char* path )
 void Viewport::LoadImage( std::unique_ptr<DataBuffer>&& buffer )
 {
     ZoneScoped;
-    const auto id = m_provider->LoadImage( std::move( buffer ), Method( ImageHandler ), this );
+    const auto id = m_provider->LoadImage( std::move( buffer ), m_window->HdrCapable(), Method( ImageHandler ), this );
     ZoneTextF( "id %ld", id );
     SetBusy( id );
 }
@@ -127,7 +127,7 @@ void Viewport::LoadImage( std::unique_ptr<DataBuffer>&& buffer )
 void Viewport::LoadImage( int fd, int flags )
 {
     ZoneScoped;
-    const auto id = m_provider->LoadImage( fd, Method( ImageHandler ), this, flags );
+    const auto id = m_provider->LoadImage( fd, m_window->HdrCapable(), Method( ImageHandler ), this, flags );
     ZoneTextF( "id %ld", id );
     SetBusy( id );
 }
@@ -267,12 +267,14 @@ void Viewport::Key( const char* key, int mods )
     if( mods & CtrlBit && strcmp( key, "v" ) == 0 ) PasteClipboard();
 }
 
-void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, int flags, std::shared_ptr<Bitmap> bitmap )
+void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, int flags, ImageProvider::ReturnData data )
 {
     ZoneScoped;
     ZoneTextF( "id %ld, result %d", id, result );
 
     if( flags != 0 ) m_window->FinishDnd( flags - 1 );
+
+    const auto& bitmap = data.bitmap;
 
     if( result == ImageProvider::Result::Success ) m_view->SetBitmap( bitmap, *m_td );
 

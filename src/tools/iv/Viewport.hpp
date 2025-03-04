@@ -9,7 +9,6 @@
 #include "util/RobinHood.hpp"
 
 class Background;
-class Bitmap;
 class BusyIndicator;
 class DataBuffer;
 class ImageView;
@@ -41,7 +40,7 @@ private:
     void Drop( int fd, const char* mime );
     void Key( const char* key, int mods );
 
-    void ImageHandler( int64_t id, ImageProvider::Result result, int flags, std::shared_ptr<Bitmap> bitmap );
+    void ImageHandler( int64_t id, ImageProvider::Result result, int flags, ImageProvider::ReturnData bitmap );
 
     void PasteClipboard();
     bool ProcessUriList( std::string uriList );

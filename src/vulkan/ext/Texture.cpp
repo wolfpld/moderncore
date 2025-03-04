@@ -7,6 +7,7 @@
 
 #include "Texture.hpp"
 #include "util/Bitmap.hpp"
+#include "util/BitmapHdr.hpp"
 #include "vulkan/VlkBuffer.hpp"
 #include "vulkan/VlkCommandBuffer.hpp"
 #include "vulkan/VlkDevice.hpp"
@@ -73,6 +74,41 @@ Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format, bool
     auto stagingBuffer = std::make_shared<VlkBuffer>( device, GetStagingBufferInfo( bufsize ), VlkBuffer::WillWrite | VlkBuffer::PreferHost );
 
     std::unique_ptr<Bitmap> tmp;
+    auto bmpptr = &bitmap;
+    auto bufptr = (uint8_t*)stagingBuffer->Ptr();
+    for( uint32_t level = 0; level < mipLevels; level++ )
+    {
+        const MipData& mipdata = mipChain[level];
+        memcpy( bufptr, bmpptr->Data(), mipdata.size );
+        bufptr += mipdata.size;
+        stagingBuffer->Flush( mipdata.offset, mipdata.size );
+
+        if( level < mipLevels-1 )
+        {
+            ZoneScopedN( "Mip downscale" );
+            ZoneTextF( "Level %u, %u x %u, %u bytes", level, mipChain[level+1].width, mipChain[level+1].height, mipChain[level+1].size );
+
+            tmp = bmpptr->ResizeNew( mipChain[level+1].width, mipChain[level+1].height, td );
+            bmpptr = tmp.get();
+        }
+    }
+
+    Upload( device, mipChain, std::move( stagingBuffer ), fencesOut );
+}
+
+Texture::Texture( VlkDevice& device, const BitmapHdr& bitmap, VkFormat format, bool mips, std::vector<std::shared_ptr<VlkFence>>& fencesOut, TaskDispatch* td )
+{
+    ZoneScoped;
+
+    uint64_t bufsize;
+    const auto mipChain = GetMipChain( mips, bitmap.Width(), bitmap.Height(), 16, bufsize );
+    const auto mipLevels = (uint32_t)mipChain.size();
+
+    m_image = std::make_shared<VlkImage>( device, GetImageCreateInfo( format, bitmap.Width(), bitmap.Height(), mipLevels ) );
+    m_imageView = std::make_unique<VlkImageView>( device, GetImageViewCreateInfo( *m_image, format, mipLevels ) );
+    auto stagingBuffer = std::make_shared<VlkBuffer>( device, GetStagingBufferInfo( bufsize ), VlkBuffer::WillWrite | VlkBuffer::PreferHost );
+
+    std::unique_ptr<BitmapHdr> tmp;
     auto bmpptr = &bitmap;
     auto bufptr = (uint8_t*)stagingBuffer->Ptr();
     for( uint32_t level = 0; level < mipLevels; level++ )

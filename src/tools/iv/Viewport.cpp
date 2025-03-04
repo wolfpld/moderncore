@@ -274,11 +274,15 @@ void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, int flags
 
     if( flags != 0 ) m_window->FinishDnd( flags - 1 );
 
-    const auto& bitmap = data.bitmap;
-
     if( result == ImageProvider::Result::Success )
     {
-        m_view->SetBitmap( bitmap, *m_td );
+        uint32_t width, height;
+        if( data.bitmap )
+        {
+            m_view->SetBitmap( data.bitmap, *m_td );
+            width = data.bitmap->Width();
+            height = data.bitmap->Height();
+        }
 
         if( !m_window->Maximized() )
         {
@@ -286,16 +290,16 @@ void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, int flags
             if( bounds.width != 0 && bounds.height != 0 )
             {
                 uint32_t w, h;
-                if( bounds.width >= bitmap->Width() && bounds.height >= bitmap->Height() )
+                if( bounds.width >= width && bounds.height >= height )
                 {
-                    w = bitmap->Width();
-                    h = bitmap->Height();
+                    w = width;
+                    h = height;
                 }
                 else
                 {
-                    const auto scale = std::min( float( bounds.width ) / bitmap->Width(), float( bounds.height ) / bitmap->Height() );
-                    w = bitmap->Width() * scale;
-                    h = bitmap->Height() * scale;
+                    const auto scale = std::min( float( bounds.width ) / width, float( bounds.height ) / height );
+                    w = width * scale;
+                    h = height * scale;
                 }
 
                 // Don't let the window get too small. 150 px is the minimum window size KDE allows.

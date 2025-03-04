@@ -85,7 +85,8 @@ public:
     [[nodiscard]] const VkExtent2D& GetSizeNoScale() const { return m_extent; }             // Logical window size, i.e. pixels at 1.0 DPI scaling
     [[nodiscard]] const char* GetTitle() const { return m_title.c_str(); }
     [[nodiscard]] uint32_t GetScale() const { return m_scale; }
-    [[nodiscard]] const VkExtent2D& GetBounds() const { return m_bounds; }
+    [[nodiscard]] VkExtent2D GetBounds() const { return VkExtent2D { m_bounds.width * m_scale / 120, m_bounds.height * m_scale / 120 }; }
+    [[nodiscard]] const VkExtent2D& GetBoundsNoScale() const { return m_bounds; }
     [[nodiscard]] bool HdrCapable() const { return m_hdrCapable; }
 
     [[nodiscard]] wl_surface* Surface() { return m_surface; }

@@ -81,8 +81,8 @@ public:
 
     void SetCursor( WaylandCursor cursor );
 
-    [[nodiscard]] const VkExtent2D& GetExtent() const { return m_swapchain->GetExtent(); }                  // Swapchain extent, i.e. render area in real pixels
-    [[nodiscard]] VkExtent2D GetSize() const { return VkExtent2D( m_extent.width, m_extent.height ); }      // Logical window size, i.e. pixels at 1.0 DPI scaling
+    [[nodiscard]] const VkExtent2D& GetExtent() const { return m_swapchain->GetExtent(); }      // Swapchain extent, i.e. render area in real pixels
+    [[nodiscard]] const VkExtent2D& GetSize() const { return m_extent; }                        // Logical window size, i.e. pixels at 1.0 DPI scaling
     [[nodiscard]] const char* GetTitle() const { return m_title.c_str(); }
     [[nodiscard]] uint32_t GetScale() const { return m_scale; }
     [[nodiscard]] const VkExtent2D& GetBounds() const { return m_bounds; }

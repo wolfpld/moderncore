@@ -161,7 +161,7 @@ static std::vector<MipData> CalcMipLevels( uint32_t width, uint32_t height, uint
     std::vector<MipData> levels( mipLevels );
     for( uint32_t i=0; i<mipLevels; i++ )
     {
-        const uint64_t size = width * height * bpp;
+        const uint64_t size = uint64_t( width ) * height * bpp;
         levels[i] = { width, height, offset, size };
         width = std::max( 1u, width / 2 );
         height = std::max( 1u, height / 2 );

@@ -12,6 +12,7 @@
 class Bitmap;
 struct MipData;
 class TaskDispatch;
+class VlkBuffer;
 class VlkDevice;
 class VlkFence;
 
@@ -26,6 +27,7 @@ public:
     operator VkImageView() const { return *m_imageView; }
 
 private:
+    void Upload( VlkDevice& device, const std::vector<MipData>& mipChain, std::shared_ptr<VlkBuffer>&& stagingBuffer, std::vector<std::shared_ptr<VlkFence>>& fencesOut );
     std::vector<MipData> GetMipChain( bool mips, uint32_t width, uint32_t height, uint64_t& bufsize );
 
     void WriteBarrier( VkCommandBuffer cmdbuf, uint32_t mip );

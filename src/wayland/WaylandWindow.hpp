@@ -89,6 +89,7 @@ public:
     [[nodiscard]] VkExtent2D GetBounds() const { return VkExtent2D { m_bounds.width * m_scale / 120, m_bounds.height * m_scale / 120 }; }
     [[nodiscard]] const VkExtent2D& GetBoundsNoScale() const { return m_bounds; }
     [[nodiscard]] bool HdrCapable() const { return m_hdrCapable; }
+    [[nodiscard]] bool Maximized() const { return m_maximized; }
 
     [[nodiscard]] wl_surface* Surface() { return m_surface; }
     [[nodiscard]] xdg_toplevel* XdgToplevel() { return m_xdgToplevel; }
@@ -146,6 +147,7 @@ private:
     VkExtent2D m_extent;
     VkExtent2D m_staged;
     VkExtent2D m_bounds;
+    bool m_maximized = false;
 
     std::mutex m_cursorLock;
     WaylandCursor m_cursor;

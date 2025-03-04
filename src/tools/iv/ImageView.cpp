@@ -293,10 +293,14 @@ void ImageView::SetBitmap( const std::shared_ptr<Bitmap>& bitmap, TaskDispatch& 
     auto vb = std::make_shared<VlkBuffer>( *m_device, vinfo, VlkBuffer::PreferDevice | VlkBuffer::WillWrite );
 
     for( auto& fence : texFences ) fence->Wait();
+    FinishSetBitmap( std::move( texture ), std::move( vb ), bitmap->Width(), bitmap->Height() );
+}
 
+void ImageView::FinishSetBitmap( std::shared_ptr<Texture>&& texture, std::shared_ptr<VlkBuffer>&& vb, uint32_t width, uint32_t height )
+{
     std::lock_guard lock( m_lock );
 
-    m_bitmapExtent = { bitmap->Width(), bitmap->Height() };
+    m_bitmapExtent = { width, height };
     const auto vdata = SetupVertexBuffer();
     memcpy( vb->Ptr(), vdata.data(), sizeof( Vertex ) * 4 );
     vb->Flush();

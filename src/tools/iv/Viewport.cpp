@@ -283,29 +283,32 @@ void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, int flags
         m_isBusy = false;
         m_window->SetCursor( WaylandCursor::Default );
 
-        auto bounds = m_window->GetBounds();
-        if( bounds.width != 0 && bounds.height != 0 )
+        if( !m_window->Maximized() )
         {
-            uint32_t w, h;
-            if( bounds.width >= bitmap->Width() && bounds.height >= bitmap->Height() )
+            auto bounds = m_window->GetBounds();
+            if( bounds.width != 0 && bounds.height != 0 )
             {
-                w = bitmap->Width();
-                h = bitmap->Height();
-            }
-            else
-            {
-                const auto scale = std::min( float( bounds.width ) / bitmap->Width(), float( bounds.height ) / bitmap->Height() );
-                w = bitmap->Width() * scale;
-                h = bitmap->Height() * scale;
-            }
+                uint32_t w, h;
+                if( bounds.width >= bitmap->Width() && bounds.height >= bitmap->Height() )
+                {
+                    w = bitmap->Width();
+                    h = bitmap->Height();
+                }
+                else
+                {
+                    const auto scale = std::min( float( bounds.width ) / bitmap->Width(), float( bounds.height ) / bitmap->Height() );
+                    w = bitmap->Width() * scale;
+                    h = bitmap->Height() * scale;
+                }
 
-            // Don't let the window get too small. 150 px is the minimum window size KDE allows.
-            const auto dpi = m_window->GetScale();
-            const auto minSize = 150 * dpi / 120;
-            w = std::max( w, minSize );
-            h = std::max( h, minSize );
+                // Don't let the window get too small. 150 px is the minimum window size KDE allows.
+                const auto dpi = m_window->GetScale();
+                const auto minSize = 150 * dpi / 120;
+                w = std::max( w, minSize );
+                h = std::max( h, minSize );
 
-            m_window->Resize( w, h, true );
+                m_window->Resize( w, h, true );
+            }
         }
     }
 }

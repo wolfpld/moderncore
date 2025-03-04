@@ -166,10 +166,21 @@ void WaylandWindow::SetIcon( const SvgImage& icon )
 
 void WaylandWindow::Resize( uint32_t width, uint32_t height )
 {
-    m_staged = {
-        .width = width,
-        .height = height
-    };
+    if( m_swapchain )
+    {
+        m_staged = {
+            .width = width,
+            .height = height
+        };
+    }
+    else
+    {
+        m_staged = m_extent = VkExtent2D( width, height );
+        CreateSwapchain( m_extent );
+
+        wp_viewport_set_source( m_viewport, 0, 0, wl_fixed_from_double( m_extent.width * m_scale / 120.f ), wl_fixed_from_double( m_extent.height * m_scale / 120.f ) );
+        wp_viewport_set_destination( m_viewport, m_extent.width, m_extent.height );
+    }
 }
 
 void WaylandWindow::LockSize()
@@ -333,15 +344,10 @@ void WaylandWindow::SetListener( const Listener* listener, void* listenerPtr )
     m_listenerPtr = listenerPtr;
 }
 
-void WaylandWindow::SetDevice( std::shared_ptr<VlkDevice> device, const VkExtent2D& extent )
+void WaylandWindow::SetDevice( std::shared_ptr<VlkDevice> device )
 {
     CheckPanic( !m_vkDevice, "Vulkan device already set" );
     m_vkDevice = std::move( device );
-    m_staged = m_extent = extent;
-    CreateSwapchain( extent );
-
-    wp_viewport_set_source( m_viewport, 0, 0, wl_fixed_from_double( m_extent.width * m_scale / 120.f ), wl_fixed_from_double( m_extent.height * m_scale / 120.f ) );
-    wp_viewport_set_destination( m_viewport, m_extent.width, m_extent.height );
 }
 
 void WaylandWindow::InvokeRender()

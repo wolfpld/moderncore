@@ -85,7 +85,8 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
 
     m_device = std::make_shared<VlkDevice>( m_vkInstance, physDevice, VlkDevice::RequireGraphic | VlkDevice::RequirePresent, m_window->VkSurface() );
     PrintQueueConfig( *m_device );
-    m_window->SetDevice( m_device, VkExtent2D { 1650, 900 } );
+    m_window->SetDevice( m_device );
+    m_window->Resize( 1650, 900 );
 
     const auto format = m_window->GetFormat();
     const auto scale = m_window->GetScale() / 120.f;

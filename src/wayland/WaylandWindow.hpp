@@ -71,7 +71,7 @@ public:
     VkFormat GetFormat();
 
     void SetListener( const Listener* listener, void* listenerPtr );
-    void SetDevice( std::shared_ptr<VlkDevice> device, const VkExtent2D& extent );
+    void SetDevice( std::shared_ptr<VlkDevice> device );
 
     void InvokeRender();
     void InvokeClipboard( const unordered_flat_set<std::string>& mimeTypes );

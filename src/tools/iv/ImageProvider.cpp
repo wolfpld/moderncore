@@ -135,6 +135,7 @@ void ImageProvider::Worker()
 
         ZoneScopedN( "Image load" );
         std::unique_ptr<Bitmap> bitmap;
+        std::unique_ptr<BitmapHdr> bitmapHdr;
 
         if( job.fd >= 0 )
         {
@@ -155,25 +156,27 @@ void ImageProvider::Worker()
             auto loader = GetImageLoader( job.path.c_str(), ToneMap::Operator::PbrNeutral, &m_td );
             if( loader )
             {
-                if( loader->IsHdr() && loader->PreferHdr() )
+                if( loader->IsHdr() && ( job.hdr || loader->PreferHdr() ) )
                 {
-                    auto hdr = loader->LoadHdr();
-                    bitmap = std::make_unique<Bitmap>( hdr->Width(), hdr->Height() );
-
-                    auto src = hdr->Data();
-                    auto dst = bitmap->Data();
-                    size_t sz = hdr->Width() * hdr->Height();
-                    while( sz > 0 )
+                    bitmapHdr = loader->LoadHdr();
+                    if( !job.hdr )
                     {
-                        const auto chunk = std::min( sz, size_t( 16 * 1024 ) );
-                        m_td.Queue( [src, dst, chunk] {
-                            ToneMap::Process( ToneMap::Operator::PbrNeutral, (uint32_t*)dst, src, chunk );
-                        } );
-                        src += chunk * 4;
-                        dst += chunk * 4;
-                        sz -= chunk;
+                        bitmap = std::make_unique<Bitmap>( bitmapHdr->Width(), bitmapHdr->Height() );
+                        auto src = bitmapHdr->Data();
+                        auto dst = bitmap->Data();
+                        size_t sz = bitmapHdr->Width() * bitmapHdr->Height();
+                        while( sz > 0 )
+                        {
+                            const auto chunk = std::min( sz, size_t( 16 * 1024 ) );
+                            m_td.Queue( [src, dst, chunk] {
+                                ToneMap::Process( ToneMap::Operator::PbrNeutral, (uint32_t*)dst, src, chunk );
+                            } );
+                            src += chunk * 4;
+                            dst += chunk * 4;
+                            sz -= chunk;
+                        }
+                        m_td.Sync();
                     }
-                    m_td.Sync();
                 }
                 else
                 {
@@ -187,12 +190,14 @@ void ImageProvider::Worker()
         {
             job.callback( job.userData, job.id, Result::Cancelled, job.flags, {} );
         }
-        else if( bitmap )
+        else if( bitmap || bitmapHdr )
         {
-            bitmap->NormalizeOrientation();
-            mclog( LogLevel::Info, "Image loaded: %ux%u", bitmap->Width(), bitmap->Height() );
+            uint32_t width, height;
+            if( bitmap ) bitmap->NormalizeOrientation();
+            mclog( LogLevel::Info, "Image loaded: %ux%u", bitmap ? bitmap->Width() : bitmapHdr->Width(), bitmap ? bitmap->Height() : bitmapHdr->Height() );
             job.callback( job.userData, job.id, Result::Success, job.flags, {
-                .bitmap = std::move( bitmap )
+                .bitmap = std::move( bitmap ),
+                .bitmapHdr = std::move( bitmapHdr )
             } );
         }
         else

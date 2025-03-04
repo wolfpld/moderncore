@@ -81,7 +81,7 @@ void WaylandDisplay::RegistryGlobal( wl_registry* reg, uint32_t name, const char
             .ping = Method( XdgWmPing )
         };
 
-        m_xdgWmBase = RegistryBind( xdg_wm_base );
+        m_xdgWmBase = RegistryBind( xdg_wm_base, 1, 4 );
         xdg_wm_base_add_listener( m_xdgWmBase, &listener, this );
     }
     else if( strcmp( interface, wl_seat_interface.name ) == 0 )

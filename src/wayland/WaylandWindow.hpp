@@ -85,6 +85,7 @@ public:
     [[nodiscard]] VkExtent2D GetSize() const { return VkExtent2D( m_extent.width, m_extent.height ); }      // Logical window size, i.e. pixels at 1.0 DPI scaling
     [[nodiscard]] const char* GetTitle() const { return m_title.c_str(); }
     [[nodiscard]] uint32_t GetScale() const { return m_scale; }
+    [[nodiscard]] const VkExtent2D& GetBounds() const { return m_bounds; }
     [[nodiscard]] bool HdrCapable() const { return m_hdrCapable; }
 
     [[nodiscard]] wl_surface* Surface() { return m_surface; }
@@ -107,6 +108,7 @@ private:
 
     void XdgToplevelConfigure( struct xdg_toplevel* toplevel, int32_t width, int32_t height, struct wl_array* states );
     void XdgToplevelClose( struct xdg_toplevel* toplevel );
+    void XdgToplevelConfigureBounds( struct xdg_toplevel* toplevel, int32_t width, int32_t height );
 
     void DecorationConfigure( zxdg_toplevel_decoration_v1* tldec, uint32_t mode );
 
@@ -141,6 +143,7 @@ private:
 
     VkExtent2D m_extent;
     VkExtent2D m_staged;
+    VkExtent2D m_bounds;
 
     std::mutex m_cursorLock;
     WaylandCursor m_cursor;

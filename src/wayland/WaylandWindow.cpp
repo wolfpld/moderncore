@@ -32,6 +32,7 @@ WaylandWindow::WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance )
     : m_display( display )
     , m_vkInstance( vkInstance )
     , m_hdrCapable( false )
+    , m_bounds {}
     , m_cursor( WaylandCursor::Default )
 {
     ZoneScoped;
@@ -61,7 +62,8 @@ WaylandWindow::WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance )
 
     static constexpr xdg_toplevel_listener toplevelListener = {
         .configure = Method( XdgToplevelConfigure ),
-        .close = Method( XdgToplevelClose )
+        .close = Method( XdgToplevelClose ),
+        .configure_bounds = Method( XdgToplevelConfigureBounds )
     };
 
     m_xdgToplevel = xdg_surface_get_toplevel( m_xdgSurface );
@@ -500,6 +502,15 @@ void WaylandWindow::XdgToplevelConfigure( struct xdg_toplevel* toplevel, int32_t
 void WaylandWindow::XdgToplevelClose( struct xdg_toplevel* toplevel )
 {
     Invoke( OnClose );
+}
+
+void WaylandWindow::XdgToplevelConfigureBounds( struct xdg_toplevel* toplevel, int32_t width, int32_t height )
+{
+    mclog( LogLevel::Debug, "XdgToplevelConfigureBounds: %dx%d", width, height );
+    m_bounds = {
+        .width = uint32_t( width ),
+        .height = uint32_t( height )
+    };
 }
 
 void WaylandWindow::DecorationConfigure( zxdg_toplevel_decoration_v1* tldec, uint32_t mode )

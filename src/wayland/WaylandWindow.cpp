@@ -221,15 +221,23 @@ void WaylandWindow::Close()
     wl_display_flush( m_display.Display() );
 }
 
+void WaylandWindow::EnableHdr( bool enable )
+{
+    if( !m_hdrCapable ) return;
+    m_hdr = enable;
+}
+
 VlkCommandBuffer& WaylandWindow::BeginFrame()
 {
     if( m_prevScale == 0 ) m_prevScale = m_scale;
     const bool resized = m_staged.width != m_extent.width || m_staged.height != m_extent.height;
     const bool dpiChange = m_scale != m_prevScale;
-    if( resized || dpiChange )
+    const bool hdrChange = m_hdr != m_prevHdr;
+    if( resized || dpiChange || hdrChange )
     {
         m_extent = m_staged;
         m_prevScale = m_scale;
+        m_prevHdr = m_hdr;
 
         CreateSwapchain( m_extent );
 
@@ -449,7 +457,7 @@ void WaylandWindow::CreateSwapchain( const VkExtent2D& extent )
 
     auto oldSwapchain = m_swapchain;
     if( m_swapchain ) CleanupSwapchain();
-    m_swapchain = std::make_shared<VlkSwapchain>( *m_vkDevice, *m_vkSurface, scaled, oldSwapchain ? *oldSwapchain : VkSwapchainKHR { VK_NULL_HANDLE } );
+    m_swapchain = std::make_shared<VlkSwapchain>( *m_vkDevice, *m_vkSurface, scaled, m_hdr, oldSwapchain ? *oldSwapchain : VkSwapchainKHR { VK_NULL_HANDLE } );
     oldSwapchain.reset();
 
     const auto imageViews = m_swapchain->GetImageViews();

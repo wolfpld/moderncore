@@ -63,6 +63,7 @@ public:
     void LockSize();
     void Commit();
     void Close();
+    void EnableHdr( bool enable );
 
     VlkCommandBuffer& BeginFrame();
     void EndFrame();
@@ -143,6 +144,9 @@ private:
 
     uint32_t m_scale = 120;
     uint32_t m_prevScale = 0;
+
+    bool m_hdr = false;
+    bool m_prevHdr = false;
 
     VkExtent2D m_extent;
     VkExtent2D m_staged;

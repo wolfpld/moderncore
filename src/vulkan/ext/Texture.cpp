@@ -22,23 +22,6 @@ struct MipData
     uint64_t size;
 };
 
-static std::vector<MipData> CalcMipLevels( uint32_t width, uint32_t height, uint64_t& total )
-{
-    const auto mipLevels = (uint32_t)std::floor( std::log2( std::max( width, height ) ) ) + 1;
-    uint64_t offset = 0;
-    std::vector<MipData> levels( mipLevels );
-    for( uint32_t i=0; i<mipLevels; i++ )
-    {
-        const uint64_t size = width * height * 4;
-        levels[i] = { width, height, offset, size };
-        width = std::max( 1u, width / 2 );
-        height = std::max( 1u, height / 2 );
-        offset += size;
-    }
-    total = offset;
-    return levels;
-}
-
 Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format, bool mips, std::vector<std::shared_ptr<VlkFence>>& fencesOut, TaskDispatch* td )
 {
     ZoneScoped;
@@ -152,6 +135,23 @@ Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format, bool
         } );
         fencesOut.emplace_back( std::move( fenceGfx ) );
     }
+}
+
+static std::vector<MipData> CalcMipLevels( uint32_t width, uint32_t height, uint64_t& total )
+{
+    const auto mipLevels = (uint32_t)std::floor( std::log2( std::max( width, height ) ) ) + 1;
+    uint64_t offset = 0;
+    std::vector<MipData> levels( mipLevels );
+    for( uint32_t i=0; i<mipLevels; i++ )
+    {
+        const uint64_t size = width * height * 4;
+        levels[i] = { width, height, offset, size };
+        width = std::max( 1u, width / 2 );
+        height = std::max( 1u, height / 2 );
+        offset += size;
+    }
+    total = offset;
+    return levels;
 }
 
 std::vector<MipData> Texture::GetMipChain( bool mips, uint32_t width, uint32_t height, uint64_t& bufsize )

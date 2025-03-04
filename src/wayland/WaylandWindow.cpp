@@ -29,6 +29,7 @@
 WaylandWindow::WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance )
     : m_display( display )
     , m_vkInstance( vkInstance )
+    , m_hdrCapable( false )
     , m_cursor( WaylandCursor::Default )
 {
     ZoneScoped;

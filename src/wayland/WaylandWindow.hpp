@@ -85,6 +85,7 @@ public:
     [[nodiscard]] VkExtent2D GetSize() const { return VkExtent2D( m_extent.width, m_extent.height ); }      // Logical window size, i.e. pixels at 1.0 DPI scaling
     [[nodiscard]] const char* GetTitle() const { return m_title.c_str(); }
     [[nodiscard]] uint32_t GetScale() const { return m_scale; }
+    [[nodiscard]] bool HdrCapable() const { return m_hdrCapable; }
 
     [[nodiscard]] wl_surface* Surface() { return m_surface; }
     [[nodiscard]] xdg_toplevel* XdgToplevel() { return m_xdgToplevel; }
@@ -132,6 +133,8 @@ private:
     std::vector<FrameData> m_frameData;
     uint32_t m_frameIdx = 0;
     uint32_t m_imageIdx;
+
+    bool m_hdrCapable;
 
     uint32_t m_scale = 120;
     uint32_t m_prevScale = 0;

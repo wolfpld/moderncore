@@ -22,8 +22,10 @@
 #include "vulkan/VlkFence.hpp"
 #include "vulkan/VlkGarbage.hpp"
 #include "vulkan/VlkInstance.hpp"
+#include "vulkan/VlkPhysicalDevice.hpp"
 #include "vulkan/VlkSemaphore.hpp"
 #include "vulkan/VlkSwapchain.hpp"
+#include "vulkan/VlkSwapchainFormats.hpp"
 #include "wayland/WaylandCursor.hpp"
 
 WaylandWindow::WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance )
@@ -348,6 +350,14 @@ void WaylandWindow::SetDevice( std::shared_ptr<VlkDevice> device )
 {
     CheckPanic( !m_vkDevice, "Vulkan device already set" );
     m_vkDevice = std::move( device );
+
+    uint32_t formatCount;
+    vkGetPhysicalDeviceSurfaceFormatsKHR( *m_vkDevice->GetPhysicalDevice(), *m_vkSurface, &formatCount, nullptr );
+    std::vector<VkSurfaceFormatKHR> m_formats( formatCount );
+    vkGetPhysicalDeviceSurfaceFormatsKHR( *m_vkDevice->GetPhysicalDevice(), *m_vkSurface, &formatCount, m_formats.data() );
+
+    const auto hdrFormat = FindSwapchainFormat( m_formats, HdrSwapchainFormats );
+    m_hdrCapable = hdrFormat.format != VK_FORMAT_UNDEFINED;
 }
 
 void WaylandWindow::InvokeRender()

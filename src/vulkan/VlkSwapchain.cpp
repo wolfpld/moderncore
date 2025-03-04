@@ -29,24 +29,12 @@ static void PrintSwapchainProperties( const VlkSwapchainProperties &properties )
 
 VlkSwapchain::VlkSwapchain( const VlkDevice& device, VkSurfaceKHR surface, const VkExtent2D& extent, VkSwapchainKHR oldSwapchain )
     : m_properties( *device.GetPhysicalDevice(), surface )
-    , m_format { VK_FORMAT_UNDEFINED }
     , m_presentMode( VK_PRESENT_MODE_FIFO_KHR )
     , m_device( device )
 {
     if( GetLogLevel() <= LogLevel::Debug ) PrintSwapchainProperties( m_properties );
 
-    for( auto& format: m_properties.GetFormats() )
-    {
-        for( auto& valid : SdrSwapchainFormats )
-        {
-            if( format.format == valid.format && format.colorSpace == valid.colorSpace )
-            {
-                m_format = format;
-                break;
-            }
-        }
-        if( m_format.format != VK_FORMAT_UNDEFINED ) break;
-    }
+    m_format = FindSwapchainFormat( m_properties.GetFormats(), SdrSwapchainFormats );
     CheckPanic( m_format.format != VK_FORMAT_UNDEFINED, "No valid swapchain format found" );
 
     mclog( LogLevel::Info, "Swapchain format: %s / %s", string_VkFormat( m_format.format ), string_VkColorSpaceKHR( m_format.colorSpace ) );

@@ -276,14 +276,9 @@ void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, int flags
 
     const auto& bitmap = data.bitmap;
 
-    if( result == ImageProvider::Result::Success ) m_view->SetBitmap( bitmap, *m_td );
-
-    std::lock_guard lock( m_lock );
-    if( m_currentJob == id )
+    if( result == ImageProvider::Result::Success )
     {
-        m_currentJob = -1;
-        m_isBusy = false;
-        m_window->SetCursor( WaylandCursor::Default );
+        m_view->SetBitmap( bitmap, *m_td );
 
         if( !m_window->Maximized() )
         {
@@ -312,6 +307,14 @@ void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, int flags
                 m_window->Resize( w, h, true );
             }
         }
+    }
+
+    std::lock_guard lock( m_lock );
+    if( m_currentJob == id )
+    {
+        m_currentJob = -1;
+        m_isBusy = false;
+        m_window->SetCursor( WaylandCursor::Default );
     }
 }
 

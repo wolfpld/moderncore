@@ -13,7 +13,7 @@ class VlkDevice;
 class VlkSwapchain : public VlkBase
 {
 public:
-    VlkSwapchain( const VlkDevice& device, VkSurfaceKHR surface, const VkExtent2D& extent, VkSwapchainKHR oldSwapchain = VK_NULL_HANDLE );
+    VlkSwapchain( const VlkDevice& device, VkSurfaceKHR surface, const VkExtent2D& extent, bool hdr, VkSwapchainKHR oldSwapchain = VK_NULL_HANDLE );
     ~VlkSwapchain();
 
     NoCopy( VlkSwapchain );

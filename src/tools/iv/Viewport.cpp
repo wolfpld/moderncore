@@ -3,6 +3,7 @@
 #include <time.h>
 #include <tracy/Tracy.hpp>
 #include <vulkan/vulkan.h>
+#include <vulkan/vk_enum_string_helper.h>
 
 #include "Background.hpp"
 #include "BusyIndicator.hpp"
@@ -220,7 +221,7 @@ void Viewport::Resize( uint32_t width, uint32_t height )
 void Viewport::FormatChange( VkFormat format )
 {
     ZoneScoped;
-    ZoneValue( enable );
+    ZoneTextF( "%s", string_VkFormat( format ) );
 
     m_background->FormatChange( format );
     m_busyIndicator->FormatChange( format );

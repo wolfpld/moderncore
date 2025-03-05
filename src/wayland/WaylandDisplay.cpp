@@ -28,8 +28,9 @@ WaylandDisplay::WaylandDisplay()
     CheckPanic( m_seat, "Failed to create Wayland seat" );
     CheckPanic( m_viewporter, "Failed to create Wayland viewporter" );
     CheckPanic( m_fractionalScaleManager, "Failed to create Wayland fractional scale manager" );
-    CheckPanic( m_cursorShapeManager, "Failed to create Wayland cursor shape manager" );
     CheckPanic( m_dataDeviceManager, "Failed to create Wayland data device manager" );
+
+    if( !m_cursorShapeManager ) mclog( LogLevel::Warning, "Unable to set mouse cursors. Switch to a different compositor." );
 }
 
 WaylandDisplay::~WaylandDisplay()

@@ -4,6 +4,7 @@
 #include <mutex>
 #include <stdint.h>
 #include <string>
+#include <vulkan/vulkan.h>
 
 #include "ImageProvider.hpp"
 #include "util/RobinHood.hpp"
@@ -35,6 +36,7 @@ private:
     bool Render();
     void Scale( uint32_t scale );
     void Resize( uint32_t width, uint32_t height );
+    void FormatChange( VkFormat format );
     void Clipboard( const unordered_flat_set<std::string>& mimeTypes );
     void Drag( const unordered_flat_set<std::string>& mimeTypes );
     void Drop( int fd, const char* mime );

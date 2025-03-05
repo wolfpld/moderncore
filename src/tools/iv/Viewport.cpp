@@ -53,6 +53,7 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
         .OnRender = Method( Render ),
         .OnScale = Method( Scale ),
         .OnResize = Method( Resize ),
+        .OnFormatChange = Method( FormatChange ),
         .OnClipboard = Method( Clipboard ),
         .OnDrag = Method( Drag ),
         .OnDrop = Method( Drop ),
@@ -214,6 +215,16 @@ void Viewport::Resize( uint32_t width, uint32_t height )
     ZoneTextF( "width %u, height %u", width, height );
 
     m_view->Resize( m_window->GetSize() );
+}
+
+void Viewport::FormatChange( VkFormat format )
+{
+    ZoneScoped;
+    ZoneValue( enable );
+
+    m_background->FormatChange( format );
+    m_busyIndicator->FormatChange( format );
+    m_view->FormatChange( format );
 }
 
 void Viewport::Clipboard( const unordered_flat_set<std::string>& mimeTypes )

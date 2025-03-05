@@ -105,6 +105,9 @@ public:
     void Recycle( std::shared_ptr<VlkBase>&& garbage ) override;
     void Recycle( std::vector<std::shared_ptr<VlkBase>>&& garbage ) override;
 
+    void lock() { m_stateLock.lock(); }
+    void unlock() { m_stateLock.unlock(); }
+
 private:
     void CreateSwapchain( const VkExtent2D& extent );
     void CleanupSwapchain( bool withSurface = false );
@@ -140,6 +143,8 @@ private:
     std::vector<FrameData> m_frameData;
     uint32_t m_frameIdx = 0;
     uint32_t m_imageIdx;
+
+    std::mutex m_stateLock;
 
     bool m_hdrCapable;
 

@@ -304,6 +304,7 @@ void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, int flags
             m_window->EnableHdr( true );
         }
 
+        std::lock_guard lock( *m_window );
         if( !m_window->Maximized() )
         {
             auto bounds = m_window->GetBounds();

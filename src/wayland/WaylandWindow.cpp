@@ -229,6 +229,7 @@ void WaylandWindow::EnableHdr( bool enable )
 
 VlkCommandBuffer& WaylandWindow::BeginFrame()
 {
+    m_stateLock.lock();
     if( m_prevScale == 0 ) m_prevScale = m_scale;
     const bool resized = m_staged.width != m_extent.width || m_staged.height != m_extent.height;
     const bool dpiChange = m_scale != m_prevScale;
@@ -248,12 +249,12 @@ VlkCommandBuffer& WaylandWindow::BeginFrame()
         if( resized || dpiChange ) Invoke( OnResize, m_extent.width, m_extent.height );
         if( hdrChange ) Invoke( OnFormatChange, m_swapchain->GetFormat() );
     }
+    m_stateLock.unlock();
 
-    {
-        auto& seat = m_display.Seat();
-        std::lock_guard lock( m_cursorLock );
-        if( m_cursor != seat.GetCursor( m_surface ) ) seat.SetCursor( m_surface, m_cursor );
-    }
+    auto& seat = m_display.Seat();
+    m_cursorLock.lock();
+    if( m_cursor != seat.GetCursor( m_surface ) ) seat.SetCursor( m_surface, m_cursor );
+    m_cursorLock.unlock();
 
     m_frameIdx = ( m_frameIdx + 1 ) % m_frameData.size();
     auto& frame = m_frameData[m_frameIdx];

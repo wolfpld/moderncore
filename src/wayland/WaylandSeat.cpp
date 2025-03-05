@@ -56,14 +56,14 @@ void WaylandSeat::AddWindow( WaylandWindow* window )
 {
     CheckPanic( m_windows.find( window->Surface() ) == m_windows.end(), "Window already added!" );
     m_windows.emplace( window->Surface(), window );
-    m_pointer->AddWindow( window->Surface() );
+    if( m_pointer ) m_pointer->AddWindow( window->Surface() );
 }
 
 void WaylandSeat::RemoveWindow( WaylandWindow* window )
 {
     CheckPanic( m_windows.find( window->Surface() ) != m_windows.end(), "Window not found!" );
     m_windows.erase( window->Surface() );
-    m_pointer->RemoveWindow( window->Surface() );
+    if( m_pointer ) m_pointer->RemoveWindow( window->Surface() );
 }
 
 int WaylandSeat::GetClipboard( const char* mime )

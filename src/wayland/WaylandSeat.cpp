@@ -1,6 +1,7 @@
 #include <tracy/Tracy.hpp>
 #include <unistd.h>
 
+#include "WaylandCursor.hpp"
 #include "WaylandDataOffer.hpp"
 #include "WaylandDisplay.hpp"
 #include "WaylandKeyboard.hpp"
@@ -54,16 +55,36 @@ void WaylandSeat::SetDataDeviceManager( wl_data_device_manager* dataDeviceManage
 
 void WaylandSeat::AddWindow( WaylandWindow* window )
 {
-    CheckPanic( m_windows.find( window->Surface() ) == m_windows.end(), "Window already added!" );
-    m_windows.emplace( window->Surface(), window );
-    if( m_pointer ) m_pointer->AddWindow( window->Surface() );
+    const auto surface = window->Surface();
+    CheckPanic( m_windows.find( surface ) == m_windows.end(), "Window already added!" );
+    m_windows.emplace( surface, window );
+    CheckPanic( m_cursorMap.find( surface ) == m_cursorMap.end(), "Window already added!" );
+    m_cursorMap.emplace( surface, WaylandCursor::Default );
 }
 
 void WaylandSeat::RemoveWindow( WaylandWindow* window )
 {
-    CheckPanic( m_windows.find( window->Surface() ) != m_windows.end(), "Window not found!" );
-    m_windows.erase( window->Surface() );
-    if( m_pointer ) m_pointer->RemoveWindow( window->Surface() );
+    const auto surface = window->Surface();
+    CheckPanic( m_windows.find( surface ) != m_windows.end(), "Window not found!" );
+    m_windows.erase( surface );
+    CheckPanic( m_cursorMap.find( surface ) != m_cursorMap.end(), "Window not added!" );
+    m_cursorMap.erase( surface );
+}
+
+WaylandCursor WaylandSeat::GetCursor( wl_surface* window )
+{
+    auto it = m_cursorMap.find( window );
+    CheckPanic( it != m_cursorMap.end(), "Getting cursor for an unknown window!" );
+    return it->second;
+}
+
+void WaylandSeat::SetCursor( wl_surface* window, WaylandCursor cursor )
+{
+    if( m_pointer ) m_pointer->SetCursor( window, cursor );
+
+    auto it = m_cursorMap.find( window );
+    CheckPanic( it != m_cursorMap.end(), "Setting cursor on an unknown window!" );
+    it->second = cursor;
 }
 
 int WaylandSeat::GetClipboard( const char* mime )

@@ -250,9 +250,9 @@ VlkCommandBuffer& WaylandWindow::BeginFrame()
     }
 
     {
-        auto& pointer = m_display.Seat().Pointer();
+        auto& seat = m_display.Seat();
         std::lock_guard lock( m_cursorLock );
-        if( m_cursor != pointer.GetCursor( m_surface ) ) pointer.SetCursor( m_surface, m_cursor );
+        if( m_cursor != seat.GetCursor( m_surface ) ) seat.SetCursor( m_surface, m_cursor );
     }
 
     m_frameIdx = ( m_frameIdx + 1 ) % m_frameData.size();

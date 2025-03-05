@@ -3,7 +3,6 @@
 #include <wayland-client.h>
 
 #include "util/NoCopy.hpp"
-#include "util/RobinHood.hpp"
 
 #include "wayland-cursor-shape-client-protocol.h"
 
@@ -21,14 +20,9 @@ public:
     NoCopy( WaylandPointer );
 
     void SetCursorShapeManager( wp_cursor_shape_manager_v1* cursorShapeManager );
-
-    [[nodiscard]] WaylandCursor GetCursor( wl_surface* window );
     void SetCursor( wl_surface* window, WaylandCursor cursor );
 
 private:
-    void AddWindow( wl_surface* window );
-    void RemoveWindow( wl_surface* window );
-
     void Enter( wl_pointer* pointer, uint32_t serial, wl_surface* window, wl_fixed_t sx, wl_fixed_t sy );
     void Leave( wl_pointer* pointer, uint32_t serial, wl_surface* window );
     void Motion( wl_pointer* pointer, uint32_t time, wl_fixed_t sx, wl_fixed_t sy );
@@ -44,7 +38,6 @@ private:
     wl_pointer* m_pointer;
     WaylandSeat& m_seat;
 
-    unordered_flat_map<wl_surface*, WaylandCursor> m_cursorMap;
     uint32_t m_enterSerial = 0;
     wl_surface* m_activeWindow = nullptr;
 

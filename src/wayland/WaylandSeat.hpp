@@ -9,6 +9,7 @@
 
 #include "wayland-cursor-shape-client-protocol.h"
 
+enum class WaylandCursor;
 class WaylandDataOffer;
 class WaylandDisplay;
 class WaylandKeyboard;
@@ -18,6 +19,7 @@ class WaylandWindow;
 class WaylandSeat
 {
     friend class WaylandKeyboard;
+    friend class WaylandPointer;
 
 public:
     explicit WaylandSeat( wl_seat* seat, WaylandDisplay& dpy );
@@ -31,8 +33,8 @@ public:
     void AddWindow( WaylandWindow* window );
     void RemoveWindow( WaylandWindow* window );
 
-    [[nodiscard]] WaylandPointer& Pointer() { return *m_pointer; }
-    [[nodiscard]] const WaylandPointer& Pointer() const { return *m_pointer; }
+    [[nodiscard]] WaylandCursor GetCursor( wl_surface* window );
+    void SetCursor( wl_surface* window, WaylandCursor cursor );
 
     [[nodiscard]] int GetClipboard( const char* mime );
     void AcceptDndMime( const char* mime );
@@ -70,6 +72,7 @@ private:
     std::string m_dndMime;
 
     unordered_flat_map<wl_surface*, WaylandWindow*> m_windows;
+    unordered_flat_map<wl_surface*, WaylandCursor> m_cursorMap;
     unordered_flat_map<int, std::unique_ptr<WaylandDataOffer>> m_pendingDnd;
 
     WaylandDisplay& m_dpy;

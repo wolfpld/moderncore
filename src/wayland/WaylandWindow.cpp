@@ -246,6 +246,7 @@ VlkCommandBuffer& WaylandWindow::BeginFrame()
 
         if( dpiChange ) Invoke( OnScale, m_scale );
         if( resized || dpiChange ) Invoke( OnResize, m_extent.width, m_extent.height );
+        if( hdrChange ) Invoke( OnFormatChange, m_swapchain->GetFormat() );
     }
 
     {

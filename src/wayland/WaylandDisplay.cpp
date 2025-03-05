@@ -87,9 +87,10 @@ void WaylandDisplay::RegistryGlobal( wl_registry* reg, uint32_t name, const char
     }
     else if( strcmp( interface, wl_seat_interface.name ) == 0 )
     {
-        CheckPanic( !m_cursorShapeManager, "Cursor shape manager created before seat" );
         auto seat = RegistryBind( wl_seat, 5, 10 );
         m_seat = std::make_unique<WaylandSeat>( seat, *this );
+        if( m_dataDeviceManager ) m_seat->SetDataDeviceManager( m_dataDeviceManager );
+        if( m_cursorShapeManager ) m_seat->SetCursorShapeManager( m_cursorShapeManager );
     }
     else if( strcmp( interface, zxdg_decoration_manager_v1_interface.name ) == 0 )
     {
@@ -105,9 +106,8 @@ void WaylandDisplay::RegistryGlobal( wl_registry* reg, uint32_t name, const char
     }
     else if( strcmp( interface, wp_cursor_shape_manager_v1_interface.name ) == 0 )
     {
-        CheckPanic( m_seat, "Cursor shape manager created before seat" );
         m_cursorShapeManager = RegistryBind( wp_cursor_shape_manager_v1 );
-        m_seat->SetCursorShapeManager( m_cursorShapeManager );
+        if( m_seat ) m_seat->SetCursorShapeManager( m_cursorShapeManager );
     }
     else if( strcmp( interface, xdg_toplevel_icon_manager_v1_interface.name ) == 0 )
     {
@@ -122,9 +122,8 @@ void WaylandDisplay::RegistryGlobal( wl_registry* reg, uint32_t name, const char
     }
     else if( strcmp( interface, wl_data_device_manager_interface.name ) == 0 )
     {
-        CheckPanic( m_seat, "Data device manager created before seat" );
         m_dataDeviceManager = RegistryBind( wl_data_device_manager, 3, 3 );
-        m_seat->SetDataDeviceManager( m_dataDeviceManager );
+        if( m_seat ) m_seat->SetDataDeviceManager( m_dataDeviceManager );
     }
 }
 

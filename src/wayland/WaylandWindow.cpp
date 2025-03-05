@@ -514,7 +514,7 @@ void WaylandWindow::XdgSurfaceConfigure( struct xdg_surface *xdg_surface, uint32
 void WaylandWindow::XdgToplevelConfigure( struct xdg_toplevel* toplevel, int32_t width, int32_t height, struct wl_array* states )
 {
     bool maximized = false;
-    for( size_t i=0; i<states->size; i++ )
+    for( size_t i=0; i < states->size / sizeof(uint32_t); i++ )
     {
         uint32_t state;
         memcpy( &state, (char*)states->data + i * sizeof( uint32_t ), sizeof( uint32_t ) );

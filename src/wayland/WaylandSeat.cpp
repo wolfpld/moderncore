@@ -223,22 +223,21 @@ void WaylandSeat::DataDrop( wl_data_device* dev )
     mclog( LogLevel::Debug, "Drag and drop drop" );
     CheckPanic( !m_dndMime.empty(), "No drag and drop mime!" );
 
+    auto dndMime = std::move( m_dndMime );
+    m_dndMime.clear();
+    auto dndOffer = std::move( m_dndOffer );
+    m_dndOffer.reset();
+
     int fd[2];
-    if( pipe( fd ) != 0 )
-    {
-        m_dndOffer.reset();
-        return;
-    }
-    wl_data_offer_receive( *m_dndOffer, m_dndMime.c_str(), fd[1] );
+    if( pipe( fd ) != 0 ) return;
+    wl_data_offer_receive( *dndOffer, dndMime.c_str(), fd[1] );
     close( fd[1] );
     wl_display_roundtrip( m_dpy.Display() );
 
     CheckPanic( !m_pendingDnd.contains( fd[0] ), "DnD already pending!" );
-    m_pendingDnd.emplace( fd[0], std::move( m_dndOffer ) );
-    m_dndOffer.reset();
+    m_pendingDnd.emplace( fd[0], std::move( dndOffer ) );
 
-    GetWindow( m_dndSurface )->InvokeDrop( fd[0], m_dndMime.c_str() );
-    m_dndMime.clear();
+    GetWindow( m_dndSurface )->InvokeDrop( fd[0], dndMime.c_str() );
 }
 
 void WaylandSeat::DataSelection( wl_data_device* dev, wl_data_offer* offer )

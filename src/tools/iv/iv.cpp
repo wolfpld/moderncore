@@ -21,7 +21,7 @@ static void PrintHelp()
 int main( int argc, char** argv )
 {
 #ifdef NDEBUG
-    SetLogLevel( LogLevel::Error );
+    SetLogLevel( LogLevel::Warning );
     bool enableValidation = false;
 #else
     bool enableValidation = true;

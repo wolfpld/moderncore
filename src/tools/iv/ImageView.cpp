@@ -257,6 +257,12 @@ void ImageView::FinishSetBitmap( std::shared_ptr<Texture>&& texture, std::shared
     m_imageInfo.imageView = *m_texture;
 }
 
+void ImageView::FormatChange( VkFormat format )
+{
+    m_garbage.Recycle( std::move( m_pipeline ) );
+    CreatePipeline( format );
+}
+
 bool ImageView::HasBitmap()
 {
     std::lock_guard lock( m_lock );

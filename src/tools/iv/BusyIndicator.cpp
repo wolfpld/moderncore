@@ -217,6 +217,12 @@ void BusyIndicator::SetScale( float scale )
     for( auto& fence : texFences ) fence->Wait();
 }
 
+void BusyIndicator::FormatChange( VkFormat format )
+{
+    m_garbage.Recycle( std::move( m_pipeline ) );
+    CreatePipeline( format );
+}
+
 void BusyIndicator::CreatePipeline( VkFormat format )
 {
     static constexpr VkVertexInputBindingDescription vertexBindingDescription = {

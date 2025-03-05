@@ -90,6 +90,12 @@ void Background::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
     vkCmdDraw( cmdbuf, 3, 1, 0, 0 );
 }
 
+void Background::FormatChange( VkFormat format )
+{
+    m_garbage.Recycle( std::move( m_pipeline ) );
+    CreatePipeline( format );
+}
+
 void Background::CreatePipeline( VkFormat format )
 {
     static constexpr VkVertexInputBindingDescription vertexBindingDescription = {

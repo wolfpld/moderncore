@@ -37,6 +37,7 @@ public:
     void SetBitmap( const std::shared_ptr<Bitmap>& bitmap, TaskDispatch& td );
     void SetBitmap( const std::shared_ptr<BitmapHdr>& bitmap, TaskDispatch& td );
     void SetScale( float scale ) { m_div = 1.f / 8.f / scale; }
+    void FormatChange( VkFormat format );
 
     [[nodiscard]] bool HasBitmap();
 

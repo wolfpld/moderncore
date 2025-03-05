@@ -18,6 +18,7 @@ public:
     ~Background();
 
     void Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent );
+    void FormatChange( VkFormat format );
 
 private:
     void CreatePipeline( VkFormat format );

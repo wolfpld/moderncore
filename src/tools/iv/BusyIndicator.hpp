@@ -25,6 +25,7 @@ public:
     void ResetTime();
     void Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent );
     void SetScale( float scale );
+    void FormatChange( VkFormat format );
 
 private:
     void CreatePipeline( VkFormat format );

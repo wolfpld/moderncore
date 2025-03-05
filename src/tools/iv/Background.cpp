@@ -40,8 +40,58 @@ Background::Background( GarbageChute& garbage, std::shared_ptr<VlkDevice> device
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
     };
     m_pipelineLayout = std::make_shared<VlkPipelineLayout>( *m_device, pipelineLayoutInfo );
+    CreatePipeline( format );
 
 
+    constexpr Vertex vdata[] = {
+        { -1, -1 },
+        { -1,  3 },
+        {  3, -1 }
+    };
+    constexpr VkBufferCreateInfo vinfo = {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .size = sizeof( vdata ),
+        .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE
+    };
+    m_vertexBuffer = std::make_shared<VlkBuffer>( *m_device, vinfo, VlkBuffer::PreferDevice | VlkBuffer::WillWrite );
+    memcpy( m_vertexBuffer->Ptr(), vdata, sizeof( vdata ) );
+    m_vertexBuffer->Flush();
+}
+
+Background::~Background()
+{
+    m_garbage.Recycle( {
+        std::move( m_pipeline ),
+        std::move( m_pipelineLayout ),
+        std::move( m_shader ),
+        std::move( m_vertexBuffer )
+    } );
+}
+
+void Background::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
+{
+    VkViewport viewport = {
+        .width = float( extent.width ),
+        .height = float( extent.height )
+    };
+    VkRect2D scissor = {
+        .extent = extent
+    };
+
+    std::array<VkBuffer, 1> vertexBuffers = { *m_vertexBuffer };
+    constexpr std::array<VkDeviceSize, 1> offsets = { 0 };
+
+    ZoneVk( *m_device, cmdbuf, "Background", true );
+    vkCmdBindPipeline( cmdbuf, VK_PIPELINE_BIND_POINT_GRAPHICS, *m_pipeline );
+    vkCmdSetViewport( cmdbuf, 0, 1, &viewport );
+    vkCmdSetScissor( cmdbuf, 0, 1, &scissor );
+    vkCmdBindVertexBuffers( cmdbuf, 0, 1, vertexBuffers.data(), offsets.data() );
+    vkCmdDraw( cmdbuf, 3, 1, 0, 0 );
+}
+
+void Background::CreatePipeline( VkFormat format )
+{
     static constexpr VkVertexInputBindingDescription vertexBindingDescription = {
         .binding = 0,
         .stride = sizeof( Vertex ),
@@ -115,51 +165,4 @@ Background::Background( GarbageChute& garbage, std::shared_ptr<VlkDevice> device
         .layout = *m_pipelineLayout,
     };
     m_pipeline = std::make_shared<VlkPipeline>( *m_device, pipelineInfo );
-
-
-    constexpr Vertex vdata[] = {
-        { -1, -1 },
-        { -1,  3 },
-        {  3, -1 }
-    };
-    constexpr VkBufferCreateInfo vinfo = {
-        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-        .size = sizeof( vdata ),
-        .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-        .sharingMode = VK_SHARING_MODE_EXCLUSIVE
-    };
-    m_vertexBuffer = std::make_shared<VlkBuffer>( *m_device, vinfo, VlkBuffer::PreferDevice | VlkBuffer::WillWrite );
-    memcpy( m_vertexBuffer->Ptr(), vdata, sizeof( vdata ) );
-    m_vertexBuffer->Flush();
-}
-
-Background::~Background()
-{
-    m_garbage.Recycle( {
-        std::move( m_pipeline ),
-        std::move( m_pipelineLayout ),
-        std::move( m_shader ),
-        std::move( m_vertexBuffer )
-    } );
-}
-
-void Background::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
-{
-    VkViewport viewport = {
-        .width = float( extent.width ),
-        .height = float( extent.height )
-    };
-    VkRect2D scissor = {
-        .extent = extent
-    };
-
-    std::array<VkBuffer, 1> vertexBuffers = { *m_vertexBuffer };
-    constexpr std::array<VkDeviceSize, 1> offsets = { 0 };
-
-    ZoneVk( *m_device, cmdbuf, "Background", true );
-    vkCmdBindPipeline( cmdbuf, VK_PIPELINE_BIND_POINT_GRAPHICS, *m_pipeline );
-    vkCmdSetViewport( cmdbuf, 0, 1, &viewport );
-    vkCmdSetScissor( cmdbuf, 0, 1, &scissor );
-    vkCmdBindVertexBuffers( cmdbuf, 0, 1, vertexBuffers.data(), offsets.data() );
-    vkCmdDraw( cmdbuf, 3, 1, 0, 0 );
 }

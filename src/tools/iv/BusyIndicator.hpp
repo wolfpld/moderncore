@@ -27,6 +27,8 @@ public:
     void SetScale( float scale );
 
 private:
+    void CreatePipeline( VkFormat format );
+
     GarbageChute& m_garbage;
     std::shared_ptr<VlkDevice> m_device;
 

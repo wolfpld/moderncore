@@ -20,6 +20,8 @@ public:
     void Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent );
 
 private:
+    void CreatePipeline( VkFormat format );
+
     GarbageChute& m_garbage;
     std::shared_ptr<VlkDevice> m_device;
 

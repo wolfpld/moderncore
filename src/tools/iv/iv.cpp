@@ -1,5 +1,6 @@
 #include <getopt.h>
 #include <memory>
+#include <stdlib.h>
 
 #include "Viewport.hpp"
 #include "util/ArgParser.hpp"
@@ -59,6 +60,8 @@ int main( int argc, char** argv )
             return 1;
         }
     }
+
+    setenv( "ENABLE_HDR_WSI", "1", 0 );
 
     auto vkInstance = std::make_unique<VlkInstance>( VlkInstanceType::Wayland, enableValidation );
     auto waylandDisplay = std::make_unique<WaylandDisplay>();

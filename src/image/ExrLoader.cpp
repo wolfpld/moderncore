@@ -8,6 +8,7 @@
 #include "ExrLoader.hpp"
 #include "util/Bitmap.hpp"
 #include "util/BitmapHdr.hpp"
+#include "util/Colorspace.hpp"
 #include "util/FileWrapper.hpp"
 #include "util/Panic.hpp"
 #include "util/TaskDispatch.hpp"
@@ -126,12 +127,6 @@ std::unique_ptr<BitmapHdr> ExrLoader::LoadHdr()
         cmsToneCurve* linear = cmsBuildGamma( nullptr, 1 );
         cmsToneCurve* linear3[3] = { linear, linear, linear };
 
-        constexpr cmsCIExyY white709 = { 0.3127f, 0.329f, 1 };
-        constexpr cmsCIExyYTRIPLE primaries709 = {
-            { 0.64f, 0.33f, 1 },
-            { 0.30f, 0.60f, 1 },
-            { 0.15f, 0.06f, 1 }
-        };
 
         auto profileIn = cmsCreateRGBProfile( &white, &primaries, linear3 );
         auto profileOut = cmsCreateRGBProfile( &white709, &primaries709, linear3 );

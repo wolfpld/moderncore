@@ -11,6 +11,7 @@
 #include "util/Alloca.h"
 #include "util/Bitmap.hpp"
 #include "util/BitmapHdr.hpp"
+#include "util/Colorspace.hpp"
 #include "util/FileBuffer.hpp"
 #include "util/FileWrapper.hpp"
 #include "util/Panic.hpp"
@@ -20,12 +21,6 @@
 
 namespace
 {
-constexpr cmsCIExyY white709 = { 0.3127f, 0.329f, 1 };
-constexpr cmsCIExyYTRIPLE primaries709 = {
-    { 0.64f, 0.33f, 1 },
-    { 0.30f, 0.60f, 1 },
-    { 0.15f, 0.06f, 1 }
-};
 
 float Pq( float N )
 {

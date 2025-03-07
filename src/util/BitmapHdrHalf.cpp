@@ -1,6 +1,10 @@
 #include <cmath>
 #include <stb_image_resize2.h>
 
+#if defined __F16C__
+#  include <x86intrin.h>
+#endif
+
 #include "contrib/half.hpp"
 
 #include "BitmapHdr.hpp"
@@ -16,6 +20,32 @@ BitmapHdrHalf::BitmapHdrHalf( const BitmapHdr& bmp )
     auto src = bmp.Data();
     auto dst = m_data;
     auto sz = m_width * m_height * 4;
+
+#ifdef __F16C__
+  #ifdef __AVX512F__
+    while( sz >= 16 )
+    {
+        __m512 f = _mm512_loadu_ps( src );
+        __m256 h = _mm512_cvtps_ph( f, _MM_FROUND_TO_NEAREST_INT );
+        _mm256_storeu_ps( (float*)dst, h );
+        src += 16;
+        dst += 16;
+        sz -= 16;
+    }
+  #endif
+  #ifdef __AVX2__
+    while( sz >= 8 )
+    {
+        __m256 f = _mm256_loadu_ps( src );
+        __m128 h = _mm256_cvtps_ph( f, _MM_FROUND_TO_NEAREST_INT );
+        _mm_storeu_ps( (float*)dst, h );
+        src += 8;
+        dst += 8;
+        sz -= 8;
+    }
+  #endif
+#endif
+
     while( sz-- > 0 )
     {
         *dst++ = half_float::half( *src++ );

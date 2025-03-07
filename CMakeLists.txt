@@ -157,6 +157,7 @@ set(MCOREUTIL_SRC
     src/util/Bitmap.cpp
     src/util/BitmapAnim.cpp
     src/util/BitmapHdr.cpp
+    src/util/BitmapHdrHalf.cpp
     src/util/Callstack.cpp
     src/util/Config.cpp
     src/util/EmbedData.cpp

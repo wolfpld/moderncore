@@ -8,6 +8,7 @@
 #include "Texture.hpp"
 #include "util/Bitmap.hpp"
 #include "util/BitmapHdr.hpp"
+#include "util/BitmapHdrHalf.hpp"
 #include "vulkan/VlkBuffer.hpp"
 #include "vulkan/VlkCommandBuffer.hpp"
 #include "vulkan/VlkDevice.hpp"
@@ -103,15 +104,26 @@ Texture::Texture( VlkDevice& device, const BitmapHdr& bitmap, VkFormat format, b
 {
     ZoneScoped;
 
+    const bool half = format == VK_FORMAT_R16G16B16A16_SFLOAT;
     uint64_t bufsize;
-    const auto mipChain = GetMipChain( mips, bitmap.Width(), bitmap.Height(), 16, bufsize );
+    const auto mipChain = GetMipChain( mips, bitmap.Width(), bitmap.Height(), half ? 8 : 16, bufsize );
     const auto mipLevels = (uint32_t)mipChain.size();
 
     m_image = std::make_shared<VlkImage>( device, GetImageCreateInfo( format, bitmap.Width(), bitmap.Height(), mipLevels ) );
     m_imageView = std::make_unique<VlkImageView>( device, GetImageViewCreateInfo( *m_image, format, mipLevels ) );
     auto stagingBuffer = std::make_shared<VlkBuffer>( device, GetStagingBufferInfo( bufsize ), VlkBuffer::WillWrite | VlkBuffer::PreferHost );
 
-    FillStagingBuffer( mipChain, std::unique_ptr<BitmapHdr>(), &bitmap, stagingBuffer, td );
+    if( half )
+    {
+        auto tmp = std::make_unique<BitmapHdrHalf>( bitmap );
+        auto bmpptr = tmp.get();
+        FillStagingBuffer( mipChain, std::move( tmp ), bmpptr, stagingBuffer, td );
+    }
+    else
+    {
+        FillStagingBuffer( mipChain, std::unique_ptr<BitmapHdr>(), &bitmap, stagingBuffer, td );
+    }
+
     Upload( device, mipChain, std::move( stagingBuffer ), fencesOut );
 }
 

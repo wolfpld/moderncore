@@ -11,7 +11,6 @@
 #include "util/Alloca.h"
 #include "util/Bitmap.hpp"
 #include "util/BitmapHdr.hpp"
-#include "util/Colorspace.hpp"
 #include "util/FileBuffer.hpp"
 #include "util/FileWrapper.hpp"
 #include "util/Panic.hpp"
@@ -220,7 +219,7 @@ std::unique_ptr<Bitmap> HeifLoader::Load()
 
     if( !IsHdr() || m_handleGainMap )
     {
-        if( !SetupDecode( false ) ) return nullptr;
+        if( !SetupDecode( false, Colorspace::BT709 ) ) return nullptr;
 
         auto bmp = std::make_unique<Bitmap>( m_width, m_height );
         auto out = (uint32_t*)bmp->Data();
@@ -246,7 +245,7 @@ std::unique_ptr<Bitmap> HeifLoader::Load()
         }
         else
         {
-            auto tmp = std::make_unique<BitmapHdr>( m_width, m_height );
+            auto tmp = std::make_unique<BitmapHdr>( m_width, m_height, Colorspace::BT709 );
             LoadYCbCr( tmp->Data(), m_width * m_height, 0 );
             ConvertYCbCrToRGB( tmp->Data(), m_width * m_height );
             cmsDoTransform( m_transform, tmp->Data(), out, m_width * m_height );
@@ -258,7 +257,7 @@ std::unique_ptr<Bitmap> HeifLoader::Load()
     {
         if( m_td )
         {
-            if( !SetupDecode( true ) ) return nullptr;
+            if( !SetupDecode( true, Colorspace::BT709 ) ) return nullptr;
 
             auto bmp = std::make_unique<Bitmap>( m_width, m_height );
             auto out = (uint32_t*)bmp->Data();
@@ -285,18 +284,18 @@ std::unique_ptr<Bitmap> HeifLoader::Load()
         }
         else
         {
-            std::unique_ptr<BitmapHdr> hdr = LoadHdr();
+            std::unique_ptr<BitmapHdr> hdr = LoadHdr( Colorspace::BT709 );
             return hdr->Tonemap( m_tonemap );
         }
     }
 }
 
-std::unique_ptr<BitmapHdr> HeifLoader::LoadHdr()
+std::unique_ptr<BitmapHdr> HeifLoader::LoadHdr( Colorspace colorspace )
 {
     if( !m_buf && !Open() ) return nullptr;
-    if( !SetupDecode( true ) ) return nullptr;
+    if( !SetupDecode( true, colorspace ) ) return nullptr;
 
-    auto bmp = std::make_unique<BitmapHdr>( m_width, m_height );
+    auto bmp = std::make_unique<BitmapHdr>( m_width, m_height, colorspace );
     if( m_td )
     {
         auto ptr = bmp->Data();
@@ -395,7 +394,7 @@ bool HeifLoader::Open()
     return true;
 }
 
-bool HeifLoader::SetupDecode( bool hdr )
+bool HeifLoader::SetupDecode( bool hdr, Colorspace colorspace )
 {
     auto err = heif_decode_image( m_handle, &m_image, heif_colorspace_YCbCr, heif_chroma_444, nullptr );
     if( err.code != heif_error_Ok ) return false;
@@ -507,7 +506,8 @@ bool HeifLoader::SetupDecode( bool hdr )
         int outType;
         if( hdr )
         {
-            m_profileOut = cmsCreateRGBProfile( &white709, &primaries709, linear3 );
+            CheckPanic( colorspace == Colorspace::BT709 || colorspace == Colorspace::BT2020, "Invalid colorspace" );
+            m_profileOut = cmsCreateRGBProfile( &white709, colorspace == Colorspace::BT709 ? &primaries709 : &primaries2020, linear3 );
             outType = TYPE_RGBA_FLT;
         }
         else
@@ -531,7 +531,8 @@ bool HeifLoader::SetupDecode( bool hdr )
             m_profileIn = cmsCreateRGBProfile( &white, &primaries, linear3 );
             if( m_nclx->color_primaries != heif_color_primaries_ITU_R_BT_709_5 )
             {
-                m_profileOut = cmsCreateRGBProfile( &white709, &primaries709, linear3 );
+                CheckPanic( colorspace == Colorspace::BT709 || colorspace == Colorspace::BT2020, "Invalid colorspace" );
+                m_profileOut = cmsCreateRGBProfile( &white709, colorspace == Colorspace::BT709 ? &primaries709 : &primaries2020, linear3 );
                 m_transform = cmsCreateTransform( m_profileIn, TYPE_RGBA_FLT, m_profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA );
             }
         }

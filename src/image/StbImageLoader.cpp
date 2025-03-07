@@ -1,3 +1,4 @@
+#include <lcms2.h>
 #include <string.h>
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -52,7 +53,7 @@ std::unique_ptr<Bitmap> StbImageLoader::Load()
     return bmp;
 }
 
-std::unique_ptr<BitmapHdr> StbImageLoader::LoadHdr()
+std::unique_ptr<BitmapHdr> StbImageLoader::LoadHdr( Colorspace colorspace )
 {
     CheckPanic( m_valid, "Invalid stb_image file" );
     if( !m_hdr ) return nullptr;
@@ -63,8 +64,40 @@ std::unique_ptr<BitmapHdr> StbImageLoader::LoadHdr()
     auto data = stbi_loadf_from_file( *m_file, &w, &h, &comp, 4 );
     if( data == nullptr ) return nullptr;
 
-    auto hdr = std::make_unique<BitmapHdr>( w, h );
-    memcpy( hdr->Data(), data, w * h * 4 * sizeof( float ) );
+    auto hdr = std::make_unique<BitmapHdr>( w, h, colorspace );
+    if( colorspace == Colorspace::BT709 )
+    {
+        memcpy( hdr->Data(), data, w * h * 4 * sizeof( float ) );
+    }
+    else if( colorspace == Colorspace::BT2020 )
+    {
+        cmsToneCurve* linear = cmsBuildGamma( nullptr, 1 );
+        cmsToneCurve* linear3[3] = { linear, linear, linear };
+
+        auto profileIn = cmsCreateRGBProfile( &white709, &primaries709, linear3 );
+        auto profileOut = cmsCreateRGBProfile( &white709, &primaries2020, linear3 );
+        auto transform = cmsCreateTransform( profileIn, TYPE_RGBA_FLT, profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, 0 );
+
+        cmsDoTransform( transform, data, hdr->Data(), w * h );
+
+        cmsDeleteTransform( transform );
+        cmsCloseProfile( profileIn );
+        cmsCloseProfile( profileOut );
+        cmsFreeToneCurve( linear );
+
+        auto ptr = hdr->Data() + 3;
+        auto sz = w * h;
+        do
+        {
+            *ptr = 1;
+            ptr += 4;
+        }
+        while( --sz );
+    }
+    else
+    {
+        Panic( "Invalid colorspace" );
+    }
 
     stbi_image_free( data );
     return hdr;

@@ -43,7 +43,7 @@ std::unique_ptr<BitmapAnim> ImageLoader::LoadAnim()
     return nullptr;
 }
 
-std::unique_ptr<BitmapHdr> ImageLoader::LoadHdr()
+std::unique_ptr<BitmapHdr> ImageLoader::LoadHdr( Colorspace colorspace )
 {
     return nullptr;
 }

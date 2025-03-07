@@ -70,7 +70,7 @@ bool ExrLoader::IsValid() const
 
 std::unique_ptr<Bitmap> ExrLoader::Load()
 {
-    auto hdr = LoadHdr();
+    auto hdr = LoadHdr( Colorspace::BT709 );
     if( m_td )
     {
         auto bmp = std::make_unique<Bitmap>( hdr->Width(), hdr->Height() );
@@ -96,9 +96,10 @@ std::unique_ptr<Bitmap> ExrLoader::Load()
     }
 }
 
-std::unique_ptr<BitmapHdr> ExrLoader::LoadHdr()
+std::unique_ptr<BitmapHdr> ExrLoader::LoadHdr( Colorspace colorspace )
 {
     CheckPanic( m_exr, "Invalid EXR file" );
+    CheckPanic( colorspace == Colorspace::BT709 || colorspace == Colorspace::BT2020, "Invalid colorspace" );
 
     auto dw = m_exr->dataWindow();
     auto width = dw.max.x - dw.min.x + 1;
@@ -110,7 +111,7 @@ std::unique_ptr<BitmapHdr> ExrLoader::LoadHdr()
     m_exr->setFrameBuffer( hdr.data() - dw.min.x - dw.min.y * width, 1, width );
     m_exr->readPixels( dw.min.y, dw.max.y );
 
-    auto bmp = std::make_unique<BitmapHdr>( width, height );
+    auto bmp = std::make_unique<BitmapHdr>( width, height, colorspace );
 
     const auto chroma = m_exr->header().findTypedAttribute<OPENEXR_IMF_INTERNAL_NAMESPACE::ChromaticitiesAttribute>( "chromaticities" );
     if( chroma )
@@ -127,9 +128,8 @@ std::unique_ptr<BitmapHdr> ExrLoader::LoadHdr()
         cmsToneCurve* linear = cmsBuildGamma( nullptr, 1 );
         cmsToneCurve* linear3[3] = { linear, linear, linear };
 
-
         auto profileIn = cmsCreateRGBProfile( &white, &primaries, linear3 );
-        auto profileOut = cmsCreateRGBProfile( &white709, &primaries709, linear3 );
+        auto profileOut = cmsCreateRGBProfile( &white709, colorspace == Colorspace::BT709 ? &primaries709 : &primaries2020, linear3 );
         auto transform = cmsCreateTransform( profileIn, TYPE_RGBA_HALF_FLT, profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, 0 );
 
         if( m_td )
@@ -159,14 +159,45 @@ std::unique_ptr<BitmapHdr> ExrLoader::LoadHdr()
         cmsCloseProfile( profileOut );
         cmsFreeToneCurve( linear );
 
-        auto ptr = bmp->Data() + 3;
-        auto sz = width * height;
-        do
+        FixAlpha( *bmp );
+    }
+    else if( colorspace == Colorspace::BT2020 )
+    {
+        cmsToneCurve* linear = cmsBuildGamma( nullptr, 1 );
+        cmsToneCurve* linear3[3] = { linear, linear, linear };
+
+        auto profileIn = cmsCreateRGBProfile( &white709, &primaries709, linear3 );
+        auto profileOut = cmsCreateRGBProfile( &white709, &primaries2020, linear3 );
+        auto transform = cmsCreateTransform( profileIn, TYPE_RGBA_HALF_FLT, profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, 0 );
+
+        if( m_td )
         {
-            *ptr = 1;
-            ptr += 4;
+            auto src = hdr.data();
+            auto dst = bmp->Data();
+            auto sz = width * height;
+            while( sz > 0 )
+            {
+                auto chunk = std::min<size_t>( sz, 16 * 1024 );
+                m_td->Queue( [src, dst, chunk, transform] {
+                    cmsDoTransform( transform, src, dst, chunk );
+                } );
+                src += chunk;
+                dst += chunk * 4;
+                sz -= chunk;
+            }
+            m_td->Sync();
         }
-        while( --sz );
+        else
+        {
+            cmsDoTransform( transform, hdr.data(), bmp->Data(), width * height );
+        }
+
+        cmsDeleteTransform( transform );
+        cmsCloseProfile( profileIn );
+        cmsCloseProfile( profileOut );
+        cmsFreeToneCurve( linear );
+
+        FixAlpha( *bmp );
     }
     else
     {
@@ -185,4 +216,16 @@ std::unique_ptr<BitmapHdr> ExrLoader::LoadHdr()
     }
 
     return bmp;
+}
+
+void ExrLoader::FixAlpha( BitmapHdr& bmp)
+{
+    auto ptr = bmp.Data() + 3;
+    auto sz = bmp.Width() * bmp.Height();
+    do
+    {
+        *ptr = 1;
+        ptr += 4;
+    }
+    while( --sz );
 }

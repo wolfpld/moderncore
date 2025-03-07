@@ -38,7 +38,7 @@ public:
     [[nodiscard]] bool PreferHdr() override;
 
     [[nodiscard]] std::unique_ptr<Bitmap> Load() override;
-    [[nodiscard]] std::unique_ptr<BitmapHdr> LoadHdr() override;
+    [[nodiscard]] std::unique_ptr<BitmapHdr> LoadHdr( Colorspace colorspace ) override;
 
 private:
     bool Open();

@@ -36,12 +36,12 @@ public:
     [[nodiscard]] bool IsHdr() override;
 
     [[nodiscard]] std::unique_ptr<Bitmap> Load() override;
-    [[nodiscard]] std::unique_ptr<BitmapHdr> LoadHdr() override;
+    [[nodiscard]] std::unique_ptr<BitmapHdr> LoadHdr( Colorspace colorspace ) override;
 
 private:
     [[nodiscard]] bool Open();
 
-    [[nodiscard]] bool SetupDecode( bool hdr );
+    [[nodiscard]] bool SetupDecode( bool hdr, Colorspace colorspace );
 
     void LoadYCbCr( float* ptr, size_t sz, size_t offset );
     void ConvertYCbCrToRGB( float* ptr, size_t sz );

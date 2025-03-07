@@ -2,6 +2,7 @@
 
 #include <memory>
 
+#include "util/Colorspace.hpp"
 #include "util/Tonemapper.hpp"
 
 class Bitmap;
@@ -22,7 +23,7 @@ public:
 
     [[nodiscard]] virtual std::unique_ptr<Bitmap> Load() = 0;
     [[nodiscard]] virtual std::unique_ptr<BitmapAnim> LoadAnim();
-    [[nodiscard]] virtual std::unique_ptr<BitmapHdr> LoadHdr();
+    [[nodiscard]] virtual std::unique_ptr<BitmapHdr> LoadHdr( Colorspace colorspace = Colorspace::BT709 );
 };
 
 std::unique_ptr<ImageLoader> GetImageLoader( const char* filename, ToneMap::Operator tonemap, TaskDispatch* td = nullptr );

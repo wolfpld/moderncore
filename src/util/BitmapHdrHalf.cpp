@@ -11,16 +11,8 @@
 #include "BitmapHdrHalf.hpp"
 #include "TaskDispatch.hpp"
 
-BitmapHdrHalf::BitmapHdrHalf( const BitmapHdr& bmp )
-    : m_width( bmp.Width() )
-    , m_height( bmp.Height() )
-    , m_data( new half_float::half[m_width*m_height*4] )
-    , m_colorspace( bmp.GetColorspace() )
+static void FloatToHalf( const float* src, half_float::half* dst, size_t sz )
 {
-    auto src = bmp.Data();
-    auto dst = m_data;
-    auto sz = m_width * m_height * 4;
-
 #ifdef __F16C__
   #ifdef __AVX512F__
     while( sz >= 16 )
@@ -50,6 +42,19 @@ BitmapHdrHalf::BitmapHdrHalf( const BitmapHdr& bmp )
     {
         *dst++ = half_float::half( *src++ );
     }
+}
+
+BitmapHdrHalf::BitmapHdrHalf( const BitmapHdr& bmp )
+    : m_width( bmp.Width() )
+    , m_height( bmp.Height() )
+    , m_data( new half_float::half[m_width*m_height*4] )
+    , m_colorspace( bmp.GetColorspace() )
+{
+    auto src = bmp.Data();
+    auto dst = m_data;
+    auto sz = m_width * m_height * 4;
+
+    FloatToHalf( src, dst, sz );
 }
 
 BitmapHdrHalf::BitmapHdrHalf( uint32_t width, uint32_t height, Colorspace colorspace )

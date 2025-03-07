@@ -61,6 +61,28 @@ static inline VkBufferCreateInfo GetStagingBufferInfo( uint64_t size )
     };
 }
 
+template<typename T>
+static void FillStagingBuffer( const std::vector<MipData>& mipChain, std::unique_ptr<T>&& tmp, const T* bmpptr, const std::shared_ptr<VlkBuffer>& stagingBuffer, TaskDispatch* td )
+{
+    const auto mipLevels = (uint32_t)mipChain.size();
+    auto bufptr = (uint8_t*)stagingBuffer->Ptr();
+    for( uint32_t level = 0; level < mipLevels; level++ )
+    {
+        const MipData& mipdata = mipChain[level];
+        memcpy( bufptr, bmpptr->Data(), mipdata.size );
+        bufptr += mipdata.size;
+        if( level < mipLevels-1 )
+        {
+            ZoneScopedN( "Mip downscale" );
+            ZoneTextF( "Level %u, %u x %u, %u bytes", level, mipChain[level+1].width, mipChain[level+1].height, mipChain[level+1].size );
+
+            tmp = bmpptr->ResizeNew( mipChain[level+1].width, mipChain[level+1].height, td );
+            bmpptr = tmp.get();
+        }
+    }
+    stagingBuffer->Flush();
+}
+
 Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format, bool mips, std::vector<std::shared_ptr<VlkFence>>& fencesOut, TaskDispatch* td )
 {
     ZoneScoped;
@@ -73,26 +95,7 @@ Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format, bool
     m_imageView = std::make_unique<VlkImageView>( device, GetImageViewCreateInfo( *m_image, format, mipLevels ) );
     auto stagingBuffer = std::make_shared<VlkBuffer>( device, GetStagingBufferInfo( bufsize ), VlkBuffer::WillWrite | VlkBuffer::PreferHost );
 
-    std::unique_ptr<Bitmap> tmp;
-    auto bmpptr = &bitmap;
-    auto bufptr = (uint8_t*)stagingBuffer->Ptr();
-    for( uint32_t level = 0; level < mipLevels; level++ )
-    {
-        const MipData& mipdata = mipChain[level];
-        memcpy( bufptr, bmpptr->Data(), mipdata.size );
-        bufptr += mipdata.size;
-        stagingBuffer->Flush( mipdata.offset, mipdata.size );
-
-        if( level < mipLevels-1 )
-        {
-            ZoneScopedN( "Mip downscale" );
-            ZoneTextF( "Level %u, %u x %u, %u bytes", level, mipChain[level+1].width, mipChain[level+1].height, mipChain[level+1].size );
-
-            tmp = bmpptr->ResizeNew( mipChain[level+1].width, mipChain[level+1].height, td );
-            bmpptr = tmp.get();
-        }
-    }
-
+    FillStagingBuffer( mipChain, std::unique_ptr<Bitmap>(), &bitmap, stagingBuffer, td );
     Upload( device, mipChain, std::move( stagingBuffer ), fencesOut );
 }
 
@@ -108,26 +111,7 @@ Texture::Texture( VlkDevice& device, const BitmapHdr& bitmap, VkFormat format, b
     m_imageView = std::make_unique<VlkImageView>( device, GetImageViewCreateInfo( *m_image, format, mipLevels ) );
     auto stagingBuffer = std::make_shared<VlkBuffer>( device, GetStagingBufferInfo( bufsize ), VlkBuffer::WillWrite | VlkBuffer::PreferHost );
 
-    std::unique_ptr<BitmapHdr> tmp;
-    auto bmpptr = &bitmap;
-    auto bufptr = (uint8_t*)stagingBuffer->Ptr();
-    for( uint32_t level = 0; level < mipLevels; level++ )
-    {
-        const MipData& mipdata = mipChain[level];
-        memcpy( bufptr, bmpptr->Data(), mipdata.size );
-        bufptr += mipdata.size;
-        stagingBuffer->Flush( mipdata.offset, mipdata.size );
-
-        if( level < mipLevels-1 )
-        {
-            ZoneScopedN( "Mip downscale" );
-            ZoneTextF( "Level %u, %u x %u, %u bytes", level, mipChain[level+1].width, mipChain[level+1].height, mipChain[level+1].size );
-
-            tmp = bmpptr->ResizeNew( mipChain[level+1].width, mipChain[level+1].height, td );
-            bmpptr = tmp.get();
-        }
-    }
-
+    FillStagingBuffer( mipChain, std::unique_ptr<BitmapHdr>(), &bitmap, stagingBuffer, td );
     Upload( device, mipChain, std::move( stagingBuffer ), fencesOut );
 }
 

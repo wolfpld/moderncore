@@ -35,14 +35,24 @@ float Pq( float N, float NominalLuminanceMul )
     return 10000.f * std::pow( std::max( 0.f, Nm2 - c1 ) / ( c2 - c3 * Nm2 ), m1inv ) * NominalLuminanceMul;
 }
 
-float Hlg( float E, float Y )
+float Hlg( float E )
 {
-    constexpr float gamma = 1.2f;
-    constexpr float g = ( gamma - 1.f ) / gamma;
-    constexpr float alpha = 1.f;  // no idea about this value
-    constexpr float invalpha = 1.f / alpha;
+    constexpr float a = 0.17883277f;
+    constexpr float b = 0.28466892f;
+    constexpr float c = 0.55991073f;
 
-    return std::pow( Y * invalpha, g ) * E * invalpha;
+    if( E < 0 )
+    {
+        return -1.f * Hlg( -1.f * E );
+    }
+    else if( E <= 0.5f )
+    {
+        return E * E / 3.f;
+    }
+    else
+    {
+        return ( std::exp( ( E - c ) / a ) + b ) / 12.f;
+    }
 }
 
 #if defined __SSE4_1__ && defined __FMA__
@@ -804,15 +814,9 @@ void HeifLoader::ApplyTransfer( float* ptr, size_t sz, size_t offset )
         case heif_transfer_characteristic_ITU_R_BT_2100_0_HLG:
             do
             {
-                const auto r = ptr[0];
-                const auto g = ptr[1];
-                const auto b = ptr[2];
-
-                const auto Y = 0.2627f * r + 0.6780f * g + 0.0593f * b;
-
-                ptr[0] = Hlg( r, Y );
-                ptr[1] = Hlg( g, Y );
-                ptr[2] = Hlg( b, Y );
+                ptr[0] = Hlg( ptr[0] ) * 100.f;
+                ptr[1] = Hlg( ptr[1] ) * 100.f;
+                ptr[2] = Hlg( ptr[2] ) * 100.f;
 
                 ptr += 4;
             }

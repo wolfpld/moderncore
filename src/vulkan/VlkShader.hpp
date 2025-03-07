@@ -15,14 +15,14 @@ class VlkShader : public VlkBase
 public:
     struct Stage
     {
-        std::shared_ptr<VlkShaderModule> module;    // Shader ctor will move this into m_modules
+        std::shared_ptr<VlkShaderModule> module;
         VkShaderStageFlagBits stage;
     };
 
     template<DataContainer T>
     explicit VlkShader( T& stages ) : VlkShader( stages.data(), stages.size() ) {}
 
-    VlkShader( Stage* stages, size_t count );
+    VlkShader( const Stage* stages, size_t count );
 
     NoCopy( VlkShader );
 

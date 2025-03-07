@@ -83,7 +83,7 @@ BusyIndicator::BusyIndicator( GarbageChute& garbage, std::shared_ptr<VlkDevice> 
     Unembed( BusyIndicatorVert );
     Unembed( TexturingFrag );
 
-    std::array stages = {
+    const std::array stages = {
         VlkShader::Stage { std::make_shared<VlkShaderModule>( *m_device, *BusyIndicatorVert ), VK_SHADER_STAGE_VERTEX_BIT },
         VlkShader::Stage { std::make_shared<VlkShaderModule>( *m_device, *TexturingFrag ), VK_SHADER_STAGE_FRAGMENT_BIT }
     };

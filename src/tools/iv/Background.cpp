@@ -29,7 +29,7 @@ Background::Background( GarbageChute& garbage, std::shared_ptr<VlkDevice> device
     Unembed( BackgroundVert );
     Unembed( BackgroundFrag );
 
-    std::array stages = {
+    const std::array stages = {
         VlkShader::Stage { std::make_shared<VlkShaderModule>( *m_device, *BackgroundVert ), VK_SHADER_STAGE_VERTEX_BIT },
         VlkShader::Stage { std::make_shared<VlkShaderModule>( *m_device, *BackgroundFrag ), VK_SHADER_STAGE_FRAGMENT_BIT }
     };

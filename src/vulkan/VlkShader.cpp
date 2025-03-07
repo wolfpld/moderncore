@@ -1,7 +1,7 @@
 #include "VlkShader.hpp"
 #include "VlkShaderModule.hpp"
 
-VlkShader::VlkShader( Stage* stages, size_t count )
+VlkShader::VlkShader( const Stage* stages, size_t count )
     : m_stages( count )
     , m_modules( count )
 {
@@ -12,6 +12,6 @@ VlkShader::VlkShader( Stage* stages, size_t count )
         m_stages[i].module = *stages[i].module;
         m_stages[i].pName = "main";
 
-        m_modules[i] = std::move( stages[i].module );
+        m_modules[i] = stages[i].module;
     }
 }

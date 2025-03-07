@@ -66,6 +66,7 @@ private:
     float m_gainMapHeadroom;
 
     Conversion m_matrix;
+    Colorspace m_colorspace;
 
     size_t m_iccSize;
     char* m_iccData;

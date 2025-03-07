@@ -21,7 +21,7 @@
 namespace
 {
 
-float Pq( float N )
+float Pq( float N, float NominalLuminanceMul )
 {
     constexpr float m1 = 0.1593017578125f;
     constexpr float m1inv = 1.f / m1;
@@ -32,7 +32,7 @@ float Pq( float N )
     constexpr float c3 = 18.6875f;
 
     const auto Nm2 = std::pow( std::max( N, 0.f ), m2inv );
-    return 10000.f * std::pow( std::max( 0.f, Nm2 - c1 ) / ( c2 - c3 * Nm2 ), m1inv ) / 255.f;
+    return 10000.f * std::pow( std::max( 0.f, Nm2 - c1 ) / ( c2 - c3 * Nm2 ), m1inv ) * NominalLuminanceMul;
 }
 
 float Hlg( float E, float Y )
@@ -46,7 +46,7 @@ float Hlg( float E, float Y )
 }
 
 #if defined __SSE4_1__ && defined __FMA__
-void LinearizePq128( float* ptr, int sz )
+void LinearizePq128( float* ptr, int sz, float NominalLuminanceMul )
 {
     while( sz > 0 )
     {
@@ -61,7 +61,7 @@ void LinearizePq128( float* ptr, int sz )
         __m128 px5 = _mm_div_ps( px3, px4 );
 
         __m128 px6 = _mm_pow_ps( px5, _mm_set1_ps( 1.f / 0.1593017578125f ) );
-        __m128 ret = _mm_mul_ps( px6, _mm_set1_ps( 10000.f / 255.f ) );
+        __m128 ret = _mm_mul_ps( px6, _mm_set1_ps( 10000.f * NominalLuminanceMul ) );
 
         __m128 b = _mm_blend_ps( ret, px0, 0x8 );
         _mm_storeu_ps( ptr, b );
@@ -72,7 +72,7 @@ void LinearizePq128( float* ptr, int sz )
 }
 
 #  if defined __AVX2__
-void LinearizePq256( float* ptr, int sz )
+void LinearizePq256( float* ptr, int sz, float NominalLuminanceMul )
 {
     while( sz > 1 )
     {
@@ -87,7 +87,7 @@ void LinearizePq256( float* ptr, int sz )
         __m256 px5 = _mm256_div_ps( px3, px4 );
 
         __m256 px6 = _mm256_pow_ps( px5, _mm256_set1_ps( 1.f / 0.1593017578125f ) );
-        __m256 ret = _mm256_mul_ps( px6, _mm256_set1_ps( 10000.f / 255.f ) );
+        __m256 ret = _mm256_mul_ps( px6, _mm256_set1_ps( 10000.f * NominalLuminanceMul ) );
 
         __m256 b = _mm256_blend_ps( ret, px0, 0x88 );
         _mm256_storeu_ps( ptr, b );
@@ -99,7 +99,7 @@ void LinearizePq256( float* ptr, int sz )
 #  endif
 
 #  if defined __AVX512F__
-void LinearizePq512( float* ptr, int sz )
+void LinearizePq512( float* ptr, int sz, float NominalLuminanceMul )
 {
     while( sz > 3 )
     {
@@ -114,7 +114,7 @@ void LinearizePq512( float* ptr, int sz )
         __m512 px5 = _mm512_div_ps( px3, px4 );
 
         __m512 px6 = _mm512_pow_ps( px5, _mm512_set1_ps( 1.f / 0.1593017578125f ) );
-        __m512 ret = _mm512_mul_ps( px6, _mm512_set1_ps( 10000.f / 255.f ) );
+        __m512 ret = _mm512_mul_ps( px6, _mm512_set1_ps( 10000.f * NominalLuminanceMul ) );
 
         __m512 b = _mm512_mask_blend_ps( 0x8888, ret, px0 );
         _mm512_storeu_ps( ptr, b );
@@ -125,30 +125,30 @@ void LinearizePq512( float* ptr, int sz )
 }
 #  endif
 
-void LinearizePq( float* ptr, int sz )
+void LinearizePq( float* ptr, int sz, float NominalLuminanceMul )
 {
 #  ifdef __AVX512F__
-    LinearizePq512( ptr, sz );
+    LinearizePq512( ptr, sz, NominalLuminanceMul );
     if( (sz & 3) == 0 ) return;
     ptr += ( sz & ~3 ) * 4;
     sz &= 3;
 #  endif
 #  ifdef __AVX2__
-    LinearizePq256( ptr, sz );
+    LinearizePq256( ptr, sz, NominalLuminanceMul );
     if( (sz & 1) == 0 ) return;
     ptr += ( sz & ~1 ) * 4;
     sz &= 1;
 #  endif
-    LinearizePq128( ptr, sz );
+    LinearizePq128( ptr, sz, NominalLuminanceMul );
 }
 #else
-void LinearizePq( float* ptr, int sz )
+void LinearizePq( float* ptr, int sz, NominalLuminanceMul )
 {
     for( int i=0; i<sz; i++ )
     {
-        ptr[0] = Pq( ptr[0] );
-        ptr[1] = Pq( ptr[1] );
-        ptr[2] = Pq( ptr[2] );
+        ptr[0] = Pq( ptr[0], NominalLuminanceMul );
+        ptr[1] = Pq( ptr[1], NominalLuminanceMul );
+        ptr[2] = Pq( ptr[2], NominalLuminanceMul );
 
         ptr += 4;
     }
@@ -398,6 +398,8 @@ bool HeifLoader::SetupDecode( bool hdr, Colorspace colorspace )
 {
     auto err = heif_decode_image( m_handle, &m_image, heif_colorspace_YCbCr, heif_chroma_444, nullptr );
     if( err.code != heif_error_Ok ) return false;
+
+    m_colorspace = colorspace;
 
     if( !m_nclx )
     {
@@ -791,11 +793,13 @@ void HeifLoader::ApplyTransfer( float* ptr, size_t sz, size_t offset )
     else
     {
         CheckPanic( m_nclx, "No nclx color profile found" );
+        CheckPanic( m_colorspace == Colorspace::BT709 || m_colorspace == Colorspace::BT2020, "Invalid colorspace" );
 
+        const auto NominalLuminanceMul = 1.0f / ( m_colorspace == Colorspace::BT709 ? 250.f : 100.f );
         switch( m_nclx->transfer_characteristics )
         {
         case heif_transfer_characteristic_ITU_R_BT_2100_0_PQ:
-            LinearizePq( ptr, sz );
+            LinearizePq( ptr, sz, NominalLuminanceMul );
             break;
         case heif_transfer_characteristic_ITU_R_BT_2100_0_HLG:
             do

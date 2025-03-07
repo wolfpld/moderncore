@@ -29,8 +29,6 @@ public:
     [[nodiscard]] std::unique_ptr<BitmapHdr> LoadHdr( Colorspace colorspace ) override;
 
 private:
-    void FixAlpha( BitmapHdr& bmp);
-
     std::unique_ptr<ExrStream> m_stream;
     std::unique_ptr<OPENEXR_IMF_INTERNAL_NAMESPACE::RgbaInputFile> m_exr;
 

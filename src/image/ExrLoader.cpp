@@ -14,6 +14,17 @@
 #include "util/TaskDispatch.hpp"
 #include "util/Tonemapper.hpp"
 
+static void FixAlpha( float* ptr, size_t sz )
+{
+    ptr += 3;
+    do
+    {
+        *ptr = 1;
+        ptr += 4;
+    }
+    while( --sz );
+}
+
 class ExrStream : public Imf::IStream
 {
 public:
@@ -142,6 +153,7 @@ std::unique_ptr<BitmapHdr> ExrLoader::LoadHdr( Colorspace colorspace )
                 auto chunk = std::min<size_t>( sz, 16 * 1024 );
                 m_td->Queue( [src, dst, chunk, transform] {
                     cmsDoTransform( transform, src, dst, chunk );
+                    FixAlpha( dst, chunk );
                 } );
                 src += chunk;
                 dst += chunk * 4;
@@ -152,14 +164,13 @@ std::unique_ptr<BitmapHdr> ExrLoader::LoadHdr( Colorspace colorspace )
         else
         {
             cmsDoTransform( transform, hdr.data(), bmp->Data(), width * height );
+            FixAlpha( bmp->Data(), width * height );
         }
 
         cmsDeleteTransform( transform );
         cmsCloseProfile( profileIn );
         cmsCloseProfile( profileOut );
         cmsFreeToneCurve( linear );
-
-        FixAlpha( *bmp );
     }
     else if( colorspace == Colorspace::BT2020 )
     {
@@ -180,6 +191,7 @@ std::unique_ptr<BitmapHdr> ExrLoader::LoadHdr( Colorspace colorspace )
                 auto chunk = std::min<size_t>( sz, 16 * 1024 );
                 m_td->Queue( [src, dst, chunk, transform] {
                     cmsDoTransform( transform, src, dst, chunk );
+                    FixAlpha( dst, chunk );
                 } );
                 src += chunk;
                 dst += chunk * 4;
@@ -190,14 +202,13 @@ std::unique_ptr<BitmapHdr> ExrLoader::LoadHdr( Colorspace colorspace )
         else
         {
             cmsDoTransform( transform, hdr.data(), bmp->Data(), width * height );
+            FixAlpha( bmp->Data(), width * height );
         }
 
         cmsDeleteTransform( transform );
         cmsCloseProfile( profileIn );
         cmsCloseProfile( profileOut );
         cmsFreeToneCurve( linear );
-
-        FixAlpha( *bmp );
     }
     else
     {
@@ -216,16 +227,4 @@ std::unique_ptr<BitmapHdr> ExrLoader::LoadHdr( Colorspace colorspace )
     }
 
     return bmp;
-}
-
-void ExrLoader::FixAlpha( BitmapHdr& bmp)
-{
-    auto ptr = bmp.Data() + 3;
-    auto sz = bmp.Width() * bmp.Height();
-    do
-    {
-        *ptr = 1;
-        ptr += 4;
-    }
-    while( --sz );
 }

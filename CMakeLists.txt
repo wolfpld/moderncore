@@ -433,6 +433,7 @@ EmbedShader(IV_SRC BackgroundVert src/tools/iv/shader/Background.vert)
 EmbedShader(IV_SRC BackgroundFrag src/tools/iv/shader/Background.frag)
 EmbedShader(IV_SRC BusyIndicatorVert src/tools/iv/shader/BusyIndicator.vert)
 EmbedShader(IV_SRC SupersampleFrag src/tools/iv/shader/Supersample.frag)
+EmbedShader(IV_SRC SupersamplePqFrag src/tools/iv/shader/SupersamplePq.frag)
 EmbedShader(IV_SRC TexturingVert src/tools/iv/shader/Texturing.vert)
 EmbedShader(IV_SRC TexturingFrag src/tools/iv/shader/Texturing.frag)
 

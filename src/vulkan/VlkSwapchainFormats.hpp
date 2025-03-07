@@ -10,7 +10,8 @@ constexpr inline std::array SdrSwapchainFormats = {
 };
 
 constexpr inline std::array HdrSwapchainFormats = {
-    VkSurfaceFormatKHR { VK_FORMAT_R16G16B16A16_SFLOAT, VK_COLOR_SPACE_BT709_LINEAR_EXT },
+    VkSurfaceFormatKHR { VK_FORMAT_A2B10G10R10_UNORM_PACK32, VK_COLOR_SPACE_HDR10_ST2084_EXT },
+    VkSurfaceFormatKHR { VK_FORMAT_A2R10G10B10_UNORM_PACK32, VK_COLOR_SPACE_HDR10_ST2084_EXT },
 };
 
 template<size_t Size>

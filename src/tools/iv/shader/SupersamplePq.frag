@@ -1,0 +1,66 @@
+#version 450
+
+in vec4 gl_FragCoord;
+
+layout(location = 0) in vec2 outTexCoord;
+layout(location = 0) out vec4 outColor;
+layout(binding = 0) uniform sampler2D tex;
+
+layout(push_constant) uniform PushConstants {
+    layout(offset = 8) float texDelta;
+    float div;
+};
+
+vec3 Pq( vec3 color )
+{
+    const float NominalLuminance = 100.0;
+
+    const float m1 = 1305.0 / 8192.0;
+    const float m2 = 2523.0 / 32.0;
+    const float c1 = 107.0 / 128.0;
+    const float c2 = 2413.0 / 128.0;
+    const float c3 = 2392.0 / 128.0;
+
+    const vec3 Y = color / ( 10000.0 / NominalLuminance );
+    const vec3 Ym1 = pow( Y, vec3( m1 ) );
+
+    return pow( ( c1 + c2 * Ym1 ) / ( 1.0 + c3 * Ym1 ), vec3( m2 ) );
+}
+
+void main()
+{
+    float dx = dFdx(outTexCoord.x);
+
+    if( dx * 0.9999 <= texDelta )
+    {
+        outColor = texture(tex, outTexCoord);
+    }
+    else
+    {
+        const float mul = min( 1.0, ( dx - texDelta ) / ( texDelta * 0.25 ) );
+        const vec2 off = vec2( 0.125, 0.375 ) * mul;
+
+        float dy = dFdy(outTexCoord.y);
+
+        vec4 acc = vec4(0.0);
+        acc += texture(tex, outTexCoord + vec2( dx * off.x,  dy * off.y));
+        acc += texture(tex, outTexCoord + vec2(-dx * off.x, -dy * off.y));
+        acc += texture(tex, outTexCoord + vec2( dx * off.y, -dy * off.x));
+        acc += texture(tex, outTexCoord + vec2(-dx * off.y,  dy * off.x));
+        outColor = acc * 0.25;
+    }
+
+    if( outColor.a < 1.0 )
+    {
+        const float lo = pow( 0.2, 2.2 );
+        const float hi = pow( 0.3, 2.2 );
+        const vec4 darkColor = vec4( lo, lo, lo, 1.0 );
+        const vec4 lightColor = vec4( hi, hi, hi, 1.0 );
+        vec4 checkerboard = ( ( int( gl_FragCoord.x * div ) + int( gl_FragCoord.y * div ) ) & 1 ) == 0 ? darkColor : lightColor;
+        outColor = vec4( Pq( mix( outColor, checkerboard, 1.0 - outColor.a ).rgb ), 1.0 );
+    }
+    else
+    {
+        outColor = vec4( Pq( outColor.rgb ), 1.0 );
+    }
+}

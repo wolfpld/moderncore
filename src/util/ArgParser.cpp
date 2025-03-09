@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string>
 #include <string.h>
+#include <ranges>
 
 #include "ArgParser.hpp"
 #include "Logs.hpp"
@@ -42,7 +43,7 @@ constexpr std::array arguments = {
 
 bool ParseBoolean( const char* str )
 {
-    constexpr auto maxLength = std::max_element( arguments.begin(), arguments.end(), []( const auto& lhs, const auto& rhs ) { return lhs.length < rhs.length; } )->length;
+    constexpr auto maxLength = std::ranges::max_element( arguments, []( const auto& lhs, const auto& rhs ) { return lhs.length < rhs.length; } )->length;
     const auto length = strlen( str );
     if( length <= maxLength )
     {

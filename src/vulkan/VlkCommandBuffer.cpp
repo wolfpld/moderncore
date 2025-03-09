@@ -6,10 +6,12 @@ VlkCommandBuffer::VlkCommandBuffer( const VlkCommandPool& pool, bool primary )
     : m_commandPool( pool )
     , m_device( pool )
 {
-    VkCommandBufferAllocateInfo info  = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO };
-    info.commandPool = pool;
-    info.level = primary ? VK_COMMAND_BUFFER_LEVEL_PRIMARY : VK_COMMAND_BUFFER_LEVEL_SECONDARY;
-    info.commandBufferCount = 1;
+    const VkCommandBufferAllocateInfo info  = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .commandPool = pool,
+        .level = primary ? VK_COMMAND_BUFFER_LEVEL_PRIMARY : VK_COMMAND_BUFFER_LEVEL_SECONDARY,
+        .commandBufferCount = 1
+    };
 
     std::lock_guard lock( pool );
     VkVerify( vkAllocateCommandBuffers( pool, &info, &m_commandBuffer ) );
@@ -23,8 +25,11 @@ VlkCommandBuffer::~VlkCommandBuffer()
 
 void VlkCommandBuffer::Begin( VkCommandBufferUsageFlags flags, bool _lock )
 {
-    VkCommandBufferBeginInfo begin = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
-    begin.flags = flags;
+    constexpr VkCommandBufferBeginInfo begin = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
+    };
+
     if( _lock ) lock();
     VkVerify( vkBeginCommandBuffer( m_commandBuffer, &begin ) );
 }

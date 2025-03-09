@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <ranges>
 
 #include "CursorBaseMulti.hpp"
 #include "util/Panic.hpp"
@@ -28,5 +29,5 @@ void CursorBaseMulti::CalcSizes()
     CheckPanic( m_sizes.empty(), "Sizes are already calculated" );
 
     for( auto& v : m_cursor ) m_sizes.emplace_back( v.first );
-    std::sort( m_sizes.begin(), m_sizes.end() );
+    std::ranges::sort( m_sizes );
 }

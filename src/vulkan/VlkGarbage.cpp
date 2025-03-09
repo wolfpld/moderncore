@@ -5,6 +5,7 @@
 #include "VlkFence.hpp"
 #include "VlkGarbage.hpp"
 #include "util/Logs.hpp"
+#include "util/Panic.hpp"
 
 VlkGarbage::VlkGarbage()
     : m_shutdown( false )
@@ -25,6 +26,7 @@ VlkGarbage::~VlkGarbage()
 
 void VlkGarbage::Recycle( std::shared_ptr<VlkFence> fence, std::shared_ptr<VlkBase>&& object )
 {
+    CheckPanic( fence, "Fence is null" );
     std::lock_guard lock( m_lock );
     auto it = m_garbage.find( fence );
     if( it != m_garbage.end() )
@@ -40,6 +42,7 @@ void VlkGarbage::Recycle( std::shared_ptr<VlkFence> fence, std::shared_ptr<VlkBa
 
 void VlkGarbage::Recycle( std::shared_ptr<VlkFence> fence, std::vector<std::shared_ptr<VlkBase>>&& objects )
 {
+    CheckPanic( fence, "Fence is null" );
     std::lock_guard lock( m_lock );
     auto it = m_garbage.find( fence );
     if( it != m_garbage.end() )

@@ -14,13 +14,22 @@ jobs:
         pacman -Syu --noconfirm
         pacman -S --noconfirm --needed nodejs git clang cmake ninja shaderc vulkan-headers vulkan-validation-layers vulkan-utility-libraries wayland wayland-protocols libxkbcommon glm libpng libjpeg-turbo libjxl libwebp libheif systemd-libs libdrm libdisplay-info mesa python mold libtiff libraw openexr libsixel cairo librsvg libexif pugixml
     - uses: actions/checkout@v4
-    - run: cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Release
+    - name: clang configure
+      run: cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Release
       env:
         CC: clang
         CXX: clang++
-    - run: ninja -C build install
+    - name: clang build
+      run: ninja -C build install
       env:
         DESTDIR: ${{ github.workspace }}/install
+    - name: gcc configure
+      run: cmake -G Ninja -B build-gcc -DCMAKE_BUILD_TYPE=Release
+      env:
+        CC: gcc
+        CXX: g++
+    - name: gcc build
+      run: ninja -C build-gcc
     - run: strip ${{ github.workspace }}/install/*
     - uses: actions/upload-artifact@v3
       with:

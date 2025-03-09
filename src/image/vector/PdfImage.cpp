@@ -8,15 +8,15 @@
 #include "util/Bitmap.hpp"
 #include "util/Panic.hpp"
 
-typedef void*(*LoadPdf_t)( int, const char*, GError** );
-typedef void*(*GetPage_t)( void*, int );
-typedef void(*GetPageSize_t)( void*, double*, double* );
-typedef void(*RenderPage_t)( void*, cairo_t* );
+using LoadPdf_t = void*(*)(int, const char*, GError**);
+using GetPage_t = void*(*)(void*, int);
+using GetPageSize_t = void(*)(void*, double*, double*);
+using RenderPage_t = void(*)(void*, cairo_t*);
 
-LoadPdf_t LoadPdf = nullptr;
-GetPage_t GetPage = nullptr;
-GetPageSize_t GetPageSize = nullptr;
-RenderPage_t RenderPage = nullptr;
+static LoadPdf_t LoadPdf = nullptr;
+static GetPage_t GetPage = nullptr;
+static GetPageSize_t GetPageSize = nullptr;
+static RenderPage_t RenderPage = nullptr;
 
 struct PdfLibraryLoader
 {

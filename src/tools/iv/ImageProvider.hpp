@@ -30,7 +30,7 @@ public:
         std::shared_ptr<BitmapHdr> bitmapHdr;
     };
 
-    typedef void(*Callback)( void* userData, int64_t id, Result result, int flags, ReturnData data );
+    using Callback = void (*)(void *, int64_t, Result, int, ReturnData);
 
     ImageProvider( TaskDispatch& td );
     ~ImageProvider();

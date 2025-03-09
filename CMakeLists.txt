@@ -129,14 +129,14 @@ endfunction()
 
 function(EmbedShader LIST NAME FILE)
     add_custom_command(
-        OUTPUT shader/${NAME}.spv
-        COMMAND ${GLSLC} --target-env=vulkan1.3 -O -o shader/${NAME}.spv ${CMAKE_CURRENT_LIST_DIR}/${FILE}
+        OUTPUT _tmp/${NAME}.spv
+        COMMAND ${GLSLC} --target-env=vulkan1.3 -O -o _tmp/${NAME}.spv ${CMAKE_CURRENT_LIST_DIR}/${FILE}
         DEPENDS ${GLSLC} ${CMAKE_CURRENT_LIST_DIR}/${FILE}
     )
     add_custom_command(
         OUTPUT shader/${NAME}.cpp shader/${NAME}.hpp
-        COMMAND embed ${NAME} shader/${NAME}.spv shader/${NAME}
-        DEPENDS embed shader/${NAME}.spv
+        COMMAND embed ${NAME} _tmp/${NAME}.spv shader/${NAME}
+        DEPENDS embed _tmp/${NAME}.spv
     )
     list(APPEND ${LIST} shader/${NAME}.cpp)
     return(PROPAGATE ${LIST})

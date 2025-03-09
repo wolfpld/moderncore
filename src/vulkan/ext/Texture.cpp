@@ -171,7 +171,7 @@ void Texture::Upload( VlkDevice& device, const std::vector<MipData>& mipChain, s
         ZoneVk( device, *cmdTrn, "Texture upload", true );
         WriteBarrier( *cmdTrn, level );
         const MipData& mipdata = mipChain[level];
-        VkBufferImageCopy region = {
+        const VkBufferImageCopy region = {
             .bufferOffset = mipdata.offset,
             .imageSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, level, 0, 1 },
             .imageExtent = { mipdata.width, mipdata.height, 1 }
@@ -220,7 +220,7 @@ void Texture::Upload( VlkDevice& device, const std::vector<MipData>& mipChain, s
 
 void Texture::WriteBarrier( VkCommandBuffer cmdbuf, uint32_t mip )
 {
-    VkImageMemoryBarrier2 barrier = {
+    const VkImageMemoryBarrier2 barrier = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
         .dstStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
         .dstAccessMask = VK_ACCESS_2_MEMORY_WRITE_BIT,
@@ -231,7 +231,7 @@ void Texture::WriteBarrier( VkCommandBuffer cmdbuf, uint32_t mip )
         .image = *m_image,
         .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, mip, 1, 0, 1 }
     };
-    VkDependencyInfo deps = {
+    const VkDependencyInfo deps = {
         .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
         .imageMemoryBarrierCount = 1,
         .pImageMemoryBarriers = &barrier
@@ -241,7 +241,7 @@ void Texture::WriteBarrier( VkCommandBuffer cmdbuf, uint32_t mip )
 
 void Texture::ReadBarrier( VkCommandBuffer cmdbuf, uint32_t mipLevels )
 {
-    VkImageMemoryBarrier2 barrier = {
+    const VkImageMemoryBarrier2 barrier = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
         .srcStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
         .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
@@ -254,7 +254,7 @@ void Texture::ReadBarrier( VkCommandBuffer cmdbuf, uint32_t mipLevels )
         .image = *m_image,
         .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, mipLevels, 0, 1 }
     };
-    VkDependencyInfo deps = {
+    const VkDependencyInfo deps = {
         .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
         .imageMemoryBarrierCount = 1,
         .pImageMemoryBarriers = &barrier
@@ -264,7 +264,7 @@ void Texture::ReadBarrier( VkCommandBuffer cmdbuf, uint32_t mipLevels )
 
 void Texture::ReadBarrierTrn( VkCommandBuffer cmdbuf, uint32_t mipLevels, uint32_t trnQueue, uint32_t gfxQueue )
 {
-    VkImageMemoryBarrier2 barrier = {
+    const VkImageMemoryBarrier2 barrier = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
         .srcStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
         .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
@@ -275,7 +275,7 @@ void Texture::ReadBarrierTrn( VkCommandBuffer cmdbuf, uint32_t mipLevels, uint32
         .image = *m_image,
         .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, mipLevels, 0, 1 }
     };
-    VkDependencyInfo deps = {
+    const VkDependencyInfo deps = {
         .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
         .imageMemoryBarrierCount = 1,
         .pImageMemoryBarriers = &barrier
@@ -285,7 +285,7 @@ void Texture::ReadBarrierTrn( VkCommandBuffer cmdbuf, uint32_t mipLevels, uint32
 
 void Texture::ReadBarrierGfx( VkCommandBuffer cmdbuf, uint32_t mipLevels, uint32_t trnQueue, uint32_t gfxQueue )
 {
-    VkImageMemoryBarrier2 barrier = {
+    const VkImageMemoryBarrier2 barrier = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
         .dstStageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT,
         .dstAccessMask = VK_ACCESS_2_SHADER_READ_BIT,
@@ -296,7 +296,7 @@ void Texture::ReadBarrierGfx( VkCommandBuffer cmdbuf, uint32_t mipLevels, uint32
         .image = *m_image,
         .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, mipLevels, 0, 1 }
     };
-    VkDependencyInfo deps = {
+    const VkDependencyInfo deps = {
         .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
         .imageMemoryBarrierCount = 1,
         .pImageMemoryBarriers = &barrier

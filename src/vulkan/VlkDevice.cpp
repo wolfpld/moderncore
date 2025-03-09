@@ -1,5 +1,6 @@
 #include <array>
 #include <format>
+#include <ranges>
 #include <string.h>
 #include <tracy/Tracy.hpp>
 #include <vector>
@@ -41,7 +42,7 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
         else
         {
             mclog( LogLevel::Debug, "No present surface provided, assuming all queues support present." );
-            std::fill( presentSupport.begin(), presentSupport.end(), VK_TRUE );
+            std::ranges::fill( presentSupport, VK_TRUE );
         }
     }
 

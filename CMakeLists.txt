@@ -379,26 +379,6 @@ set(MCORE_SRC
     src/MCore.cpp
 )
 
-set(SHADER_SRC
-    shader/Background.frag
-    shader/Background.vert
-    shader/SoftwareCursor.frag
-    shader/SoftwareCursor.vert
-)
-
-foreach(SHADER IN LISTS SHADER_SRC)
-    get_filename_component(SPIRV ${SHADER} NAME)
-    string(APPEND SPIRV ".spv")
-
-    add_custom_command(
-        OUTPUT ${SPIRV}
-        COMMAND ${GLSLC} --target-env=vulkan1.3 -O -o ${SPIRV} ${CMAKE_CURRENT_LIST_DIR}/${SHADER}
-        DEPENDS ${SHADER}
-    )
-
-    set(MCORE_SRC ${MCORE_SRC} ${SPIRV})
-endforeach()
-
 add_executable(mcore ${MCORE_SRC})
 add_dependencies(mcore git-ref)
 target_link_libraries(mcore PRIVATE

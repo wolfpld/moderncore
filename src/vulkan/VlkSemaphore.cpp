@@ -4,7 +4,7 @@
 VlkSemaphore::VlkSemaphore( VkDevice device )
     : m_device( device )
 {
-    VkSemaphoreCreateInfo info = { VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
+    constexpr VkSemaphoreCreateInfo info = { .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
     VkVerify( vkCreateSemaphore( device, &info, nullptr, &m_semaphore ) );
 }
 

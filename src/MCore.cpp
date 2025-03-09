@@ -7,8 +7,7 @@
 #include "util/Callstack.hpp"
 #include "util/Logs.hpp"
 
-namespace {
-void PrintHelp()
+static void PrintHelp()
 {
     printf( "Usage: mcore [options]\n" );
     printf( "Options:\n" );
@@ -18,7 +17,6 @@ void PrintHelp()
     printf( "  -l, --log-file               Log to file\n" );
     printf( "  -V, --validation [on|off]    Enable or disable validation layers\n" );
     printf( "  --help                       Print this help\n" );
-}
 }
 
 int main( int argc, char** argv )

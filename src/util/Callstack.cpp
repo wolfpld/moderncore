@@ -7,11 +7,9 @@
 #include "Callstack.hpp"
 #include "Logs.hpp"
 
-namespace {
-int callstackIdx;
-bool callstackExternal;
-bool callstackShowExternal = false;
-}
+static int callstackIdx;
+static bool callstackExternal;
+static bool callstackShowExternal = false;
 
 #ifndef DISABLE_CALLSTACK
 

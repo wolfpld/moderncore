@@ -8,13 +8,10 @@
 #include "Terminal.hpp"
 #include "util/Panic.hpp"
 
-namespace
-{
 constexpr std::array termFileNo = { STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO };
 
 static int s_termFd = -1;
 static struct termios s_termSave;
-}
 
 bool OpenTerminal()
 {

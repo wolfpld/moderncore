@@ -25,8 +25,7 @@
 #include "util/Tonemapper.hpp"
 #include "util/VectorImage.hpp"
 
-namespace {
-void PrintHelp()
+static void PrintHelp()
 {
     printf( "Usage: vv [options] <image>\n" );
     printf( "Options:\n" );
@@ -54,7 +53,7 @@ enum class ScaleMode
     Scale2x,
 };
 
-void AdjustBitmap( std::unique_ptr<Bitmap>& bitmap, std::unique_ptr<BitmapAnim>& anim, const std::unique_ptr<VectorImage>& vector, TaskDispatch& td, uint32_t col, uint32_t row, ScaleMode scale )
+static void AdjustBitmap( std::unique_ptr<Bitmap>& bitmap, std::unique_ptr<BitmapAnim>& anim, const std::unique_ptr<VectorImage>& vector, TaskDispatch& td, uint32_t col, uint32_t row, ScaleMode scale )
 {
     if( anim )
     {
@@ -126,7 +125,7 @@ void AdjustBitmap( std::unique_ptr<Bitmap>& bitmap, std::unique_ptr<BitmapAnim>&
     }
 }
 
-void FillBackground( Bitmap& bitmap, uint32_t bg )
+static void FillBackground( Bitmap& bitmap, uint32_t bg )
 {
     const auto bgc = bg | 0xFF000000;
     const auto bgr = ( bg       ) & 0xFF;
@@ -158,7 +157,7 @@ void FillBackground( Bitmap& bitmap, uint32_t bg )
     }
 }
 
-void FillCheckerboard( Bitmap& bitmap, uint32_t shift = 3 )
+static void FillCheckerboard( Bitmap& bitmap, uint32_t shift = 3 )
 {
     constexpr auto dist = 32;
     constexpr auto bg0 = 128 + dist;
@@ -202,7 +201,7 @@ void FillCheckerboard( Bitmap& bitmap, uint32_t shift = 3 )
     }
 }
 
-void FillBackground( BitmapAnim& anim, uint32_t bg )
+static void FillBackground( BitmapAnim& anim, uint32_t bg )
 {
     for( size_t i=0; i<anim.FrameCount(); i++ )
     {
@@ -210,7 +209,7 @@ void FillBackground( BitmapAnim& anim, uint32_t bg )
     }
 }
 
-void FillCheckerboard( BitmapAnim& anim, uint32_t shift = 3 )
+static void FillCheckerboard( BitmapAnim& anim, uint32_t shift = 3 )
 {
     for( size_t i=0; i<anim.FrameCount(); i++ )
     {
@@ -218,7 +217,7 @@ void FillCheckerboard( BitmapAnim& anim, uint32_t shift = 3 )
     }
 }
 
-void PrintBitmapBlock( Bitmap& bitmap )
+static void PrintBitmapBlock( Bitmap& bitmap )
 {
     auto px0 = (uint32_t*)bitmap.Data();
     auto px1 = px0 + bitmap.Width();
@@ -255,7 +254,7 @@ void PrintBitmapBlock( Bitmap& bitmap )
     }
 }
 
-bool UploadKittyImage( Bitmap& bitmap, const char* queryPart, bool anim = false )
+static bool UploadKittyImage( Bitmap& bitmap, const char* queryPart, bool anim = false )
 {
     const auto bmpSize = bitmap.Width() * bitmap.Height() * 4;
 
@@ -336,7 +335,6 @@ bool UploadKittyImage( Bitmap& bitmap, const char* queryPart, bool anim = false 
     }
 
     return true;
-}
 }
 
 int main( int argc, char** argv )

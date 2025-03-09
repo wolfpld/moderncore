@@ -9,6 +9,7 @@
 #include "wayland-cursor-shape-client-protocol.h"
 #include "wayland-fractional-scale-client-protocol.h"
 #include "wayland-viewporter-client-protocol.h"
+#include "wayland-xdg-activation-client-protocol.h"
 #include "wayland-xdg-decoration-client-protocol.h"
 #include "wayland-xdg-shell-client-protocol.h"
 #include "wayland-xdg-toplevel-icon-client-protocol.h"
@@ -36,6 +37,7 @@ public:
     [[nodiscard]] wp_fractional_scale_manager_v1* FractionalScaleManager() { return m_fractionalScaleManager; }
     [[nodiscard]] wp_viewporter* Viewporter() { return m_viewporter; }
     [[nodiscard]] xdg_toplevel_icon_manager_v1* IconManager() { return m_iconManager; }
+    [[nodiscard]] xdg_activation_v1* Activation() { return m_activation; }
 
     [[nodiscard]] const std::vector<int32_t>& IconSizes() const { return m_iconSizes; }
 
@@ -63,6 +65,7 @@ private:
     wp_cursor_shape_manager_v1* m_cursorShapeManager = nullptr;
     xdg_toplevel_icon_manager_v1* m_iconManager = nullptr;
     wl_data_device_manager* m_dataDeviceManager = nullptr;
+    xdg_activation_v1* m_activation = nullptr;
 
     bool m_keepRunning = true;
 

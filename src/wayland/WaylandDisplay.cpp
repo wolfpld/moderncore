@@ -36,6 +36,7 @@ WaylandDisplay::WaylandDisplay()
 WaylandDisplay::~WaylandDisplay()
 {
     m_seat.reset();
+    if( m_activation ) xdg_activation_v1_destroy( m_activation );
     if( m_dataDeviceManager ) wl_data_device_manager_destroy( m_dataDeviceManager );
     if( m_iconManager ) xdg_toplevel_icon_manager_v1_destroy( m_iconManager );
     if( m_cursorShapeManager ) wp_cursor_shape_manager_v1_destroy( m_cursorShapeManager );
@@ -124,6 +125,10 @@ void WaylandDisplay::RegistryGlobal( wl_registry* reg, uint32_t name, const char
     {
         m_dataDeviceManager = RegistryBind( wl_data_device_manager, 3, 3 );
         if( m_seat ) m_seat->SetDataDeviceManager( m_dataDeviceManager );
+    }
+    else if( strcmp( interface, xdg_activation_v1_interface.name ) == 0 )
+    {
+        m_activation = RegistryBind( xdg_activation_v1 );
     }
 }
 

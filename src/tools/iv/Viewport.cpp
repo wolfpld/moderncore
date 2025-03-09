@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <stdlib.h>
 #include <sys/stat.h>
 #include <time.h>
 #include <tracy/Tracy.hpp>
@@ -99,6 +100,13 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
     m_background = std::make_shared<Background>( *m_window, m_device, format );
     m_busyIndicator = std::make_shared<BusyIndicator>( *m_window, m_device, format, scale );
     m_view = std::make_shared<ImageView>( *m_window, m_device, format, m_window->GetSize(), scale );
+
+    const char* token = getenv( "XDG_ACTIVATION_TOKEN" );
+    if( token )
+    {
+        m_window->Activate( token );
+        unsetenv( "XDG_ACTIVATION_TOKEN" );
+    }
 
     m_lastTime = Now();
     m_window->InvokeRender();

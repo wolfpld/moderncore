@@ -341,7 +341,7 @@ void Bitmap::SavePng( const char* path ) const
 
     mclog( LogLevel::Info, "Saving PNG: %s", path );
 
-    png_structp png_ptr = png_create_write_struct( PNG_LIBPNG_VER_STRING, NULL, NULL, NULL );
+    png_structp png_ptr = png_create_write_struct( PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr );
     png_infop info_ptr = png_create_info_struct( png_ptr );
     setjmp( png_jmpbuf( png_ptr ) );
     png_init_io( png_ptr, f );

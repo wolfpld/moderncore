@@ -3,7 +3,7 @@
 void UrlDecode( std::string& url )
 {
     size_t pos = 0;
-    while( ( pos = url.find( "%", pos ) ) != std::string::npos )
+    while( ( pos = url.find( '%', pos ) ) != std::string::npos )
     {
         if( pos + 2 >= url.size() )
         {

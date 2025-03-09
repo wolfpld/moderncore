@@ -7,11 +7,12 @@ VlkShader::VlkShader( const Stage* stages, size_t count )
 {
     for( size_t i=0; i<count; i++ )
     {
-        m_stages[i] = { VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO };
-        m_stages[i].stage = stages[i].stage;
-        m_stages[i].module = *stages[i].module;
-        m_stages[i].pName = "main";
-
+        m_stages[i] = {
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+            .stage = stages[i].stage,
+            .module = *stages[i].module,
+            .pName = "main"
+        };
         m_modules[i] = stages[i].module;
     }
 }

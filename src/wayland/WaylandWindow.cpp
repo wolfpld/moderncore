@@ -146,7 +146,7 @@ void WaylandWindow::SetIcon( const SvgImage& icon )
         auto buf = wl_shm_pool_create_buffer( pool, offset, sz, sz, sz * 4, WL_SHM_FORMAT_ARGB8888 );
         bufs.push_back( buf );
 
-        auto bmp = icon.Rasterize( sz, sz );
+        const auto bmp = icon.Rasterize( sz, sz );
         auto src = (uint32_t*)bmp->Data();
         auto dst = (uint32_t*)(membuf + offset);
         offset += sz * sz * 4;
@@ -300,23 +300,23 @@ void WaylandWindow::EndFrame()
     TracyVkCollect( m_vkDevice->GetTracyContext(), *frame.commandBuffer );
     frame.commandBuffer->End();
 
-    VkCommandBufferSubmitInfo cmdbufInfo = {
+    const VkCommandBufferSubmitInfo cmdbufInfo = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
         .commandBuffer = *frame.commandBuffer
     };
-    VkSemaphoreSubmitInfo semaImageAvailable = {
+    const VkSemaphoreSubmitInfo semaImageAvailable = {
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
         .semaphore = *frame.imageAvailable,
         .value = 1,
         .stageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT
     };
-    VkSemaphoreSubmitInfo semaRenderFinished = {
+    const VkSemaphoreSubmitInfo semaRenderFinished = {
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
         .semaphore = *frame.renderFinished,
         .value = 1,
         .stageMask = VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT
     };
-    VkSubmitInfo2 submitInfo = {
+    const VkSubmitInfo2 submitInfo = {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
         .waitSemaphoreInfoCount = 1,
         .pWaitSemaphoreInfos = &semaImageAvailable,
@@ -337,12 +337,12 @@ void WaylandWindow::EndFrame()
     VkSemaphore renderFinished = *frame.renderFinished;
     VkSwapchainKHR swapchain = *m_swapchain;
 
-    VkSwapchainPresentFenceInfoEXT presentFenceInfo = {
+    const VkSwapchainPresentFenceInfoEXT presentFenceInfo = {
         .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_PRESENT_FENCE_INFO_EXT,
         .swapchainCount = 1,
         .pFences = &presentFence
     };
-    VkPresentInfoKHR presentInfo = {
+    const VkPresentInfoKHR presentInfo = {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
         .pNext = &presentFenceInfo,
         .waitSemaphoreCount = 1,

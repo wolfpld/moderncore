@@ -4,8 +4,10 @@
 VlkFence::VlkFence( VkDevice device, VkFenceCreateFlags flags )
     : m_device( device )
 {
-    VkFenceCreateInfo createInfo = { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
-    createInfo.flags = flags;
+    const VkFenceCreateInfo createInfo = {
+        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+        .flags = flags
+    };
     VkVerify( vkCreateFence( device, &createInfo, nullptr, &m_fence ) );
 }
 

@@ -31,8 +31,8 @@ float Pq( float N, float NominalLuminanceMul )
     constexpr float c2 = 18.8515625f;
     constexpr float c3 = 18.6875f;
 
-    const auto Nm2 = std::pow( std::max( N, 0.f ), m2inv );
-    return 10000.f * std::pow( std::max( 0.f, Nm2 - c1 ) / ( c2 - c3 * Nm2 ), m1inv ) * NominalLuminanceMul;
+    const auto Nm2 = std::powf( std::max( N, 0.f ), m2inv );
+    return 10000.f * std::powf( std::max( 0.f, Nm2 - c1 ) / ( c2 - c3 * Nm2 ), m1inv ) * NominalLuminanceMul;
 }
 
 float Hlg( float E )
@@ -598,7 +598,7 @@ bool HeifLoader::SetupDecode( bool hdr, Colorspace colorspace )
                 }
                 else
                 {
-                    *dst++ = pow( ( v + 0.099f ) / 1.099f, 1.f / 0.45f );
+                    *dst++ = std::powf( ( v + 0.099f ) / 1.099f, 1.f / 0.45f );
                 }
             }
             src += stride - w;

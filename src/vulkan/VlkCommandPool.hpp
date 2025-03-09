@@ -9,7 +9,7 @@
 class VlkCommandPool
 {
 public:
-    VlkCommandPool( VkDevice device, int queueIndex, QueueType queueType );
+    VlkCommandPool( VkDevice device, uint32_t queueIndex, QueueType queueType );
     ~VlkCommandPool();
 
     NoCopy( VlkCommandPool );

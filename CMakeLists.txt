@@ -105,8 +105,9 @@ if(MARCH_NATIVE)
     endif()
 endif()
 
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
 add_custom_target(git-ref
-    COMMAND python3 ${CMAKE_CURRENT_LIST_DIR}/cmake/git-ref.py
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_LIST_DIR}/cmake/git-ref.py
     BYPRODUCTS GitRef.hpp
 )
 

@@ -70,6 +70,6 @@ std::unique_ptr<Bitmap> RawLoader::Load()
         break;
     }
 
-    m_raw->dcraw_clear_mem( img );
+    LibRaw::dcraw_clear_mem( img );
     return bmp;
 }

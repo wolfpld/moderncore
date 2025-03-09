@@ -374,8 +374,8 @@ set(MCORE_SRC
     src/backend/drm/DrmProperties.cpp
     src/backend/drm/PciBus.cpp
     src/backend/wayland/BackendWayland.cpp
-    src/plumbing/Display.cpp
     src/server/Server.cpp
+    src/server/Display.cpp
     src/MCore.cpp
 )
 

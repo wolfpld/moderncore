@@ -2,11 +2,11 @@
 #include <tracy/Tracy.hpp>
 #include <thread>
 
+#include "Display.hpp"
 #include "Server.hpp"
 #include "backend/drm/BackendDrm.hpp"
 #include "backend/wayland/BackendWayland.hpp"
 #include "dbus/DbusSession.hpp"
-#include "plumbing/Display.hpp"
 #include "util/Logs.hpp"
 #include "util/Panic.hpp"
 #include "vulkan/VlkInstance.hpp"

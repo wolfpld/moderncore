@@ -121,6 +121,7 @@ void WaylandWindow::SetIcon( const SvgImage& icon )
     size_t total = 0;
     for( auto sz : sizes ) total += sz * sz;
     total *= 4;
+    CheckPanic( total > 0, "Invalid icon sizes" );
 
     std::string shmPath = path;
     shmPath.append( "/mcore_icon-XXXXXX" );

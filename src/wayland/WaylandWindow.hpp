@@ -64,6 +64,7 @@ public:
     void LockSize();
     void Commit();
     void Close();
+    void Activate( const char* token );
     void EnableHdr( bool enable );
 
     VlkCommandBuffer& BeginFrame();

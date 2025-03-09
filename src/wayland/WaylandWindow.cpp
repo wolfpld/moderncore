@@ -221,6 +221,13 @@ void WaylandWindow::Close()
     wl_display_flush( m_display.Display() );
 }
 
+void WaylandWindow::Activate( const char* token )
+{
+    auto activation = m_display.Activation();
+    if( !activation ) return;
+    xdg_activation_v1_activate( activation, token, m_surface );
+}
+
 void WaylandWindow::EnableHdr( bool enable )
 {
     if( !m_hdrCapable ) return;

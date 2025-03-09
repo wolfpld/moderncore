@@ -45,7 +45,7 @@ private:
     void CreatePipeline( VkFormat format );
 
     void Cleanup();
-    std::array<Vertex, 4> SetupVertexBuffer() const;
+    [[nodiscard]] std::array<Vertex, 4> SetupVertexBuffer() const;
     void FinishSetBitmap( std::shared_ptr<Texture>&& texture, std::shared_ptr<VlkBuffer>&& vb, uint32_t width, uint32_t height );
 
     GarbageChute& m_garbage;

@@ -42,7 +42,7 @@ private:
     void Drop( int fd, const char* mime );
     void Key( const char* key, int mods );
 
-    void ImageHandler( int64_t id, ImageProvider::Result result, int flags, const ImageProvider::ReturnData& bitmap );
+    void ImageHandler( int64_t id, ImageProvider::Result result, int flags, const ImageProvider::ReturnData& data );
 
     void PasteClipboard();
     bool ProcessUriList( std::string uriList );

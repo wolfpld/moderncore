@@ -127,10 +127,10 @@ void Viewport::LoadImage( const char* path )
     SetBusy( id );
 }
 
-void Viewport::LoadImage( std::unique_ptr<DataBuffer>&& buffer )
+void Viewport::LoadImage( std::unique_ptr<DataBuffer>&& data )
 {
     ZoneScoped;
-    const auto id = m_provider->LoadImage( std::move( buffer ), m_window->HdrCapable(), Method( ImageHandler ), this );
+    const auto id = m_provider->LoadImage( std::move( data ), m_window->HdrCapable(), Method( ImageHandler ), this );
     ZoneTextF( "id %ld", id );
     SetBusy( id );
 }

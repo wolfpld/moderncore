@@ -106,7 +106,7 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
     if( flags & RequireCompute )
     {
         CheckPanic( m_physDev->IsComputeCapable(), "Requested Device with compute queue, but it does not has any compute queues." );
-        uint32_t idx = sz;
+        uint32_t idx;
         for( idx=0; idx<sz; idx++ )
         {
             if( ( (int)idx != m_queueInfo[(int)QueueType::Graphic].idx ) &&
@@ -130,7 +130,7 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
 
     // Always want transfer queue
     {
-        uint32_t idx = sz;
+        uint32_t idx;
         for( idx=0; idx<sz; idx++ )
         {
             if( ( (int)idx != m_queueInfo[(int)QueueType::Graphic].idx ) &&

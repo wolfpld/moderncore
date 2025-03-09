@@ -30,7 +30,6 @@ public:
 
 private:
     void Upload( VlkDevice& device, const std::vector<MipData>& mipChain, std::shared_ptr<VlkBuffer>&& stagingBuffer, std::vector<std::shared_ptr<VlkFence>>& fencesOut );
-    std::vector<MipData> GetMipChain( bool mips, uint32_t width, uint32_t height, uint32_t bpp, uint64_t& bufsize );
 
     void WriteBarrier( VkCommandBuffer cmdbuf, uint32_t mip );
     void ReadBarrier( VkCommandBuffer cmdbuf, uint32_t mipLevels );

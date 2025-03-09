@@ -24,6 +24,38 @@ struct MipData
     uint64_t size;
 };
 
+static std::vector<MipData> CalcMipLevels( uint32_t width, uint32_t height, uint32_t bpp, uint64_t& total )
+{
+    const auto mipLevels = (uint32_t)std::floor( std::log2( std::max( width, height ) ) ) + 1;
+    uint64_t offset = 0;
+    std::vector<MipData> levels( mipLevels );
+    for( uint32_t i=0; i<mipLevels; i++ )
+    {
+        const uint64_t size = uint64_t( width ) * height * bpp;
+        levels[i] = { width, height, offset, size };
+        width = std::max( 1u, width / 2 );
+        height = std::max( 1u, height / 2 );
+        offset += size;
+    }
+    total = offset;
+    return levels;
+}
+
+static std::vector<MipData> GetMipChain( bool mips, uint32_t width, uint32_t height, uint32_t bpp, uint64_t& bufsize )
+{
+    std::vector<MipData> mipChain;
+    if( mips )
+    {
+        mipChain = CalcMipLevels( width, height, bpp, bufsize );
+    }
+    else
+    {
+        bufsize = width * height * bpp;
+        mipChain.emplace_back( width, height, 0, bufsize );
+    }
+    return mipChain;
+}
+
 static inline VkImageCreateInfo GetImageCreateInfo( VkFormat format, uint32_t width, uint32_t height, uint32_t mipLevels )
 {
     return {
@@ -184,38 +216,6 @@ void Texture::Upload( VlkDevice& device, const std::vector<MipData>& mipChain, s
         } );
         fencesOut.emplace_back( std::move( fenceGfx ) );
     }
-}
-
-static std::vector<MipData> CalcMipLevels( uint32_t width, uint32_t height, uint32_t bpp, uint64_t& total )
-{
-    const auto mipLevels = (uint32_t)std::floor( std::log2( std::max( width, height ) ) ) + 1;
-    uint64_t offset = 0;
-    std::vector<MipData> levels( mipLevels );
-    for( uint32_t i=0; i<mipLevels; i++ )
-    {
-        const uint64_t size = uint64_t( width ) * height * bpp;
-        levels[i] = { width, height, offset, size };
-        width = std::max( 1u, width / 2 );
-        height = std::max( 1u, height / 2 );
-        offset += size;
-    }
-    total = offset;
-    return levels;
-}
-
-std::vector<MipData> Texture::GetMipChain( bool mips, uint32_t width, uint32_t height, uint32_t bpp, uint64_t& bufsize )
-{
-    std::vector<MipData> mipChain;
-    if( mips )
-    {
-        mipChain = CalcMipLevels( width, height, bpp, bufsize );
-    }
-    else
-    {
-        bufsize = width * height * bpp;
-        mipChain.emplace_back( width, height, 0, bufsize );
-    }
-    return mipChain;
 }
 
 void Texture::WriteBarrier( VkCommandBuffer cmdbuf, uint32_t mip )

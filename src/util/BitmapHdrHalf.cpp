@@ -18,8 +18,8 @@ static void FloatToHalf( const float* src, half_float::half* dst, size_t sz )
     while( sz >= 16 )
     {
         __m512 f = _mm512_loadu_ps( src );
-        __m256 h = _mm512_cvtps_ph( f, _MM_FROUND_TO_NEAREST_INT );
-        _mm256_storeu_ps( (float*)dst, h );
+        __m256i h = _mm512_cvtps_ph( f, _MM_FROUND_TO_NEAREST_INT );
+        _mm256_storeu_si256( (__m256i*)dst, h );
         src += 16;
         dst += 16;
         sz -= 16;
@@ -29,8 +29,8 @@ static void FloatToHalf( const float* src, half_float::half* dst, size_t sz )
     while( sz >= 8 )
     {
         __m256 f = _mm256_loadu_ps( src );
-        __m128 h = _mm256_cvtps_ph( f, _MM_FROUND_TO_NEAREST_INT );
-        _mm_storeu_ps( (float*)dst, h );
+        __m128i h = _mm256_cvtps_ph( f, _MM_FROUND_TO_NEAREST_INT );
+        _mm_storeu_si128( (__m128i*)dst, h );
         src += 8;
         dst += 8;
         sz -= 8;

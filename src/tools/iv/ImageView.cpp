@@ -117,8 +117,8 @@ ImageView::ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, 
     CreatePipeline( format );
 
 
-    uint16_t idata[] = { 0, 1, 2, 2, 3, 0 };
-    VkBufferCreateInfo iinfo = {
+    constexpr uint16_t idata[] = { 0, 1, 2, 2, 3, 0 };
+    constexpr VkBufferCreateInfo iinfo = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .size = sizeof( idata ),
         .usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
@@ -148,22 +148,22 @@ void ImageView::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
 {
     CheckPanic( m_texture, "No texture" );
 
-    VkViewport viewport = {
+    const VkViewport viewport = {
         .width = float( extent.width ),
         .height = float( extent.height )
     };
-    VkRect2D scissor = {
+    const VkRect2D scissor = {
         .extent = extent
     };
 
-    PushConstant pushConstant = {
+    const PushConstant pushConstant = {
         float( extent.width ),
         float( extent.height ),
         1.f / float( m_bitmapExtent.width ),
         m_div
     };
 
-    std::array<VkBuffer, 1> vertexBuffers = { *m_vertexBuffer };
+    const std::array<VkBuffer, 1> vertexBuffers = { *m_vertexBuffer };
     constexpr std::array<VkDeviceSize, 1> offsets = { 0 };
 
     std::lock_guard lock( m_lock );
@@ -375,7 +375,7 @@ void ImageView::Cleanup()
     }
 }
 
-std::array<ImageView::Vertex, 4> ImageView::SetupVertexBuffer()
+std::array<ImageView::Vertex, 4> ImageView::SetupVertexBuffer() const
 {
     float x0, x1, y0, y1;
 

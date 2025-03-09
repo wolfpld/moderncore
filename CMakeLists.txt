@@ -424,6 +424,7 @@ EmbedShader(IV_SRC SupersampleFrag src/tools/iv/shader/Supersample.frag)
 EmbedShader(IV_SRC SupersamplePqFrag src/tools/iv/shader/SupersamplePq.frag)
 EmbedShader(IV_SRC TexturingVert src/tools/iv/shader/Texturing.vert)
 EmbedShader(IV_SRC TexturingFrag src/tools/iv/shader/Texturing.frag)
+EmbedShader(IV_SRC TexturingPqFrag src/tools/iv/shader/TexturingPq.frag)
 
 add_executable(iv ${IV_SRC})
 target_link_libraries(iv PRIVATE

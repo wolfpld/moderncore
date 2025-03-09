@@ -27,6 +27,7 @@
 #include "data/HourglassSvg.hpp"
 #include "shader/BusyIndicatorVert.hpp"
 #include "shader/TexturingFrag.hpp"
+#include "shader/TexturingPqFrag.hpp"
 
 static float SmootherStep( float edge0, float edge1, float x )
 {
@@ -82,12 +83,20 @@ BusyIndicator::BusyIndicator( GarbageChute& garbage, std::shared_ptr<VlkDevice> 
 
     Unembed( BusyIndicatorVert );
     Unembed( TexturingFrag );
+    Unembed( TexturingPqFrag );
 
     const std::array stages = {
         VlkShader::Stage { std::make_shared<VlkShaderModule>( *m_device, *BusyIndicatorVert ), VK_SHADER_STAGE_VERTEX_BIT },
         VlkShader::Stage { std::make_shared<VlkShaderModule>( *m_device, *TexturingFrag ), VK_SHADER_STAGE_FRAGMENT_BIT }
     };
     m_shader = std::make_shared<VlkShader>( stages );
+
+
+    const std::array stagesPq = {
+        stages[0],
+        VlkShader::Stage { std::make_shared<VlkShaderModule>( *m_device, *TexturingPqFrag ), VK_SHADER_STAGE_FRAGMENT_BIT }
+    };
+    m_shaderPq = std::make_shared<VlkShader>( stagesPq );
 
 
     static constexpr std::array bindings = {
@@ -156,6 +165,7 @@ BusyIndicator::~BusyIndicator()
         std::move( m_pipelineLayout ),
         std::move( m_setLayout ),
         std::move( m_shader ),
+        std::move( m_shaderPq ),
         std::move( m_vertexBuffer ),
         std::move( m_indexBuffer ),
         std::move( m_texture ),
@@ -290,11 +300,12 @@ void BusyIndicator::CreatePipeline( VkFormat format )
         .dynamicStateCount = dynamicStateList.size(),
         .pDynamicStates = dynamicStateList.data()
     };
+    const bool pq = format == VK_FORMAT_A2B10G10R10_UNORM_PACK32 || format == VK_FORMAT_A2R10G10B10_UNORM_PACK32;
     const VkGraphicsPipelineCreateInfo pipelineInfo = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
         .pNext = &rendering,
-        .stageCount = m_shader->GetStageCount(),
-        .pStages = m_shader->GetStages(),
+        .stageCount = pq ? m_shaderPq->GetStageCount() : m_shader->GetStageCount(),
+        .pStages = pq ? m_shaderPq->GetStages() : m_shader->GetStages(),
         .pVertexInputState = &vertexInputInfo,
         .pInputAssemblyState = &inputAssembly,
         .pViewportState = &viewportState,

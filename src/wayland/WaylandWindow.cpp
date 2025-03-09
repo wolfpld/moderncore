@@ -87,6 +87,12 @@ WaylandWindow::WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance )
 WaylandWindow::~WaylandWindow()
 {
     CleanupSwapchain( true );
+    if( m_surface ) Destroy();
+}
+
+void WaylandWindow::Destroy()
+{
+    CheckPanic( m_surface, "Window already destroyed" );
 
     wp_viewport_destroy( m_viewport );
     wp_fractional_scale_v1_destroy( m_fractionalScale );
@@ -95,6 +101,8 @@ WaylandWindow::~WaylandWindow()
     xdg_surface_destroy( m_xdgSurface );
     m_display.Seat().RemoveWindow( this );
     wl_surface_destroy( m_surface );
+
+    m_surface = nullptr;
 }
 
 void WaylandWindow::SetAppId( const char* appId )
@@ -217,8 +225,7 @@ void WaylandWindow::Commit()
 
 void WaylandWindow::Close()
 {
-    wl_surface_attach( m_surface, nullptr, 0, 0 );
-    wl_surface_commit( m_surface );
+    Destroy();
     wl_display_flush( m_display.Display() );
 }
 

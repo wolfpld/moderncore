@@ -110,6 +110,8 @@ public:
     void unlock() { m_stateLock.unlock(); }
 
 private:
+    void Destroy();
+
     void CreateSwapchain( const VkExtent2D& extent );
     void CleanupSwapchain( bool withSurface = false );
 

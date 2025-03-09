@@ -375,7 +375,6 @@ set(MCORE_SRC
     src/backend/drm/PciBus.cpp
     src/backend/wayland/BackendWayland.cpp
     src/plumbing/Display.cpp
-    src/render/SoftwareCursor.cpp
     src/server/Server.cpp
     src/MCore.cpp
 )

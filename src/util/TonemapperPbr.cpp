@@ -228,8 +228,6 @@ void PbrNeutral( uint32_t* dst, float* src, size_t sz )
 #endif
     while( sz > 0 )
     {
-        const auto color = PbrNeutral( { src[0], src[1], src[2] } );
-
         __m128 s0 = _mm_loadu_ps( src );
         __m128 v0 = PbrNeutral128( s0 );
         __m128 v1 = _mm_cmple_ps( v0, _mm_set1_ps( 0.0031308f ) );

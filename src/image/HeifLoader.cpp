@@ -489,9 +489,10 @@ bool HeifLoader::SetupDecode( bool hdr, Colorspace colorspace )
 
         switch( m_nclx->transfer_characteristics )
         {
+        case heif_transfer_characteristic_ITU_R_BT_709_5:
         case heif_transfer_characteristic_unspecified:
         case heif_transfer_characteristic_IEC_61966_2_1:
-            mclog( LogLevel::Info, "HEIF: Ignoring IEC 61966-2-1 transfer function" );
+            mclog( LogLevel::Debug, "HEIF: Ignoring non-HDR transfer function" );
             break;
         case heif_transfer_characteristic_ITU_R_BT_2100_0_PQ:
             mclog( LogLevel::Info, "HEIF: Applying PQ transfer function" );

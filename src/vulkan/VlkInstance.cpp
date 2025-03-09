@@ -90,18 +90,20 @@ VlkInstance::VlkInstance( VlkInstanceType instanceType, bool enableValidation )
     std::vector<VkExtensionProperties> extensions( numExtensions );
     VkVerify( vkEnumerateInstanceExtensionProperties( nullptr, &numExtensions, extensions.data() ) );
 
-    VkApplicationInfo appInfo = { VK_STRUCTURE_TYPE_APPLICATION_INFO };
-    appInfo.pApplicationName = "Modern Core";
-    appInfo.applicationVersion = VK_MAKE_API_VERSION( 0, 1, 0, 0 );
-    appInfo.pEngineName = "Modern Core";
-    appInfo.engineVersion = VK_MAKE_API_VERSION( 0, 0, 0, 0 );
-    appInfo.apiVersion = ApiVersion();
-
-    VkInstanceCreateInfo createInfo = { VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO };
-    createInfo.pApplicationInfo = &appInfo;
+    const VkApplicationInfo appInfo = {
+        .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
+        .pApplicationName = "Modern Core",
+        .applicationVersion = VK_MAKE_API_VERSION( 0, 1, 0, 0 ),
+        .pEngineName = "Modern Core",
+        .engineVersion = VK_MAKE_API_VERSION( 0, 0, 0, 0 ),
+        .apiVersion = ApiVersion()
+    };
+    VkInstanceCreateInfo createInfo = {
+        .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+        .pApplicationInfo = &appInfo
+    };
 
     std::vector<const char*> instanceExtensions;
-
     switch( instanceType )
     {
     case VlkInstanceType::Wayland:

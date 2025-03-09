@@ -5,6 +5,7 @@
 #include <string>
 #include <string.h>
 #include <sys/stat.h>
+#include <ranges>
 #include <vector>
 
 #include "CursorType.hpp"
@@ -221,7 +222,7 @@ XCursor::XCursor( const char* theme )
     {
         for( int i=0; i<numTypes; i++ )
         {
-            if( std::any_of( m_cursor.begin(), m_cursor.end(), [i]( const auto& v ){ return !v.second.type[i].bitmaps.empty(); } ) ) continue;
+            if( std::ranges::any_of( m_cursor, [i]( const auto& v ){ return !v.second.type[i].bitmaps.empty(); } ) ) continue;
 
             const auto path = td + CursorNames[i];
             if( LoadCursor( path, i, m_cursor ) ) left--;

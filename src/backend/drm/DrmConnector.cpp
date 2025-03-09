@@ -2,6 +2,7 @@
 #include <bit>
 #include <format>
 #include <gbm.h>
+#include <ranges>
 #include <tracy/Tracy.hpp>
 
 extern "C" {
@@ -128,7 +129,7 @@ bool DrmConnector::SetModeDrm( const drmModeModeInfo& mode )
     mclog( LogLevel::Info, "  Setting connector %s to %dx%d @ %d Hz", m_name.c_str(), mode.hdisplay, mode.vdisplay, mode.vrefresh );
 
     auto& crtcs = m_device.Crtcs();
-    auto it = std::find_if( crtcs.begin(), crtcs.end(), []( const auto& c ) { return !c->IsUsed(); } );
+    auto it = std::ranges::find_if( crtcs, []( const auto& c ) { return !c->IsUsed(); } );
     if( it == crtcs.end() ) return false;
 
     m_plane = GetPlaneForCrtc( **it );

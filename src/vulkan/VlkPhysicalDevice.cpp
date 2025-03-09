@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <string.h>
+#include <ranges>
 #include <tracy/Tracy.hpp>
 
 #include "VlkPhysicalDevice.hpp"
@@ -18,7 +19,7 @@ VlkPhysicalDevice::VlkPhysicalDevice( VkPhysicalDevice physDev )
     m_extensionProperties.resize( count );
     vkEnumerateDeviceExtensionProperties( physDev, nullptr, &count, m_extensionProperties.data() );
 
-    std::sort( m_extensionProperties.begin(), m_extensionProperties.end(), []( const auto& lhs, const auto& rhs ) { return strcmp( lhs.extensionName, rhs.extensionName ) < 0; } );
+    std::ranges::sort( m_extensionProperties, []( const auto& lhs, const auto& rhs ) { return strcmp( lhs.extensionName, rhs.extensionName ) < 0; } );
 
     vkGetPhysicalDeviceProperties( physDev, &m_properties );
     vkGetPhysicalDeviceMemoryProperties( physDev, &m_memoryProperties );
@@ -45,15 +46,13 @@ VlkPhysicalDevice::VlkPhysicalDevice( VkPhysicalDevice physDev )
 bool VlkPhysicalDevice::IsGraphicCapable() const
 {
     ZoneScoped;
-    return std::any_of( m_queueFamilyProperties.begin(), m_queueFamilyProperties.end(),
-        []( const auto& v ) { return ( v.queueFlags & VK_QUEUE_GRAPHICS_BIT ) != 0; } );
+    return std::ranges::any_of( m_queueFamilyProperties, []( const auto& v ) { return ( v.queueFlags & VK_QUEUE_GRAPHICS_BIT ) != 0; } );
 }
 
 bool VlkPhysicalDevice::IsComputeCapable() const
 {
     ZoneScoped;
-    return std::any_of( m_queueFamilyProperties.begin(), m_queueFamilyProperties.end(),
-        []( const auto& v ) { return ( v.queueFlags & VK_QUEUE_GRAPHICS_BIT ) != 0; } );
+    return std::ranges::any_of( m_queueFamilyProperties, []( const auto& v ) { return ( v.queueFlags & VK_QUEUE_GRAPHICS_BIT ) != 0; } );
 }
 
 bool VlkPhysicalDevice::IsSwapchainCapable() const

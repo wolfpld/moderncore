@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <array>
 #include <string.h>
+#include <ranges>
 #include <tracy/Tracy.hpp>
 
 #include <vulkan/vulkan.h>
@@ -24,7 +25,7 @@ static bool HasValidationLayers()
 
     for( auto& search : validationLayers )
     {
-        if( std::none_of( layers.begin(), layers.end(), [&search](auto& layer){ return strcmp( layer.layerName, search ) == 0; } ) )
+        if( std::ranges::none_of( layers, [&search](auto& layer){ return strcmp( layer.layerName, search ) == 0; } ) )
         {
             mclog( LogLevel::Warning, "Validation layers are not available!" );
             return false;
@@ -36,7 +37,7 @@ static bool HasValidationLayers()
 
 static bool HasExtension( const std::vector<VkExtensionProperties>& extensions, const char* search )
 {
-    return std::any_of( extensions.begin(), extensions.end(), [&search](auto& ext){ return strcmp( ext.extensionName, search ) == 0; } );
+    return std::ranges::any_of( extensions, [&search](auto& ext){ return strcmp( ext.extensionName, search ) == 0; } );
 }
 
 [[maybe_unused]] static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback( VkDebugUtilsMessageSeverityFlagBitsEXT severity,

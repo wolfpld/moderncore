@@ -1,5 +1,6 @@
 #include <format>
 #include <inttypes.h>
+#include <ranges>
 #include <tracy/Tracy.hpp>
 
 #include "BackendWayland.hpp"
@@ -112,7 +113,7 @@ void BackendWayland::OpenWindow( int physDev, uint32_t width, uint32_t height, c
         CheckPanic( device_, "Failed to find suitable physical device" );
         auto device = (VkPhysicalDevice)*device_;
 
-        auto it = std::find_if( m_gpus.begin(), m_gpus.end(), [device]( const auto& v ) { return *v->Device() == device; } );
+        auto it = std::ranges::find_if( m_gpus, [device]( const auto& v ) { return *v->Device() == device; } );
         CheckPanic( it != m_gpus.end(), "Selected physical device has valid index, but not found in list of GPUs (?)" );
 
         physDev = it - m_gpus.begin();

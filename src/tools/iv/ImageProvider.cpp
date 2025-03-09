@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <ranges>
 #include <tracy/Tracy.hpp>
 
 #include "ImageProvider.hpp"
@@ -93,7 +94,7 @@ void ImageProvider::Cancel( int64_t id )
     }
     else
     {
-        auto it = std::find_if( m_jobs.begin(), m_jobs.end(), [id]( const auto& job ) { return job.id == id; } );
+        auto it = std::ranges::find_if( m_jobs, [id]( const auto& job ) { return job.id == id; } );
         if( it != m_jobs.end() )
         {
             it->callback( it->userData, it->id, Result::Cancelled, it->flags, {} );

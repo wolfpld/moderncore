@@ -49,7 +49,7 @@ constexpr size_t HourglassSize = 128;
 
 BusyIndicator::BusyIndicator( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, float scale )
     : m_garbage( garbage )
-    , m_device( device )
+    , m_device( std::move( device ) )
     , m_scale( scale )
 {
     Unembed( HourglassSvg );

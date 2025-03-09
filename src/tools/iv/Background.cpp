@@ -14,6 +14,7 @@
 #include "vulkan/ext/Tracy.hpp"
 
 #include "shader/BackgroundFrag.hpp"
+#include "shader/BackgroundPqFrag.hpp"
 #include "shader/BackgroundVert.hpp"
 
 
@@ -28,12 +29,20 @@ Background::Background( GarbageChute& garbage, std::shared_ptr<VlkDevice> device
 {
     Unembed( BackgroundVert );
     Unembed( BackgroundFrag );
+    Unembed( BackgroundPqFrag );
 
     const std::array stages = {
         VlkShader::Stage { std::make_shared<VlkShaderModule>( *m_device, *BackgroundVert ), VK_SHADER_STAGE_VERTEX_BIT },
         VlkShader::Stage { std::make_shared<VlkShaderModule>( *m_device, *BackgroundFrag ), VK_SHADER_STAGE_FRAGMENT_BIT }
     };
     m_shader = std::make_shared<VlkShader>( stages );
+
+
+    const std::array stagesPq = {
+        stages[0],
+        VlkShader::Stage { std::make_shared<VlkShaderModule>( *m_device, *BackgroundPqFrag ), VK_SHADER_STAGE_FRAGMENT_BIT }
+    };
+    m_shaderPq = std::make_shared<VlkShader>( stagesPq );
 
 
     constexpr VkPipelineLayoutCreateInfo pipelineLayoutInfo = {
@@ -65,6 +74,7 @@ Background::~Background()
         std::move( m_pipeline ),
         std::move( m_pipelineLayout ),
         std::move( m_shader ),
+        std::move( m_shaderPq ),
         std::move( m_vertexBuffer )
     } );
 }
@@ -156,11 +166,12 @@ void Background::CreatePipeline( VkFormat format )
         .dynamicStateCount = dynamicStateList.size(),
         .pDynamicStates = dynamicStateList.data()
     };
+    const bool pq = format == VK_FORMAT_A2B10G10R10_UNORM_PACK32 || format == VK_FORMAT_A2R10G10B10_UNORM_PACK32;
     const VkGraphicsPipelineCreateInfo pipelineInfo = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
         .pNext = &rendering,
-        .stageCount = m_shader->GetStageCount(),
-        .pStages = m_shader->GetStages(),
+        .stageCount = pq ? m_shaderPq->GetStageCount() : m_shader->GetStageCount(),
+        .pStages = pq ? m_shaderPq->GetStages() : m_shader->GetStages(),
         .pVertexInputState = &vertexInputInfo,
         .pInputAssemblyState = &inputAssembly,
         .pViewportState = &viewportState,

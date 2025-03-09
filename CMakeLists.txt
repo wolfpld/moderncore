@@ -418,6 +418,7 @@ Embed(IV_SRC IconSvg src/tools/iv/assets/icon.svg)
 
 EmbedShader(IV_SRC BackgroundVert src/tools/iv/shader/Background.vert)
 EmbedShader(IV_SRC BackgroundFrag src/tools/iv/shader/Background.frag)
+EmbedShader(IV_SRC BackgroundPqFrag src/tools/iv/shader/BackgroundPq.frag)
 EmbedShader(IV_SRC BusyIndicatorVert src/tools/iv/shader/BusyIndicator.vert)
 EmbedShader(IV_SRC SupersampleFrag src/tools/iv/shader/Supersample.frag)
 EmbedShader(IV_SRC SupersamplePqFrag src/tools/iv/shader/SupersamplePq.frag)

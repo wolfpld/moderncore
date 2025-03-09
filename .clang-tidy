@@ -51,6 +51,7 @@ Checks:
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
 FormatStyle:     none
+UseColor: 'true'
 CheckOptions:
   llvm-else-after-return.WarnOnConditionVariables: 'false'
   modernize-loop-convert.MinConfidence: reasonable

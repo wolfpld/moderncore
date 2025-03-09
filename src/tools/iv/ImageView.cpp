@@ -33,7 +33,7 @@ struct PushConstant
 
 ImageView::ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, const VkExtent2D& extent, float scale )
     : m_garbage( garbage )
-    , m_device( device )
+    , m_device( std::move( device ) )
     , m_extent( extent )
 {
     SetScale( scale );

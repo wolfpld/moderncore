@@ -28,5 +28,5 @@ MemoryBuffer::MemoryBuffer( int fd )
 
 std::string MemoryBuffer::AsString() const
 {
-    return std::string( m_buf.data(), m_buf.size() );
+    return { m_buf.data(), m_buf.size() };
 }

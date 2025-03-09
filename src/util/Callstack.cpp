@@ -151,7 +151,6 @@ static int CallstackCallback( void*, uintptr_t pc, const char* filename, int lin
             if( end - shortened > 6 && memcmp( end-6, " const", 6 ) == 0 )
             {
                 dst[-7] = '\0';
-                end -= 6;
             }
 
             ptr = shortened;

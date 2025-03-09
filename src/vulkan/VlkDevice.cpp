@@ -229,25 +229,29 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
         }
     }
 
-    const float queuePriority = 1.0;
+    constexpr float queuePriority = 1.0;
     std::vector<VkDeviceQueueCreateInfo> queueCreate;
 
     if( m_queueInfo[(int)QueueType::Graphic].idx >= 0 )
     {
-        VkDeviceQueueCreateInfo qi = { VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO };
-        qi.queueCount = 1;
-        qi.queueFamilyIndex = (uint32_t)m_queueInfo[(int)QueueType::Graphic].idx;
-        qi.pQueuePriorities = &queuePriority;
+        const VkDeviceQueueCreateInfo qi = {
+            .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+            .queueFamilyIndex = (uint32_t)m_queueInfo[(int)QueueType::Graphic].idx,
+            .queueCount = 1,
+            .pQueuePriorities = &queuePriority
+        };
         queueCreate.emplace_back( qi );
     }
 
     if(  ( m_queueInfo[(int)QueueType::Compute].idx >= 0 ) &&
         !( m_queueInfo[(int)QueueType::Compute].shareGraphic ) )
     {
-        VkDeviceQueueCreateInfo qi = { VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO };
-        qi.queueCount = 1;
-        qi.queueFamilyIndex = (uint32_t)m_queueInfo[(int)QueueType::Compute].idx;
-        qi.pQueuePriorities = &queuePriority;
+        const VkDeviceQueueCreateInfo qi = {
+            .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+            .queueFamilyIndex = (uint32_t)m_queueInfo[(int)QueueType::Compute].idx,
+            .queueCount = 1,
+            .pQueuePriorities = &queuePriority
+        };
         queueCreate.emplace_back( qi );
     }
 
@@ -255,10 +259,12 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
         !( m_queueInfo[(int)QueueType::Transfer].shareGraphic ) &&
         !( m_queueInfo[(int)QueueType::Transfer].shareCompute ) )
     {
-        VkDeviceQueueCreateInfo qi = { VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO };
-        qi.queueCount = 1;
-        qi.queueFamilyIndex = (uint32_t)m_queueInfo[(int)QueueType::Transfer].idx;
-        qi.pQueuePriorities = &queuePriority;
+        const VkDeviceQueueCreateInfo qi = {
+            .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+            .queueFamilyIndex = (uint32_t)m_queueInfo[(int)QueueType::Transfer].idx,
+            .queueCount = 1,
+            .pQueuePriorities = &queuePriority
+        };
         queueCreate.emplace_back( qi );
     }
 
@@ -267,10 +273,12 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
         !( m_queueInfo[(int)QueueType::Present].shareCompute ) &&
         !( m_queueInfo[(int)QueueType::Present].shareTransfer ) )
     {
-        VkDeviceQueueCreateInfo qi = { VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO };
-        qi.queueCount = 1;
-        qi.queueFamilyIndex = (uint32_t)m_queueInfo[(int)QueueType::Present].idx;
-        qi.pQueuePriorities = &queuePriority;
+        const VkDeviceQueueCreateInfo qi = {
+            .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+            .queueFamilyIndex = (uint32_t)m_queueInfo[(int)QueueType::Present].idx,
+            .queueCount = 1,
+            .pQueuePriorities = &queuePriority
+        };
         queueCreate.emplace_back( qi );
     }
 
@@ -314,23 +322,26 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
     features12.hostQueryReset = VK_TRUE;
 #endif
 
-    VkDeviceCreateInfo devInfo = { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
-    devInfo.pNext = &features;
-    devInfo.queueCreateInfoCount = (uint32_t)queueCreate.size();
-    devInfo.pQueueCreateInfos = queueCreate.data();
-    devInfo.enabledExtensionCount = (uint32_t)deviceExtensions.size();
-    devInfo.ppEnabledExtensionNames = deviceExtensions.data();
-
+    const VkDeviceCreateInfo devInfo = {
+        .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+        .pNext = &features,
+        .queueCreateInfoCount = (uint32_t)queueCreate.size(),
+        .pQueueCreateInfos = queueCreate.data(),
+        .enabledExtensionCount = (uint32_t)deviceExtensions.size(),
+        .ppEnabledExtensionNames = deviceExtensions.data()
+    };
     auto res = vkCreateDevice( *m_physDev, &devInfo, nullptr, &m_device );
     if( res != VK_SUCCESS ) throw DeviceException( std::format( "Failed to create logical device ({}).", string_VkResult( res ) ) );
 
     if( instance.Type() == VlkInstanceType::Drm )
     {
-        VkPhysicalDeviceExternalSemaphoreInfo extSemInfo = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_SEMAPHORE_INFO };
-        extSemInfo.handleType = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_SYNC_FD_BIT;
-
-        VkExternalSemaphoreProperties extSemProps = { VK_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_PROPERTIES };
-
+        constexpr VkPhysicalDeviceExternalSemaphoreInfo extSemInfo = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_SEMAPHORE_INFO,
+            .handleType = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_SYNC_FD_BIT
+        };
+        VkExternalSemaphoreProperties extSemProps = {
+            .sType = VK_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_PROPERTIES
+        };
         vkGetPhysicalDeviceExternalSemaphoreProperties( *m_physDev, &extSemInfo, &extSemProps );
 
         if( !( extSemProps.externalSemaphoreFeatures & VK_EXTERNAL_SEMAPHORE_FEATURE_IMPORTABLE_BIT ) )
@@ -356,12 +367,12 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
         vkGetDeviceQueue( m_device, m_queueInfo[(int)QueueType::Present].idx, 0, &m_queue[(int)QueueType::Present] );
     }
 
-    VmaAllocatorCreateInfo allocInfo = {};
-    allocInfo.physicalDevice = *m_physDev;
-    allocInfo.device = m_device;
-    allocInfo.instance = instance;
-    allocInfo.vulkanApiVersion = instance.ApiVersion();
-
+    const VmaAllocatorCreateInfo allocInfo = {
+        .physicalDevice = *m_physDev,
+        .device = m_device,
+        .instance = instance,
+        .vulkanApiVersion = instance.ApiVersion()
+    };
     VkVerify( vmaCreateAllocator( &allocInfo, &m_allocator ) );
 
     if( m_queueInfo[(int)QueueType::Graphic].idx >= 0 )
@@ -456,12 +467,11 @@ VlkDevice::~VlkDevice()
 
 void VlkDevice::Submit( const VlkCommandBuffer& cmdbuf, VkFence fence )
 {
-    VkCommandBufferSubmitInfo cmdbufInfo = {
+    const VkCommandBufferSubmitInfo cmdbufInfo = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
         .commandBuffer = cmdbuf
     };
-
-    VkSubmitInfo2 submitInfo = {
+    const VkSubmitInfo2 submitInfo = {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
         .commandBufferInfoCount = 1,
         .pCommandBufferInfos = &cmdbufInfo

@@ -42,8 +42,8 @@ static HdrColor PbrNeutral( const HdrColor& hdr )
 static __m128 PbrNeutral128( __m128 hdr )
 {
     __m128 vx0 = _mm_blend_ps( hdr, _mm_set1_ps( FLT_MAX ), 0x8 );
-    __m128 vx1 = _mm_shuffle_ps( hdr, hdr, _MM_SHUFFLE( 0, 1, 3, 2 ) );
-    __m128 vx2 = _mm_min_ps( hdr, vx1 );
+    __m128 vx1 = _mm_shuffle_ps( vx0, vx0, _MM_SHUFFLE( 0, 1, 3, 2 ) );
+    __m128 vx2 = _mm_min_ps( vx0, vx1 );
     __m128 vx3 = _mm_shuffle_ps( vx2, vx2, _MM_SHUFFLE( 2, 3, 0, 1 ) );
     __m128 vx = _mm_min_ps( vx2, vx3 );
 
@@ -52,7 +52,7 @@ static __m128 PbrNeutral128( __m128 hdr )
     __m128 vo2 = _mm_fnmadd_ps( vo1, _mm_set1_ps( 6.25f ), vx );
     __m128 vo = _mm_blendv_ps( _mm_set1_ps( 0.04f ), vo2, vo0 );
 
-    __m128 vc0 = _mm_sub_ps( hdr, vo );
+    __m128 vc0 = _mm_sub_ps( vx0, vo );
 
     __m128 vp0 = _mm_blend_ps( vc0, _mm_set1_ps( FLT_MIN ), 0x8 );
     __m128 vp1 = _mm_shuffle_ps( vp0, vp0, _MM_SHUFFLE( 0, 1, 3, 2 ) );
@@ -86,8 +86,8 @@ static __m128 PbrNeutral128( __m128 hdr )
 static __m256 PbrNeutral256( __m256 hdr )
 {
     __m256 vx0 = _mm256_blend_ps( hdr, _mm256_set1_ps( FLT_MAX ), 0x88 );
-    __m256 vx1 = _mm256_shuffle_ps( hdr, hdr, _MM_SHUFFLE( 0, 1, 3, 2 ) );
-    __m256 vx2 = _mm256_min_ps( hdr, vx1 );
+    __m256 vx1 = _mm256_shuffle_ps( vx0, vx0, _MM_SHUFFLE( 0, 1, 3, 2 ) );
+    __m256 vx2 = _mm256_min_ps( vx0, vx1 );
     __m256 vx3 = _mm256_shuffle_ps( vx2, vx2, _MM_SHUFFLE( 2, 3, 0, 1 ) );
     __m256 vx = _mm256_min_ps( vx2, vx3 );
 
@@ -96,7 +96,7 @@ static __m256 PbrNeutral256( __m256 hdr )
     __m256 vo2 = _mm256_fnmadd_ps( vo1, _mm256_set1_ps( 6.25f ), vx );
     __m256 vo = _mm256_blendv_ps( _mm256_set1_ps( 0.04f ), vo2, vo0 );
 
-    __m256 vc0 = _mm256_sub_ps( hdr, vo );
+    __m256 vc0 = _mm256_sub_ps( vx0, vo );
 
     __m256 vp0 = _mm256_blend_ps( vc0, _mm256_set1_ps( FLT_MIN ), 0x88 );
     __m256 vp1 = _mm256_shuffle_ps( vp0, vp0, _MM_SHUFFLE( 0, 1, 3, 2 ) );
@@ -130,8 +130,8 @@ static __m256 PbrNeutral256( __m256 hdr )
 static __m512 PbrNeutral512( __m512 hdr )
 {
     __m512 vx0 = _mm512_mask_blend_ps( 0x8888, hdr, _mm512_set1_ps( FLT_MAX ) );
-    __m512 vx1 = _mm512_shuffle_ps( hdr, hdr, _MM_SHUFFLE( 0, 1, 3, 2 ) );
-    __m512 vx2 = _mm512_min_ps( hdr, vx1 );
+    __m512 vx1 = _mm512_shuffle_ps( vx0, vx0, _MM_SHUFFLE( 0, 1, 3, 2 ) );
+    __m512 vx2 = _mm512_min_ps( vx0, vx1 );
     __m512 vx3 = _mm512_shuffle_ps( vx2, vx2, _MM_SHUFFLE( 2, 3, 0, 1 ) );
     __m512 vx = _mm512_min_ps( vx2, vx3 );
 
@@ -140,7 +140,7 @@ static __m512 PbrNeutral512( __m512 hdr )
     __m512 vo2 = _mm512_fnmadd_ps( vo1, _mm512_set1_ps( 6.25f ), vx );
     __m512 vo = _mm512_mask_blend_ps( vo0, _mm512_set1_ps( 0.04f ), vo2 );
 
-    __m512 vc0 = _mm512_sub_ps( hdr, vo );
+    __m512 vc0 = _mm512_sub_ps( vx0, vo );
 
     __m512 vp0 = _mm512_mask_blend_ps( 0x8888, vc0, _mm512_set1_ps( FLT_MIN ) );
     __m512 vp1 = _mm512_shuffle_ps( vp0, vp0, _MM_SHUFFLE( 0, 1, 3, 2 ) );

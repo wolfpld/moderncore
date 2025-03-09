@@ -288,7 +288,7 @@ void Viewport::Key( const char* key, int mods )
     if( mods & CtrlBit && strcmp( key, "v" ) == 0 ) PasteClipboard();
 }
 
-void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, int flags, ImageProvider::ReturnData data )
+void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, int flags, const ImageProvider::ReturnData& data )
 {
     ZoneScoped;
     ZoneTextF( "id %ld, result %d", id, result );

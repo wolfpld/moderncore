@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-void Usage()
+static void Usage()
 {
     fprintf( stderr, "Usage: embed <objectName> <source> <destination>\n" );
     fprintf( stderr, "  destination should be without extension, will create cpp, hpp pair\n" );

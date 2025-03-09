@@ -7,10 +7,11 @@
 VlkSurface::VlkSurface( VkInstance instance, wl_display* display, wl_surface* surface )
     : m_instance( instance )
 {
-    VkWaylandSurfaceCreateInfoKHR createInfo = { VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR };
-    createInfo.display = display;
-    createInfo.surface = surface;
-
+    const VkWaylandSurfaceCreateInfoKHR createInfo = {
+        .sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR,
+        .display = display,
+        .surface = surface
+    };
     VkVerify( vkCreateWaylandSurfaceKHR( instance, &createInfo, nullptr, &m_surface ) );
 }
 

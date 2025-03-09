@@ -9,7 +9,7 @@
 namespace ToneMap
 {
 
-float AgxCurve( float x )
+static float AgxCurve( float x )
 {
     constexpr auto threshold = 0.6060606060606061f;
     constexpr auto a_up = 69.86278913545539f;
@@ -24,10 +24,10 @@ float AgxCurve( float x )
     const float b = b_up + (b_down - b_up) * mask;
     const float c = c_up + (c_down - c_up) * mask;
 
-    return 0.5f + ( -2.f * threshold + 2.f * x ) * pow( 1.f + a * pow( fabs( x - threshold ), b ), c );
+    return 0.5f + ( -2.f * threshold + 2.f * x ) * std::pow( 1.f + a * std::pow( std::fabs( x - threshold ), b ), c );
 }
 
-HdrColor AgxTransform( const HdrColor& hdr )
+static HdrColor AgxTransform( const HdrColor& hdr )
 {
     constexpr auto min_ev = -12.473931188332413f;
     constexpr auto max_ev = 4.026068811667588f;
@@ -64,7 +64,7 @@ HdrColor AgxTransform( const HdrColor& hdr )
     return c3;
 }
 
-HdrColor AgxLookGolden( const HdrColor& color )
+static HdrColor AgxLookGolden( const HdrColor& color )
 {
     const auto luma = 0.2126f * color.r + 0.7152f * color.g + 0.0722f * color.b;
     const auto vr = std::pow( std::max( 0.f, color.r ), 0.8f );
@@ -78,7 +78,7 @@ HdrColor AgxLookGolden( const HdrColor& color )
     };
 }
 
-HdrColor AgxLookPunchy( const HdrColor& color )
+static HdrColor AgxLookPunchy( const HdrColor& color )
 {
     const auto luma = 0.2126f * color.r + 0.7152f * color.g + 0.0722f * color.b;
     const auto vr = std::pow( std::max( 0.f, color.r ), 1.35f );
@@ -92,7 +92,7 @@ HdrColor AgxLookPunchy( const HdrColor& color )
     };
 }
 
-HdrColor AgxEotf( const HdrColor& color )
+static HdrColor AgxEotf( const HdrColor& color )
 {
     constexpr std::array agx_mat_inv = {
         1.1969986613119143f, -0.053001338688085674f, -0.053001338688085674f,

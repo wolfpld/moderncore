@@ -8,15 +8,13 @@
 namespace ToneMap
 {
 
-namespace
-{
 constexpr auto startCompression = 0.8f - 0.04f;
 constexpr auto desaturation = 0.15f;
 constexpr auto d = 1.f - startCompression;
 constexpr auto d2 = d * d;
 constexpr auto dsc = d - startCompression;
 
-HdrColor PbrNeutral( const HdrColor& hdr )
+static HdrColor PbrNeutral( const HdrColor& hdr )
 {
     const auto x = std::min( { hdr.r, hdr.g, hdr.b } );
     const auto offset = x < 0.08f ? x - 6.25f * x * x : 0.04f;
@@ -39,10 +37,9 @@ HdrColor PbrNeutral( const HdrColor& hdr )
         std::lerp( color.b, newPeak, g ),
     };
 }
-}
 
 #if defined __SSE4_1__ && defined __FMA__
-__m128 PbrNeutral128( __m128 hdr )
+static __m128 PbrNeutral128( __m128 hdr )
 {
     __m128 vx0 = _mm_blend_ps( hdr, _mm_set1_ps( FLT_MAX ), 0x8 );
     __m128 vx1 = _mm_shuffle_ps( hdr, hdr, _MM_SHUFFLE( 0, 1, 3, 2 ) );
@@ -86,7 +83,7 @@ __m128 PbrNeutral128( __m128 hdr )
 #endif
 
 #if defined __AVX2__
-__m256 PbrNeutral256( __m256 hdr )
+static __m256 PbrNeutral256( __m256 hdr )
 {
     __m256 vx0 = _mm256_blend_ps( hdr, _mm256_set1_ps( FLT_MAX ), 0x88 );
     __m256 vx1 = _mm256_shuffle_ps( hdr, hdr, _MM_SHUFFLE( 0, 1, 3, 2 ) );
@@ -130,7 +127,7 @@ __m256 PbrNeutral256( __m256 hdr )
 #endif
 
 #if defined __AVX512F__
-__m512 PbrNeutral512( __m512 hdr )
+static __m512 PbrNeutral512( __m512 hdr )
 {
     __m512 vx0 = _mm512_mask_blend_ps( 0x8888, hdr, _mm512_set1_ps( FLT_MAX ) );
     __m512 vx1 = _mm512_shuffle_ps( hdr, hdr, _MM_SHUFFLE( 0, 1, 3, 2 ) );

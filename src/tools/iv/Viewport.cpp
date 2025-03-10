@@ -158,6 +158,15 @@ void Viewport::SetBusy( int64_t job )
     }
 }
 
+void Viewport::Update( float delta )
+{
+    std::lock_guard lock( m_lock );
+    if( m_isBusy )
+    {
+        m_busyIndicator->Update( delta );
+    }
+}
+
 void Viewport::Close()
 {
     m_display.Stop();
@@ -168,10 +177,11 @@ bool Viewport::Render()
     ZoneScoped;
 
     const auto now = Now();
-    const auto delta = std::min( now - m_lastTime, uint64_t( 1000000000 ) );
+    const auto delta = std::min( now - m_lastTime, uint64_t( 1000000000 ) ) / 1000000000.f;
     m_lastTime = now;
 
     m_window->Update();
+    Update( delta );
 
     FrameMark;
     auto& cmdbuf = m_window->BeginFrame();
@@ -199,7 +209,6 @@ bool Viewport::Render()
         if( m_view->HasBitmap() ) m_view->Render( cmdbuf, m_window->GetSize() );
         if( m_isBusy )
         {
-            m_busyIndicator->Update( delta / 1000000000.f );
             m_busyIndicator->Render( cmdbuf, m_window->GetSize() );
         }
     }

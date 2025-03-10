@@ -31,6 +31,7 @@ public:
 
 private:
     void SetBusy( int64_t job );
+    void Update( float delta );
 
     void Close();
     bool Render();

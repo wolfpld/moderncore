@@ -177,9 +177,14 @@ void WaylandWindow::SetIcon( const SvgImage& icon )
     wl_shm_pool_destroy( pool );
 }
 
+static uint32_t ceil( uint32_t a, uint32_t b )
+{
+    return ( a + b - 1 ) / b;
+}
+
 void WaylandWindow::Resize( uint32_t width, uint32_t height, bool reposition )
 {
-    ResizeNoScale( width * 120 / m_scale, height * 120 / m_scale, reposition );
+    ResizeNoScale( ceil( width * 120, m_scale ), ceil( height * 120, m_scale ), reposition );
 }
 
 void WaylandWindow::ResizeNoScale( uint32_t width, uint32_t height, bool reposition )

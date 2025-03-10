@@ -422,7 +422,13 @@ void WaylandWindow::InvokeRender()
     auto cb = wl_surface_frame( m_surface );
     wl_callback_add_listener( cb, &listener, this );
 
-    m_idle = !InvokeRet( OnRender, false );
+    CheckPanic( !m_idle, "Window is rendering, but is idle?" );
+    const auto idle = !InvokeRet( OnRender, false );
+    if( idle )
+    {
+        std::lock_guard lock( m_idleLock );
+        m_idle = true;
+    }
 }
 
 void WaylandWindow::InvokeClipboard( const unordered_flat_set<std::string>& mimeTypes )
@@ -447,8 +453,12 @@ void WaylandWindow::InvokeKey( const char* key, int mods )
 
 void WaylandWindow::ResumeIfIdle()
 {
-    if( !m_idle ) return;
-    m_idle = false;
+    {
+        std::lock_guard lock( m_idleLock );
+        if( !m_idle ) return;
+        m_idle = false;
+    }
+
     wl_surface_commit( m_surface );
 }
 

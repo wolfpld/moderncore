@@ -163,6 +163,8 @@ private:
     VkExtent2D m_staged;
     VkExtent2D m_bounds;
     bool m_maximized = false;
+
+    std::mutex m_idleLock;
     bool m_idle = false;
 
     std::mutex m_cursorLock;

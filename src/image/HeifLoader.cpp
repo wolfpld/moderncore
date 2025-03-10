@@ -18,10 +18,7 @@
 #include "util/TaskDispatch.hpp"
 #include "util/Tonemapper.hpp"
 
-namespace
-{
-
-float Pq( float N, float NominalLuminanceMul )
+static float Pq( float N, float NominalLuminanceMul )
 {
     constexpr float m1 = 0.1593017578125f;
     constexpr float m1inv = 1.f / m1;
@@ -35,7 +32,7 @@ float Pq( float N, float NominalLuminanceMul )
     return 10000.f * std::powf( std::max( 0.f, Nm2 - c1 ) / ( c2 - c3 * Nm2 ), m1inv ) * NominalLuminanceMul;
 }
 
-float Hlg( float E )
+static float Hlg( float E )
 {
     constexpr float a = 0.17883277f;
     constexpr float b = 0.28466892f;
@@ -56,7 +53,7 @@ float Hlg( float E )
 }
 
 #if defined __SSE4_1__ && defined __FMA__
-void LinearizePq128( float* ptr, int sz, float NominalLuminanceMul )
+static void LinearizePq128( float* ptr, int sz, float NominalLuminanceMul )
 {
     while( sz > 0 )
     {
@@ -82,7 +79,7 @@ void LinearizePq128( float* ptr, int sz, float NominalLuminanceMul )
 }
 
 #  if defined __AVX2__
-void LinearizePq256( float* ptr, int sz, float NominalLuminanceMul )
+static void LinearizePq256( float* ptr, int sz, float NominalLuminanceMul )
 {
     while( sz > 1 )
     {
@@ -109,7 +106,7 @@ void LinearizePq256( float* ptr, int sz, float NominalLuminanceMul )
 #  endif
 
 #  if defined __AVX512F__
-void LinearizePq512( float* ptr, int sz, float NominalLuminanceMul )
+static void LinearizePq512( float* ptr, int sz, float NominalLuminanceMul )
 {
     while( sz > 3 )
     {
@@ -135,7 +132,7 @@ void LinearizePq512( float* ptr, int sz, float NominalLuminanceMul )
 }
 #  endif
 
-void LinearizePq( float* ptr, int sz, float NominalLuminanceMul )
+static void LinearizePq( float* ptr, int sz, float NominalLuminanceMul )
 {
 #  ifdef __AVX512F__
     LinearizePq512( ptr, sz, NominalLuminanceMul );
@@ -152,7 +149,7 @@ void LinearizePq( float* ptr, int sz, float NominalLuminanceMul )
     LinearizePq128( ptr, sz, NominalLuminanceMul );
 }
 #else
-void LinearizePq( float* ptr, int sz, NominalLuminanceMul )
+static void LinearizePq( float* ptr, int sz, NominalLuminanceMul )
 {
     for( int i=0; i<sz; i++ )
     {
@@ -164,7 +161,6 @@ void LinearizePq( float* ptr, int sz, NominalLuminanceMul )
     }
 }
 #endif
-}
 
 HeifLoader::HeifLoader( std::shared_ptr<FileWrapper> file, ToneMap::Operator tonemap, TaskDispatch* td )
     : m_valid( false )

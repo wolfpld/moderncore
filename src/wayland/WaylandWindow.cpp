@@ -242,7 +242,7 @@ void WaylandWindow::EnableHdr( bool enable )
     m_hdr = enable;
 }
 
-VlkCommandBuffer& WaylandWindow::BeginFrame()
+void WaylandWindow::Update()
 {
     m_stateLock.lock();
     if( m_prevScale == 0 ) m_prevScale = m_scale;
@@ -270,7 +270,10 @@ VlkCommandBuffer& WaylandWindow::BeginFrame()
     m_cursorLock.lock();
     if( m_cursor != seat.GetCursor( m_surface ) ) seat.SetCursor( m_surface, m_cursor );
     m_cursorLock.unlock();
+}
 
+VlkCommandBuffer& WaylandWindow::BeginFrame()
+{
     m_frameIdx = ( m_frameIdx + 1 ) % m_frameData.size();
     auto& frame = m_frameData[m_frameIdx];
 

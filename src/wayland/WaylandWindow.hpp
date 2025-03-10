@@ -67,6 +67,7 @@ public:
     void Activate( const char* token );
     void EnableHdr( bool enable );
 
+    void Update();
     VlkCommandBuffer& BeginFrame();
     void EndFrame();
 

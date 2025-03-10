@@ -171,6 +171,8 @@ bool Viewport::Render()
     const auto delta = std::min( now - m_lastTime, uint64_t( 1000000000 ) );
     m_lastTime = now;
 
+    m_window->Update();
+
     FrameMark;
     auto& cmdbuf = m_window->BeginFrame();
 

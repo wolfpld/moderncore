@@ -78,7 +78,7 @@ void BitmapHdrHalf::Resize( uint32_t width, uint32_t height, TaskDispatch* td )
     stbir_set_non_pm_alpha_speed_over_quality( &resize, 1 );
     if( td )
     {
-        auto threads = td->NumWorkers();
+        auto threads = td->NumWorkers() + 1;
         threads = stbir_build_samplers_with_splits( &resize, threads );
         for( size_t i=0; i<threads; i++ )
         {
@@ -107,7 +107,7 @@ std::unique_ptr<BitmapHdrHalf> BitmapHdrHalf::ResizeNew( uint32_t width, uint32_
     stbir_set_non_pm_alpha_speed_over_quality( &resize, 1 );
     if( td )
     {
-        auto threads = td->NumWorkers();
+        auto threads = td->NumWorkers() + 1;
         threads = stbir_build_samplers_with_splits( &resize, threads );
         for( size_t i=0; i<threads; i++ )
         {

@@ -85,6 +85,8 @@ public:
     void InvokeDrop( int fd, const char* mime );
     void InvokeKey( const char* key, int mods );
 
+    void ResumeIfIdle();
+
     [[nodiscard]] const VkExtent2D& GetSize() const { return m_swapchain->GetExtent(); }    // Swapchain extent, i.e. render area in real pixels
     [[nodiscard]] const VkExtent2D& GetSizeNoScale() const { return m_extent; }             // Logical window size, i.e. pixels at 1.0 DPI scaling
     [[nodiscard]] const char* GetTitle() const { return m_title.c_str(); }
@@ -161,6 +163,7 @@ private:
     VkExtent2D m_staged;
     VkExtent2D m_bounds;
     bool m_maximized = false;
+    bool m_idle = false;
 
     std::mutex m_cursorLock;
     WaylandCursor m_cursor;

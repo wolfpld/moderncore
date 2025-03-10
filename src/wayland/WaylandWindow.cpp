@@ -239,7 +239,11 @@ void WaylandWindow::Activate( const char* token )
 void WaylandWindow::EnableHdr( bool enable )
 {
     if( !m_hdrCapable ) return;
-    m_hdr = enable;
+    if( m_hdr != enable )
+    {
+        m_hdr = enable;
+        ResumeIfIdle();
+    }
 }
 
 void WaylandWindow::Update()
@@ -418,7 +422,7 @@ void WaylandWindow::InvokeRender()
     auto cb = wl_surface_frame( m_surface );
     wl_callback_add_listener( cb, &listener, this );
 
-    if( !InvokeRet( OnRender, false ) ) wl_surface_commit( m_surface );
+    m_idle = !InvokeRet( OnRender, false );
 }
 
 void WaylandWindow::InvokeClipboard( const unordered_flat_set<std::string>& mimeTypes )
@@ -439,6 +443,13 @@ void WaylandWindow::InvokeDrop( int fd, const char* mime )
 void WaylandWindow::InvokeKey( const char* key, int mods )
 {
     Invoke( OnKey, key, mods );
+}
+
+void WaylandWindow::ResumeIfIdle()
+{
+    if( !m_idle ) return;
+    m_idle = false;
+    wl_surface_commit( m_surface );
 }
 
 int WaylandWindow::GetClipboard( const char* mime )
@@ -551,6 +562,8 @@ void WaylandWindow::XdgToplevelConfigure( struct xdg_toplevel* toplevel, int32_t
         .width = uint32_t( width ),
         .height = uint32_t( height )
     };
+
+    ResumeIfIdle();
 }
 
 void WaylandWindow::XdgToplevelClose( struct xdg_toplevel* toplevel )
@@ -574,6 +587,7 @@ void WaylandWindow::DecorationConfigure( zxdg_toplevel_decoration_v1* tldec, uin
 void WaylandWindow::FractionalScalePreferredScale( wp_fractional_scale_v1* scale, uint32_t scaleValue )
 {
     m_scale = scaleValue;
+    ResumeIfIdle();
 }
 
 void WaylandWindow::FrameDone( struct wl_callback* cb, uint32_t time )

@@ -164,10 +164,39 @@ static void LinearizePq( float* ptr, int sz, NominalLuminanceMul )
 
 static void ApplyGainMap( float* ptr, size_t sz, const float* gptr, float headroom )
 {
+    const float hadj = headroom - 1.f;
+
+#if defined __SSE4_1__ && defined __FMA__
+    __m128 hadj4 = _mm_set1_ps( hadj );
+    while( sz >= 4 )
+    {
+        __m128 gain = _mm_loadu_ps( gptr );
+        __m128 mul = _mm_fmadd_ps( hadj4, gain, _mm_set1_ps( 1.f ) );
+        __m128 mul0 = _mm_blend_ps( _mm_shuffle_ps( mul, mul, _MM_SHUFFLE( 0, 0, 0, 0 ) ), _mm_set1_ps( 1.f ), 8 );
+        __m128 mul1 = _mm_blend_ps( _mm_shuffle_ps( mul, mul, _MM_SHUFFLE( 1, 1, 1, 1 ) ), _mm_set1_ps( 1.f ), 8 );
+        __m128 mul2 = _mm_blend_ps( _mm_shuffle_ps( mul, mul, _MM_SHUFFLE( 2, 2, 2, 2 ) ), _mm_set1_ps( 1.f ), 8 );
+        __m128 mul3 = _mm_blend_ps( _mm_shuffle_ps( mul, mul, _MM_SHUFFLE( 3, 3, 3, 3 ) ), _mm_set1_ps( 1.f ), 8 );
+
+        __m128 px0 = _mm_loadu_ps( ptr );
+        __m128 px1 = _mm_loadu_ps( ptr + 4 );
+        __m128 px2 = _mm_loadu_ps( ptr + 8 );
+        __m128 px3 = _mm_loadu_ps( ptr + 12 );
+
+        _mm_storeu_ps( ptr, _mm_mul_ps( px0, mul0 ) );
+        _mm_storeu_ps( ptr + 4, _mm_mul_ps( px1, mul1 ) );
+        _mm_storeu_ps( ptr + 8, _mm_mul_ps( px2, mul2 ) );
+        _mm_storeu_ps( ptr + 12, _mm_mul_ps( px3, mul3 ) );
+
+        sz -= 4;
+        ptr += 16;
+        gptr += 4;
+    }
+#endif
+
     while( sz-- > 0 )
     {
         const auto gain = *gptr++;
-        const auto mul = 1.f + ( headroom - 1.f ) * gain;
+        const auto mul = 1.f + hadj * gain;
         ptr[0] *= mul;
         ptr[1] *= mul;
         ptr[2] *= mul;

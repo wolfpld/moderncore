@@ -178,9 +178,17 @@ static void ApplyGainMap( float* ptr, size_t sz, const float* gptr, float headro
         __m128 sh2 = _mm_shuffle_ps( mul, mul, _MM_SHUFFLE( 2, 2, 2, 2 ) );
         __m128 sh3 = _mm_shuffle_ps( mul, mul, _MM_SHUFFLE( 3, 3, 3, 3 ) );
 
-    #ifdef __AVX2__
+  #ifdef __AVX2__
         __m256 sh01 = _mm256_insertf128_ps( _mm256_castps128_ps256( sh0 ), sh1, 1 );
         __m256 sh23 = _mm256_insertf128_ps( _mm256_castps128_ps256( sh2 ), sh3, 1 );
+
+    #ifdef __AVX512F__
+        __m512 sh0123 = _mm512_insertf32x8( _mm512_castps256_ps512( sh01 ), sh23, 1 );
+        __m512 mul0 = _mm512_mask_blend_ps( 0x8888, sh0123, _mm512_set1_ps( 1.f ) );
+
+        __m512 px = _mm512_loadu_ps( ptr );
+        _mm512_storeu_ps( ptr, _mm512_mul_ps( px, mul0 ) );
+    #else
         __m256 mul0 = _mm256_blend_ps( sh01, _mm256_set1_ps( 1.f ), 0x88 );
         __m256 mul1 = _mm256_blend_ps( sh23, _mm256_set1_ps( 1.f ), 0x88 );
 
@@ -189,7 +197,8 @@ static void ApplyGainMap( float* ptr, size_t sz, const float* gptr, float headro
 
         _mm256_storeu_ps( ptr, _mm256_mul_ps( px0, mul0 ) );
         _mm256_storeu_ps( ptr + 8, _mm256_mul_ps( px1, mul1 ) );
-    #else
+    #endif
+  #else
         __m128 mul0 = _mm_blend_ps( sh0, _mm_set1_ps( 1.f ), 8 );
         __m128 mul1 = _mm_blend_ps( sh1, _mm_set1_ps( 1.f ), 8 );
         __m128 mul2 = _mm_blend_ps( sh2, _mm_set1_ps( 1.f ), 8 );
@@ -204,7 +213,7 @@ static void ApplyGainMap( float* ptr, size_t sz, const float* gptr, float headro
         _mm_storeu_ps( ptr + 4, _mm_mul_ps( px1, mul1 ) );
         _mm_storeu_ps( ptr + 8, _mm_mul_ps( px2, mul2 ) );
         _mm_storeu_ps( ptr + 12, _mm_mul_ps( px3, mul3 ) );
-    #endif
+  #endif
 
         sz -= 4;
         ptr += 16;

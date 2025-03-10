@@ -155,6 +155,7 @@ void Viewport::SetBusy( int64_t job )
         m_isBusy = true;
         m_busyIndicator->ResetTime();
         m_window->SetCursor( WaylandCursor::Wait );
+        WantRender();
     }
 }
 
@@ -164,7 +165,15 @@ void Viewport::Update( float delta )
     if( m_isBusy )
     {
         m_busyIndicator->Update( delta );
+        m_render = true;
     }
+}
+
+void Viewport::WantRender()
+{
+    if( m_render ) return;
+    m_render = true;
+    m_window->ResumeIfIdle();
 }
 
 void Viewport::Close()
@@ -182,6 +191,9 @@ bool Viewport::Render()
 
     m_window->Update();
     Update( delta );
+
+    if( !m_render ) return false;
+    m_render = false;
 
     FrameMark;
     auto& cmdbuf = m_window->BeginFrame();
@@ -227,6 +239,8 @@ void Viewport::Scale( uint32_t scale )
 
     m_busyIndicator->SetScale( scale / 120.f );
     m_view->SetScale( scale / 120.f );
+
+    m_render = true;
 }
 
 void Viewport::Resize( uint32_t width, uint32_t height )
@@ -235,6 +249,8 @@ void Viewport::Resize( uint32_t width, uint32_t height )
     ZoneTextF( "width %u, height %u", width, height );
 
     m_view->Resize( m_window->GetSize() );
+
+    m_render = true;
 }
 
 void Viewport::FormatChange( VkFormat format )
@@ -245,6 +261,8 @@ void Viewport::FormatChange( VkFormat format )
     m_background->FormatChange( format );
     m_busyIndicator->FormatChange( format );
     m_view->FormatChange( format );
+
+    m_render = true;
 }
 
 void Viewport::Clipboard( const unordered_flat_set<std::string>& mimeTypes )
@@ -323,6 +341,7 @@ void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, int flags
             height = data.bitmapHdr->Height();
             m_window->EnableHdr( true );
         }
+        WantRender();
 
         std::lock_guard lock( *m_window );
         if( !m_window->Maximized() )

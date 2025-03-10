@@ -33,6 +33,8 @@ private:
     void SetBusy( int64_t job );
     void Update( float delta );
 
+    void WantRender();
+
     void Close();
     bool Render();
     void Scale( uint32_t scale );
@@ -63,6 +65,7 @@ private:
     std::shared_ptr<ImageView> m_view;
 
     uint64_t m_lastTime = 0;
+    bool m_render = true;
 
     unordered_flat_set<std::string> m_clipboardOffer;
 

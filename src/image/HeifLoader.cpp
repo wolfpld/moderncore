@@ -162,6 +162,20 @@ static void LinearizePq( float* ptr, int sz, NominalLuminanceMul )
 }
 #endif
 
+static void ApplyGainMap( float* ptr, size_t sz, const float* gptr, float headroom )
+{
+    while( sz-- > 0 )
+    {
+        const auto gain = *gptr++;
+        const auto mul = 1.f + ( headroom - 1.f ) * gain;
+        ptr[0] *= mul;
+        ptr[1] *= mul;
+        ptr[2] *= mul;
+        ptr += 4;
+    }
+}
+
+
 HeifLoader::HeifLoader( std::shared_ptr<FileWrapper> file, ToneMap::Operator tonemap, TaskDispatch* td )
     : m_valid( false )
     , m_tonemap( tonemap )
@@ -785,17 +799,7 @@ void HeifLoader::ApplyTransfer( float* ptr, size_t sz, size_t offset )
 {
     if( m_gainMap )
     {
-        auto gptr = m_gainMap + offset;
-        do
-        {
-            const auto gain = *gptr++;
-            const auto mul = 1.f + ( m_gainMapHeadroom - 1.f ) * gain;
-            ptr[0] *= mul;
-            ptr[1] *= mul;
-            ptr[2] *= mul;
-            ptr += 4;
-        }
-        while( --sz );
+        ApplyGainMap( ptr, sz, m_gainMap + offset, m_gainMapHeadroom );
     }
     else
     {

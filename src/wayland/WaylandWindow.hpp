@@ -77,14 +77,13 @@ public:
 
     void SetListener( const Listener* listener, void* listenerPtr );
     void SetDevice( std::shared_ptr<VlkDevice> device );
+    void SetCursor( WaylandCursor cursor );
 
     void InvokeRender();
     void InvokeClipboard( const unordered_flat_set<std::string>& mimeTypes );
     void InvokeDrag( const unordered_flat_set<std::string>& mimeTypes );
     void InvokeDrop( int fd, const char* mime );
     void InvokeKey( const char* key, int mods );
-
-    void SetCursor( WaylandCursor cursor );
 
     [[nodiscard]] const VkExtent2D& GetSize() const { return m_swapchain->GetExtent(); }    // Swapchain extent, i.e. render area in real pixels
     [[nodiscard]] const VkExtent2D& GetSizeNoScale() const { return m_extent; }             // Logical window size, i.e. pixels at 1.0 DPI scaling

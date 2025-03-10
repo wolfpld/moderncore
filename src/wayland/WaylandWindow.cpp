@@ -389,6 +389,12 @@ void WaylandWindow::SetListener( const Listener* listener, void* listenerPtr )
     m_listenerPtr = listenerPtr;
 }
 
+void WaylandWindow::SetCursor( WaylandCursor cursor )
+{
+    std::lock_guard lock( m_cursorLock );
+    m_cursor = cursor;
+}
+
 void WaylandWindow::SetDevice( std::shared_ptr<VlkDevice> device )
 {
     CheckPanic( !m_vkDevice, "Vulkan device already set" );
@@ -433,12 +439,6 @@ void WaylandWindow::InvokeDrop( int fd, const char* mime )
 void WaylandWindow::InvokeKey( const char* key, int mods )
 {
     Invoke( OnKey, key, mods );
-}
-
-void WaylandWindow::SetCursor( WaylandCursor cursor )
-{
-    std::lock_guard lock( m_cursorLock );
-    m_cursor = cursor;
 }
 
 int WaylandWindow::GetClipboard( const char* mime )

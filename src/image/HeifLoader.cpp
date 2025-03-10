@@ -832,7 +832,63 @@ void HeifLoader::ConvertYCbCrToRGB( float* ptr, size_t sz )
             break;
         }
 
-        do
+#ifdef __AVX512F__
+        __m512 abcd16 = _mm512_set_ps( c, d, b, a, c, d, b, a, c, d, b, a, c, d, b, a );
+        while( sz >= 4 )
+        {
+            __m512 px0 = _mm512_loadu_ps( ptr );
+            __m512 px1 = _mm512_shuffle_ps( px0, px0, _MM_SHUFFLE( 2, 1, 1, 2 ) );
+            __m512 mul = _mm512_mul_ps( px1, abcd16 );
+            __m512 a0 = _mm512_shuffle_ps( mul, mul, _MM_SHUFFLE( 3, 3, 3, 3 ) );
+            __m512 a1 = _mm512_mask_blend_ps( 0x2222, _mm512_setzero_ps(), a0 );
+            __m512 add = _mm512_add_ps( mul, a1 );
+            __m512 y = _mm512_shuffle_ps( px0, px0, _MM_SHUFFLE( 0, 0, 0, 0 ) );
+            __m512 rgb0 = _mm512_add_ps( y, add );
+            __m512 rgb = _mm512_mask_blend_ps( 0x8888, rgb0, px0 );
+            _mm512_storeu_ps( ptr, rgb );
+
+            sz -= 4;
+            ptr += 16;
+        }
+#endif
+#ifdef __AVX2__
+        __m256 abcd8 = _mm256_set_ps( c, d, b, a, c, d, b, a );
+        while( sz >= 2 )
+        {
+            __m256 px0 = _mm256_loadu_ps( ptr );
+            __m256 px1 = _mm256_shuffle_ps( px0, px0, _MM_SHUFFLE( 2, 1, 1, 2 ) );
+            __m256 mul = _mm256_mul_ps( px1, abcd8 );
+            __m256 a0 = _mm256_shuffle_ps( mul, mul, _MM_SHUFFLE( 3, 3, 3, 3 ) );
+            __m256 a1 = _mm256_blend_ps( _mm256_setzero_ps(), a0, 0x22 );
+            __m256 add = _mm256_add_ps( mul, a1 );
+            __m256 y = _mm256_shuffle_ps( px0, px0, _MM_SHUFFLE( 0, 0, 0, 0 ) );
+            __m256 rgb0 = _mm256_add_ps( y, add );
+            __m256 rgb = _mm256_blend_ps( rgb0, px0, 0x88 );
+            _mm256_storeu_ps( ptr, rgb );
+
+            sz -= 2;
+            ptr += 8;
+        }
+#endif
+#ifdef __SSE4_1__
+        __m128 abcd4 = _mm_set_ps( c, d, b, a );
+        while( sz > 0 )
+        {
+            __m128 px0 = _mm_loadu_ps( ptr );
+            __m128 px1 = _mm_shuffle_ps( px0, px0, _MM_SHUFFLE( 2, 1, 1, 2 ) );
+            __m128 mul = _mm_mul_ps( px1, abcd4 );
+            __m128 a0 = _mm_insert_ps( _mm_setzero_ps(), mul, 0xdd );
+            __m128 add = _mm_add_ps( mul, a0 );
+            __m128 y = _mm_shuffle_ps( px0, px0, _MM_SHUFFLE( 0, 0, 0, 0 ) );
+            __m128 rgb0 = _mm_add_ps( y, add );
+            __m128 rgb = _mm_blend_ps( rgb0, px0, 8 );
+            _mm_store_ps( ptr, rgb );
+
+            ptr += 4;
+            sz--;
+        }
+#else
+        while( sz > 0 )
         {
             const auto Y = ptr[0];
             const auto Cb = ptr[1];
@@ -847,8 +903,9 @@ void HeifLoader::ConvertYCbCrToRGB( float* ptr, size_t sz )
             ptr[2] = b;
 
             ptr += 4;
+            sz--;
         }
-        while( --sz );
+#endif
     }
 }
 

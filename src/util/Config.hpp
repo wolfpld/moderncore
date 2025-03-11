@@ -27,7 +27,7 @@ public:
     template<typename T>
     bool GetOpt( const char* section, const char* key, T& output );
 
-    static std::string GetPath( const char* name );
+    static std::string GetPath( const char* name = "" );
 
 private:
     const char* GetString( const char* section, const char* key, const char* def );

@@ -164,6 +164,7 @@ set(MCOREUTIL_SRC
     src/util/Config.cpp
     src/util/EmbedData.cpp
     src/util/FileBuffer.cpp
+    src/util/Filesystem.cpp
     src/util/Home.cpp
     src/util/Logs.cpp
     src/util/MemoryBuffer.cpp

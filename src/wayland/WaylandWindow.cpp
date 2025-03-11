@@ -203,6 +203,8 @@ void WaylandWindow::ResizeNoScale( uint32_t width, uint32_t height, bool reposit
             .width = width,
             .height = height
         };
+
+        ResumeIfIdle();
     }
     else
     {

@@ -90,10 +90,14 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
     }
     mclog( LogLevel::Info, "Selected GPU: %s", physDevice->Properties().deviceName );
 
+    Config cfg( "iv.ini" );
+    const auto width = cfg.Get( "Window", "Width", 1280 );
+    const auto height = cfg.Get( "Window", "Height", 720 );
+
     m_device = std::make_shared<VlkDevice>( m_vkInstance, physDevice, VlkDevice::RequireGraphic | VlkDevice::RequirePresent, m_window->VkSurface() );
     PrintQueueConfig( *m_device );
     m_window->SetDevice( m_device );
-    m_window->ResizeNoScale( 1280, 720 );
+    m_window->ResizeNoScale( width, height );
 
     if( m_window->HdrCapable() ) mclog( LogLevel::Info, "HDR capable" );
 

@@ -40,6 +40,7 @@ public:
     void FormatChange( VkFormat format );
 
     [[nodiscard]] bool HasBitmap();
+    [[nodiscard]] VkExtent2D GetBitmapExtent() const { return m_bitmapExtent; }
 
 private:
     void CreatePipeline( VkFormat format );

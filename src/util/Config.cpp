@@ -8,34 +8,34 @@
 #include "contrib/ini/ini.h"
 
 Config::Config( const char* name )
-    : m_config( nullptr )
+    : m_config( ini_load( GetPath( name ).c_str() ) )
 {
-    if( strncmp( name, "./", 2 ) != 0 )
-    {
-        std::string path;
-        const auto xdgConfig = getenv( "XDG_CONFIG_HOME" );
-        if( xdgConfig )
-        {
-            path = xdgConfig;
-            path += "/ModernCore/";
-        }
-        else
-        {
-            path = GetHome();
-            path += "/.config/ModernCore/";
-        }
-        path += name;
-        m_config = ini_load( path.c_str() );
-    }
-    else
-    {
-        m_config = ini_load( name );
-    }
 }
 
 Config::~Config()
 {
     if( m_config ) ini_free( m_config );
+}
+
+std::string Config::GetPath( const char* name )
+{
+    if( strncmp( name, "./", 2 ) == 0 ) return name;
+
+    std::string path;
+    const auto xdgConfig = getenv( "XDG_CONFIG_HOME" );
+    if( xdgConfig )
+    {
+        path = xdgConfig;
+        path += "/ModernCore/";
+    }
+    else
+    {
+        path = GetHome();
+        path += "/.config/ModernCore/";
+    }
+    path += name;
+
+    return path;
 }
 
 const char* Config::GetString( const char* section, const char* key, const char* def )

@@ -13,8 +13,10 @@
 #include "image/vector/SvgImage.hpp"
 #include "util/Bitmap.hpp"
 #include "util/BitmapHdr.hpp"
+#include "util/Config.hpp"
 #include "util/DataBuffer.hpp"
 #include "util/EmbedData.hpp"
+#include "util/Filesystem.hpp"
 #include "util/Invoke.hpp"
 #include "util/MemoryBuffer.hpp"
 #include "util/Panic.hpp"
@@ -114,9 +116,26 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
 
 Viewport::~Viewport()
 {
+    const auto winSize = m_window->GetSizeNoScale();
+    const auto maximized = m_window->Maximized();
+
     m_window->Close();
     m_provider->CancelAll();
     m_provider.reset();
+
+    const auto configPath = Config::GetPath();
+    if( CreateDirectories( configPath ) )
+    {
+        FILE* f = fopen( ( configPath + "iv.ini" ).c_str(), "w" );
+        if( f )
+        {
+            fprintf( f, "[Window]\n" );
+            fprintf( f, "Width = %u\n", winSize.width );
+            fprintf( f, "Height = %u\n", winSize.height );
+            fprintf( f, "Maximized = %d\n", maximized );
+            fclose( f );
+        }
+    }
 }
 
 void Viewport::LoadImage( const char* path )

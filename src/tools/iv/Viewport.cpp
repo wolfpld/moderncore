@@ -314,7 +314,44 @@ void Viewport::Key( const char* key, int mods )
     ZoneScoped;
     ZoneText( key, strlen( key ) );
 
-    if( mods & CtrlBit && strcmp( key, "v" ) == 0 ) PasteClipboard();
+    if( mods & CtrlBit && strcmp( key, "v" ) == 0 )
+    {
+        PasteClipboard();
+    }
+    else if( mods == 0 && strcmp( key, "f" ) == 0 )
+    {
+        if( !m_view->HasBitmap() ) return;
+
+        std::lock_guard lock( *m_window );
+        if( !m_window->Maximized() )
+        {
+            const auto size = m_view->GetBitmapExtent();
+            const auto bounds = m_window->GetBounds();
+            if( bounds.width != 0 && bounds.height != 0 )
+            {
+                uint32_t w, h;
+                if( bounds.width >= size.width && bounds.height >= size.height )
+                {
+                    w = size.width;
+                    h = size.height;
+                }
+                else
+                {
+                    const auto scale = std::min( float( bounds.width ) / size.width, float( bounds.height ) / size.height );
+                    w = size.width * scale;
+                    h = size.height * scale;
+                }
+
+                // Don't let the window get too small. 150 px is the minimum window size KDE allows.
+                const auto dpi = m_window->GetScale();
+                const auto minSize = 150 * dpi / 120;
+                w = std::max( w, minSize );
+                h = std::max( h, minSize );
+
+                m_window->Resize( w, h, true );
+            }
+        }
+    }
 }
 
 void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, int flags, const ImageProvider::ReturnData& data )
@@ -342,35 +379,6 @@ void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, int flags
             m_window->EnableHdr( true );
         }
         WantRender();
-
-        std::lock_guard lock( *m_window );
-        if( !m_window->Maximized() )
-        {
-            auto bounds = m_window->GetBounds();
-            if( bounds.width != 0 && bounds.height != 0 )
-            {
-                uint32_t w, h;
-                if( bounds.width >= width && bounds.height >= height )
-                {
-                    w = width;
-                    h = height;
-                }
-                else
-                {
-                    const auto scale = std::min( float( bounds.width ) / width, float( bounds.height ) / height );
-                    w = width * scale;
-                    h = height * scale;
-                }
-
-                // Don't let the window get too small. 150 px is the minimum window size KDE allows.
-                const auto dpi = m_window->GetScale();
-                const auto minSize = 150 * dpi / 120;
-                w = std::max( w, minSize );
-                h = std::max( h, minSize );
-
-                m_window->Resize( w, h, true );
-            }
-        }
     }
 
     std::lock_guard lock( m_lock );

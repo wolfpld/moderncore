@@ -20,7 +20,7 @@ public:
     };
 
     template<DataContainer T>
-    explicit VlkShader( T& stages ) : VlkShader( stages.data(), stages.size() ) {}
+    explicit VlkShader( const T& stages ) : VlkShader( stages.data(), stages.size() ) {}
 
     VlkShader( const Stage* stages, size_t count );
 

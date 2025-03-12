@@ -68,17 +68,18 @@ ImageView::ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, 
     Unembed( SupersampleFrag );
     Unembed( SupersamplePqFrag );
 
-    const std::array stages = {
-        VlkShader::Stage { std::make_shared<VlkShaderModule>( *m_device, *TexturingVert ), VK_SHADER_STAGE_VERTEX_BIT },
-        VlkShader::Stage { std::make_shared<VlkShaderModule>( *m_device, *SupersampleFrag ), VK_SHADER_STAGE_FRAGMENT_BIT }
-    };
-    m_shaderMin[0] = std::make_shared<VlkShader>( stages );
+    auto TexturingVertModule = std::make_shared<VlkShaderModule>( *m_device, *TexturingVert );
+    auto SupersampleFragModule = std::make_shared<VlkShaderModule>( *m_device, *SupersampleFrag );
+    auto SupersamplePqFragModule = std::make_shared<VlkShaderModule>( *m_device, *SupersamplePqFrag );
 
-    const std::array stagesPq = {
-        stages[0],
-        VlkShader::Stage { std::make_shared<VlkShaderModule>( *m_device, *SupersamplePqFrag ), VK_SHADER_STAGE_FRAGMENT_BIT }
-    };
-    m_shaderMin[1] = std::make_shared<VlkShader>( stagesPq );
+    m_shaderMin[0] = std::make_shared<VlkShader>( std::array {
+        VlkShader::Stage { TexturingVertModule, VK_SHADER_STAGE_VERTEX_BIT },
+        VlkShader::Stage { SupersampleFragModule, VK_SHADER_STAGE_FRAGMENT_BIT }
+    } );
+    m_shaderMin[1] = std::make_shared<VlkShader>( std::array {
+        VlkShader::Stage { TexturingVertModule, VK_SHADER_STAGE_VERTEX_BIT },
+        VlkShader::Stage { SupersamplePqFragModule, VK_SHADER_STAGE_FRAGMENT_BIT }
+    } );
 
 
     static constexpr std::array bindings = {

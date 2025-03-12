@@ -52,8 +52,7 @@ private:
     GarbageChute& m_garbage;
     std::shared_ptr<VlkDevice> m_device;
 
-    std::shared_ptr<VlkShader> m_shader;
-    std::shared_ptr<VlkShader> m_shaderPq;
+    std::shared_ptr<VlkShader> m_shaderMin[2];
     std::shared_ptr<VlkDescriptorSetLayout> m_setLayout;
     std::shared_ptr<VlkPipelineLayout> m_pipelineLayout;
     std::shared_ptr<VlkPipeline> m_pipeline;

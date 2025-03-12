@@ -22,6 +22,8 @@
 
 #include "shader/SupersampleFrag.hpp"
 #include "shader/SupersamplePqFrag.hpp"
+#include "shader/TexturingAlphaFrag.hpp"
+#include "shader/TexturingAlphaPqFrag.hpp"
 #include "shader/TexturingVert.hpp"
 
 struct PushConstant
@@ -64,13 +66,17 @@ ImageView::ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, 
     };
 
 
-    Unembed( TexturingVert );
     Unembed( SupersampleFrag );
     Unembed( SupersamplePqFrag );
+    Unembed( TexturingAlphaFrag );
+    Unembed( TexturingAlphaPqFrag );
+    Unembed( TexturingVert );
 
-    auto TexturingVertModule = std::make_shared<VlkShaderModule>( *m_device, *TexturingVert );
     auto SupersampleFragModule = std::make_shared<VlkShaderModule>( *m_device, *SupersampleFrag );
     auto SupersamplePqFragModule = std::make_shared<VlkShaderModule>( *m_device, *SupersamplePqFrag );
+    auto TexturingAlphaFragModule = std::make_shared<VlkShaderModule>( *m_device, *TexturingAlphaFrag );
+    auto TexturingAlphaPqFragModule = std::make_shared<VlkShaderModule>( *m_device, *TexturingAlphaPqFrag );
+    auto TexturingVertModule = std::make_shared<VlkShaderModule>( *m_device, *TexturingVert );
 
     m_shaderMin[0] = std::make_shared<VlkShader>( std::array {
         VlkShader::Stage { TexturingVertModule, VK_SHADER_STAGE_VERTEX_BIT },
@@ -79,6 +85,15 @@ ImageView::ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, 
     m_shaderMin[1] = std::make_shared<VlkShader>( std::array {
         VlkShader::Stage { TexturingVertModule, VK_SHADER_STAGE_VERTEX_BIT },
         VlkShader::Stage { SupersamplePqFragModule, VK_SHADER_STAGE_FRAGMENT_BIT }
+    } );
+
+    m_shaderExact[0] = std::make_shared<VlkShader>( std::array {
+        VlkShader::Stage { TexturingVertModule, VK_SHADER_STAGE_VERTEX_BIT },
+        VlkShader::Stage { TexturingAlphaFragModule, VK_SHADER_STAGE_FRAGMENT_BIT }
+    } );
+    m_shaderExact[1] = std::make_shared<VlkShader>( std::array {
+        VlkShader::Stage { TexturingVertModule, VK_SHADER_STAGE_VERTEX_BIT },
+        VlkShader::Stage { TexturingAlphaPqFragModule, VK_SHADER_STAGE_FRAGMENT_BIT }
     } );
 
 
@@ -133,11 +148,14 @@ ImageView::ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, 
 ImageView::~ImageView()
 {
     m_garbage.Recycle( {
-        std::move( m_pipeline ),
+        std::move( m_pipelineMin ),
+        std::move( m_pipelineExact ),
         std::move( m_pipelineLayout ),
         std::move( m_setLayout ),
         std::move( m_shaderMin[0] ),
         std::move( m_shaderMin[1] ),
+        std::move( m_shaderExact[0] ),
+        std::move( m_shaderExact[1] ),
         std::move( m_vertexBuffer ),
         std::move( m_indexBuffer ),
         std::move( m_texture ),
@@ -170,7 +188,14 @@ void ImageView::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
     std::lock_guard lock( m_lock );
 
     ZoneVk( *m_device, cmdbuf, "ImageView", true );
-    vkCmdBindPipeline( cmdbuf, VK_PIPELINE_BIND_POINT_GRAPHICS, *m_pipeline );
+    if( m_bitmapExtent.width <= extent.width && m_bitmapExtent.height <= extent.height )
+    {
+        vkCmdBindPipeline( cmdbuf, VK_PIPELINE_BIND_POINT_GRAPHICS, *m_pipelineExact );
+    }
+    else
+    {
+        vkCmdBindPipeline( cmdbuf, VK_PIPELINE_BIND_POINT_GRAPHICS, *m_pipelineMin );
+    }
     vkCmdPushConstants( cmdbuf, *m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, offsetof( PushConstant, screenSize ), sizeof( float ) * 2, &pushConstant );
     vkCmdPushConstants( cmdbuf, *m_pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, offsetof( PushConstant, texDelta ), sizeof( float ) * 2, &pushConstant.texDelta );
     vkCmdSetViewport( cmdbuf, 0, 1, &viewport );
@@ -269,7 +294,10 @@ void ImageView::FinishSetBitmap( std::shared_ptr<Texture>&& texture, std::shared
 
 void ImageView::FormatChange( VkFormat format )
 {
-    m_garbage.Recycle( std::move( m_pipeline ) );
+    m_garbage.Recycle( {
+        std::move( m_pipelineMin ),
+        std::move( m_pipelineExact )
+    } );
     CreatePipeline( format );
 }
 
@@ -348,7 +376,7 @@ void ImageView::CreatePipeline( VkFormat format )
         .pDynamicStates = dynamicStateList.data()
     };
     const bool pq = format == VK_FORMAT_A2B10G10R10_UNORM_PACK32 || format == VK_FORMAT_A2R10G10B10_UNORM_PACK32;
-    const VkGraphicsPipelineCreateInfo pipelineInfo = {
+    VkGraphicsPipelineCreateInfo pipelineInfo = {
         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
         .pNext = &rendering,
         .stageCount = pq ? m_shaderMin[1]->GetStageCount() : m_shaderMin[0]->GetStageCount(),
@@ -362,7 +390,11 @@ void ImageView::CreatePipeline( VkFormat format )
         .pDynamicState = &dynamicState,
         .layout = *m_pipelineLayout,
     };
-    m_pipeline = std::make_shared<VlkPipeline>( *m_device, pipelineInfo );
+    m_pipelineMin = std::make_shared<VlkPipeline>( *m_device, pipelineInfo );
+
+    pipelineInfo.stageCount = pq ? m_shaderExact[1]->GetStageCount() : m_shaderExact[0]->GetStageCount();
+    pipelineInfo.pStages = pq ? m_shaderExact[1]->GetStages() : m_shaderExact[0]->GetStages();
+    m_pipelineExact = std::make_shared<VlkPipeline>( *m_device, pipelineInfo );
 }
 
 void ImageView::Cleanup()

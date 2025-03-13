@@ -213,7 +213,7 @@ void BusyIndicator::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
     vkCmdSetScissor( cmdbuf, 0, 1, &scissor );
     vkCmdBindVertexBuffers( cmdbuf, 0, 1, vertexBuffers.data(), offsets.data() );
     vkCmdBindIndexBuffer( cmdbuf, *m_indexBuffer, 0, VK_INDEX_TYPE_UINT16 );
-    CmdPushDescriptorSetKHR( cmdbuf, VK_PIPELINE_BIND_POINT_GRAPHICS, *m_pipelineLayout, 0, 1, &m_descWrite );
+    vkCmdPushDescriptorSet( cmdbuf, VK_PIPELINE_BIND_POINT_GRAPHICS, *m_pipelineLayout, 0, 1, &m_descWrite );
     vkCmdDrawIndexed( cmdbuf, 6, 1, 0, 0, 0 );
 }
 

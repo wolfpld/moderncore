@@ -1,16 +1,12 @@
 #include "VlkInstance.hpp"
 #include "VlkProxy.hpp"
 
-PFN_vkCmdPushDescriptorSetKHR CmdPushDescriptorSetKHR;
 PFN_vkGetSemaphoreFdKHR GetSemaphoreFdKHR;
 PFN_vkImportSemaphoreFdKHR ImportSemaphoreFdKHR;
 PFN_vkGetMemoryFdPropertiesKHR GetMemoryFdPropertiesKHR;
 
 VkResult LoadVulkanExtensions( VlkInstance& instance )
 {
-    CmdPushDescriptorSetKHR = (PFN_vkCmdPushDescriptorSetKHR)vkGetInstanceProcAddr( instance, "vkCmdPushDescriptorSetKHR" );
-    if( !CmdPushDescriptorSetKHR ) return VK_ERROR_EXTENSION_NOT_PRESENT;
-
     if( instance.Type() == VlkInstanceType::Drm )
     {
         GetSemaphoreFdKHR = (PFN_vkGetSemaphoreFdKHR)vkGetInstanceProcAddr( instance, "vkGetSemaphoreFdKHR" );

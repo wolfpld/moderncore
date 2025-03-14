@@ -282,7 +282,7 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
         queueCreate.emplace_back( qi );
     }
 
-    std::vector<const char*> deviceExtensions = { VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME };
+    std::vector<const char*> deviceExtensions = {};
 
     if( instance.Type() == VlkInstanceType::Wayland )
     {
@@ -298,8 +298,13 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
         deviceExtensions.emplace_back( VK_KHR_EXTERNAL_SEMAPHORE_FD_EXTENSION_NAME );
     }
 
+    VkPhysicalDeviceVulkan14Features features14 = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_FEATURES,
+        .pushDescriptor = VK_TRUE
+    };
     VkPhysicalDeviceVulkan13Features features13 = {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
+        .pNext = &features14,
         .synchronization2 = VK_TRUE,
         .dynamicRendering = VK_TRUE
     };

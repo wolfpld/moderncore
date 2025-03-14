@@ -24,8 +24,12 @@ VlkPhysicalDevice::VlkPhysicalDevice( VkPhysicalDevice physDev )
     vkGetPhysicalDeviceProperties( physDev, &m_properties );
     vkGetPhysicalDeviceMemoryProperties( physDev, &m_memoryProperties );
 
+    m_features14 = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_FEATURES
+    };
     m_features13 = {
-        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
+        .pNext = &m_features14
     };
     m_features12 = {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,

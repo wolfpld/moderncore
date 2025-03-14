@@ -23,6 +23,7 @@ public:
     [[nodiscard]] bool HasDynamicRendering() const;
     [[nodiscard]] bool HasCalibratedTimestamps() const;
     [[nodiscard]] bool HasPciBusInfo() const;
+    [[nodiscard]] bool HasHostImageCopy() const;
 
     [[nodiscard]] bool IsDeviceHardware() const;
 

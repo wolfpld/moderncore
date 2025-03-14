@@ -79,6 +79,11 @@ bool VlkPhysicalDevice::HasPciBusInfo() const
     return IsExtensionAvailable( VK_EXT_PCI_BUS_INFO_EXTENSION_NAME );
 }
 
+bool VlkPhysicalDevice::HasHostImageCopy() const
+{
+    return m_features14.hostImageCopy == VK_TRUE;
+}
+
 bool VlkPhysicalDevice::IsDeviceHardware() const
 {
     return m_properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU ||

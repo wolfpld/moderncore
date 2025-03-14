@@ -298,8 +298,12 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
         deviceExtensions.emplace_back( VK_KHR_EXTERNAL_SEMAPHORE_FD_EXTENSION_NAME );
     }
 
+    const auto& txInfo = m_queueInfo[(int)QueueType::Transfer];
+    m_hostImageCopy = m_physDev->HasHostImageCopy() && ( txInfo.shareCompute || txInfo.shareGraphic );
+
     VkPhysicalDeviceVulkan14Features features14 = {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_FEATURES,
+        .hostImageCopy = m_hostImageCopy,
         .pushDescriptor = VK_TRUE
     };
     VkPhysicalDeviceVulkan13Features features13 = {

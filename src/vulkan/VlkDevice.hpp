@@ -52,6 +52,8 @@ public:
     [[nodiscard]] auto& GetPhysicalDevice() const { return m_physDev; }
     [[nodiscard]] auto& GetGarbage() const { return m_garbage; }
 
+    [[nodiscard]] bool UseHostImageCopy() const { return m_hostImageCopy; }
+
     operator VkDevice() const { return m_device; }
     operator VkPhysicalDevice() const { return *m_physDev; }
     operator VmaAllocator() const { return m_allocator; }
@@ -73,6 +75,8 @@ private:
     std::array<VkQueue, 4> m_queue;
     std::array<std::shared_ptr<VlkCommandPool>, 4> m_commandPool;
     std::array<std::shared_ptr<std::mutex>, 4> m_queueLock;
+
+    bool m_hostImageCopy;
 
 #ifdef TRACY_ENABLE
     TracyVkCtx m_tracyCtx = nullptr;

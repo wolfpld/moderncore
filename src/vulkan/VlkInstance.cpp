@@ -179,7 +179,7 @@ void VlkInstance::InitPhysicalDevices()
     auto it = m_physicalDevices.begin();
     while( it != m_physicalDevices.end() )
     {
-        if( !(*it)->HasDynamicRendering() || !(*it)->HasPushDescriptor() || !(*it)->IsGraphicCapable() )
+        if( !(*it)->HasDynamicRendering() || !(*it)->IsGraphicCapable() )
         {
             mclog( LogLevel::Warning, "Physical device '%s' is not compatible", (*it)->Properties().deviceName );
             it = m_physicalDevices.erase( it );

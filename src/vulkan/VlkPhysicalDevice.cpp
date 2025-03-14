@@ -64,11 +64,6 @@ bool VlkPhysicalDevice::IsSwapchainCapable() const
     return IsExtensionAvailable( VK_KHR_SWAPCHAIN_EXTENSION_NAME );
 }
 
-bool VlkPhysicalDevice::HasPushDescriptor() const
-{
-    return IsExtensionAvailable( VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME );
-}
-
 bool VlkPhysicalDevice::HasDynamicRendering() const
 {
     return m_features13.dynamicRendering == VK_TRUE;

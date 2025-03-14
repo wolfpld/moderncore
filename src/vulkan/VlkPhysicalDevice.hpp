@@ -20,7 +20,6 @@ public:
     [[nodiscard]] bool IsGraphicCapable() const;
     [[nodiscard]] bool IsComputeCapable() const;
     [[nodiscard]] bool IsSwapchainCapable() const;
-    [[nodiscard]] bool HasPushDescriptor() const;
     [[nodiscard]] bool HasDynamicRendering() const;
     [[nodiscard]] bool HasCalibratedTimestamps() const;
     [[nodiscard]] bool HasPciBusInfo() const;

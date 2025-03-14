@@ -8,12 +8,12 @@ layout(location = 0) out vec4 outColor;
 layout(binding = 0) uniform sampler2D tex;
 
 layout(push_constant) uniform PushConstants {
-    layout(offset = 8) float texDelta;
-    float div;
+    layout(offset = 8) float div;
 };
 
 void main()
 {
+    float texDelta = 1.0 / textureSize( tex, 0 ).x;
     float dx = dFdx(outTexCoord.x);
     float dy = dFdy(outTexCoord.y);
 

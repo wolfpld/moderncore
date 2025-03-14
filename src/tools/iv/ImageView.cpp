@@ -29,7 +29,6 @@
 struct PushConstant
 {
     float screenSize[2];
-    float texDelta;
     float div;
 };
 
@@ -118,8 +117,8 @@ ImageView::ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, 
         },
         VkPushConstantRange {
             .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-            .offset = offsetof( PushConstant, texDelta ),
-            .size = sizeof( float ) * 2
+            .offset = offsetof( PushConstant, div ),
+            .size = sizeof( float )
         }
     };
     const VkPipelineLayoutCreateInfo pipelineLayoutInfo = {
@@ -178,7 +177,6 @@ void ImageView::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
     const PushConstant pushConstant = {
         float( extent.width ),
         float( extent.height ),
-        1.f / float( m_bitmapExtent.width ),
         m_div
     };
 
@@ -197,7 +195,7 @@ void ImageView::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
         vkCmdBindPipeline( cmdbuf, VK_PIPELINE_BIND_POINT_GRAPHICS, *m_pipelineMin );
     }
     vkCmdPushConstants( cmdbuf, *m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, offsetof( PushConstant, screenSize ), sizeof( float ) * 2, &pushConstant );
-    vkCmdPushConstants( cmdbuf, *m_pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, offsetof( PushConstant, texDelta ), sizeof( float ) * 2, &pushConstant.texDelta );
+    vkCmdPushConstants( cmdbuf, *m_pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, offsetof( PushConstant, div ), sizeof( float ), &pushConstant.div );
     vkCmdSetViewport( cmdbuf, 0, 1, &viewport );
     vkCmdSetScissor( cmdbuf, 0, 1, &scissor );
     vkCmdBindVertexBuffers( cmdbuf, 0, 1, vertexBuffers.data(), offsets.data() );

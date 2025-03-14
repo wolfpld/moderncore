@@ -163,39 +163,39 @@ void Texture::Upload( VlkDevice& device, const std::vector<MipData>& mipChain, s
 {
     const auto mipLevels = (uint32_t)mipChain.size();
 
-    auto cmdTrn = std::make_unique<VlkCommandBuffer>( *device.GetCommandPool( QueueType::Transfer ) );
-    cmdTrn->Begin( VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT );
+    auto cmdTx = std::make_unique<VlkCommandBuffer>( *device.GetCommandPool( QueueType::Transfer ) );
+    cmdTx->Begin( VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT );
 
     for( uint32_t level = 0; level < mipLevels; level++ )
     {
-        ZoneVk( device, *cmdTrn, "Texture upload", true );
-        WriteBarrier( *cmdTrn, level );
+        ZoneVk( device, *cmdTx, "Texture upload", true );
+        WriteBarrier( *cmdTx, level );
         const MipData& mipdata = mipChain[level];
         const VkBufferImageCopy region = {
             .bufferOffset = mipdata.offset,
             .imageSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, level, 0, 1 },
             .imageExtent = { mipdata.width, mipdata.height, 1 }
         };
-        vkCmdCopyBufferToImage( *cmdTrn, *stagingBuffer, *m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region );
+        vkCmdCopyBufferToImage( *cmdTx, *stagingBuffer, *m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region );
     }
 
     const auto shareQueue = device.GetQueueInfo( QueueType::Graphic ).shareTransfer;
-    const auto trnQueue = device.GetQueueInfo( QueueType::Transfer ).idx;
+    const auto txQueue = device.GetQueueInfo( QueueType::Transfer ).idx;
     const auto gfxQueue = device.GetQueueInfo( QueueType::Graphic ).idx;
     if( shareQueue )
     {
-        ReadBarrier( *cmdTrn, mipLevels );
+        ReadBarrier( *cmdTx, mipLevels );
     }
     else
     {
-        ReadBarrierTrn( *cmdTrn, mipLevels, trnQueue, gfxQueue );
+        ReadBarrierTx( *cmdTx, mipLevels, txQueue, gfxQueue );
     }
-    cmdTrn->End();
+    cmdTx->End();
 
     auto fenceTrn = std::make_shared<VlkFence>( device );
-    device.Submit( *cmdTrn, *fenceTrn );
+    device.Submit( *cmdTx, *fenceTrn );
     device.GetGarbage()->Recycle( fenceTrn, {
-        std::move( cmdTrn ),
+        std::move( cmdTx ),
         std::move( stagingBuffer ),
         m_image
     } );
@@ -205,7 +205,7 @@ void Texture::Upload( VlkDevice& device, const std::vector<MipData>& mipChain, s
     {
         auto cmdGfx = std::make_unique<VlkCommandBuffer>( *device.GetCommandPool( QueueType::Graphic ) );
         cmdGfx->Begin( VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT );
-        ReadBarrierGfx( *cmdGfx, mipLevels, trnQueue, gfxQueue );
+        ReadBarrierGfx( *cmdGfx, mipLevels, txQueue, gfxQueue );
         cmdGfx->End();
 
         auto fenceGfx = std::make_shared<VlkFence>( device );
@@ -262,7 +262,7 @@ void Texture::ReadBarrier( VkCommandBuffer cmdbuf, uint32_t mipLevels )
     vkCmdPipelineBarrier2( cmdbuf, &deps );
 }
 
-void Texture::ReadBarrierTrn( VkCommandBuffer cmdbuf, uint32_t mipLevels, uint32_t trnQueue, uint32_t gfxQueue )
+void Texture::ReadBarrierTx( VkCommandBuffer cmdbuf, uint32_t mipLevels, uint32_t trnQueue, uint32_t gfxQueue )
 {
     const VkImageMemoryBarrier2 barrier = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,

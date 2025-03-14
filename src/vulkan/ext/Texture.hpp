@@ -33,7 +33,7 @@ private:
 
     void WriteBarrier( VkCommandBuffer cmdbuf, uint32_t mip );
     void ReadBarrier( VkCommandBuffer cmdbuf, uint32_t mipLevels );
-    void ReadBarrierTrn( VkCommandBuffer cmdbuf, uint32_t mipLevels, uint32_t trnQueue, uint32_t gfxQueue );
+    void ReadBarrierTx( VkCommandBuffer cmdbuf, uint32_t mipLevels, uint32_t trnQueue, uint32_t gfxQueue );
     void ReadBarrierGfx( VkCommandBuffer cmdbuf, uint32_t mipLevels, uint32_t trnQueue, uint32_t gfxQueue );
 
     std::shared_ptr<VlkImage> m_image;

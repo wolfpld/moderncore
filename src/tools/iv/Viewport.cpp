@@ -263,6 +263,7 @@ void Viewport::Scale( uint32_t width, uint32_t height, uint32_t scale )
     m_busyIndicator->SetScale( scale / 120.f );
     m_view->SetScale( scale / 120.f, m_window->GetSize() );
 
+    std::lock_guard lock( m_lock );
     m_render = true;
 }
 
@@ -273,6 +274,7 @@ void Viewport::Resize( uint32_t width, uint32_t height )
 
     m_view->Resize( m_window->GetSize() );
 
+    std::lock_guard lock( m_lock );
     m_render = true;
 }
 
@@ -285,6 +287,7 @@ void Viewport::FormatChange( VkFormat format )
     m_busyIndicator->FormatChange( format );
     m_view->FormatChange( format );
 
+    std::lock_guard lock( m_lock );
     m_render = true;
 }
 
@@ -349,6 +352,7 @@ void Viewport::Key( const char* key, int mods )
         if( m_window->Maximized() )
         {
             m_view->FitToExtent( m_window->GetSize() );
+            std::lock_guard lock( m_lock );
             WantRender();
         }
         else
@@ -382,6 +386,7 @@ void Viewport::Key( const char* key, int mods )
             else
             {
                 m_view->FitToExtent( m_window->GetSize() );
+                std::lock_guard lock( m_lock );
                 WantRender();
             }
         }
@@ -390,6 +395,7 @@ void Viewport::Key( const char* key, int mods )
     {
         if( !m_view->HasBitmap() ) return;
         m_view->FitPixelPerfect( m_window->GetSize() );
+        std::lock_guard lock( m_lock );
         WantRender();
     }
 }
@@ -418,16 +424,22 @@ void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, int flags
             height = data.bitmapHdr->Height();
             m_window->EnableHdr( true );
         }
+
+        m_lock.lock();
         WantRender();
     }
+    else
+    {
+        m_lock.lock();
+    }
 
-    std::lock_guard lock( m_lock );
     if( m_currentJob == id )
     {
         m_currentJob = -1;
         m_isBusy = false;
         m_window->SetCursor( WaylandCursor::Default );
     }
+    m_lock.unlock();
 }
 
 void Viewport::PasteClipboard()

@@ -38,6 +38,7 @@ ImageView::ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, 
     , m_device( std::move( device ) )
     , m_extent( extent )
     , m_scale( scale )
+    , m_fitToResize( true )
 {
     SetScale( scale, extent );
 
@@ -212,10 +213,17 @@ void ImageView::Resize( const VkExtent2D& extent )
     const auto dx = int32_t( extent.width - m_extent.width );
     const auto dy = int32_t( extent.height - m_extent.height );
     if( dx == 0 && dy == 0 ) return;
-    m_extent = extent;
 
-    m_imgOrigin.x += dx / 2.f;
-    m_imgOrigin.y += dy / 2.f;
+    if( m_fitToResize )
+    {
+        FitToExtent( extent );
+    }
+    else
+    {
+        m_extent = extent;
+        m_imgOrigin.x += dx / 2.f;
+        m_imgOrigin.y += dy / 2.f;
+    }
 
     UpdateVertexBuffer();
 }
@@ -305,7 +313,9 @@ void ImageView::FormatChange( VkFormat format )
 
 void ImageView::FitToExtent( const VkExtent2D& extent )
 {
+    m_fitToResize = true;
     m_extent = extent;
+
     if( m_bitmapExtent.width <= extent.width &&
         m_bitmapExtent.height <= extent.height )
     {
@@ -331,6 +341,7 @@ void ImageView::FitToExtent( const VkExtent2D& extent )
 
 void ImageView::FitPixelPerfect( const VkExtent2D& extent)
 {
+    m_fitToResize = false;
     m_extent = extent;
     m_imgOrigin = {
         ( (float)extent.width - m_bitmapExtent.width ) / 2,

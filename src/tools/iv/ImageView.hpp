@@ -80,6 +80,7 @@ private:
 
     float m_div;
     float m_scale;
+    bool m_fitToResize;
 
     std::mutex m_lock;
 };

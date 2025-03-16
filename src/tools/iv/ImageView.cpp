@@ -206,23 +206,10 @@ void ImageView::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
 
 void ImageView::Resize( const VkExtent2D& extent )
 {
-    constexpr VkBufferCreateInfo vinfo = {
-        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-        .size = sizeof( Vertex ) * 4,
-        .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-        .sharingMode = VK_SHARING_MODE_EXCLUSIVE
-    };
-    auto vb = std::make_shared<VlkBuffer>( *m_device, vinfo, VlkBuffer::PreferDevice | VlkBuffer::WillWrite );
-
     std::lock_guard lock( m_lock );
     m_extent = extent;
 
-    const auto vdata = SetupVertexBuffer();
-    memcpy( vb->Ptr(), vdata.data(), sizeof( Vertex ) * 4 );
-    vb->Flush();
-
-    std::swap( m_vertexBuffer, vb );
-    m_garbage.Recycle( std::move( vb ) );
+    UpdateVertexBuffer();
 }
 
 void ImageView::SetBitmap( const std::shared_ptr<Bitmap>& bitmap, TaskDispatch& td )
@@ -276,18 +263,13 @@ void ImageView::SetBitmap( const std::shared_ptr<BitmapHdr>& bitmap, TaskDispatc
 void ImageView::FinishSetBitmap( std::shared_ptr<Texture>&& texture, std::shared_ptr<VlkBuffer>&& vb, uint32_t width, uint32_t height )
 {
     std::lock_guard lock( m_lock );
-
-    m_bitmapExtent = { width, height };
-    const auto vdata = SetupVertexBuffer();
-    memcpy( vb->Ptr(), vdata.data(), sizeof( Vertex ) * 4 );
-    vb->Flush();
-
     Cleanup();
 
     std::swap( m_texture, texture );
-    std::swap( m_vertexBuffer, vb );
-
     m_imageInfo.imageView = *m_texture;
+
+    m_bitmapExtent = { width, height };
+    UpdateVertexBuffer();
 }
 
 void ImageView::FormatChange( VkFormat format )
@@ -439,4 +421,22 @@ std::array<ImageView::Vertex, 4> ImageView::SetupVertexBuffer() const
         { x1, y1, 1, 1 },
         { x0, y1, 0, 1 }
     } };
+}
+
+void ImageView::UpdateVertexBuffer()
+{
+    constexpr VkBufferCreateInfo vinfo = {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .size = sizeof( Vertex ) * 4,
+        .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE
+    };
+    auto vb = std::make_shared<VlkBuffer>( *m_device, vinfo, VlkBuffer::PreferDevice | VlkBuffer::WillWrite );
+
+    const auto vdata = SetupVertexBuffer();
+    memcpy( vb->Ptr(), vdata.data(), sizeof( Vertex ) * 4 );
+    vb->Flush();
+
+    if( m_vertexBuffer ) m_garbage.Recycle( std::move( m_vertexBuffer ) );
+    std::swap( m_vertexBuffer, vb );
 }

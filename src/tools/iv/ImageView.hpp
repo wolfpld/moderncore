@@ -47,6 +47,7 @@ private:
 
     void Cleanup();
     [[nodiscard]] std::array<Vertex, 4> SetupVertexBuffer() const;
+    void UpdateVertexBuffer();
     void FinishSetBitmap( std::shared_ptr<Texture>&& texture, std::shared_ptr<VlkBuffer>&& vb, uint32_t width, uint32_t height );
 
     GarbageChute& m_garbage;

@@ -42,8 +42,8 @@ public:
     {
         void (*OnClose)( void* ptr );
         bool (*OnRender)( void* ptr );
-        void (*OnScale)( void* ptr, uint32_t scale );
-        void (*OnResize)( void* ptr, uint32_t width, uint32_t height );  // Logical pixels
+        void (*OnScale)( void* ptr, uint32_t width, uint32_t height, uint32_t scale );  // Logical pixels
+        void (*OnResize)( void* ptr, uint32_t width, uint32_t height );                 // Logical pixels
         void (*OnFormatChange)( void* ptr, VkFormat format );
         void (*OnClipboard)( void* ptr, const unordered_flat_set<std::string>& mimeTypes );
         void (*OnDrag)( void* ptr, const unordered_flat_set<std::string>& mimeTypes );

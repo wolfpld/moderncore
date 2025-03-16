@@ -253,14 +253,15 @@ bool Viewport::Render()
     return true;
 }
 
-void Viewport::Scale( uint32_t scale )
+void Viewport::Scale( uint32_t width, uint32_t height, uint32_t scale )
 {
     ZoneScoped;
-    ZoneValue( scale );
+    ZoneTextF( "scale %u, width %u, height %u", scale, width, height );
 
-    mclog( LogLevel::Info, "Preferred window scale: %g", scale / 120.f );
+    mclog( LogLevel::Info, "Preferred window scale: %g, size: %ux%u", scale / 120.f, width, height );
 
     m_busyIndicator->SetScale( scale / 120.f );
+    m_view->Resize( m_window->GetSize() );
     m_view->SetScale( scale / 120.f );
 
     m_render = true;

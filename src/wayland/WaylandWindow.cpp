@@ -271,8 +271,14 @@ void WaylandWindow::Update()
         wp_viewport_set_source( m_viewport, 0, 0, wl_fixed_from_double( m_extent.width * m_scale / 120.f ), wl_fixed_from_double( m_extent.height * m_scale / 120.f ) );
         wp_viewport_set_destination( m_viewport, m_extent.width, m_extent.height );
 
-        if( dpiChange ) Invoke( OnScale, m_scale );
-        if( resized || dpiChange ) Invoke( OnResize, m_extent.width, m_extent.height );
+        if( dpiChange )
+        {
+            Invoke( OnScale, m_extent.width, m_extent.height, m_scale );
+        }
+        else if( resized )
+        {
+            Invoke( OnResize, m_extent.width, m_extent.height );
+        }
         if( hdrChange ) Invoke( OnFormatChange, m_swapchain->GetFormat() );
     }
     m_stateLock.unlock();

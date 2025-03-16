@@ -37,7 +37,7 @@ private:
 
     void Close();
     bool Render();
-    void Scale( uint32_t scale );
+    void Scale( uint32_t width, uint32_t height, uint32_t scale );
     void Resize( uint32_t width, uint32_t height );
     void FormatChange( VkFormat format );
     void Clipboard( const unordered_flat_set<std::string>& mimeTypes );

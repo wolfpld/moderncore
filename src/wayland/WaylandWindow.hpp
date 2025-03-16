@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <memory>
 #include <string>
 #include <vector>
@@ -148,6 +149,7 @@ private:
     std::vector<FrameData> m_frameData;
     uint32_t m_frameIdx = 0;
     uint32_t m_imageIdx;
+    std::atomic<std::shared_ptr<VlkFence>> m_currentRenderFence;
 
     std::mutex m_stateLock;
 

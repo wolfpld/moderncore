@@ -358,6 +358,8 @@ void WaylandWindow::EndFrame()
     VkVerify( vkQueueSubmit2( m_vkDevice->GetQueue( QueueType::Graphic ), 1, &submitInfo, *frame.renderFence ) );
     m_vkDevice->unlock( QueueType::Graphic );
 
+    m_currentRenderFence.store( frame.renderFence, std::memory_order_release );
+
     frame.presentFence->Wait();
     frame.presentFence->Reset();
 
@@ -492,14 +494,12 @@ void WaylandWindow::FinishDnd( int fd )
 
 void WaylandWindow::Recycle( std::shared_ptr<VlkBase>&& garbage )
 {
-    auto& current = m_frameData[m_frameIdx];
-    m_vkDevice->GetGarbage()->Recycle( current.renderFence, std::move( garbage ) );
+    m_vkDevice->GetGarbage()->Recycle( m_currentRenderFence.load( std::memory_order_acquire ), std::move( garbage ) );
 }
 
 void WaylandWindow::Recycle( std::vector<std::shared_ptr<VlkBase>>&& garbage )
 {
-    auto& current = m_frameData[m_frameIdx];
-    m_vkDevice->GetGarbage()->Recycle( current.renderFence, std::move( garbage ) );
+    m_vkDevice->GetGarbage()->Recycle( m_currentRenderFence.load( std::memory_order_acquire ), std::move( garbage ) );
 }
 
 void WaylandWindow::CreateSwapchain( const VkExtent2D& extent )

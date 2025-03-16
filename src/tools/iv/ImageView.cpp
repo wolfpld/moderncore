@@ -1,3 +1,4 @@
+#include <cmath>
 #include <string.h>
 #include <vector>
 
@@ -36,8 +37,9 @@ ImageView::ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, 
     : m_garbage( garbage )
     , m_device( std::move( device ) )
     , m_extent( extent )
+    , m_scale( scale )
 {
-    SetScale( scale );
+    SetScale( scale, extent );
 
     constexpr VkSamplerCreateInfo samplerInfo = {
         .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
@@ -207,7 +209,13 @@ void ImageView::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
 void ImageView::Resize( const VkExtent2D& extent )
 {
     std::lock_guard lock( m_lock );
+    const auto dx = int32_t( extent.width - m_extent.width );
+    const auto dy = int32_t( extent.height - m_extent.height );
+    if( dx == 0 && dy == 0 ) return;
     m_extent = extent;
+
+    m_imgOrigin.x += dx / 2.f;
+    m_imgOrigin.y += dy / 2.f;
 
     UpdateVertexBuffer();
 }
@@ -269,6 +277,20 @@ void ImageView::FinishSetBitmap( std::shared_ptr<Texture>&& texture, std::shared
     m_imageInfo.imageView = *m_texture;
 
     m_bitmapExtent = { width, height };
+    FitToExtent( m_extent );
+}
+
+void ImageView::SetScale( float scale, const VkExtent2D& extent )
+{
+    const auto ratio = scale / m_scale;
+    m_scale = scale;
+    m_extent = extent;
+    m_div = 1.f / 8.f / scale;
+    if( !HasBitmap() ) return;
+
+    m_imgOrigin.x *= ratio;
+    m_imgOrigin.y *= ratio;
+    m_imgScale *= ratio;
     UpdateVertexBuffer();
 }
 
@@ -280,6 +302,44 @@ void ImageView::FormatChange( VkFormat format )
     } );
     CreatePipeline( format );
 }
+
+void ImageView::FitToExtent( const VkExtent2D& extent )
+{
+    m_extent = extent;
+    if( m_bitmapExtent.width <= extent.width &&
+        m_bitmapExtent.height <= extent.height )
+    {
+        m_imgOrigin = {
+            float( extent.width - m_bitmapExtent.width ) / 2,
+            float( extent.height - m_bitmapExtent.height ) / 2
+        };
+        m_imgScale = 1;
+    }
+    else
+    {
+        const auto ratioWidth = float( extent.width ) / m_bitmapExtent.width;
+        const auto ratioHeight = float( extent.height ) / m_bitmapExtent.height;
+        const auto scale = std::min( ratioWidth, ratioHeight );
+        m_imgOrigin = {
+            float( extent.width - m_bitmapExtent.width * scale ) / 2,
+            float( extent.height - m_bitmapExtent.height * scale ) / 2
+        };
+        m_imgScale = scale;
+    }
+    UpdateVertexBuffer();
+}
+
+void ImageView::FitPixelPerfect( const VkExtent2D& extent)
+{
+    m_extent = extent;
+    m_imgOrigin = {
+        ( (float)extent.width - m_bitmapExtent.width ) / 2,
+        ( (float)extent.height - m_bitmapExtent.height ) / 2
+    };
+    m_imgScale = 1;
+    UpdateVertexBuffer();
+}
+
 
 bool ImageView::HasBitmap()
 {
@@ -390,30 +450,10 @@ void ImageView::Cleanup()
 
 std::array<ImageView::Vertex, 4> ImageView::SetupVertexBuffer() const
 {
-    float x0, x1, y0, y1;
-
-    if( m_bitmapExtent.width <= m_extent.width &&
-        m_bitmapExtent.height <= m_extent.height )
-    {
-        x0 = ( m_extent.width - m_bitmapExtent.width ) / 2;
-        x1 = x0 + m_bitmapExtent.width;
-        y0 = ( m_extent.height - m_bitmapExtent.height ) / 2;
-        y1 = y0 + m_bitmapExtent.height;
-    }
-    else
-    {
-        const auto wr = float( m_extent.width ) / m_bitmapExtent.width;
-        const auto hr = float( m_extent.height ) / m_bitmapExtent.height;
-        const auto r = std::min( wr, hr );
-
-        const auto w = m_bitmapExtent.width * r;
-        const auto h = m_bitmapExtent.height * r;
-
-        x0 = ( m_extent.width - w ) / 2;
-        x1 = x0 + w;
-        y0 = ( m_extent.height - h ) / 2;
-        y1 = y0 + h;
-    }
+    float x0 = std::floor( m_imgOrigin.x );
+    float y0 = std::floor( m_imgOrigin.y );
+    float x1 = std::round( x0 + m_bitmapExtent.width * m_imgScale );
+    float y1 = std::round( y0 + m_bitmapExtent.height * m_imgScale );
 
     return { {
         { x0, y0, 0, 0 },

@@ -5,6 +5,8 @@
 #include <mutex>
 #include <vulkan/vulkan.h>
 
+#include "util/Vector2.hpp"
+
 class Bitmap;
 class BitmapHdr;
 class GarbageChute;
@@ -36,8 +38,11 @@ public:
 
     void SetBitmap( const std::shared_ptr<Bitmap>& bitmap, TaskDispatch& td );
     void SetBitmap( const std::shared_ptr<BitmapHdr>& bitmap, TaskDispatch& td );
-    void SetScale( float scale ) { m_div = 1.f / 8.f / scale; }
+    void SetScale( float scale, const VkExtent2D& extent );
     void FormatChange( VkFormat format );
+
+    void FitToExtent( const VkExtent2D& extent );
+    void FitPixelPerfect( const VkExtent2D& extent );
 
     [[nodiscard]] bool HasBitmap();
     [[nodiscard]] VkExtent2D GetBitmapExtent() const { return m_bitmapExtent; }
@@ -67,10 +72,14 @@ private:
     VkExtent2D m_extent;
     VkExtent2D m_bitmapExtent;
 
+    Vector2<float> m_imgOrigin;
+    float m_imgScale;
+
     VkDescriptorImageInfo m_imageInfo;
     VkWriteDescriptorSet m_descWrite;
 
     float m_div;
+    float m_scale;
 
     std::mutex m_lock;
 };

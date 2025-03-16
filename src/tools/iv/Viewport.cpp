@@ -261,8 +261,7 @@ void Viewport::Scale( uint32_t width, uint32_t height, uint32_t scale )
     mclog( LogLevel::Info, "Preferred window scale: %g, size: %ux%u", scale / 120.f, width, height );
 
     m_busyIndicator->SetScale( scale / 120.f );
-    m_view->Resize( m_window->GetSize() );
-    m_view->SetScale( scale / 120.f );
+    m_view->SetScale( scale / 120.f, m_window->GetSize() );
 
     m_render = true;
 }
@@ -347,7 +346,12 @@ void Viewport::Key( const char* key, int mods )
         if( !m_view->HasBitmap() ) return;
 
         std::lock_guard lock( *m_window );
-        if( !m_window->Maximized() )
+        if( m_window->Maximized() )
+        {
+            m_view->FitToExtent( m_window->GetSize() );
+            WantRender();
+        }
+        else
         {
             const auto size = m_view->GetBitmapExtent();
             const auto bounds = m_window->GetBounds();
@@ -373,8 +377,20 @@ void Viewport::Key( const char* key, int mods )
                 h = std::max( h, minSize );
 
                 m_window->Resize( w, h, true );
+                m_view->FitToExtent( VkExtent2D( w, h ) );
+            }
+            else
+            {
+                m_view->FitToExtent( m_window->GetSize() );
+                WantRender();
             }
         }
+    }
+    else if( mods == 0 && strcmp( key, "1" ) == 0 )
+    {
+        if( !m_view->HasBitmap() ) return;
+        m_view->FitPixelPerfect( m_window->GetSize() );
+        WantRender();
     }
 }
 

@@ -26,6 +26,9 @@ std::unique_ptr<Bitmap> RawLoader::Load()
 {
     CheckPanic( m_valid, "Invalid RAW file" );
 
+    auto params = m_raw->output_params_ptr();
+    params->use_camera_wb = 1;
+
     m_raw->unpack();
     m_raw->dcraw_process();
     auto img = m_raw->dcraw_make_mem_image();

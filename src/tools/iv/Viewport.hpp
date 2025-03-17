@@ -44,6 +44,10 @@ private:
     void Drag( const unordered_flat_set<std::string>& mimeTypes );
     void Drop( int fd, const char* mime );
     void Key( const char* key, int mods );
+    void MouseEnter( float x, float y );
+    void MouseLeave();
+    void MouseMove( float x, float y );
+    void MouseButton( uint32_t button, bool pressed );
 
     void ImageHandler( int64_t id, ImageProvider::Result result, int flags, const ImageProvider::ReturnData& data );
 

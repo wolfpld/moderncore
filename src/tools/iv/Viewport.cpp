@@ -61,7 +61,11 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
         .OnClipboard = Method( Clipboard ),
         .OnDrag = Method( Drag ),
         .OnDrop = Method( Drop ),
-        .OnKey = Method( Key )
+        .OnKey = Method( Key ),
+        .OnMouseEnter = Method( MouseEnter ),
+        .OnMouseLeave = Method( MouseLeave ),
+        .OnMouseMove = Method( MouseMove ),
+        .OnMouseButton = Method( MouseButton )
     };
 
     Unembed( IconSvg );
@@ -404,6 +408,22 @@ void Viewport::Key( const char* key, int mods )
         std::lock_guard lock( m_lock );
         WantRender();
     }
+}
+
+void Viewport::MouseEnter( float x, float y )
+{
+}
+
+void Viewport::MouseLeave()
+{
+}
+
+void Viewport::MouseMove( float x, float y )
+{
+}
+
+void Viewport::MouseButton( uint32_t button, bool pressed )
+{
 }
 
 void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, int flags, const ImageProvider::ReturnData& data )

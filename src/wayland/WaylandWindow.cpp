@@ -466,6 +466,27 @@ void WaylandWindow::InvokeKey( const char* key, int mods )
     Invoke( OnKey, key, mods );
 }
 
+void WaylandWindow::InvokeMouseEnter( float x, float y )
+{
+    Invoke( OnMouseEnter, x * m_scale / 120, y * m_scale / 120 );
+}
+
+void WaylandWindow::InvokeMouseLeave()
+{
+    Invoke( OnMouseLeave );
+}
+
+void WaylandWindow::InvokeMouseMove( float x, float y )
+{
+    Invoke( OnMouseMove, x * m_scale / 120, y * m_scale / 120 );
+}
+
+void WaylandWindow::InvokeMouseButton( uint32_t button, bool pressed )
+{
+    Invoke( OnMouseButton, button, pressed );
+}
+
+
 void WaylandWindow::ResumeIfIdle()
 {
     {

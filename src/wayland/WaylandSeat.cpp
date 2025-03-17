@@ -139,6 +139,26 @@ void WaylandSeat::KeyEntered( wl_surface* surf, const char* key, int mods )
     GetWindow( surf )->InvokeKey( key, mods );
 }
 
+void WaylandSeat::PointerEntered( wl_surface* surf, wl_fixed_t x, wl_fixed_t y )
+{
+    GetWindow( surf )->InvokeMouseEnter( wl_fixed_to_double( x ), wl_fixed_to_double( y ) );
+}
+
+void WaylandSeat::PointerLeft( wl_surface* surf )
+{
+    GetWindow( surf )->InvokeMouseLeave();
+}
+
+void WaylandSeat::PointerMotion( wl_surface* surf, wl_fixed_t x, wl_fixed_t y )
+{
+    GetWindow( surf )->InvokeMouseMove( wl_fixed_to_double( x ), wl_fixed_to_double( y ) );
+}
+
+void WaylandSeat::PointerButton( wl_surface* surf, uint32_t button, bool pressed )
+{
+    GetWindow( surf )->InvokeMouseButton( button, pressed );
+}
+
 void WaylandSeat::Capabilities( wl_seat* seat, uint32_t caps )
 {
     const bool hasPointer = caps & WL_SEAT_CAPABILITY_POINTER;

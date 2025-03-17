@@ -52,6 +52,10 @@ public:
         void (*OnDrag)( void* ptr, const unordered_flat_set<std::string>& mimeTypes );
         void (*OnDrop)( void* ptr, int fd, const char* mime );
         void (*OnKey)( void* ptr, const char* key, int mods );
+        void (*OnMouseEnter)( void* ptr, float x, float y );
+        void (*OnMouseLeave)( void* ptr );
+        void (*OnMouseMove)( void* ptr, float x, float y );
+        void (*OnMouseButton)( void* ptr, uint32_t button, bool pressed );
     };
 
     WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance );
@@ -116,6 +120,10 @@ private:
     void InvokeDrag( const unordered_flat_set<std::string>& mimeTypes );
     void InvokeDrop( int fd, const char* mime );
     void InvokeKey( const char* key, int mods );
+    void InvokeMouseEnter( float x, float y );
+    void InvokeMouseLeave();
+    void InvokeMouseMove( float x, float y );
+    void InvokeMouseButton( uint32_t button, bool pressed );
 
     void CreateSwapchain( const VkExtent2D& extent );
     void CleanupSwapchain( bool withSurface = false );

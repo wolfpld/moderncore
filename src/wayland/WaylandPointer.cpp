@@ -58,20 +58,25 @@ void WaylandPointer::Enter( wl_pointer* pointer, uint32_t serial, wl_surface* wi
 
     m_enterSerial = serial;
     m_activeWindow = window;
+
+    m_seat.PointerEntered( window, sx, sy );
 }
 
 void WaylandPointer::Leave( wl_pointer* pointer, uint32_t serial, wl_surface* window )
 {
     CheckPanic( m_activeWindow == window, "Unknown window left!" );
     m_activeWindow = nullptr;
+    m_seat.PointerLeft( window );
 }
 
 void WaylandPointer::Motion( wl_pointer* pointer, uint32_t time, wl_fixed_t sx, wl_fixed_t sy )
 {
+    m_seat.PointerMotion( m_activeWindow, sx, sy );
 }
 
 void WaylandPointer::Button( wl_pointer* pointer, uint32_t serial, uint32_t time, uint32_t button, uint32_t state )
 {
+    m_seat.PointerButton( m_activeWindow, button, state == WL_POINTER_BUTTON_STATE_PRESSED );
 }
 
 void WaylandPointer::Axis( wl_pointer* pointer, uint32_t time, uint32_t axis, wl_fixed_t value )

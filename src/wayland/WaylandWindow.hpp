@@ -29,6 +29,8 @@ class WaylandDisplay;
 
 class WaylandWindow : public GarbageChute
 {
+    friend class WaylandSeat;
+
     struct FrameData
     {
         std::shared_ptr<VlkCommandBuffer> commandBuffer;
@@ -81,11 +83,6 @@ public:
     void SetCursor( WaylandCursor cursor );
 
     void InvokeRender();
-    void InvokeClipboard( const unordered_flat_set<std::string>& mimeTypes );
-    void InvokeDrag( const unordered_flat_set<std::string>& mimeTypes );
-    void InvokeDrop( int fd, const char* mime );
-    void InvokeKey( const char* key, int mods );
-
     void ResumeIfIdle();
 
     [[nodiscard]] const VkExtent2D& GetSize() const { return m_swapchain->GetExtent(); }    // Swapchain extent, i.e. render area in real pixels
@@ -114,6 +111,11 @@ public:
 
 private:
     void Destroy();
+
+    void InvokeClipboard( const unordered_flat_set<std::string>& mimeTypes );
+    void InvokeDrag( const unordered_flat_set<std::string>& mimeTypes );
+    void InvokeDrop( int fd, const char* mime );
+    void InvokeKey( const char* key, int mods );
 
     void CreateSwapchain( const VkExtent2D& extent );
     void CleanupSwapchain( bool withSurface = false );

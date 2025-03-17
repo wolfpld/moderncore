@@ -88,7 +88,7 @@ void WaylandDisplay::RegistryGlobal( wl_registry* reg, uint32_t name, const char
     }
     else if( strcmp( interface, wl_seat_interface.name ) == 0 )
     {
-        auto seat = RegistryBind( wl_seat, 5, 10 );
+        auto seat = RegistryBind( wl_seat, 8, 10 );
         m_seat = std::make_unique<WaylandSeat>( seat, *this );
         if( m_dataDeviceManager ) m_seat->SetDataDeviceManager( m_dataDeviceManager );
         if( m_cursorShapeManager ) m_seat->SetCursorShapeManager( m_cursorShapeManager );

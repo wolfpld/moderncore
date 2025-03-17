@@ -31,7 +31,6 @@ private:
     void Frame( wl_pointer* pointer );
     void AxisSource( wl_pointer* pointer, uint32_t source );
     void AxisStop( wl_pointer* pointer, uint32_t time, uint32_t axis );
-    void AxisDiscrete( wl_pointer* pointer, uint32_t axis, int32_t discrete );
     void AxisValue120( wl_pointer* pointer, uint32_t axis, int32_t value120 );
     void AxisRelativeDirection( wl_pointer* pointer, uint32_t axis, uint32_t direction );
 

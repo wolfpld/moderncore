@@ -17,7 +17,6 @@ WaylandPointer::WaylandPointer( wl_pointer* pointer, WaylandSeat& seat )
         .frame = Method( Frame ),
         .axis_source = Method( AxisSource ),
         .axis_stop = Method( AxisStop ),
-        .axis_discrete = Method( AxisDiscrete ),
         .axis_value120 = Method( AxisValue120 ),
         .axis_relative_direction = Method( AxisRelativeDirection )
     };
@@ -92,10 +91,6 @@ void WaylandPointer::AxisSource( wl_pointer* pointer, uint32_t source )
 }
 
 void WaylandPointer::AxisStop( wl_pointer* pointer, uint32_t time, uint32_t axis )
-{
-}
-
-void WaylandPointer::AxisDiscrete( wl_pointer* pointer, uint32_t axis, int32_t discrete )
 {
 }
 

@@ -8,6 +8,7 @@
 
 #include "ImageProvider.hpp"
 #include "util/RobinHood.hpp"
+#include "util/Vector2.hpp"
 
 class Background;
 class BusyIndicator;
@@ -76,4 +77,7 @@ private:
     std::mutex m_lock;
     bool m_isBusy = false;
     int m_currentJob = -1;
+
+    Vector2<float> m_mousePos;
+    bool m_dragActive = false;
 };

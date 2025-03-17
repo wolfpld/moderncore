@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cmath>
 #include <string.h>
 #include <vector>
@@ -351,6 +352,14 @@ void ImageView::FitPixelPerfect( const VkExtent2D& extent)
     UpdateVertexBuffer();
 }
 
+void ImageView::Pan( const Vector2<float>& delta )
+{
+    m_fitToResize = false;
+    m_imgOrigin += delta;
+    m_imgOrigin.x = std::clamp( m_imgOrigin.x, m_extent.width / 2.f - m_bitmapExtent.width * m_imgScale, m_extent.width / 2.f );
+    m_imgOrigin.y = std::clamp( m_imgOrigin.y, m_extent.height / 2.f - m_bitmapExtent.height * m_imgScale, m_extent.height / 2.f );
+    UpdateVertexBuffer();
+}
 
 bool ImageView::HasBitmap()
 {

@@ -44,6 +44,8 @@ public:
     void FitToExtent( const VkExtent2D& extent );
     void FitPixelPerfect( const VkExtent2D& extent );
 
+    void Pan( const Vector2<float>& delta );
+
     [[nodiscard]] bool HasBitmap();
     [[nodiscard]] VkExtent2D GetBitmapExtent() const { return m_bitmapExtent; }
 

@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <linux/input-event-codes.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <time.h>
@@ -412,6 +413,7 @@ void Viewport::Key( const char* key, int mods )
 
 void Viewport::MouseEnter( float x, float y )
 {
+    m_mousePos = { x, y };
 }
 
 void Viewport::MouseLeave()
@@ -420,10 +422,23 @@ void Viewport::MouseLeave()
 
 void Viewport::MouseMove( float x, float y )
 {
+    if( m_dragActive )
+    {
+        m_view->Pan( { x - m_mousePos.x, y - m_mousePos.y } );
+        std::lock_guard lock( m_lock );
+        WantRender();
+    }
+    m_mousePos = { x, y };
 }
 
 void Viewport::MouseButton( uint32_t button, bool pressed )
 {
+    if( button == BTN_RIGHT )
+    {
+        m_dragActive = pressed;
+        m_window->SetCursor( m_dragActive ? WaylandCursor::Grabbing : WaylandCursor::Default );
+        m_window->ResumeIfIdle();
+    }
 }
 
 void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, int flags, const ImageProvider::ReturnData& data )

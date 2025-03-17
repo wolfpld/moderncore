@@ -13,6 +13,7 @@ enum class WaylandCursor;
 class WaylandDataOffer;
 class WaylandDisplay;
 class WaylandKeyboard;
+struct WaylandScroll;
 class WaylandPointer;
 class WaylandWindow;
 
@@ -48,6 +49,7 @@ private:
     void PointerLeft( wl_surface* surf );
     void PointerMotion( wl_surface* surf, wl_fixed_t x, wl_fixed_t y );
     void PointerButton( wl_surface* surf, uint32_t button, bool pressed );
+    void PointerScroll( wl_surface* surf, const WaylandScroll& scroll );
 
     void Capabilities( wl_seat* seat, uint32_t caps );
     void Name( wl_seat* seat, const char* name );

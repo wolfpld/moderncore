@@ -7,6 +7,7 @@
 WaylandPointer::WaylandPointer( wl_pointer* pointer, WaylandSeat& seat )
     : m_pointer( pointer )
     , m_seat( seat )
+    , m_scroll {}
 {
     static constexpr wl_pointer_listener listener = {
         .enter = Method( Enter ),
@@ -80,14 +81,45 @@ void WaylandPointer::Button( wl_pointer* pointer, uint32_t serial, uint32_t time
 
 void WaylandPointer::Axis( wl_pointer* pointer, uint32_t time, uint32_t axis, wl_fixed_t value )
 {
+    if( axis == WL_POINTER_AXIS_VERTICAL_SCROLL )
+    {
+        m_scroll.delta.y += wl_fixed_to_double( value );
+    }
+    else
+    {
+        CheckPanic( axis == WL_POINTER_AXIS_HORIZONTAL_SCROLL, "Unknown scroll axis!" );
+        m_scroll.delta.x += wl_fixed_to_double( value );
+    }
 }
 
 void WaylandPointer::Frame( wl_pointer* pointer )
 {
+    if( m_scroll.delta.x != 0 || m_scroll.delta.y != 0 )
+    {
+        m_seat.PointerScroll( m_activeWindow, m_scroll );
+        m_scroll = {};
+    }
 }
 
 void WaylandPointer::AxisSource( wl_pointer* pointer, uint32_t source )
 {
+    switch( source )
+    {
+    case WL_POINTER_AXIS_SOURCE_WHEEL:
+        m_scroll.source = WaylandScroll::Source::Wheel;
+        break;
+    case WL_POINTER_AXIS_SOURCE_FINGER:
+        m_scroll.source = WaylandScroll::Source::Finger;
+        break;
+    case WL_POINTER_AXIS_SOURCE_CONTINUOUS:
+        m_scroll.source = WaylandScroll::Source::Continuous;
+        break;
+    case WL_POINTER_AXIS_SOURCE_WHEEL_TILT:
+        m_scroll.source = WaylandScroll::Source::Tilt;
+        break;
+    default:
+        CheckPanic( false, "Unknown scroll source!" );
+    };
 }
 
 void WaylandPointer::AxisStop( wl_pointer* pointer, uint32_t time, uint32_t axis )
@@ -100,4 +132,16 @@ void WaylandPointer::AxisValue120( wl_pointer* pointer, uint32_t axis, int32_t v
 
 void WaylandPointer::AxisRelativeDirection( wl_pointer* pointer, uint32_t axis, uint32_t direction )
 {
+    CheckPanic( direction == WL_POINTER_AXIS_RELATIVE_DIRECTION_IDENTICAL ||
+                direction == WL_POINTER_AXIS_RELATIVE_DIRECTION_INVERTED, "Unknown scroll direction!" );
+
+    if( axis == WL_POINTER_AXIS_VERTICAL_SCROLL )
+    {
+        m_scroll.inverted.y = direction == WL_POINTER_AXIS_RELATIVE_DIRECTION_INVERTED;
+    }
+    else
+    {
+        CheckPanic( axis == WL_POINTER_AXIS_HORIZONTAL_SCROLL, "Unknown scroll axis!" );
+        m_scroll.inverted.x = direction == WL_POINTER_AXIS_RELATIVE_DIRECTION_INVERTED;
+    }
 }

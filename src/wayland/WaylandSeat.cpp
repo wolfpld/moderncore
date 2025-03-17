@@ -159,6 +159,11 @@ void WaylandSeat::PointerButton( wl_surface* surf, uint32_t button, bool pressed
     GetWindow( surf )->InvokeMouseButton( button, pressed );
 }
 
+void WaylandSeat::PointerScroll( wl_surface* surf, const WaylandScroll& scroll )
+{
+    GetWindow( surf )->InvokeScroll( scroll );
+}
+
 void WaylandSeat::Capabilities( wl_seat* seat, uint32_t caps )
 {
     const bool hasPointer = caps & WL_SEAT_CAPABILITY_POINTER;

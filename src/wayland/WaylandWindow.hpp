@@ -26,6 +26,7 @@ class VlkInstance;
 class VlkSemaphore;
 enum class WaylandCursor;
 class WaylandDisplay;
+struct WaylandScroll;
 
 class WaylandWindow : public GarbageChute
 {
@@ -56,6 +57,7 @@ public:
         void (*OnMouseLeave)( void* ptr );
         void (*OnMouseMove)( void* ptr, float x, float y );
         void (*OnMouseButton)( void* ptr, uint32_t button, bool pressed );
+        void (*OnScroll)( void* ptr, const WaylandScroll& scroll );
     };
 
     WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance );
@@ -124,6 +126,7 @@ private:
     void InvokeMouseLeave();
     void InvokeMouseMove( float x, float y );
     void InvokeMouseButton( uint32_t button, bool pressed );
+    void InvokeScroll( const WaylandScroll& scroll );
 
     void CreateSwapchain( const VkExtent2D& extent );
     void CleanupSwapchain( bool withSurface = false );

@@ -2,6 +2,7 @@
 
 #include <wayland-client.h>
 
+#include "WaylandScroll.hpp"
 #include "util/NoCopy.hpp"
 
 #include "wayland-cursor-shape-client-protocol.h"
@@ -42,4 +43,6 @@ private:
 
     wp_cursor_shape_manager_v1* m_cursorShapeManager = nullptr;
     wp_cursor_shape_device_v1* m_cursorShapeDevice = nullptr;
+
+    WaylandScroll m_scroll;
 };

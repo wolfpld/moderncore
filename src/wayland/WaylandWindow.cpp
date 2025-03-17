@@ -486,6 +486,10 @@ void WaylandWindow::InvokeMouseButton( uint32_t button, bool pressed )
     Invoke( OnMouseButton, button, pressed );
 }
 
+void WaylandWindow::InvokeScroll( const WaylandScroll& scroll )
+{
+    Invoke( OnScroll, scroll );
+}
 
 void WaylandWindow::ResumeIfIdle()
 {

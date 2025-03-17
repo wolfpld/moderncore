@@ -433,7 +433,7 @@ void Viewport::MouseMove( float x, float y )
 
 void Viewport::MouseButton( uint32_t button, bool pressed )
 {
-    if( button == BTN_RIGHT )
+    if( button == BTN_RIGHT && m_view->HasBitmap() )
     {
         m_dragActive = pressed;
         m_window->SetCursor( m_dragActive ? WaylandCursor::Grabbing : WaylandCursor::Default );

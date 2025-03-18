@@ -449,7 +449,7 @@ void Viewport::Scroll( const WaylandScroll& scroll )
     if( scroll.delta.y != 0 && m_view->HasBitmap() )
     {
         float factor;
-        const auto delta = scroll.inverted.y ? scroll.delta.y : -scroll.delta.y;
+        const auto delta = -scroll.delta.y;
         if( scroll.source == WaylandScroll::Source::Wheel )
         {
             factor = delta / 15.f * std::numbers::sqrt2_v<float>;

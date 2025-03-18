@@ -24,7 +24,7 @@ jobs:
       env:
         DESTDIR: ${{ github.workspace }}/install
     - name: gcc configure
-      run: cmake -G Ninja -B build-gcc -DCMAKE_BUILD_TYPE=Release
+      run: cmake -G Ninja -B build-gcc -DCMAKE_BUILD_TYPE=Release -DBUILD_MCORE=1
       env:
         CC: gcc
         CXX: g++

@@ -149,7 +149,7 @@ static void LinearizePq( float* ptr, int sz, float NominalLuminanceMul )
     LinearizePq128( ptr, sz, NominalLuminanceMul );
 }
 #else
-static void LinearizePq( float* ptr, int sz, NominalLuminanceMul )
+static void LinearizePq( float* ptr, int sz, float NominalLuminanceMul )
 {
     for( int i=0; i<sz; i++ )
     {

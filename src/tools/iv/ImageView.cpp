@@ -354,6 +354,7 @@ void ImageView::FitPixelPerfect( const VkExtent2D& extent)
 
 void ImageView::Pan( const Vector2<float>& delta )
 {
+    std::lock_guard lock( m_lock );
     m_fitToResize = false;
     m_imgOrigin += delta;
     ClampImagePosition();
@@ -362,6 +363,7 @@ void ImageView::Pan( const Vector2<float>& delta )
 
 void ImageView::Zoom( const Vector2<float>& focus, float factor )
 {
+    std::lock_guard lock( m_lock );
     m_fitToResize = false;
     const auto oldScale = m_imgScale;
     m_imgScale = std::clamp( m_imgScale * factor, 0.01f, 100.f );

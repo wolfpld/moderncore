@@ -478,7 +478,6 @@ target_link_libraries(vv PRIVATE
 
 # install
 
-set(CMAKE_INSTALL_PREFIX /)
 install(TARGETS
     mcore
     iv
@@ -487,5 +486,4 @@ install(TARGETS
     mcoreimage
     mcorevulkan
     mcorewayland
-    TracyClient
-DESTINATION .)
+)

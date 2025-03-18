@@ -4,6 +4,7 @@ option(TRACY_ENABLE "Enable Tracy" OFF)
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 option(MARCH_NATIVE "Enable -march=native" ON)
 option(SANITIZE "Sanitizer parameters" OFF)
+option(BUILD_MCORE "Build defunct mcore binary" OFF)
 
 set(CMAKE_CXX_STANDARD 20)
 
@@ -64,9 +65,6 @@ set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_SAVE})
 find_program(GLSLC glslc REQUIRED)
 
 pkg_check_modules(CAIRO REQUIRED cairo)
-pkg_check_modules(DISPLAYINFO REQUIRED libdisplay-info)
-pkg_check_modules(DRM REQUIRED libdrm)
-pkg_check_modules(GBM REQUIRED gbm)
 pkg_check_modules(EXIF REQUIRED libexif)
 pkg_check_modules(EXR REQUIRED OpenEXR)
 pkg_check_modules(HEIF REQUIRED libheif)
@@ -79,15 +77,21 @@ pkg_check_modules(PUGIXML REQUIRED pugixml)
 pkg_check_modules(RAW REQUIRED libraw)
 pkg_check_modules(RSVG REQUIRED librsvg-2.0)
 pkg_check_modules(SIXEL REQUIRED libsixel)
-pkg_check_modules(SYSTEMD REQUIRED libsystemd)
 pkg_check_modules(TIFF REQUIRED libtiff-4)
 pkg_check_modules(VULKAN REQUIRED vulkan)
 pkg_check_modules(WAYLAND_CLIENT REQUIRED wayland-client)
 pkg_check_modules(WAYLAND_PROTOCOLS REQUIRED wayland-protocols)
-pkg_check_modules(WAYLAND_SERVER REQUIRED wayland-server)
 pkg_check_modules(WEBP REQUIRED libwebpdemux)
 pkg_check_modules(XKB REQUIRED xkbcommon)
 pkg_check_modules(ZLIB REQUIRED zlib)
+
+if(BUILD_MCORE)
+    pkg_check_modules(DISPLAYINFO REQUIRED libdisplay-info)
+    pkg_check_modules(DRM REQUIRED libdrm)
+    pkg_check_modules(GBM REQUIRED gbm)
+    pkg_check_modules(SYSTEMD REQUIRED libsystemd)
+    pkg_check_modules(WAYLAND_SERVER REQUIRED wayland-server)
+endif()
 
 pkg_get_variable(WAYLAND_PROTOCOLS_PKGDATADIR wayland-protocols pkgdatadir)
 
@@ -396,27 +400,29 @@ set(MCORE_SRC
     src/MCore.cpp
 )
 
-add_executable(mcore ${MCORE_SRC})
-add_dependencies(mcore git-ref)
-target_link_libraries(mcore PRIVATE
-    mcoreutil
-    mcoreimage
-    mcorevulkan
-    mcorewayland
-    Tracy::TracyClient
-    ${DISPLAYINFO_LINK_LIBRARIES}
-    ${DRM_LINK_LIBRARIES}
-    ${GBM_LINK_LIBRARIES}
-    ${SYSTEMD_LINK_LIBRARIES}
-    ${WAYLAND_SERVER_LINK_LIBRARIES}
-)
-target_include_directories(mcore PRIVATE
-    ${DISPLAYINFO_INCLUDE_DIRS}
-    ${DRM_INCLUDE_DIRS}
-    ${GBM_INCLUDE_DIRS}
-    ${SYSTEMD_INCLUDE_DIRS}
-    ${WAYLAND_SERVER_INCLUDE_DIRS}
-)
+if(BUILD_MCORE)
+    add_executable(mcore ${MCORE_SRC})
+    add_dependencies(mcore git-ref)
+    target_link_libraries(mcore PRIVATE
+        mcoreutil
+        mcoreimage
+        mcorevulkan
+        mcorewayland
+        Tracy::TracyClient
+        ${DISPLAYINFO_LINK_LIBRARIES}
+        ${DRM_LINK_LIBRARIES}
+        ${GBM_LINK_LIBRARIES}
+        ${SYSTEMD_LINK_LIBRARIES}
+        ${WAYLAND_SERVER_LINK_LIBRARIES}
+    )
+    target_include_directories(mcore PRIVATE
+        ${DISPLAYINFO_INCLUDE_DIRS}
+        ${DRM_INCLUDE_DIRS}
+        ${GBM_INCLUDE_DIRS}
+        ${SYSTEMD_INCLUDE_DIRS}
+        ${WAYLAND_SERVER_INCLUDE_DIRS}
+    )
+endif()
 
 # iv
 
@@ -479,7 +485,6 @@ target_link_libraries(vv PRIVATE
 # install
 
 install(TARGETS
-    mcore
     iv
     vv
     mcoreutil
@@ -487,3 +492,7 @@ install(TARGETS
     mcorevulkan
     mcorewayland
 )
+
+if(BUILD_MCORE)
+    install(TARGETS mcore)
+endif()

@@ -117,27 +117,42 @@ add_executable(embed helpers/embed.cpp)
 target_link_libraries(embed PRIVATE ${LZ4_LINK_LIBRARIES})
 target_include_directories(embed PRIVATE ${LZ4_INCLUDE_DIRS})
 
+add_custom_command(
+    OUTPUT data
+    COMMAND ${CMAKE_COMMAND} -E make_directory data
+)
+
 function(Embed LIST NAME FILE)
     add_custom_command(
         OUTPUT data/${NAME}.cpp data/${NAME}.hpp
         COMMAND embed ${NAME} ${CMAKE_CURRENT_LIST_DIR}/${FILE} data/${NAME}
-        DEPENDS embed ${CMAKE_CURRENT_LIST_DIR}/${FILE}
+        DEPENDS data embed ${CMAKE_CURRENT_LIST_DIR}/${FILE}
     )
     list(APPEND ${LIST} data/${NAME}.cpp)
     return(PROPAGATE ${LIST})
 endfunction()
 
+add_custom_command(
+    OUTPUT _tmp
+    COMMAND ${CMAKE_COMMAND} -E make_directory _tmp
+)
+
+add_custom_command(
+    OUTPUT shader
+    COMMAND ${CMAKE_COMMAND} -E make_directory shader
+)
+
 function(EmbedShader LIST NAME FILE)
     add_custom_command(
         OUTPUT _tmp/${NAME}.spv
         COMMAND ${GLSLC} -MD -MF _tmp/${NAME}.spv.d --target-env=vulkan1.3 -O -o _tmp/${NAME}.spv ${CMAKE_CURRENT_LIST_DIR}/${FILE}
-        DEPENDS ${GLSLC} ${CMAKE_CURRENT_LIST_DIR}/${FILE}
+        DEPENDS _tmp ${GLSLC} ${CMAKE_CURRENT_LIST_DIR}/${FILE}
         DEPFILE _tmp/${NAME}.spv.d
     )
     add_custom_command(
         OUTPUT shader/${NAME}.cpp shader/${NAME}.hpp
         COMMAND embed ${NAME} _tmp/${NAME}.spv shader/${NAME}
-        DEPENDS embed _tmp/${NAME}.spv
+        DEPENDS shader embed _tmp/${NAME}.spv
     )
     list(APPEND ${LIST} shader/${NAME}.cpp)
     return(PROPAGATE ${LIST})

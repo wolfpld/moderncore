@@ -30,7 +30,10 @@ jobs:
         CXX: g++
     - name: gcc build
       run: ninja -C build-gcc
-    - run: strip ${{ github.workspace }}/install/*
+    - name: strip
+      run: |
+        strip ${{ github.workspace }}/install/usr/bin/*
+        strip ${{ github.workspace }}/install/usr/lib/*.so
     - uses: actions/upload-artifact@v3
       with:
         path: install

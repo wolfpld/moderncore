@@ -39,7 +39,7 @@ ImageView::ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, 
     , m_device( std::move( device ) )
     , m_extent( extent )
     , m_scale( scale )
-    , m_fitToResize( true )
+    , m_fitMode( FitMode::TooSmall )
 {
     SetScale( scale, extent );
 
@@ -215,9 +215,13 @@ void ImageView::Resize( const VkExtent2D& extent )
     const auto dy = int32_t( extent.height - m_extent.height );
     if( dx == 0 && dy == 0 ) return;
 
-    if( m_fitToResize )
+    if( m_fitMode == FitMode::TooSmall )
     {
         FitToExtentUnlocked( extent );
+    }
+    else if( m_fitMode == FitMode::Always )
+    {
+        FitToWindowUnlocked( extent );
     }
     else
     {
@@ -320,7 +324,7 @@ void ImageView::FitToExtent( const VkExtent2D& extent )
 
 void ImageView::FitToExtentUnlocked( const VkExtent2D& extent )
 {
-    m_fitToResize = true;
+    m_fitMode = FitMode::TooSmall;
     m_extent = extent;
 
     if( m_bitmapExtent.width <= extent.width &&
@@ -346,10 +350,33 @@ void ImageView::FitToExtentUnlocked( const VkExtent2D& extent )
     UpdateVertexBuffer();
 }
 
+void ImageView::FitToWindow( const VkExtent2D& extent )
+{
+    std::lock_guard lock( m_lock );
+    FitToWindowUnlocked( extent );
+}
+
+void ImageView::FitToWindowUnlocked( const VkExtent2D& extent )
+{
+    m_fitMode = FitMode::Always;
+    m_extent = extent;
+
+    const auto ratioWidth = float( extent.width ) / m_bitmapExtent.width;
+    const auto ratioHeight = float( extent.height ) / m_bitmapExtent.height;
+    const auto scale = std::min( ratioWidth, ratioHeight );
+    m_imgOrigin = {
+        float( extent.width - m_bitmapExtent.width * scale ) / 2,
+        float( extent.height - m_bitmapExtent.height * scale ) / 2
+    };
+    m_imgScale = scale;
+
+    UpdateVertexBuffer();
+}
+
 void ImageView::FitPixelPerfect( const VkExtent2D& extent)
 {
     std::lock_guard lock( m_lock );
-    m_fitToResize = false;
+    m_fitMode = FitMode::None;
     m_extent = extent;
     m_imgOrigin = {
         ( (float)extent.width - m_bitmapExtent.width ) / 2,
@@ -362,7 +389,7 @@ void ImageView::FitPixelPerfect( const VkExtent2D& extent)
 void ImageView::Pan( const Vector2<float>& delta )
 {
     std::lock_guard lock( m_lock );
-    m_fitToResize = false;
+    m_fitMode = FitMode::None;
     m_imgOrigin += delta;
     ClampImagePosition();
     UpdateVertexBuffer();
@@ -371,7 +398,7 @@ void ImageView::Pan( const Vector2<float>& delta )
 void ImageView::Zoom( const Vector2<float>& focus, float factor )
 {
     std::lock_guard lock( m_lock );
-    m_fitToResize = false;
+    m_fitMode = FitMode::None;
     const auto oldScale = m_imgScale;
     m_imgScale = std::clamp( m_imgScale * factor, 0.01f, 100.f );
     m_imgOrigin.x = focus.x + ( m_imgOrigin.x - focus.x ) * m_imgScale / oldScale;

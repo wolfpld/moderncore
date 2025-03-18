@@ -29,6 +29,13 @@ class ImageView
         float u, v;
     };
 
+    enum class FitMode
+    {
+        None,
+        TooSmall,
+        Always
+    };
+
 public:
     ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, const VkExtent2D& extent, float scale );
     ~ImageView();
@@ -42,6 +49,7 @@ public:
     void FormatChange( VkFormat format );
 
     void FitToExtent( const VkExtent2D& extent );
+    void FitToWindow( const VkExtent2D& extent );
     void FitPixelPerfect( const VkExtent2D& extent );
 
     void Pan( const Vector2<float>& delta );
@@ -59,7 +67,9 @@ private:
     void FinishSetBitmap( std::shared_ptr<Texture>&& texture, std::shared_ptr<VlkBuffer>&& vb, uint32_t width, uint32_t height );
 
     void ClampImagePosition();
+
     void FitToExtentUnlocked( const VkExtent2D& extent );
+    void FitToWindowUnlocked( const VkExtent2D& extent );
 
     GarbageChute& m_garbage;
     std::shared_ptr<VlkDevice> m_device;
@@ -86,7 +96,7 @@ private:
 
     float m_div;
     float m_scale;
-    bool m_fitToResize;
+    FitMode m_fitMode;
 
     std::mutex m_lock;
 };

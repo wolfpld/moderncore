@@ -358,6 +358,12 @@ void Viewport::Key( const char* key, int mods )
         std::lock_guard lock( m_lock );
         WantRender();
     }
+    else if( mods == CtrlBit && strcmp( key, "f" ) == 0 )
+    {
+        m_view->FitToWindow( m_window->GetSize() );
+        std::lock_guard lock( m_lock );
+        WantRender();
+    }
     else if( mods == ShiftBit && strcmp( key, "F" ) == 0 )
     {
         if( !m_view->HasBitmap() ) return;

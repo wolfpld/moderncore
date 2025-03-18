@@ -509,6 +509,7 @@ void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, int flags
         m_currentJob = -1;
         m_isBusy = false;
         m_window->SetCursor( WaylandCursor::Default );
+        WantRender();
     }
     m_lock.unlock();
 }

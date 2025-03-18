@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <linux/input-event-codes.h>
+#include <numbers>
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <time.h>
@@ -33,6 +34,7 @@
 #include "wayland/WaylandCursor.hpp"
 #include "wayland/WaylandDisplay.hpp"
 #include "wayland/WaylandKeys.hpp"
+#include "wayland/WaylandScroll.hpp"
 #include "wayland/WaylandWindow.hpp"
 
 #include "data/IconSvg.hpp"
@@ -66,7 +68,8 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
         .OnMouseEnter = Method( MouseEnter ),
         .OnMouseLeave = Method( MouseLeave ),
         .OnMouseMove = Method( MouseMove ),
-        .OnMouseButton = Method( MouseButton )
+        .OnMouseButton = Method( MouseButton ),
+        .OnScroll = Method( Scroll )
     };
 
     Unembed( IconSvg );
@@ -438,6 +441,19 @@ void Viewport::MouseButton( uint32_t button, bool pressed )
         m_dragActive = pressed;
         m_window->SetCursor( m_dragActive ? WaylandCursor::Grabbing : WaylandCursor::Default );
         m_window->ResumeIfIdle();
+    }
+}
+
+void Viewport::Scroll( const WaylandScroll& scroll )
+{
+    if( scroll.delta.y != 0 && m_view->HasBitmap() )
+    {
+        const auto delta = scroll.inverted.y ? scroll.delta.y : -scroll.delta.y;
+        float factor = delta / 15.f * std::numbers::sqrt2_v<float>;
+        if( delta < 0 ) factor = -1.f / factor;
+        m_view->Zoom( m_mousePos, factor );
+        std::lock_guard lock( m_lock );
+        WantRender();
     }
 }
 

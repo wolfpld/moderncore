@@ -18,6 +18,7 @@ class TaskDispatch;
 class VlkDevice;
 class VlkInstance;
 class WaylandDisplay;
+struct WaylandScroll;
 class WaylandWindow;
 
 class Viewport
@@ -49,6 +50,7 @@ private:
     void MouseLeave();
     void MouseMove( float x, float y );
     void MouseButton( uint32_t button, bool pressed );
+    void Scroll( const WaylandScroll& scroll );
 
     void ImageHandler( int64_t id, ImageProvider::Result result, int flags, const ImageProvider::ReturnData& data );
 

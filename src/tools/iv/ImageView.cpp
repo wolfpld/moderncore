@@ -356,9 +356,25 @@ void ImageView::Pan( const Vector2<float>& delta )
 {
     m_fitToResize = false;
     m_imgOrigin += delta;
+    ClampImagePosition();
+    UpdateVertexBuffer();
+}
+
+void ImageView::Zoom( const Vector2<float>& focus, float factor )
+{
+    m_fitToResize = false;
+    const auto oldScale = m_imgScale;
+    m_imgScale = std::clamp( m_imgScale * factor, 0.01f, 100.f );
+    m_imgOrigin.x = focus.x + ( m_imgOrigin.x - focus.x ) * m_imgScale / oldScale;
+    m_imgOrigin.y = focus.y + ( m_imgOrigin.y - focus.y ) * m_imgScale / oldScale;
+    ClampImagePosition();
+    UpdateVertexBuffer();
+}
+
+void ImageView::ClampImagePosition()
+{
     m_imgOrigin.x = std::clamp( m_imgOrigin.x, m_extent.width / 2.f - m_bitmapExtent.width * m_imgScale, m_extent.width / 2.f );
     m_imgOrigin.y = std::clamp( m_imgOrigin.y, m_extent.height / 2.f - m_bitmapExtent.height * m_imgScale, m_extent.height / 2.f );
-    UpdateVertexBuffer();
 }
 
 bool ImageView::HasBitmap()

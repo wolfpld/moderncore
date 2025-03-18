@@ -45,6 +45,7 @@ public:
     void FitPixelPerfect( const VkExtent2D& extent );
 
     void Pan( const Vector2<float>& delta );
+    void Zoom( const Vector2<float>& focus, float factor );
 
     [[nodiscard]] bool HasBitmap();
     [[nodiscard]] VkExtent2D GetBitmapExtent() const { return m_bitmapExtent; }
@@ -56,6 +57,8 @@ private:
     [[nodiscard]] std::array<Vertex, 4> SetupVertexBuffer() const;
     void UpdateVertexBuffer();
     void FinishSetBitmap( std::shared_ptr<Texture>&& texture, std::shared_ptr<VlkBuffer>&& vb, uint32_t width, uint32_t height );
+
+    void ClampImagePosition();
 
     GarbageChute& m_garbage;
     std::shared_ptr<VlkDevice> m_device;

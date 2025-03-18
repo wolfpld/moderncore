@@ -59,6 +59,7 @@ private:
     void FinishSetBitmap( std::shared_ptr<Texture>&& texture, std::shared_ptr<VlkBuffer>&& vb, uint32_t width, uint32_t height );
 
     void ClampImagePosition();
+    void FitToExtentUnlocked( const VkExtent2D& extent );
 
     GarbageChute& m_garbage;
     std::shared_ptr<VlkDevice> m_device;

@@ -217,7 +217,7 @@ void ImageView::Resize( const VkExtent2D& extent )
 
     if( m_fitToResize )
     {
-        FitToExtent( extent );
+        FitToExtentUnlocked( extent );
     }
     else
     {
@@ -286,7 +286,7 @@ void ImageView::FinishSetBitmap( std::shared_ptr<Texture>&& texture, std::shared
     m_imageInfo.imageView = *m_texture;
 
     m_bitmapExtent = { width, height };
-    FitToExtent( m_extent );
+    FitToExtentUnlocked( m_extent );
 }
 
 void ImageView::SetScale( float scale, const VkExtent2D& extent )
@@ -313,6 +313,12 @@ void ImageView::FormatChange( VkFormat format )
 }
 
 void ImageView::FitToExtent( const VkExtent2D& extent )
+{
+    std::lock_guard lock( m_lock );
+    FitToExtentUnlocked( extent );
+}
+
+void ImageView::FitToExtentUnlocked( const VkExtent2D& extent )
 {
     m_fitToResize = true;
     m_extent = extent;
@@ -342,6 +348,7 @@ void ImageView::FitToExtent( const VkExtent2D& extent )
 
 void ImageView::FitPixelPerfect( const VkExtent2D& extent)
 {
+    std::lock_guard lock( m_lock );
     m_fitToResize = false;
     m_extent = extent;
     m_imgOrigin = {

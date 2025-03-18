@@ -13,8 +13,10 @@
 #include <vector>
 #include <zlib.h>
 
+#include "GitRef.hpp"
 #include "Terminal.hpp"
 #include "image/ImageLoader.hpp"
+#include "util/Ansi.hpp"
 #include "util/Bitmap.hpp"
 #include "util/BitmapAnim.hpp"
 #include "util/BitmapHdr.hpp"
@@ -27,6 +29,7 @@
 
 static void PrintHelp()
 {
+    printf( ANSI_BOLD "vv — terminal image viewer, build %s" ANSI_RESET "\n\n", GitRef );
     printf( "Usage: vv [options] <image>\n" );
     printf( "Options:\n" );
     printf( "  -b, --block                  Use text-only block mode\n" );

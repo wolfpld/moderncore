@@ -2,7 +2,9 @@
 #include <memory>
 #include <stdlib.h>
 
+#include "GitRef.hpp"
 #include "Viewport.hpp"
+#include "util/Ansi.hpp"
 #include "util/ArgParser.hpp"
 #include "util/Callstack.hpp"
 #include "util/Logs.hpp"
@@ -11,6 +13,7 @@
 
 static void PrintHelp()
 {
+    printf( ANSI_BOLD "iv — Wayland HDR image viewer, build %s" ANSI_RESET "\n\n", GitRef );
     printf( "Usage: iv [options]\n" );
     printf( "Options:\n" );
     printf( "  -d, --debug                  Enable debug output\n" );

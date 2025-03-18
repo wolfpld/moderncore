@@ -452,6 +452,7 @@ EmbedShader(IV_SRC TexturingAlphaPqFrag src/tools/iv/shader/TexturingAlphaPq.fra
 
 
 add_executable(iv ${IV_SRC})
+add_dependencies(iv git-ref)
 target_link_libraries(iv PRIVATE
     mcoreutil
     mcoreimage
@@ -468,6 +469,7 @@ set(VV_SRC
 )
 
 add_executable(vv ${VV_SRC})
+add_dependencies(vv git-ref)
 target_include_directories(vv PRIVATE
     ${SIXEL_INCLUDE_DIRS}
     ${ZLIB_INCLUDE_DIRS}

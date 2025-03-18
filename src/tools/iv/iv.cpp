@@ -17,6 +17,7 @@ static void PrintHelp()
     printf( "  -e, --external               Show external callstacks\n" );
     printf( "  -V, --validation [on|off]    Enable or disable Vulkan validation layers\n" );
     printf( "  -g, --gpu [id]               Select GPU by id\n" );
+    printf( "  --help                       Print this help\n" );
 }
 
 int main( int argc, char** argv )
@@ -30,11 +31,14 @@ int main( int argc, char** argv )
 
     int gpu = -1;
 
+    enum { OptHelp };
+
     struct option longOptions[] = {
         { "debug", no_argument, nullptr, 'd' },
         { "external", no_argument, nullptr, 'e' },
         { "validation", required_argument, nullptr, 'V' },
         { "gpu", required_argument, nullptr, 'g' },
+        { "help", no_argument, nullptr, OptHelp },
         {}
     };
 
@@ -55,6 +59,9 @@ int main( int argc, char** argv )
         case 'g':
             gpu = atoi( optarg );
             break;
+        case OptHelp:
+            PrintHelp();
+            return 0;
         default:
             PrintHelp();
             return 1;

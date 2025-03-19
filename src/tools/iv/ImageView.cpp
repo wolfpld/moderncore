@@ -400,7 +400,7 @@ void ImageView::Zoom( const Vector2<float>& focus, float factor )
     std::lock_guard lock( m_lock );
     m_fitMode = FitMode::None;
     const auto oldScale = m_imgScale;
-    SetImgScale( std::clamp( m_imgScale * factor, 0.01f, 100.f ) );
+    SetImgScale( std::clamp( m_imgScale * factor, 1.f / 128.f, 128.f ) );
     m_imgOrigin.x = focus.x + ( m_imgOrigin.x - focus.x ) * m_imgScale / oldScale;
     m_imgOrigin.y = focus.y + ( m_imgOrigin.y - focus.y ) * m_imgScale / oldScale;
     ClampImagePosition();

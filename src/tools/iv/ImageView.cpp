@@ -303,7 +303,7 @@ void ImageView::SetScale( float scale, const VkExtent2D& extent )
 
     m_imgOrigin.x *= ratio;
     m_imgOrigin.y *= ratio;
-    m_imgScale *= ratio;
+    SetImgScale( m_imgScale * ratio );
     UpdateVertexBuffer();
 }
 
@@ -334,7 +334,7 @@ void ImageView::FitToExtentUnlocked( const VkExtent2D& extent )
             float( extent.width - m_bitmapExtent.width ) / 2,
             float( extent.height - m_bitmapExtent.height ) / 2
         };
-        m_imgScale = 1;
+        SetImgScale( 1 );
     }
     else
     {
@@ -345,7 +345,7 @@ void ImageView::FitToExtentUnlocked( const VkExtent2D& extent )
             float( extent.width - m_bitmapExtent.width * scale ) / 2,
             float( extent.height - m_bitmapExtent.height * scale ) / 2
         };
-        m_imgScale = scale;
+        SetImgScale( scale );
     }
     UpdateVertexBuffer();
 }
@@ -368,7 +368,7 @@ void ImageView::FitToWindowUnlocked( const VkExtent2D& extent )
         float( extent.width - m_bitmapExtent.width * scale ) / 2,
         float( extent.height - m_bitmapExtent.height * scale ) / 2
     };
-    m_imgScale = scale;
+    SetImgScale( scale );
 
     UpdateVertexBuffer();
 }
@@ -382,7 +382,7 @@ void ImageView::FitPixelPerfect( const VkExtent2D& extent)
         ( (float)extent.width - m_bitmapExtent.width ) / 2,
         ( (float)extent.height - m_bitmapExtent.height ) / 2
     };
-    m_imgScale = 1;
+    SetImgScale( 1 );
     UpdateVertexBuffer();
 }
 
@@ -400,7 +400,7 @@ void ImageView::Zoom( const Vector2<float>& focus, float factor )
     std::lock_guard lock( m_lock );
     m_fitMode = FitMode::None;
     const auto oldScale = m_imgScale;
-    m_imgScale = std::clamp( m_imgScale * factor, 0.01f, 100.f );
+    SetImgScale( std::clamp( m_imgScale * factor, 0.01f, 100.f ) );
     m_imgOrigin.x = focus.x + ( m_imgOrigin.x - focus.x ) * m_imgScale / oldScale;
     m_imgOrigin.y = focus.y + ( m_imgOrigin.y - focus.y ) * m_imgScale / oldScale;
     ClampImagePosition();
@@ -411,6 +411,11 @@ void ImageView::ClampImagePosition()
 {
     m_imgOrigin.x = std::clamp( m_imgOrigin.x, m_extent.width / 2.f - m_bitmapExtent.width * m_imgScale, m_extent.width / 2.f );
     m_imgOrigin.y = std::clamp( m_imgOrigin.y, m_extent.height / 2.f - m_bitmapExtent.height * m_imgScale, m_extent.height / 2.f );
+}
+
+void ImageView::SetImgScale( float scale )
+{
+    m_imgScale = scale;
 }
 
 bool ImageView::HasBitmap()

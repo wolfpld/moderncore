@@ -67,6 +67,7 @@ private:
     void FinishSetBitmap( std::shared_ptr<Texture>&& texture, std::shared_ptr<VlkBuffer>&& vb, uint32_t width, uint32_t height );
 
     void ClampImagePosition();
+    void SetImgScale( float scale );
 
     void FitToExtentUnlocked( const VkExtent2D& extent );
     void FitToWindowUnlocked( const VkExtent2D& extent );

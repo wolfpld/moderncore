@@ -190,7 +190,7 @@ void ImageView::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
     std::lock_guard lock( m_lock );
 
     ZoneVk( *m_device, cmdbuf, "ImageView", true );
-    if( m_bitmapExtent.width <= extent.width && m_bitmapExtent.height <= extent.height )
+    if( m_imgScale >= 1 )
     {
         vkCmdBindPipeline( cmdbuf, VK_PIPELINE_BIND_POINT_GRAPHICS, *m_pipelineExact );
     }

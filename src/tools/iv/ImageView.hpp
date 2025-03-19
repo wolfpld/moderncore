@@ -84,7 +84,8 @@ private:
     std::shared_ptr<VlkBuffer> m_vertexBuffer;
     std::shared_ptr<VlkBuffer> m_indexBuffer;
     std::shared_ptr<Texture> m_texture;
-    std::shared_ptr<VlkSampler> m_sampler;
+    std::shared_ptr<VlkSampler> m_samplerLinear;
+    std::shared_ptr<VlkSampler> m_samplerNearest;
 
     VkExtent2D m_extent;
     VkExtent2D m_bitmapExtent;

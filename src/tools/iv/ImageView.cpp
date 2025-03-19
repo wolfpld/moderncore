@@ -43,7 +43,7 @@ ImageView::ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, 
 {
     SetScale( scale, extent );
 
-    constexpr VkSamplerCreateInfo samplerInfo = {
+    VkSamplerCreateInfo samplerInfo = {
         .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
         .magFilter = VK_FILTER_LINEAR,
         .minFilter = VK_FILTER_LINEAR,
@@ -53,10 +53,14 @@ ImageView::ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, 
         .mipLodBias = -1.f,
         .maxLod = VK_LOD_CLAMP_NONE
     };
-    m_sampler = std::make_unique<VlkSampler>( *m_device, samplerInfo );
+    m_samplerLinear = std::make_unique<VlkSampler>( *m_device, samplerInfo );
+
+    samplerInfo.magFilter = VK_FILTER_NEAREST;
+    samplerInfo.minFilter = VK_FILTER_NEAREST;
+    m_samplerNearest = std::make_unique<VlkSampler>( *m_device, samplerInfo );
 
     m_imageInfo = {
-        .sampler = *m_sampler,
+        .sampler = *m_samplerLinear,
         .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
     };
 
@@ -162,7 +166,8 @@ ImageView::~ImageView()
         std::move( m_vertexBuffer ),
         std::move( m_indexBuffer ),
         std::move( m_texture ),
-        std::move( m_sampler )
+        std::move( m_samplerLinear ),
+        std::move( m_samplerNearest ),
     } );
 }
 
@@ -415,6 +420,16 @@ void ImageView::ClampImagePosition()
 
 void ImageView::SetImgScale( float scale )
 {
+    if( scale >= 0.999f && std::abs( scale - std::round( scale ) ) < 0.01f )
+    {
+        scale = std::round( scale );
+        m_imageInfo.sampler = *m_samplerNearest;
+    }
+    else
+    {
+        m_imageInfo.sampler = *m_samplerLinear;
+    }
+
     m_imgScale = scale;
 }
 

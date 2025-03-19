@@ -77,10 +77,12 @@ private:
 
     std::shared_ptr<VlkShader> m_shaderMin[2];
     std::shared_ptr<VlkShader> m_shaderExact[2];
+    std::shared_ptr<VlkShader> m_shaderNearest[2];
     std::shared_ptr<VlkDescriptorSetLayout> m_setLayout;
     std::shared_ptr<VlkPipelineLayout> m_pipelineLayout;
     std::shared_ptr<VlkPipeline> m_pipelineMin;
     std::shared_ptr<VlkPipeline> m_pipelineExact;
+    std::shared_ptr<VlkPipeline> m_pipelineNearest;
     std::shared_ptr<VlkBuffer> m_vertexBuffer;
     std::shared_ptr<VlkBuffer> m_indexBuffer;
     std::shared_ptr<Texture> m_texture;
@@ -92,6 +94,7 @@ private:
 
     Vector2<float> m_imgOrigin;
     float m_imgScale;
+    bool m_filteredNearest;
 
     VkDescriptorImageInfo m_imageInfo;
     VkWriteDescriptorSet m_descWrite;

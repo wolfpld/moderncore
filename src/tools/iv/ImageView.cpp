@@ -22,6 +22,8 @@
 #include "vulkan/ext/Texture.hpp"
 #include "vulkan/ext/Tracy.hpp"
 
+#include "shader/NearestFrag.hpp"
+#include "shader/NearestPqFrag.hpp"
 #include "shader/SupersampleFrag.hpp"
 #include "shader/SupersamplePqFrag.hpp"
 #include "shader/TexturingAlphaFrag.hpp"
@@ -38,6 +40,7 @@ ImageView::ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, 
     : m_garbage( garbage )
     , m_device( std::move( device ) )
     , m_extent( extent )
+    , m_filteredNearest( false )
     , m_scale( scale )
     , m_fitMode( FitMode::TooSmall )
 {
@@ -73,12 +76,16 @@ ImageView::ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, 
     };
 
 
+    Unembed( NearestFrag );
+    Unembed( NearestPqFrag );
     Unembed( SupersampleFrag );
     Unembed( SupersamplePqFrag );
     Unembed( TexturingAlphaFrag );
     Unembed( TexturingAlphaPqFrag );
     Unembed( TexturingVert );
 
+    auto NearestFragModule = std::make_shared<VlkShaderModule>( *m_device, *NearestFrag );
+    auto NearestPqFragModule = std::make_shared<VlkShaderModule>( *m_device, *NearestPqFrag );
     auto SupersampleFragModule = std::make_shared<VlkShaderModule>( *m_device, *SupersampleFrag );
     auto SupersamplePqFragModule = std::make_shared<VlkShaderModule>( *m_device, *SupersamplePqFrag );
     auto TexturingAlphaFragModule = std::make_shared<VlkShaderModule>( *m_device, *TexturingAlphaFrag );
@@ -103,6 +110,14 @@ ImageView::ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, 
         VlkShader::Stage { TexturingAlphaPqFragModule, VK_SHADER_STAGE_FRAGMENT_BIT }
     } );
 
+    m_shaderNearest[0] = std::make_shared<VlkShader>( std::array {
+        VlkShader::Stage { TexturingVertModule, VK_SHADER_STAGE_VERTEX_BIT },
+        VlkShader::Stage { NearestFragModule, VK_SHADER_STAGE_FRAGMENT_BIT }
+    } );
+    m_shaderNearest[1] = std::make_shared<VlkShader>( std::array {
+        VlkShader::Stage { TexturingVertModule, VK_SHADER_STAGE_VERTEX_BIT },
+        VlkShader::Stage { NearestPqFragModule, VK_SHADER_STAGE_FRAGMENT_BIT }
+    } );
 
     static constexpr std::array bindings = {
         VkDescriptorSetLayoutBinding { 0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT }
@@ -157,12 +172,15 @@ ImageView::~ImageView()
     m_garbage.Recycle( {
         std::move( m_pipelineMin ),
         std::move( m_pipelineExact ),
+        std::move( m_pipelineNearest ),
         std::move( m_pipelineLayout ),
         std::move( m_setLayout ),
         std::move( m_shaderMin[0] ),
         std::move( m_shaderMin[1] ),
         std::move( m_shaderExact[0] ),
         std::move( m_shaderExact[1] ),
+        std::move( m_shaderNearest[0] ),
+        std::move( m_shaderNearest[1] ),
         std::move( m_vertexBuffer ),
         std::move( m_indexBuffer ),
         std::move( m_texture ),
@@ -197,7 +215,14 @@ void ImageView::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
     ZoneVk( *m_device, cmdbuf, "ImageView", true );
     if( m_imgScale >= 1 )
     {
-        vkCmdBindPipeline( cmdbuf, VK_PIPELINE_BIND_POINT_GRAPHICS, *m_pipelineExact );
+        if( m_filteredNearest )
+        {
+            vkCmdBindPipeline( cmdbuf, VK_PIPELINE_BIND_POINT_GRAPHICS, *m_pipelineNearest );
+        }
+        else
+        {
+            vkCmdBindPipeline( cmdbuf, VK_PIPELINE_BIND_POINT_GRAPHICS, *m_pipelineExact );
+        }
     }
     else
     {
@@ -423,10 +448,12 @@ void ImageView::SetImgScale( float scale )
     if( scale >= 0.999f && std::abs( scale - std::round( scale ) ) < 0.01f )
     {
         scale = std::round( scale );
+        m_filteredNearest = false;
         m_imageInfo.sampler = *m_samplerNearest;
     }
     else
     {
+        m_filteredNearest = true;
         m_imageInfo.sampler = *m_samplerLinear;
     }
 
@@ -527,6 +554,10 @@ void ImageView::CreatePipeline( VkFormat format )
     pipelineInfo.stageCount = pq ? m_shaderExact[1]->GetStageCount() : m_shaderExact[0]->GetStageCount();
     pipelineInfo.pStages = pq ? m_shaderExact[1]->GetStages() : m_shaderExact[0]->GetStages();
     m_pipelineExact = std::make_shared<VlkPipeline>( *m_device, pipelineInfo );
+
+    pipelineInfo.stageCount = pq ? m_shaderNearest[1]->GetStageCount() : m_shaderNearest[0]->GetStageCount();
+    pipelineInfo.pStages = pq ? m_shaderNearest[1]->GetStages() : m_shaderNearest[0]->GetStages();
+    m_pipelineNearest = std::make_shared<VlkPipeline>( *m_device, pipelineInfo );
 }
 
 void ImageView::Cleanup()

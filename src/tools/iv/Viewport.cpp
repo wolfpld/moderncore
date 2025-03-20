@@ -129,7 +129,7 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
 Viewport::~Viewport()
 {
     const auto winSize = m_window->GetSizeNoScale();
-    const auto maximized = m_window->Maximized();
+    const auto maximized = m_window->IsMaximized();
 
     m_window->Close();
     m_provider->CancelAll();
@@ -369,7 +369,7 @@ void Viewport::Key( const char* key, int mods )
         if( !m_view->HasBitmap() ) return;
 
         std::lock_guard lock( *m_window );
-        if( m_window->Maximized() )
+        if( m_window->IsMaximized() )
         {
             m_view->FitToExtent( m_window->GetSize() );
             std::lock_guard lock( m_lock );

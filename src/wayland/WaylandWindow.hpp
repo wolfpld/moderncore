@@ -71,6 +71,7 @@ public:
     void Resize( uint32_t width, uint32_t height, bool reposition = false );             // Window size in real pixels
     void ResizeNoScale( uint32_t width, uint32_t height, bool reposition = false );      // Window size in logical pixels (1.0 scale)
     void LockSize();
+    void Fullscreen( bool enable );
     void Commit();
     void Close();
     void Activate( const char* token );
@@ -98,7 +99,8 @@ public:
     [[nodiscard]] VkExtent2D GetBounds() const { return VkExtent2D { m_bounds.width * m_scale / 120, m_bounds.height * m_scale / 120 }; }
     [[nodiscard]] const VkExtent2D& GetBoundsNoScale() const { return m_bounds; }
     [[nodiscard]] bool HdrCapable() const { return m_hdrCapable; }
-    [[nodiscard]] bool Maximized() const { return m_maximized; }
+    [[nodiscard]] bool IsMaximized() const { return m_maximized; }
+    [[nodiscard]] bool IsFullscreen() const { return m_fullscreen; }
 
     [[nodiscard]] wl_surface* Surface() { return m_surface; }
     [[nodiscard]] xdg_toplevel* XdgToplevel() { return m_xdgToplevel; }
@@ -178,6 +180,7 @@ private:
     VkExtent2D m_staged;
     VkExtent2D m_bounds;
     bool m_maximized = false;
+    bool m_fullscreen = false;
 
     std::mutex m_idleLock;
     bool m_idle = false;

@@ -225,6 +225,21 @@ void WaylandWindow::LockSize()
     xdg_toplevel_set_max_size( m_xdgToplevel, extent.width, extent.height );
 }
 
+void WaylandWindow::Fullscreen( bool enable )
+{
+    if( m_fullscreen == enable ) return;
+    m_fullscreen = enable;
+
+    if( enable )
+    {
+        xdg_toplevel_set_fullscreen( m_xdgToplevel, nullptr );
+    }
+    else
+    {
+        xdg_toplevel_unset_fullscreen( m_xdgToplevel );
+    }
+}
+
 void WaylandWindow::Commit()
 {
     wl_surface_commit( m_surface );
@@ -592,17 +607,16 @@ void WaylandWindow::XdgSurfaceConfigure( struct xdg_surface *xdg_surface, uint32
 void WaylandWindow::XdgToplevelConfigure( struct xdg_toplevel* toplevel, int32_t width, int32_t height, struct wl_array* states )
 {
     bool maximized = false;
+    bool fullscreen = false;
     for( size_t i=0; i < states->size / sizeof(uint32_t); i++ )
     {
         uint32_t state;
         memcpy( &state, (char*)states->data + i * sizeof( uint32_t ), sizeof( uint32_t ) );
-        if( state == XDG_TOPLEVEL_STATE_MAXIMIZED )
-        {
-            maximized = true;
-            break;
-        }
+        if( state == XDG_TOPLEVEL_STATE_MAXIMIZED ) maximized = true;
+        if( state == XDG_TOPLEVEL_STATE_FULLSCREEN ) fullscreen = true;
     }
     m_maximized = maximized;
+    m_fullscreen = fullscreen;
 
     if( width == 0 || height == 0 ) return;
 

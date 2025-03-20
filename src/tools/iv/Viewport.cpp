@@ -422,6 +422,12 @@ void Viewport::KeyEvent( uint32_t key, int mods, bool pressed )
         std::lock_guard lock( m_lock );
         WantRender();
     }
+    else if( mods == 0 && key == KEY_F11 )
+    {
+        m_window->Fullscreen( !m_window->IsFullscreen() );
+        std::lock_guard lock( m_lock );
+        WantRender();
+    }
 }
 
 void Viewport::MouseEnter( float x, float y )

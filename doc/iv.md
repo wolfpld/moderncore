@@ -48,6 +48,7 @@ Keybindings:
  - `f` makes the image fit in the window (will only scale down).
  - `ctrl+f` makes the image fill the window (will also scale up).
  - `shift+f` resizes the window to fit the image.
+ - `F11` enables fullscreen mode.
 
 ### Unsupported features
 

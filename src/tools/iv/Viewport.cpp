@@ -128,7 +128,7 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
 
 Viewport::~Viewport()
 {
-    const auto winSize = m_window->GetSizeNoScale();
+    const auto winSize = m_window->GetSizeFloating();
     const auto maximized = m_window->IsMaximized();
 
     m_window->Close();

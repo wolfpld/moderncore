@@ -52,7 +52,8 @@ public:
         void (*OnClipboard)( void* ptr, const unordered_flat_set<std::string>& mimeTypes );
         void (*OnDrag)( void* ptr, const unordered_flat_set<std::string>& mimeTypes );
         void (*OnDrop)( void* ptr, int fd, const char* mime );
-        void (*OnKey)( void* ptr, const char* key, int mods );
+        void (*OnKeyEvent)( void* ptr, uint32_t key, int mods, bool pressed );
+        void (*OnCharacter)( void* ptr, const char* character );
         void (*OnMouseEnter)( void* ptr, float x, float y );
         void (*OnMouseLeave)( void* ptr );
         void (*OnMouseMove)( void* ptr, float x, float y );
@@ -123,7 +124,8 @@ private:
     void InvokeClipboard( const unordered_flat_set<std::string>& mimeTypes );
     void InvokeDrag( const unordered_flat_set<std::string>& mimeTypes );
     void InvokeDrop( int fd, const char* mime );
-    void InvokeKey( const char* key, int mods );
+    void InvokeKeyEvent( uint32_t key, int mods, bool pressed );
+    void InvokeCharacter( const char* character );
     void InvokeMouseEnter( float x, float y );
     void InvokeMouseLeave();
     void InvokeMouseMove( float x, float y );

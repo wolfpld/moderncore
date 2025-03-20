@@ -91,7 +91,15 @@ void WaylandKeyboard::Leave( wl_keyboard* kbd, uint32_t serial, wl_surface* surf
 
 void WaylandKeyboard::Key( wl_keyboard* kbd, uint32_t serial, uint32_t time, uint32_t key, uint32_t state )
 {
-    if( state == WL_KEYBOARD_KEY_STATE_RELEASED ) return;
+    if( state == WL_KEYBOARD_KEY_STATE_PRESSED )
+    {
+        m_seat.KeyEvent( m_activeWindow, key, m_modState, true );
+    }
+    else if( state == WL_KEYBOARD_KEY_STATE_RELEASED )
+    {
+        m_seat.KeyEvent( m_activeWindow, key, m_modState, false );
+        return;
+    }
 
     const xkb_keysym_t* keysyms;
     if( xkb_state_key_get_syms( m_state, key + 8, &keysyms ) == 1 )
@@ -100,7 +108,7 @@ void WaylandKeyboard::Key( wl_keyboard* kbd, uint32_t serial, uint32_t time, uin
         char txt[8];
         if( xkb_keysym_to_utf8( sym, txt, sizeof( txt ) ) > 0 )
         {
-            m_seat.KeyEntered( m_activeWindow, txt, m_modState );
+            m_seat.CharacterEntered( m_activeWindow, txt );
         }
     }
 }

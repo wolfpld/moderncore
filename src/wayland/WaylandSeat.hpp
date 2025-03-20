@@ -43,7 +43,8 @@ public:
 
 private:
     void KeyboardLeave( wl_surface* surf );
-    void KeyEntered( wl_surface* surf, const char* key, int mods );
+    void KeyEvent( wl_surface* surf, uint32_t key, int mods, bool pressed );
+    void CharacterEntered( wl_surface* surf, const char* character );
 
     void PointerEntered( wl_surface* surf, wl_fixed_t x, wl_fixed_t y );
     void PointerLeft( wl_surface* surf );

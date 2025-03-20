@@ -64,7 +64,7 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
         .OnClipboard = Method( Clipboard ),
         .OnDrag = Method( Drag ),
         .OnDrop = Method( Drop ),
-        .OnKey = Method( Key ),
+        .OnKeyEvent = Method( KeyEvent ),
         .OnMouseEnter = Method( MouseEnter ),
         .OnMouseLeave = Method( MouseLeave ),
         .OnMouseMove = Method( MouseMove ),
@@ -343,75 +343,79 @@ void Viewport::Drop( int fd, const char* mime )
     }
 }
 
-void Viewport::Key( const char* key, int mods )
+void Viewport::KeyEvent( uint32_t key, int mods, bool pressed )
 {
-    ZoneScoped;
-    ZoneText( key, strlen( key ) );
+    if( !pressed ) return;
 
-    if( mods & CtrlBit && strcmp( key, "v" ) == 0 )
+    ZoneScoped;
+    ZoneValue( key );
+
+    if( mods & CtrlBit && key == KEY_V )
     {
         PasteClipboard();
     }
-    else if( mods == 0 && strcmp( key, "f" ) == 0 )
-    {
-        m_view->FitToExtent( m_window->GetSize() );
-        std::lock_guard lock( m_lock );
-        WantRender();
-    }
-    else if( mods == CtrlBit && strcmp( key, "f" ) == 0 )
-    {
-        m_view->FitToWindow( m_window->GetSize() );
-        std::lock_guard lock( m_lock );
-        WantRender();
-    }
-    else if( mods == ShiftBit && strcmp( key, "F" ) == 0 )
+    else if( key == KEY_F )
     {
         if( !m_view->HasBitmap() ) return;
-
-        std::lock_guard lock( *m_window );
-        if( m_window->IsMaximized() )
+        if( mods == 0 )
         {
             m_view->FitToExtent( m_window->GetSize() );
             std::lock_guard lock( m_lock );
             WantRender();
         }
-        else
+        else if( mods == CtrlBit )
         {
-            const auto size = m_view->GetBitmapExtent();
-            const auto bounds = m_window->GetBounds();
-            if( bounds.width != 0 && bounds.height != 0 )
-            {
-                uint32_t w, h;
-                if( bounds.width >= size.width && bounds.height >= size.height )
-                {
-                    w = size.width;
-                    h = size.height;
-                }
-                else
-                {
-                    const auto scale = std::min( float( bounds.width ) / size.width, float( bounds.height ) / size.height );
-                    w = size.width * scale;
-                    h = size.height * scale;
-                }
-
-                // Don't let the window get too small. 150 px is the minimum window size KDE allows.
-                const auto dpi = m_window->GetScale();
-                const auto minSize = 150 * dpi / 120;
-                w = std::max( w, minSize );
-                h = std::max( h, minSize );
-
-                m_window->Resize( w, h, true );
-                m_view->FitToExtent( VkExtent2D( w, h ) );
-            }
-            else
+            m_view->FitToWindow( m_window->GetSize() );
+            std::lock_guard lock( m_lock );
+            WantRender();
+        }
+        else if( mods == ShiftBit )
+        {
+            std::lock_guard lock( *m_window );
+            if( m_window->IsMaximized() )
             {
                 m_view->FitToExtent( m_window->GetSize() );
                 std::lock_guard lock( m_lock );
                 WantRender();
             }
+            else
+            {
+                const auto size = m_view->GetBitmapExtent();
+                const auto bounds = m_window->GetBounds();
+                if( bounds.width != 0 && bounds.height != 0 )
+                {
+                    uint32_t w, h;
+                    if( bounds.width >= size.width && bounds.height >= size.height )
+                    {
+                        w = size.width;
+                        h = size.height;
+                    }
+                    else
+                    {
+                        const auto scale = std::min( float( bounds.width ) / size.width, float( bounds.height ) / size.height );
+                        w = size.width * scale;
+                        h = size.height * scale;
+                    }
+    
+                    // Don't let the window get too small. 150 px is the minimum window size KDE allows.
+                    const auto dpi = m_window->GetScale();
+                    const auto minSize = 150 * dpi / 120;
+                    w = std::max( w, minSize );
+                    h = std::max( h, minSize );
+    
+                    m_window->Resize( w, h, true );
+                    m_view->FitToExtent( VkExtent2D( w, h ) );
+                }
+                else
+                {
+                    m_view->FitToExtent( m_window->GetSize() );
+                    std::lock_guard lock( m_lock );
+                    WantRender();
+                }
+            }
         }
     }
-    else if( mods == 0 && strcmp( key, "1" ) == 0 )
+    else if( mods == 0 && key == KEY_1 )
     {
         if( !m_view->HasBitmap() ) return;
         m_view->FitPixelPerfect( m_window->GetSize() );

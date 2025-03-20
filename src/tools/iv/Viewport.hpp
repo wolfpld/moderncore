@@ -45,7 +45,7 @@ private:
     void Clipboard( const unordered_flat_set<std::string>& mimeTypes );
     void Drag( const unordered_flat_set<std::string>& mimeTypes );
     void Drop( int fd, const char* mime );
-    void Key( const char* key, int mods );
+    void KeyEvent( uint32_t key, int mods, bool pressed );
     void MouseEnter( float x, float y );
     void MouseLeave();
     void MouseMove( float x, float y );

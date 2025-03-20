@@ -134,9 +134,14 @@ void WaylandSeat::KeyboardLeave( wl_surface* surf )
     }
 }
 
-void WaylandSeat::KeyEntered( wl_surface* surf, const char* key, int mods )
+void WaylandSeat::KeyEvent( wl_surface* surf, uint32_t key, int mods, bool pressed )
 {
-    GetWindow( surf )->InvokeKey( key, mods );
+    GetWindow( surf )->InvokeKeyEvent( key, mods, pressed );
+}
+
+void WaylandSeat::CharacterEntered( wl_surface* surf, const char* character )
+{
+    GetWindow( surf )->InvokeCharacter( character );
 }
 
 void WaylandSeat::PointerEntered( wl_surface* surf, wl_fixed_t x, wl_fixed_t y )

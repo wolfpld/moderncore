@@ -476,9 +476,14 @@ void WaylandWindow::InvokeDrop( int fd, const char* mime )
     Invoke( OnDrop, fd, mime );
 }
 
-void WaylandWindow::InvokeKey( const char* key, int mods )
+void WaylandWindow::InvokeKeyEvent( uint32_t key, int mods, bool pressed )
 {
-    Invoke( OnKey, key, mods );
+    Invoke( OnKeyEvent, key, mods, pressed );
+}
+
+void WaylandWindow::InvokeCharacter( const char* character )
+{
+    Invoke( OnCharacter, character );
 }
 
 void WaylandWindow::InvokeMouseEnter( float x, float y )

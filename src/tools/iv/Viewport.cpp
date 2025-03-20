@@ -372,7 +372,7 @@ void Viewport::KeyEvent( uint32_t key, int mods, bool pressed )
         else if( mods == ShiftBit )
         {
             std::lock_guard lock( *m_window );
-            if( m_window->IsMaximized() )
+            if( m_window->IsMaximized() || m_window->IsFullscreen() )
             {
                 m_view->FitToExtent( m_window->GetSize() );
                 std::lock_guard lock( m_lock );

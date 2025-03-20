@@ -95,6 +95,7 @@ public:
 
     [[nodiscard]] const VkExtent2D& GetSize() const { return m_swapchain->GetExtent(); }    // Swapchain extent, i.e. render area in real pixels
     [[nodiscard]] const VkExtent2D& GetSizeNoScale() const { return m_extent; }             // Logical window size, i.e. pixels at 1.0 DPI scaling
+    [[nodiscard]] const VkExtent2D& GetSizeFloating() const { return m_floatingExtent; }    // Logical window size
     [[nodiscard]] const char* GetTitle() const { return m_title.c_str(); }
     [[nodiscard]] uint32_t GetScale() const { return m_scale; }
     [[nodiscard]] VkExtent2D GetBounds() const { return VkExtent2D { m_bounds.width * m_scale / 120, m_bounds.height * m_scale / 120 }; }
@@ -180,6 +181,7 @@ private:
 
     VkExtent2D m_extent;
     VkExtent2D m_staged;
+    VkExtent2D m_floatingExtent;
     VkExtent2D m_bounds;
     bool m_maximized = false;
     bool m_fullscreen = false;

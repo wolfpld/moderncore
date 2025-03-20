@@ -208,7 +208,7 @@ void WaylandWindow::ResizeNoScale( uint32_t width, uint32_t height, bool reposit
     }
     else
     {
-        m_staged = m_extent = VkExtent2D( width, height );
+        m_floatingExtent = m_staged = m_extent = VkExtent2D( width, height );
         CreateSwapchain( m_extent );
 
         wp_viewport_set_source( m_viewport, 0, 0, wl_fixed_from_double( m_extent.width * m_scale / 120.f ), wl_fixed_from_double( m_extent.height * m_scale / 120.f ) );
@@ -280,6 +280,7 @@ void WaylandWindow::Update()
         m_extent = m_staged;
         m_prevScale = m_scale;
         m_prevHdr = m_hdr;
+        if( !m_maximized && !m_fullscreen ) m_floatingExtent = m_extent;
 
         CreateSwapchain( m_extent );
 

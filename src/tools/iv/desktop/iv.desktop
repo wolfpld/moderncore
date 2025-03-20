@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=iv
+GenericName=Image viewer
+GenericName[pl]=Przeglądarka obrazów
+Comment=Wayland HDR image viewer
+Comment[pl]=Przeglądarka obrazów HDR na Waylanda
+Exec=iv %f
+Icon=iv
+Terminal=false
+Categories=Graphics;2DGraphics;RasterGraphics;Viewer;
+MimeType=image/avif;image/bmp;image/dng;image/gif;image/heic;image/heif;image/jpeg;image/jxl;image/png;image/tiff;image/vnd.adobe.photoshop;image/vnd.zbrush.pcx;image/webp;image/x-canon-cr2;image/x-canon-cr3;image/x-canon-crw;image/x-exr;image/x-fuji-raf;image/x-kodak-dcr;image/x-minolta-mrw;image/x-nikon-nrw;image/x-olympus-orf;image/x-panasonic-raw;image/x-panasonic-raw2;image/x-panasonic-rw;image/x-panasonic-rw2;image/x-pentax-pef;image/x-portable-anymap;image/x-targa;image/x-dds;image/x-hdr;image/x-sigma-x3f;

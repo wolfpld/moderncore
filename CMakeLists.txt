@@ -497,6 +497,9 @@ install(TARGETS
     mcorewayland
 )
 
+install(FILES src/tools/iv/desktop/iv.desktop DESTINATION share/applications)
+install(FILES src/tools/iv/assets/icon.svg DESTINATION share/icons/hicolor/scalable/apps RENAME iv.svg)
+
 if(BUILD_MCORE)
     install(TARGETS mcore)
 endif()

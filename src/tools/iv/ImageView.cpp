@@ -421,6 +421,7 @@ void ImageView::FitPixelPerfect( const VkExtent2D& extent, uint32_t zoom, const 
         m_imgOrigin.y = ( (float)extent.height - m_bitmapExtent.height * zoom ) / 2;
     }
     SetImgScale( zoom );
+    if( focus ) ClampImagePosition();
     UpdateVertexBuffer();
 }
 

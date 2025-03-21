@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <format>
 #include <linux/input-event-codes.h>
 #include <numbers>
 #include <stdlib.h>
@@ -197,6 +198,12 @@ void Viewport::Update( float delta )
     {
         m_busyIndicator->Update( delta );
         m_render = true;
+    }
+
+    if( m_updateTitle )
+    {
+        m_updateTitle = false;
+        m_window->SetTitle( std::format( "{} — IV", m_origin ).c_str() );
     }
 }
 
@@ -509,6 +516,15 @@ void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, int flags
         }
 
         m_lock.lock();
+        if( data.origin.empty() )
+        {
+            m_origin = "Untitled";
+        }
+        else
+        {
+            m_origin = data.origin.substr( data.origin.find_last_of( '/' ) + 1 );
+        }
+        m_updateTitle = true;
         WantRender();
     }
     else

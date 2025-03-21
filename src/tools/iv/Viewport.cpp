@@ -418,7 +418,7 @@ void Viewport::KeyEvent( uint32_t key, int mods, bool pressed )
     else if( mods == 0 && key == KEY_1 )
     {
         if( !m_view->HasBitmap() ) return;
-        m_view->FitPixelPerfect( m_window->GetSize() );
+        m_view->FitPixelPerfect( m_window->GetSize(), m_mouseFocus ? &m_mousePos : nullptr );
         std::lock_guard lock( m_lock );
         WantRender();
     }

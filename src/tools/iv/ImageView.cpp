@@ -403,15 +403,21 @@ void ImageView::FitToWindowUnlocked( const VkExtent2D& extent )
     UpdateVertexBuffer();
 }
 
-void ImageView::FitPixelPerfect( const VkExtent2D& extent)
+void ImageView::FitPixelPerfect( const VkExtent2D& extent, const Vector2<float>* focus )
 {
     std::lock_guard lock( m_lock );
     m_fitMode = FitMode::None;
     m_extent = extent;
-    m_imgOrigin = {
-        ( (float)extent.width - m_bitmapExtent.width ) / 2,
-        ( (float)extent.height - m_bitmapExtent.height ) / 2
-    };
+    if( focus )
+    {
+        m_imgOrigin.x = focus->x + ( m_imgOrigin.x - focus->x ) / m_imgScale;
+        m_imgOrigin.y = focus->y + ( m_imgOrigin.y - focus->y ) / m_imgScale;
+    }
+    else
+    {
+        m_imgOrigin.x = ( (float)extent.width - m_bitmapExtent.width ) / 2;
+        m_imgOrigin.y = ( (float)extent.height - m_bitmapExtent.height ) / 2;
+    }
     SetImgScale( 1 );
     UpdateVertexBuffer();
 }

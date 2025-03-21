@@ -50,7 +50,7 @@ public:
 
     void FitToExtent( const VkExtent2D& extent );
     void FitToWindow( const VkExtent2D& extent );
-    void FitPixelPerfect( const VkExtent2D& extent, const Vector2<float>* focus = nullptr );
+    void FitPixelPerfect( const VkExtent2D& extent, uint32_t zoom, const Vector2<float>* focus = nullptr );
 
     void Pan( const Vector2<float>& delta );
     void Zoom( const Vector2<float>& focus, float factor );

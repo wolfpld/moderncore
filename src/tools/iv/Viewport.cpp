@@ -396,7 +396,7 @@ void Viewport::KeyEvent( uint32_t key, int mods, bool pressed )
                         w = size.width * scale;
                         h = size.height * scale;
                     }
-    
+
                     // Don't let the window get too small. 150 px is the minimum window size KDE allows.
                     const auto dpi = m_window->GetScale();
                     const auto minSize = 150 * dpi / 120;

@@ -28,6 +28,7 @@ public:
     {
         std::shared_ptr<Bitmap> bitmap;
         std::shared_ptr<BitmapHdr> bitmapHdr;
+        std::string origin;
     };
 
     using Callback = void (*)(void *, int64_t, Result, int, ReturnData);

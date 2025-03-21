@@ -198,7 +198,8 @@ void ImageProvider::Worker()
             mclog( LogLevel::Info, "Image loaded: %ux%u", bitmap ? bitmap->Width() : bitmapHdr->Width(), bitmap ? bitmap->Height() : bitmapHdr->Height() );
             job.callback( job.userData, job.id, Result::Success, job.flags, {
                 .bitmap = std::move( bitmap ),
-                .bitmapHdr = std::move( bitmapHdr )
+                .bitmapHdr = std::move( bitmapHdr ),
+                .origin = job.path
             } );
         }
         else

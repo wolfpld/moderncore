@@ -114,7 +114,7 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
     const auto scale = m_window->GetScale() / 120.f;
     m_background = std::make_shared<Background>( *m_window, m_device, format );
     m_busyIndicator = std::make_shared<BusyIndicator>( *m_window, m_device, format, scale );
-    m_view = std::make_shared<ImageView>( *m_window, m_device, format, m_window->GetSize(), scale );
+    m_view = std::make_shared<ImageView>( *m_window, m_device, format, m_window->GetSize(), scale, Method( ViewScaleChanged ), this );
 
     const char* token = getenv( "XDG_ACTIVATION_TOKEN" );
     if( token )
@@ -204,7 +204,7 @@ void Viewport::Update( float delta )
     {
         m_updateTitle = false;
         const auto extent = m_view->GetBitmapExtent();
-        m_window->SetTitle( std::format( "{} - {}×{} — IV", m_origin, extent.width, extent.height ).c_str() );
+        m_window->SetTitle( std::format( "{} - {}×{} - {:.2f}% — IV", m_origin, extent.width, extent.height, m_viewScale * 100 ).c_str() );
     }
 }
 
@@ -541,6 +541,13 @@ void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, int flags
         WantRender();
     }
     m_lock.unlock();
+}
+
+void Viewport::ViewScaleChanged( float scale )
+{
+    std::lock_guard lock( m_lock );
+    m_viewScale = scale;
+    m_updateTitle = true;
 }
 
 void Viewport::PasteClipboard()

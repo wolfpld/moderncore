@@ -53,6 +53,7 @@ private:
     void Scroll( const WaylandScroll& scroll );
 
     void ImageHandler( int64_t id, ImageProvider::Result result, int flags, const ImageProvider::ReturnData& data );
+    void ViewScaleChanged( float scale );
 
     void PasteClipboard();
     bool ProcessUriList( std::string uriList );
@@ -86,4 +87,5 @@ private:
 
     bool m_updateTitle = false;
     std::string m_origin;
+    float m_viewScale;
 };

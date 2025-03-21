@@ -37,7 +37,9 @@ class ImageView
     };
 
 public:
-    ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, const VkExtent2D& extent, float scale );
+    using ViewScaleChanged = void (*)(void *, float);
+
+    ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, const VkExtent2D& extent, float scale, ViewScaleChanged viewScaleChanged, void* userData );
     ~ImageView();
 
     void Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent );
@@ -104,4 +106,7 @@ private:
     FitMode m_fitMode;
 
     std::mutex m_lock;
+
+    ViewScaleChanged m_viewScaleCb;
+    void* m_viewScaleUd;
 };

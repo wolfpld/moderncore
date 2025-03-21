@@ -203,7 +203,8 @@ void Viewport::Update( float delta )
     if( m_updateTitle )
     {
         m_updateTitle = false;
-        m_window->SetTitle( std::format( "{} — IV", m_origin ).c_str() );
+        const auto extent = m_view->GetBitmapExtent();
+        m_window->SetTitle( std::format( "{} - {}×{} — IV", m_origin, extent.width, extent.height ).c_str() );
     }
 }
 

@@ -81,5 +81,6 @@ private:
     int m_currentJob = -1;
 
     Vector2<float> m_mousePos;
+    bool m_mouseFocus = false;
     bool m_dragActive = false;
 };

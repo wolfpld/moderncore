@@ -433,10 +433,12 @@ void Viewport::KeyEvent( uint32_t key, int mods, bool pressed )
 void Viewport::MouseEnter( float x, float y )
 {
     m_mousePos = { x, y };
+    m_mouseFocus = true;
 }
 
 void Viewport::MouseLeave()
 {
+    m_mouseFocus = false;
 }
 
 void Viewport::MouseMove( float x, float y )

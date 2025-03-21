@@ -46,8 +46,8 @@ You can pan the image by holding down the right mouse button. Zoom is done with 
 Keybindings:
  - `1` sets the zoom level to 100%.
  - `2` sets the zoom level to 200%.
- - `3` sets the zoom level to 300%.
- - `4` sets the zoom level to 400%.
+ - `3` sets the zoom level to 400%.
+ - `4` sets the zoom level to 800%.
  - `f` makes the image fit in the window (will only scale down).
  - `ctrl+f` makes the image fill the window (will also scale up).
  - `shift+f` resizes the window to fit the image.

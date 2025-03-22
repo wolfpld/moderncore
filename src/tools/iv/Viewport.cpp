@@ -570,6 +570,7 @@ void Viewport::PasteClipboard()
     ZoneScoped;
     mclog( LogLevel::Info, "Clipboard paste" );
 
+    std::string loadOrigin;
     if( m_clipboardOffer.contains( "text/uri-list" ) )
     {
         const auto uriList = ProcessUriList( MemoryBuffer( m_window->GetClipboard( "text/uri-list" ) ).AsString() );
@@ -578,6 +579,10 @@ void Viewport::PasteClipboard()
         {
             LoadImage( file.c_str() );
             return;
+        }
+        else if( !uriList.empty() )
+        {
+            loadOrigin = uriList[0];
         }
     }
     if( m_clipboardOffer.contains( "image/png" ) )

@@ -188,7 +188,10 @@ void ImageProvider::Worker()
         }
 
         lock.lock();
-        if( m_currentJob == -1 )
+        const bool cancelled = m_currentJob == -1;
+        lock.unlock();
+
+        if( cancelled )
         {
             job.callback( job.userData, job.id, Result::Cancelled, job.flags, {} );
         }
@@ -208,5 +211,7 @@ void ImageProvider::Worker()
             mclog( LogLevel::Error, "Failed to load image %s", job.path.c_str() );
             job.callback( job.userData, job.id, Result::Error, job.flags, {} );
         }
+
+        lock.lock();
     }
 }

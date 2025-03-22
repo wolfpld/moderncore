@@ -238,6 +238,8 @@ bool Viewport::Render()
     m_lastTime = now;
 
     m_window->Update();
+
+    std::lock_guard lock( *m_view );
     Update( delta );
 
     if( !m_render ) return false;
@@ -286,7 +288,10 @@ void Viewport::Scale( uint32_t width, uint32_t height, uint32_t scale )
     mclog( LogLevel::Info, "Preferred window scale: %g, size: %ux%u", scale / 120.f, width, height );
 
     m_busyIndicator->SetScale( scale / 120.f );
+
+    m_view->lock();
     m_view->SetScale( scale / 120.f, m_window->GetSize() );
+    m_view->unlock();
 
     std::lock_guard lock( m_lock );
     m_render = true;
@@ -297,7 +302,9 @@ void Viewport::Resize( uint32_t width, uint32_t height )
     ZoneScoped;
     ZoneTextF( "width %u, height %u", width, height );
 
+    m_view->lock();
     m_view->Resize( m_window->GetSize() );
+    m_view->unlock();
 
     std::lock_guard lock( m_lock );
     m_render = true;
@@ -310,7 +317,10 @@ void Viewport::FormatChange( VkFormat format )
 
     m_background->FormatChange( format );
     m_busyIndicator->FormatChange( format );
+
+    m_view->lock();
     m_view->FormatChange( format );
+    m_view->unlock();
 
     std::lock_guard lock( m_lock );
     m_render = true;
@@ -386,6 +396,7 @@ void Viewport::KeyEvent( uint32_t key, int mods, bool pressed )
     }
     else if( key == KEY_F )
     {
+        std::lock_guard lock( *m_view );
         if( !m_view->HasBitmap() ) return;
         if( mods == 0 )
         {
@@ -447,8 +458,11 @@ void Viewport::KeyEvent( uint32_t key, int mods, bool pressed )
     }
     else if( mods == 0 && key >= KEY_1 && key <= KEY_4 )
     {
+        std::unique_lock viewLock( *m_view );
         if( !m_view->HasBitmap() ) return;
         m_view->FitPixelPerfect( m_window->GetSize(), 1 << ( key - KEY_1 ), m_mouseFocus ? &m_mousePos : nullptr );
+        viewLock.unlock();
+
         std::lock_guard lock( m_lock );
         WantRender();
     }
@@ -475,7 +489,10 @@ void Viewport::MouseMove( float x, float y )
 {
     if( m_dragActive )
     {
+        m_view->lock();
         m_view->Pan( { x - m_mousePos.x, y - m_mousePos.y } );
+        m_view->unlock();
+
         std::lock_guard lock( m_lock );
         WantRender();
     }
@@ -484,32 +501,42 @@ void Viewport::MouseMove( float x, float y )
 
 void Viewport::MouseButton( uint32_t button, bool pressed )
 {
-    if( button == BTN_RIGHT && m_view->HasBitmap() )
+    if( button == BTN_RIGHT )
     {
-        m_dragActive = pressed;
-        m_window->SetCursor( m_dragActive ? WaylandCursor::Grabbing : WaylandCursor::Default );
-        m_window->ResumeIfIdle();
+        std::lock_guard lock( *m_view );
+        if( m_view->HasBitmap() )
+        {
+            m_dragActive = pressed;
+            m_window->SetCursor( m_dragActive ? WaylandCursor::Grabbing : WaylandCursor::Default );
+            m_window->ResumeIfIdle();
+        }
     }
 }
 
 void Viewport::Scroll( const WaylandScroll& scroll )
 {
-    if( scroll.delta.y != 0 && m_view->HasBitmap() )
+    if( scroll.delta.y != 0 )
     {
-        float factor;
-        const auto delta = -scroll.delta.y;
-        if( scroll.source == WaylandScroll::Source::Wheel )
+        std::unique_lock viewLock( *m_view );
+        if( m_view->HasBitmap() )
         {
-            factor = delta / 15.f * std::numbers::sqrt2_v<float>;
-            if( delta < 0 ) factor = -1.f / factor;
+            float factor;
+            const auto delta = -scroll.delta.y;
+            if( scroll.source == WaylandScroll::Source::Wheel )
+            {
+                factor = delta / 15.f * std::numbers::sqrt2_v<float>;
+                if( delta < 0 ) factor = -1.f / factor;
+            }
+            else
+            {
+                factor = 1 + delta * 0.01f;
+            }
+            m_view->Zoom( m_mousePos, factor );
+            viewLock.unlock();
+
+            std::lock_guard lock( m_lock );
+            WantRender();
         }
-        else
-        {
-            factor = 1 + delta * 0.01f;
-        }
-        m_view->Zoom( m_mousePos, factor );
-        std::lock_guard lock( m_lock );
-        WantRender();
     }
 }
 
@@ -525,6 +552,7 @@ void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, int flags
         uint32_t width, height;
         if( data.bitmap )
         {
+            // must not lock m_view here
             m_view->SetBitmap( data.bitmap, *m_td );
             width = data.bitmap->Width();
             height = data.bitmap->Height();
@@ -532,6 +560,7 @@ void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, int flags
         }
         else
         {
+            // must not lock m_view here
             m_view->SetBitmap( data.bitmapHdr, *m_td );
             width = data.bitmapHdr->Width();
             height = data.bitmapHdr->Height();

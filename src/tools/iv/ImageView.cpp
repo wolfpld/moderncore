@@ -210,8 +210,6 @@ void ImageView::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
     const std::array<VkBuffer, 1> vertexBuffers = { *m_vertexBuffer };
     constexpr std::array<VkDeviceSize, 1> offsets = { 0 };
 
-    std::lock_guard lock( m_lock );
-
     ZoneVk( *m_device, cmdbuf, "ImageView", true );
     if( m_imgScale >= 1 )
     {
@@ -240,18 +238,17 @@ void ImageView::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
 
 void ImageView::Resize( const VkExtent2D& extent )
 {
-    std::lock_guard lock( m_lock );
     const auto dx = int32_t( extent.width - m_extent.width );
     const auto dy = int32_t( extent.height - m_extent.height );
     if( dx == 0 && dy == 0 ) return;
 
     if( m_fitMode == FitMode::TooSmall )
     {
-        FitToExtentUnlocked( extent );
+        FitToExtent( extent );
     }
     else if( m_fitMode == FitMode::Always )
     {
-        FitToWindowUnlocked( extent );
+        FitToWindow( extent );
     }
     else
     {
@@ -320,7 +317,7 @@ void ImageView::FinishSetBitmap( std::shared_ptr<Texture>&& texture, std::shared
     m_imageInfo.imageView = *m_texture;
 
     m_bitmapExtent = { width, height };
-    FitToExtentUnlocked( m_extent );
+    FitToExtent( m_extent );
 }
 
 void ImageView::SetScale( float scale, const VkExtent2D& extent )
@@ -347,12 +344,6 @@ void ImageView::FormatChange( VkFormat format )
 }
 
 void ImageView::FitToExtent( const VkExtent2D& extent )
-{
-    std::lock_guard lock( m_lock );
-    FitToExtentUnlocked( extent );
-}
-
-void ImageView::FitToExtentUnlocked( const VkExtent2D& extent )
 {
     m_fitMode = FitMode::TooSmall;
     m_extent = extent;
@@ -382,12 +373,6 @@ void ImageView::FitToExtentUnlocked( const VkExtent2D& extent )
 
 void ImageView::FitToWindow( const VkExtent2D& extent )
 {
-    std::lock_guard lock( m_lock );
-    FitToWindowUnlocked( extent );
-}
-
-void ImageView::FitToWindowUnlocked( const VkExtent2D& extent )
-{
     m_fitMode = FitMode::Always;
     m_extent = extent;
 
@@ -405,7 +390,6 @@ void ImageView::FitToWindowUnlocked( const VkExtent2D& extent )
 
 void ImageView::FitPixelPerfect( const VkExtent2D& extent, uint32_t zoom, const Vector2<float>* focus )
 {
-    std::lock_guard lock( m_lock );
     m_fitMode = FitMode::None;
     m_extent = extent;
     if( focus )
@@ -425,7 +409,6 @@ void ImageView::FitPixelPerfect( const VkExtent2D& extent, uint32_t zoom, const 
 
 void ImageView::Pan( const Vector2<float>& delta )
 {
-    std::lock_guard lock( m_lock );
     m_fitMode = FitMode::None;
     m_imgOrigin += delta;
     ClampImagePosition();
@@ -434,7 +417,6 @@ void ImageView::Pan( const Vector2<float>& delta )
 
 void ImageView::Zoom( const Vector2<float>& focus, float factor )
 {
-    std::lock_guard lock( m_lock );
     m_fitMode = FitMode::None;
     const auto oldScale = m_imgScale;
     SetImgScale( std::clamp( m_imgScale * factor, 1.f / 128.f, 128.f ) );
@@ -465,12 +447,6 @@ void ImageView::SetImgScale( float scale )
     }
 
     m_imgScale = scale;
-}
-
-bool ImageView::HasBitmap()
-{
-    std::lock_guard lock( m_lock );
-    return m_texture != nullptr;
 }
 
 void ImageView::CreatePipeline( VkFormat format )

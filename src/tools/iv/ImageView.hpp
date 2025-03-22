@@ -21,6 +21,7 @@ class VlkPipelineLayout;
 class VlkSampler;
 class VlkShader;
 
+// Must be externally synchronized.
 class ImageView
 {
     struct Vertex
@@ -43,8 +44,8 @@ public:
     void Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent );
     void Resize( const VkExtent2D& extent );
 
-    void SetBitmap( const std::shared_ptr<Bitmap>& bitmap, TaskDispatch& td );
-    void SetBitmap( const std::shared_ptr<BitmapHdr>& bitmap, TaskDispatch& td );
+    void SetBitmap( const std::shared_ptr<Bitmap>& bitmap, TaskDispatch& td );      // call with no lock
+    void SetBitmap( const std::shared_ptr<BitmapHdr>& bitmap, TaskDispatch& td );   // call with no lock
     void SetScale( float scale, const VkExtent2D& extent );
     void FormatChange( VkFormat format );
 
@@ -55,9 +56,12 @@ public:
     void Pan( const Vector2<float>& delta );
     void Zoom( const Vector2<float>& focus, float factor );
 
-    [[nodiscard]] bool HasBitmap();
+    [[nodiscard]] bool HasBitmap() const { return m_texture != nullptr; };
     [[nodiscard]] VkExtent2D GetBitmapExtent() const { return m_bitmapExtent; }
     [[nodiscard]] float GetImgScale() const { return m_imgScale; }
+
+    void lock() { m_lock.lock(); }
+    void unlock() { m_lock.unlock(); }
 
 private:
     void CreatePipeline( VkFormat format );
@@ -69,9 +73,6 @@ private:
 
     void ClampImagePosition();
     void SetImgScale( float scale );
-
-    void FitToExtentUnlocked( const VkExtent2D& extent );
-    void FitToWindowUnlocked( const VkExtent2D& extent );
 
     GarbageChute& m_garbage;
     std::shared_ptr<VlkDevice> m_device;

@@ -54,7 +54,6 @@ private:
     void Scroll( const WaylandScroll& scroll );
 
     void ImageHandler( int64_t id, ImageProvider::Result result, int flags, const ImageProvider::ReturnData& data );
-    void ViewScaleChanged( float scale );
 
     void PasteClipboard();
     [[nodiscard]] std::vector<std::string> ProcessUriList( std::string uriList );

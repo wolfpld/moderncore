@@ -36,15 +36,13 @@ struct PushConstant
     float div;
 };
 
-ImageView::ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, const VkExtent2D& extent, float scale, ViewScaleChanged viewScaleChanged, void* userData )
+ImageView::ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, const VkExtent2D& extent, float scale )
     : m_garbage( garbage )
     , m_device( std::move( device ) )
     , m_extent( extent )
     , m_filteredNearest( false )
     , m_scale( scale )
     , m_fitMode( FitMode::TooSmall )
-    , m_viewScaleCb( viewScaleChanged )
-    , m_viewScaleUd( userData )
 {
     SetScale( scale, extent );
 
@@ -467,7 +465,6 @@ void ImageView::SetImgScale( float scale )
     }
 
     m_imgScale = scale;
-    m_viewScaleCb( m_viewScaleUd, scale );
 }
 
 bool ImageView::HasBitmap()

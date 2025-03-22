@@ -37,9 +37,7 @@ class ImageView
     };
 
 public:
-    using ViewScaleChanged = void (*)(void *, float);
-
-    ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, const VkExtent2D& extent, float scale, ViewScaleChanged viewScaleChanged, void* userData );
+    ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, const VkExtent2D& extent, float scale );
     ~ImageView();
 
     void Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent );
@@ -59,6 +57,7 @@ public:
 
     [[nodiscard]] bool HasBitmap();
     [[nodiscard]] VkExtent2D GetBitmapExtent() const { return m_bitmapExtent; }
+    [[nodiscard]] float GetImgScale() const { return m_imgScale; }
 
 private:
     void CreatePipeline( VkFormat format );
@@ -106,7 +105,4 @@ private:
     FitMode m_fitMode;
 
     std::mutex m_lock;
-
-    ViewScaleChanged m_viewScaleCb;
-    void* m_viewScaleUd;
 };

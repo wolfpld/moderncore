@@ -301,8 +301,13 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
     const auto& txInfo = m_queueInfo[(int)QueueType::Transfer];
     m_hostImageCopy = m_physDev->HasHostImageCopy() && ( txInfo.shareCompute || txInfo.shareGraphic );
 
+    VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT featuresSwapchainMaintenance1 = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SWAPCHAIN_MAINTENANCE_1_FEATURES_EXT,
+        .swapchainMaintenance1 = VK_TRUE
+    };
     VkPhysicalDeviceVulkan14Features features14 = {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_FEATURES,
+        .pNext = &featuresSwapchainMaintenance1,
         .hostImageCopy = m_hostImageCopy,
         .pushDescriptor = VK_TRUE
     };

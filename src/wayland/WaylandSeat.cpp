@@ -224,6 +224,7 @@ void WaylandSeat::DataEnter( wl_data_device* dev, uint32_t serial, wl_surface* s
 
     if( offer )
     {
+        CheckPanic( *m_nextOffer == offer, "Offer mismatch!" );
         m_dndOffer = std::move( m_nextOffer );
         m_nextOffer.reset();
 
@@ -287,6 +288,7 @@ void WaylandSeat::DataSelection( wl_data_device* dev, wl_data_offer* offer )
 {
     if( offer )
     {
+        CheckPanic( *m_nextOffer == offer, "Offer mismatch!" );
         m_selectionOffer = std::move( m_nextOffer );
         m_nextOffer.reset();
 

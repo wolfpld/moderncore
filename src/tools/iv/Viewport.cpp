@@ -341,7 +341,8 @@ void Viewport::Drop( int fd, const char* mime )
     {
         auto fn = MemoryBuffer( fd ).AsString();
         m_window->FinishDnd( fd );
-        ProcessUriList( std::move( fn ) );
+        const auto uriList = ProcessUriList( std::move( fn ) );
+        LoadUriList( uriList );
     }
     else if( strcmp( mime, "image/png" ) == 0 )
     {
@@ -559,7 +560,8 @@ void Viewport::PasteClipboard()
 
     if( m_clipboardOffer.contains( "text/uri-list" ) )
     {
-        if( ProcessUriList( MemoryBuffer( m_window->GetClipboard( "text/uri-list" ) ).AsString() ) ) return;
+        const auto uriList = ProcessUriList( MemoryBuffer( m_window->GetClipboard( "text/uri-list" ) ).AsString() );
+        LoadUriList( uriList );
     }
     if( m_clipboardOffer.contains( "image/png" ) )
     {
@@ -567,19 +569,39 @@ void Viewport::PasteClipboard()
     }
 }
 
-bool Viewport::ProcessUriList( std::string uriList )
+std::vector<std::string> Viewport::ProcessUriList( std::string uriList )
 {
-    if( uriList.starts_with( "file://" ) )
+    std::vector<std::string> ret;
+    while( !uriList.empty() )
     {
-        uriList.erase( 0, 7 );
         auto pos = uriList.find_first_of( "\r\n" );
-        if( pos != std::string::npos ) uriList.resize( pos );
-        UrlDecode( uriList );
-        struct stat st;
-        if( stat( uriList.c_str(), &st ) == 0 && S_ISREG( st.st_mode ) )
+        if( pos == 0 )
         {
-            LoadImage( uriList.c_str() );
-            return true;
+            uriList.erase( 0, 1 );
+            continue;
+        }
+        if( pos == std::string::npos ) pos = uriList.size();
+        auto uri = uriList.substr( 0, pos );
+        uriList.erase( 0, pos + 1 );
+        UrlDecode( uri );
+        ret.emplace_back( std::move( uri ) );
+    }
+    return ret;
+}
+
+bool Viewport::LoadUriList( const std::vector<std::string>& uriList )
+{
+    for( const auto& uri : uriList )
+    {
+        if( uri.starts_with( "file://" ) )
+        {
+            const auto path = uri.substr( 7 );
+            struct stat st;
+            if( stat( path.c_str(), &st ) == 0 && S_ISREG( st.st_mode ) )
+            {
+                LoadImage( path.c_str() );
+                return true;
+            }
         }
     }
     return false;

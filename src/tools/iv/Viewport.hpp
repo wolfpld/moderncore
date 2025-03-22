@@ -4,6 +4,7 @@
 #include <mutex>
 #include <stdint.h>
 #include <string>
+#include <vector>
 #include <vulkan/vulkan.h>
 
 #include "ImageProvider.hpp"
@@ -56,7 +57,8 @@ private:
     void ViewScaleChanged( float scale );
 
     void PasteClipboard();
-    bool ProcessUriList( std::string uriList );
+    [[nodiscard]] std::vector<std::string> ProcessUriList( std::string uriList );
+    bool LoadUriList( const std::vector<std::string>& uriList );
 
     WaylandDisplay& m_display;
     VlkInstance& m_vkInstance;

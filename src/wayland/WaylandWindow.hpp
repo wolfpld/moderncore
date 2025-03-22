@@ -188,8 +188,7 @@ private:
     bool m_maximized = false;
     bool m_fullscreen = false;
 
-    std::mutex m_idleLock;
-    bool m_idle = false;
+    std::atomic<bool> m_idle;
 
     std::mutex m_cursorLock;
     WaylandCursor m_cursor;

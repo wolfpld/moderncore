@@ -33,6 +33,7 @@ WaylandWindow::WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance )
     , m_vkInstance( vkInstance )
     , m_hdrCapable( false )
     , m_bounds {}
+    , m_idle( false )
     , m_cursor( WaylandCursor::Default )
 {
     ZoneScoped;
@@ -468,13 +469,9 @@ void WaylandWindow::InvokeRender()
     auto cb = wl_surface_frame( m_surface );
     wl_callback_add_listener( cb, &listener, this );
 
-    CheckPanic( !m_idle, "Window is rendering, but is idle?" );
+    CheckPanic( !m_idle.load( std::memory_order_acquire ), "Window is rendering, but is idle?" );
     const auto idle = !InvokeRet( OnRender, false );
-    if( idle )
-    {
-        std::lock_guard lock( m_idleLock );
-        m_idle = true;
-    }
+    if( idle ) m_idle.store( true, std::memory_order_release );
 }
 
 void WaylandWindow::InvokeClipboard( const unordered_flat_set<std::string>& mimeTypes )
@@ -529,10 +526,11 @@ void WaylandWindow::InvokeScroll( const WaylandScroll& scroll )
 
 void WaylandWindow::ResumeIfIdle()
 {
+    bool idle = m_idle.load( std::memory_order_relaxed );
+    if( !idle ) return;
+    while( !m_idle.compare_exchange_weak( idle, false, std::memory_order_release ) )
     {
-        std::lock_guard lock( m_idleLock );
-        if( !m_idle ) return;
-        m_idle = false;
+        if( !idle ) return;
     }
 
     wl_surface_commit( m_surface );

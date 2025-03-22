@@ -318,18 +318,27 @@ void Viewport::Drag( const unordered_flat_set<std::string>& mimeTypes )
 {
     if( mimeTypes.empty() ) return;
 
-    static constexpr std::array mimes = {
-        "image/png",
-        "text/uri-list"
-    };
-
-    for( const auto& mime : mimes )
+    auto it = mimeTypes.find( "text/uri-list" );
+    if( it != mimeTypes.end() )
     {
-        if( mimeTypes.contains( mime ) )
+        const auto uriList = ProcessUriList( MemoryBuffer( m_window->GetDnd( "text/uri-list" ) ).AsString() );
+        const auto file = FindValidFile( uriList );
+        if( !file.empty() )
         {
-            m_window->AcceptDndMime( mime );
+            m_window->AcceptDndMime( "text/uri-list" );
             return;
         }
+        else if( !uriList.empty() )
+        {
+            m_loadOrigin = uriList[0];
+        }
+    }
+
+    it = mimeTypes.find( "image/png" );
+    if( it != mimeTypes.end() )
+    {
+        m_window->AcceptDndMime( "image/png" );
+        return;
     }
 
     m_window->AcceptDndMime( nullptr );
@@ -353,6 +362,8 @@ void Viewport::Drop( int fd, const char* mime )
     {
         Panic( "Unsupported MIME type: %s", mime );
     }
+
+    m_loadOrigin.clear();
 }
 
 void Viewport::KeyEvent( uint32_t key, int mods, bool pressed )

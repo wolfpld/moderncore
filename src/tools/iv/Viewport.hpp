@@ -89,5 +89,6 @@ private:
 
     bool m_updateTitle = false;
     std::string m_origin;
+    std::string m_loadOrigin;
     float m_viewScale;
 };

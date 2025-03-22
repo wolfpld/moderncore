@@ -125,6 +125,8 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
 
     m_lastTime = Now();
     m_window->InvokeRender();
+
+    if( cfg.Get( "Window", "Maximized", 0 ) ) m_window->Maximize( true );
 }
 
 Viewport::~Viewport()

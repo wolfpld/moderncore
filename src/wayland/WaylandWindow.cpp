@@ -225,6 +225,21 @@ void WaylandWindow::LockSize()
     xdg_toplevel_set_max_size( m_xdgToplevel, extent.width, extent.height );
 }
 
+void WaylandWindow::Maximize( bool enable )
+{
+    if( m_maximized == enable ) return;
+    m_maximized = enable;
+
+    if( enable )
+    {
+        xdg_toplevel_set_maximized( m_xdgToplevel );
+    }
+    else
+    {
+        xdg_toplevel_unset_maximized( m_xdgToplevel );
+    }
+}
+
 void WaylandWindow::Fullscreen( bool enable )
 {
     if( m_fullscreen == enable ) return;

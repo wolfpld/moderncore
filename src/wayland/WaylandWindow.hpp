@@ -72,6 +72,7 @@ public:
     void Resize( uint32_t width, uint32_t height, bool reposition = false );             // Window size in real pixels
     void ResizeNoScale( uint32_t width, uint32_t height, bool reposition = false );      // Window size in logical pixels (1.0 scale)
     void LockSize();
+    void Maximize( bool enable );
     void Fullscreen( bool enable );
     void Commit();
     void Close();

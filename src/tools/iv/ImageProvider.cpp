@@ -88,7 +88,7 @@ int64_t ImageProvider::LoadImage( int fd, bool hdr, Callback callback, void* use
 void ImageProvider::Cancel( int64_t id )
 {
     ZoneScoped;
-    std::lock_guard lock( m_lock );
+    std::unique_lock lock( m_lock );
     if( m_currentJob == id )
     {
         m_currentJob = -1;
@@ -98,8 +98,10 @@ void ImageProvider::Cancel( int64_t id )
         auto it = std::ranges::find_if( m_jobs, [id]( const auto& job ) { return job.id == id; } );
         if( it != m_jobs.end() )
         {
-            it->callback( it->userData, it->id, Result::Cancelled, it->flags, {} );
+            auto job = std::move( *it );
             m_jobs.erase( it );
+            lock.unlock();
+            job.callback( job.userData, job.id, Result::Cancelled, job.flags, {} );
         }
     }
 }

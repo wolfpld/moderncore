@@ -52,7 +52,7 @@ static bool HasExtension( const std::vector<VkExtensionProperties>& extensions, 
         loglevel = LogLevel::Warning;
         break;
     case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-        loglevel = LogLevel::Error;
+        loglevel = LogLevel::ErrorTrace;
         break;
     default:
         return VK_FALSE;

@@ -342,7 +342,8 @@ void Viewport::Drop( int fd, const char* mime )
         auto fn = MemoryBuffer( fd ).AsString();
         m_window->FinishDnd( fd );
         const auto uriList = ProcessUriList( std::move( fn ) );
-        LoadUriList( uriList );
+        const auto file = FindValidFile( uriList );
+        if( !file.empty() ) LoadImage( file.c_str() );
     }
     else if( strcmp( mime, "image/png" ) == 0 )
     {
@@ -561,7 +562,8 @@ void Viewport::PasteClipboard()
     if( m_clipboardOffer.contains( "text/uri-list" ) )
     {
         const auto uriList = ProcessUriList( MemoryBuffer( m_window->GetClipboard( "text/uri-list" ) ).AsString() );
-        LoadUriList( uriList );
+        const auto file = FindValidFile( uriList );
+        if( !file.empty() ) LoadImage( file.c_str() );
     }
     if( m_clipboardOffer.contains( "image/png" ) )
     {
@@ -589,7 +591,7 @@ std::vector<std::string> Viewport::ProcessUriList( std::string uriList )
     return ret;
 }
 
-bool Viewport::LoadUriList( const std::vector<std::string>& uriList )
+std::string Viewport::FindValidFile( const std::vector<std::string>& uriList )
 {
     for( const auto& uri : uriList )
     {
@@ -597,12 +599,8 @@ bool Viewport::LoadUriList( const std::vector<std::string>& uriList )
         {
             const auto path = uri.substr( 7 );
             struct stat st;
-            if( stat( path.c_str(), &st ) == 0 && S_ISREG( st.st_mode ) )
-            {
-                LoadImage( path.c_str() );
-                return true;
-            }
+            if( stat( path.c_str(), &st ) == 0 && S_ISREG( st.st_mode ) ) return path;
         }
     }
-    return false;
+    return {};
 }

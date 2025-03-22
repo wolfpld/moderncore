@@ -303,17 +303,26 @@ void WaylandWindow::Update()
         wp_viewport_set_source( m_viewport, 0, 0, wl_fixed_from_double( m_extent.width * m_scale / 120.f ), wl_fixed_from_double( m_extent.height * m_scale / 120.f ) );
         wp_viewport_set_destination( m_viewport, m_extent.width, m_extent.height );
 
+        const auto extent = m_extent;
+        const auto scale = m_scale;
+        const auto format = m_swapchain->GetFormat();
+
+        m_stateLock.unlock();
+
         if( dpiChange )
         {
-            Invoke( OnScale, m_extent.width, m_extent.height, m_scale );
+            Invoke( OnScale, extent.width, extent.height, scale );
         }
         else if( resized )
         {
-            Invoke( OnResize, m_extent.width, m_extent.height );
+            Invoke( OnResize, extent.width, extent.height );
         }
-        if( hdrChange ) Invoke( OnFormatChange, m_swapchain->GetFormat() );
+        if( hdrChange ) Invoke( OnFormatChange, format );
     }
-    m_stateLock.unlock();
+    else
+    {
+        m_stateLock.unlock();
+    }
 
     auto& seat = m_display.Seat();
     const auto cursor = m_cursor.load( std::memory_order_acquire );

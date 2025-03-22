@@ -9,6 +9,7 @@ enum class LogLevel
     Info,
     Warning,
     Error,
+    ErrorTrace,
     Fatal
 };
 

@@ -70,7 +70,8 @@ void PrintLevel( LogLevel level )
     case LogLevel::Debug: str = ANSI_BOLD ANSI_BLACK "[DEBUG] "; break;
     case LogLevel::Info: str = " [INFO] "; break;
     case LogLevel::Warning: str = ANSI_BOLD ANSI_YELLOW " [WARN] "; break;
-    case LogLevel::Error: str = ANSI_BOLD ANSI_RED "[ERROR] "; break;
+    case LogLevel::Error:
+    case LogLevel::ErrorTrace: str = ANSI_BOLD ANSI_RED "[ERROR] "; break;
     case LogLevel::Fatal: str = ANSI_BOLD ANSI_MAGENTA "[FATAL] "; break;
     default: assert( false ); break;
     }
@@ -103,7 +104,7 @@ void MCoreLogMessage( LogLevel level, const char* fileName, size_t line, const c
 
 #ifndef DISABLE_CALLSTACK
     // Get callstack outside of lock
-    const bool printCallstack = level >= LogLevel::Error && s_logLevel <= LogLevel::Callstack;
+    const bool printCallstack = level >= LogLevel::ErrorTrace || ( level >= LogLevel::Error && s_logLevel <= LogLevel::Callstack );
     CallstackData stack;
     if( printCallstack ) stack.count = backtrace( stack.addr, 64 );
 #endif

@@ -543,6 +543,11 @@ int WaylandWindow::GetClipboard( const char* mime )
     return m_display.Seat().GetClipboard( mime );
 }
 
+int WaylandWindow::GetDnd( const char* mime )
+{
+    return m_display.Seat().GetDnd( mime );
+}
+
 void WaylandWindow::AcceptDndMime( const char* mime )
 {
     m_display.Seat().AcceptDndMime( mime );

@@ -38,6 +38,7 @@ public:
     void SetCursor( wl_surface* window, WaylandCursor cursor );
 
     [[nodiscard]] int GetClipboard( const char* mime );
+    [[nodiscard]] int GetDnd( const char* mime );
     void AcceptDndMime( const char* mime );
     void FinishDnd( int fd );
 

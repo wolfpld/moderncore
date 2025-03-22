@@ -100,6 +100,19 @@ int WaylandSeat::GetClipboard( const char* mime )
     return fd[0];
 }
 
+int WaylandSeat::GetDnd( const char* mime )
+{
+    ZoneScoped;
+    CheckPanic( m_dndOffer, "No drag and drop offer!" );
+
+    int fd[2];
+    if( pipe( fd ) != 0 ) return -1;
+    wl_data_offer_receive( *m_dndOffer, mime, fd[1] );
+    close( fd[1] );
+    wl_display_roundtrip( m_dpy.Display() );
+    return fd[0];
+}
+
 void WaylandSeat::AcceptDndMime( const char* mime )
 {
     CheckPanic( m_dndOffer, "No drag and drop offer!" );

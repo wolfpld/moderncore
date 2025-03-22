@@ -316,9 +316,8 @@ void WaylandWindow::Update()
     m_stateLock.unlock();
 
     auto& seat = m_display.Seat();
-    m_cursorLock.lock();
-    if( m_cursor != seat.GetCursor( m_surface ) ) seat.SetCursor( m_surface, m_cursor );
-    m_cursorLock.unlock();
+    const auto cursor = m_cursor.load( std::memory_order_acquire );
+    if( cursor != seat.GetCursor( m_surface ) ) seat.SetCursor( m_surface, cursor );
 }
 
 VlkCommandBuffer& WaylandWindow::BeginFrame()
@@ -442,8 +441,7 @@ void WaylandWindow::SetListener( const Listener* listener, void* listenerPtr )
 
 void WaylandWindow::SetCursor( WaylandCursor cursor )
 {
-    std::lock_guard lock( m_cursorLock );
-    m_cursor = cursor;
+    m_cursor.store( cursor, std::memory_order_release );
 }
 
 void WaylandWindow::SetDevice( std::shared_ptr<VlkDevice> device )

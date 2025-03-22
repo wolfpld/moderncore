@@ -189,9 +189,7 @@ private:
     bool m_fullscreen = false;
 
     std::atomic<bool> m_idle;
-
-    std::mutex m_cursorLock;
-    WaylandCursor m_cursor;
+    std::atomic<WaylandCursor> m_cursor;
 
     std::string m_title;
 };

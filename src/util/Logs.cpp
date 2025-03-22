@@ -95,7 +95,7 @@ void PrintSourceLocation( FILE* f, const char* fileName, size_t len, size_t line
 
 void MCoreLogMessage( LogLevel level, const char* fileName, size_t line, const char *fmt, ... )
 {
-    if( level < s_logLevel ) return;
+    if( level != LogLevel::Callstack && level < s_logLevel ) return;
 
     va_list args;
     va_start( args, fmt );

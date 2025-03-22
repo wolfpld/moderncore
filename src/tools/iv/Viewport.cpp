@@ -539,6 +539,7 @@ void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, int flags
         else
         {
             m_origin = data.origin.substr( data.origin.find_last_of( '/' ) + 1 );
+            if( m_origin.empty() ) m_origin = "Untitled";
         }
         m_updateTitle = true;
         WantRender();

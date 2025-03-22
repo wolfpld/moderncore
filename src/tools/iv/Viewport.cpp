@@ -574,7 +574,11 @@ void Viewport::PasteClipboard()
     {
         const auto uriList = ProcessUriList( MemoryBuffer( m_window->GetClipboard( "text/uri-list" ) ).AsString() );
         const auto file = FindValidFile( uriList );
-        if( !file.empty() ) LoadImage( file.c_str() );
+        if( !file.empty() )
+        {
+            LoadImage( file.c_str() );
+            return;
+        }
     }
     if( m_clipboardOffer.contains( "image/png" ) )
     {

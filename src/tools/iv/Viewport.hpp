@@ -30,7 +30,7 @@ public:
 
     void LoadImage( const char* path );
     void LoadImage( std::unique_ptr<DataBuffer>&& data );
-    void LoadImage( int fd, int flags = 0 );
+    void LoadImage( int fd, const char* origin, int flags = 0 );
 
 private:
     void SetBusy( int64_t job );

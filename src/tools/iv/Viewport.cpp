@@ -169,10 +169,10 @@ void Viewport::LoadImage( std::unique_ptr<DataBuffer>&& data )
     SetBusy( id );
 }
 
-void Viewport::LoadImage( int fd, int flags )
+void Viewport::LoadImage( int fd, const char* origin, int flags )
 {
     ZoneScoped;
-    const auto id = m_provider->LoadImage( fd, m_window->HdrCapable(), Method( ImageHandler ), this, flags );
+    const auto id = m_provider->LoadImage( fd, m_window->HdrCapable(), Method( ImageHandler ), this, m_loadOrigin.c_str(), flags );
     ZoneTextF( "id %ld", id );
     SetBusy( id );
 }
@@ -356,7 +356,7 @@ void Viewport::Drop( int fd, const char* mime )
     }
     else if( strcmp( mime, "image/png" ) == 0 )
     {
-        LoadImage( fd, fd + 1 );
+        LoadImage( fd, m_loadOrigin.c_str(), fd + 1 );
     }
     else
     {
@@ -587,7 +587,7 @@ void Viewport::PasteClipboard()
     }
     if( m_clipboardOffer.contains( "image/png" ) )
     {
-        LoadImage( m_window->GetClipboard( "image/png" ) );
+        LoadImage( m_window->GetClipboard( "image/png" ), loadOrigin.c_str() );
     }
 }
 

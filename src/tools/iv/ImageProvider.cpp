@@ -67,13 +67,14 @@ int64_t ImageProvider::LoadImage( std::unique_ptr<DataBuffer>&& buffer, bool hdr
     return id;
 }
 
-int64_t ImageProvider::LoadImage( int fd, bool hdr, Callback callback, void* userData, int flags )
+int64_t ImageProvider::LoadImage( int fd, bool hdr, Callback callback, void* userData, const char* origin, int flags )
 {
     ZoneScoped;
     const auto id = m_nextId++;
     std::lock_guard lock( m_lock );
     m_jobs.emplace_back( Job {
         .id = id,
+        .path = origin,
         .fd = fd,
         .hdr = hdr,
         .callback = callback,

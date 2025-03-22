@@ -78,7 +78,7 @@ private:
 
     unordered_flat_set<std::string> m_clipboardOffer;
 
-    std::mutex m_lock;
+    std::recursive_mutex m_lock;
     bool m_isBusy = false;
     int m_currentJob = -1;
 

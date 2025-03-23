@@ -6,6 +6,7 @@
 
 #include "util/NoCopy.hpp"
 
+#include "wayland-color-management-client-protocol.h"
 #include "wayland-cursor-shape-client-protocol.h"
 #include "wayland-fractional-scale-client-protocol.h"
 #include "wayland-viewporter-client-protocol.h"
@@ -67,6 +68,7 @@ private:
     xdg_toplevel_icon_manager_v1* m_iconManager = nullptr;
     wl_data_device_manager* m_dataDeviceManager = nullptr;
     xdg_activation_v1* m_activation = nullptr;
+    wp_color_manager_v1* m_colorManager = nullptr;
 
     bool m_keepRunning = true;
 

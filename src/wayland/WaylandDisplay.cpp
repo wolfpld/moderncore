@@ -30,6 +30,7 @@ WaylandDisplay::WaylandDisplay()
     CheckPanic( m_viewporter, "Failed to create Wayland viewporter" );
     CheckPanic( m_fractionalScaleManager, "Failed to create Wayland fractional scale manager" );
     CheckPanic( m_dataDeviceManager, "Failed to create Wayland data device manager" );
+    CheckPanic( m_colorManager, "Failed to create Wayland color manager" );
 
     if( !m_cursorShapeManager ) mclog( LogLevel::Warning, "Unable to set mouse cursors. Switch to a different compositor." );
 }
@@ -38,6 +39,7 @@ WaylandDisplay::~WaylandDisplay()
 {
     m_outputs.clear();
     m_seat.reset();
+    if( m_colorManager ) wp_color_manager_v1_destroy( m_colorManager );
     if( m_activation ) xdg_activation_v1_destroy( m_activation );
     if( m_dataDeviceManager ) wl_data_device_manager_destroy( m_dataDeviceManager );
     if( m_iconManager ) xdg_toplevel_icon_manager_v1_destroy( m_iconManager );
@@ -136,6 +138,10 @@ void WaylandDisplay::RegistryGlobal( wl_registry* reg, uint32_t name, const char
     {
         auto output = RegistryBind( wl_output, 4, 4 );
         m_outputs.emplace_back( std::make_shared<WaylandOutput>( output, name ) );
+    }
+    else if( strcmp( interface, wp_color_manager_v1_interface.name ) == 0 )
+    {
+        m_colorManager = RegistryBind( wp_color_manager_v1 );
     }
 }
 

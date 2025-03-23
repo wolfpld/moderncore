@@ -359,6 +359,11 @@ ecm_add_wayland_client_protocol(MCOREWAYLAND_SRC
     BASENAME xdg-activation
 )
 
+ecm_add_wayland_client_protocol(MCOREWAYLAND_SRC
+    PROTOCOL ${WAYLAND_PROTOCOLS_PKGDATADIR}/staging/color-management/color-management-v1.xml
+    BASENAME color-management
+)
+
 add_library(mcorewayland ${MCOREWAYLAND_SRC})
 target_link_libraries(mcorewayland PRIVATE
     mcoreimage

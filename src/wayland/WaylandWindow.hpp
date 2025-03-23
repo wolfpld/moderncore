@@ -59,6 +59,7 @@ public:
         void (*OnMouseMove)( void* ptr, float x, float y );
         void (*OnMouseButton)( void* ptr, uint32_t button, bool pressed );
         void (*OnScroll)( void* ptr, const WaylandScroll& scroll );
+        void (*OnColor)( void* ptr, int maxLuminance );
     };
 
     WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance );
@@ -138,6 +139,8 @@ private:
     void CreateSwapchain( const VkExtent2D& extent );
     void CleanupSwapchain( bool withSurface = false );
 
+    void RecalcMaxLuminance();
+
     void SurfaceEnter( wl_surface* surface, wl_output* output );
     void SurfaceLeave( wl_surface* surface, wl_output* output );
     void SurfacePreferredBufferScale( wl_surface* surface, int32_t scale );
@@ -185,6 +188,9 @@ private:
 
     bool m_hdr = false;
     bool m_prevHdr = false;
+
+    int m_maxLuminance = 0;
+    int m_prevMaxLuminance = 0;
 
     VkExtent2D m_extent;
     VkExtent2D m_staged;

@@ -333,6 +333,12 @@ void WaylandWindow::Update()
         m_stateLock.unlock();
     }
 
+    if( m_prevMaxLuminance != m_maxLuminance )
+    {
+        Invoke( OnColor, m_maxLuminance );
+        m_prevMaxLuminance = m_maxLuminance;
+    }
+
     auto& seat = m_display.Seat();
     const auto cursor = m_cursor.load( std::memory_order_acquire );
     if( cursor != seat.GetCursor( m_surface ) ) seat.SetCursor( m_surface, cursor );
@@ -639,10 +645,25 @@ void WaylandWindow::CleanupSwapchain( bool withSurface )
     m_frameData.clear();
 }
 
+void WaylandWindow::RecalcMaxLuminance()
+{
+    auto& outputs = m_display.Outputs();
+    int l = 0;
+    for( auto& wo : m_outputs )
+    {
+        auto it = std::ranges::find_if( outputs, [wo]( const auto& o ) { return *o == wo; } );
+        CheckPanic( it != outputs.end(), "Output not found" );
+        l = std::max( l, (*it)->MaxLuminance() );
+    }
+    m_maxLuminance = l;
+    if( m_maxLuminance != m_prevMaxLuminance ) ResumeIfIdle();
+}
+
 void WaylandWindow::SurfaceEnter( wl_surface* surface, wl_output* output )
 {
     CheckPanic( std::ranges::find( m_outputs, output ) == m_outputs.end(), "Output already exists" );
     m_outputs.emplace_back( output );
+    RecalcMaxLuminance();
 }
 
 void WaylandWindow::SurfaceLeave( wl_surface* surface, wl_output* output )
@@ -650,6 +671,7 @@ void WaylandWindow::SurfaceLeave( wl_surface* surface, wl_output* output )
     auto it = std::ranges::find( m_outputs, output );
     CheckPanic( it != m_outputs.end(), "Output not found" );
     m_outputs.erase( it );
+    RecalcMaxLuminance();
 }
 
 void WaylandWindow::SurfacePreferredBufferScale( wl_surface* surface, int32_t scale )

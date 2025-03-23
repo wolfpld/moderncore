@@ -115,7 +115,8 @@ int WaylandSeat::GetDnd( const char* mime )
 
 void WaylandSeat::AcceptDndMime( const char* mime )
 {
-    CheckPanic( m_dndOffer, "No drag and drop offer!" );
+    if( !m_dndOffer ) return;
+
     mclog( LogLevel::Debug, "Drag and drop accept mime %s", mime ? mime : "none" );
     wl_data_offer_accept( *m_dndOffer, m_dndSerial, mime );
     if( mime )

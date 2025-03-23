@@ -27,6 +27,7 @@
 #include "vulkan/VlkSwapchain.hpp"
 #include "vulkan/VlkSwapchainFormats.hpp"
 #include "wayland/WaylandCursor.hpp"
+#include "wayland/WaylandOutput.hpp"
 
 WaylandWindow::WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance )
     : m_display( display )
@@ -640,10 +641,15 @@ void WaylandWindow::CleanupSwapchain( bool withSurface )
 
 void WaylandWindow::SurfaceEnter( wl_surface* surface, wl_output* output )
 {
+    CheckPanic( std::ranges::find( m_outputs, output ) == m_outputs.end(), "Output already exists" );
+    m_outputs.emplace_back( output );
 }
 
 void WaylandWindow::SurfaceLeave( wl_surface* surface, wl_output* output )
 {
+    auto it = std::ranges::find( m_outputs, output );
+    CheckPanic( it != m_outputs.end(), "Output not found" );
+    m_outputs.erase( it );
 }
 
 void WaylandWindow::SurfacePreferredBufferScale( wl_surface* surface, int32_t scale )

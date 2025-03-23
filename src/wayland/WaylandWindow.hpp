@@ -197,4 +197,6 @@ private:
     std::atomic<WaylandCursor> m_cursor;
 
     std::string m_title;
+
+    std::vector<wl_output*> m_outputs;
 };

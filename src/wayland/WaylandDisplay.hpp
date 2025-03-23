@@ -41,7 +41,8 @@ public:
     [[nodiscard]] xdg_toplevel_icon_manager_v1* IconManager() { return m_iconManager; }
     [[nodiscard]] xdg_activation_v1* Activation() { return m_activation; }
 
-    [[nodiscard]] const std::vector<int32_t>& IconSizes() const { return m_iconSizes; }
+    [[nodiscard]] const auto& IconSizes() const { return m_iconSizes; }
+    [[nodiscard]] const auto& Outputs() const { return m_outputs; }
 
     [[nodiscard]] WaylandSeat& Seat() { return *m_seat; }
     [[nodiscard]] const WaylandSeat& Seat() const { return *m_seat; }

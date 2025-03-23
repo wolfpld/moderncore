@@ -6,7 +6,7 @@
 
 </div>
 
-iv is a Wayland application that can display images. Fractional scaling is properly supported (you can't run without it), along with true HDR output if you have the proper setup. iv does not use any UI toolkits (such as GTK or Qt) to interact with the Wayland compositor.
+iv is a Wayland application that can display images. Fractional scaling is properly supported (you can't run without it), along with true HDR output if you have the proper setup. iv does not use any UI toolkits (such as GTK or Qt) to interact with the Wayland compositor. Vulkan 1.4 is required.
 
 ### Fractional scaling
 
@@ -34,6 +34,24 @@ A more practical example is shown below, where the legibility of scaled-down tex
 
 </div>
 
+### Close-up of the images
+
+Images that are zoomed in are displayed using nearest neighbor filtering. This works fine for integer zoom levels (200%, 300%, etc.), but would produce ugly results in other cases where the pixels inevitably don't have the same size, as shown in the screenshot below from another program.
+
+<div align="center">
+
+![Non-uniform pixels](screenshots/nearest1.png)
+
+</div>
+
+This is not a problem in iv, where close-ups of images are properly filtered so that each pixel is the same size. Since this results in sub-pixel detail, the displayed image may appear blurry.
+
+<div align="center">
+
+![Properly filtered pixels](screenshots/nearest2.png)
+
+</div>
+
 ### Usage
 
 To load an image in iv you can:
@@ -53,6 +71,9 @@ Keybindings:
  - `shift+f` resizes the window to fit the image.
  - `F11` enables fullscreen mode.
 
-### Unsupported features
+### Future plans
 
-iv is currently unable to display vector images (SVG, PDF). Animations are loaded as single-frame images. Support for these missing features may be added in the future.
+- Load vector images (SVG, PDF).
+- Animation support.
+- Selection of an image region for copying to the clipboard.
+- Save image to file.

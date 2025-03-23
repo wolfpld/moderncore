@@ -136,8 +136,9 @@ void WaylandDisplay::RegistryGlobal( wl_registry* reg, uint32_t name, const char
     }
     else if( strcmp( interface, wl_output_interface.name ) == 0 )
     {
+        CheckPanic( m_colorManager, "Wayland color manager not available" );
         auto output = RegistryBind( wl_output, 4, 4 );
-        m_outputs.emplace_back( std::make_shared<WaylandOutput>( output, name ) );
+        m_outputs.emplace_back( std::make_shared<WaylandOutput>( output, name, m_colorManager ) );
     }
     else if( strcmp( interface, wp_color_manager_v1_interface.name ) == 0 )
     {

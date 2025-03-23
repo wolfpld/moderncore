@@ -4,7 +4,7 @@
 
 WaylandOutput::WaylandOutput( wl_output* output, uint32_t id, wp_color_manager_v1* colorManager )
     : m_output( output )
-    , m_outputColor( wp_color_manager_v1_get_output( colorManager, output ) )
+    , m_outputColor( nullptr )
     , m_imageDescription( nullptr )
     , m_imageDescriptionInfo( nullptr )
     , m_id( id )
@@ -20,12 +20,17 @@ WaylandOutput::WaylandOutput( wl_output* output, uint32_t id, wp_color_manager_v
     };
     wl_output_add_listener( m_output, &outputListener, this );
 
-    static constexpr wp_color_management_output_v1_listener colorListener = {
-        .image_description_changed = Method( ImageDescriptionChanged )
-    };
-    wp_color_management_output_v1_add_listener( m_outputColor, &colorListener, this );
+    if( colorManager )
+    {
+        m_outputColor = wp_color_manager_v1_get_output( colorManager, output );
 
-    GetImageDescription();
+        static constexpr wp_color_management_output_v1_listener colorListener = {
+            .image_description_changed = Method( ImageDescriptionChanged )
+        };
+        wp_color_management_output_v1_add_listener( m_outputColor, &colorListener, this );
+
+        GetImageDescription();
+    }
 }
 
 WaylandOutput::~WaylandOutput()
@@ -34,7 +39,7 @@ WaylandOutput::~WaylandOutput()
 
     if( m_imageDescriptionInfo ) wp_image_description_info_v1_destroy( m_imageDescriptionInfo );
     if( m_imageDescription ) wp_image_description_v1_destroy( m_imageDescription );
-    wp_color_management_output_v1_destroy( m_outputColor );
+    if( m_outputColor ) wp_color_management_output_v1_destroy( m_outputColor );
     wl_output_destroy( m_output );
 }
 

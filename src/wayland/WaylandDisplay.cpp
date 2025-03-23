@@ -30,7 +30,6 @@ WaylandDisplay::WaylandDisplay()
     CheckPanic( m_viewporter, "Failed to create Wayland viewporter" );
     CheckPanic( m_fractionalScaleManager, "Failed to create Wayland fractional scale manager" );
     CheckPanic( m_dataDeviceManager, "Failed to create Wayland data device manager" );
-    CheckPanic( m_colorManager, "Failed to create Wayland color manager" );
 
     if( !m_cursorShapeManager ) mclog( LogLevel::Warning, "Unable to set mouse cursors. Switch to a different compositor." );
 }
@@ -136,7 +135,6 @@ void WaylandDisplay::RegistryGlobal( wl_registry* reg, uint32_t name, const char
     }
     else if( strcmp( interface, wl_output_interface.name ) == 0 )
     {
-        CheckPanic( m_colorManager, "Wayland color manager not available" );
         auto output = RegistryBind( wl_output, 4, 4 );
         m_outputs.emplace_back( std::make_shared<WaylandOutput>( output, name, m_colorManager ) );
     }

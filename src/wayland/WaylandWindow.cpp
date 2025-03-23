@@ -38,17 +38,25 @@ WaylandWindow::WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance )
 {
     ZoneScoped;
 
+    static constexpr wl_surface_listener surfaceListener = {
+        .enter = Method( SurfaceEnter ),
+        .leave = Method( SurfaceLeave ),
+        .preferred_buffer_scale = Method( SurfacePreferredBufferScale ),
+        .preferred_buffer_transform = Method( SurfacePreferredBufferTransform )
+    };
+
     m_surface = wl_compositor_create_surface( display.Compositor() );
     CheckPanic( m_surface, "Failed to create Wayland surface" );
     m_display.Seat().AddWindow( this );
+    wl_surface_add_listener( m_surface, &surfaceListener, this );
 
-    static constexpr wp_fractional_scale_v1_listener listener = {
+    static constexpr wp_fractional_scale_v1_listener fractionalListener = {
         .preferred_scale = Method( FractionalScalePreferredScale )
     };
 
     m_fractionalScale = wp_fractional_scale_manager_v1_get_fractional_scale( display.FractionalScaleManager(), m_surface );
     CheckPanic( m_fractionalScale, "Failed to create Wayland fractional scale" );
-    wp_fractional_scale_v1_add_listener( m_fractionalScale, &listener, this );
+    wp_fractional_scale_v1_add_listener( m_fractionalScale, &fractionalListener, this );
 
     m_viewport = wp_viewporter_get_viewport( display.Viewporter(), m_surface );
     CheckPanic( m_viewport, "Failed to create Wayland viewport" );
@@ -628,6 +636,22 @@ void WaylandWindow::CleanupSwapchain( bool withSurface )
     }
 
     m_frameData.clear();
+}
+
+void WaylandWindow::SurfaceEnter( wl_surface* surface, wl_output* output )
+{
+}
+
+void WaylandWindow::SurfaceLeave( wl_surface* surface, wl_output* output )
+{
+}
+
+void WaylandWindow::SurfacePreferredBufferScale( wl_surface* surface, int32_t scale )
+{
+}
+
+void WaylandWindow::SurfacePreferredBufferTransform( wl_surface* surface, int32_t transform )
+{
 }
 
 void WaylandWindow::XdgSurfaceConfigure( struct xdg_surface *xdg_surface, uint32_t serial )

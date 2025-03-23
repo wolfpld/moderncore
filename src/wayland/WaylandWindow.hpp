@@ -138,6 +138,11 @@ private:
     void CreateSwapchain( const VkExtent2D& extent );
     void CleanupSwapchain( bool withSurface = false );
 
+    void SurfaceEnter( wl_surface* surface, wl_output* output );
+    void SurfaceLeave( wl_surface* surface, wl_output* output );
+    void SurfacePreferredBufferScale( wl_surface* surface, int32_t scale );
+    void SurfacePreferredBufferTransform( wl_surface* surface, int32_t transform );
+
     void XdgSurfaceConfigure( struct xdg_surface *xdg_surface, uint32_t serial );
 
     void XdgToplevelConfigure( struct xdg_toplevel* toplevel, int32_t width, int32_t height, struct wl_array* states );

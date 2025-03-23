@@ -313,6 +313,7 @@ set(MCOREWAYLAND_SRC
     src/wayland/WaylandDataOffer.cpp
     src/wayland/WaylandDisplay.cpp
     src/wayland/WaylandKeyboard.cpp
+    src/wayland/WaylandOutput.cpp
     src/wayland/WaylandPointer.cpp
     src/wayland/WaylandSeat.cpp
     src/wayland/WaylandWindow.cpp

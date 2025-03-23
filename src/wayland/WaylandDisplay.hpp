@@ -14,8 +14,9 @@
 #include "wayland-xdg-shell-client-protocol.h"
 #include "wayland-xdg-toplevel-icon-client-protocol.h"
 
-class WaylandSeat;
+class WaylandOutput;
 class WaylandPointer;
+class WaylandSeat;
 
 class WaylandDisplay
 {
@@ -70,4 +71,5 @@ private:
     bool m_keepRunning = true;
 
     std::vector<int32_t> m_iconSizes;
+    std::vector<std::shared_ptr<WaylandOutput>> m_outputs;
 };

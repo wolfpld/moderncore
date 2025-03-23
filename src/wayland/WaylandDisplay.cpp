@@ -2,6 +2,7 @@
 #include <tracy/Tracy.hpp>
 
 #include "WaylandDisplay.hpp"
+#include "WaylandOutput.hpp"
 #include "WaylandRegistry.hpp"
 #include "WaylandSeat.hpp"
 #include "util/Invoke.hpp"
@@ -35,6 +36,7 @@ WaylandDisplay::WaylandDisplay()
 
 WaylandDisplay::~WaylandDisplay()
 {
+    m_outputs.clear();
     m_seat.reset();
     if( m_activation ) xdg_activation_v1_destroy( m_activation );
     if( m_dataDeviceManager ) wl_data_device_manager_destroy( m_dataDeviceManager );
@@ -130,10 +132,17 @@ void WaylandDisplay::RegistryGlobal( wl_registry* reg, uint32_t name, const char
     {
         m_activation = RegistryBind( xdg_activation_v1 );
     }
+    else if( strcmp( interface, wl_output_interface.name ) == 0 )
+    {
+        auto output = RegistryBind( wl_output, 4, 4 );
+        m_outputs.emplace_back( std::make_shared<WaylandOutput>( output, name ) );
+    }
 }
 
 void WaylandDisplay::RegistryGlobalRemove( wl_registry* reg, uint32_t name )
 {
+    auto it = std::ranges::find_if( m_outputs, [name]( const auto& output ) { return output->Id() == name; } );
+    if( it != m_outputs.end() ) m_outputs.erase( it );
 }
 
 void WaylandDisplay::XdgWmPing( xdg_wm_base* shell, uint32_t serial )

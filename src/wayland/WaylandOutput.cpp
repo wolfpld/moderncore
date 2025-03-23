@@ -34,6 +34,9 @@ void WaylandOutput::Mode( wl_output* output, uint32_t flags, int32_t width, int3
 
 void WaylandOutput::Done( wl_output* output )
 {
+    if( m_initDone ) return;
+    m_initDone = true;
+
     mclog( LogLevel::Debug, "Display %s connected at %s", m_description.c_str(), m_name.c_str() );
 }
 

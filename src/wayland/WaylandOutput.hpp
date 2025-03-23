@@ -11,8 +11,11 @@ public:
     WaylandOutput( wl_output* output, uint32_t id, wp_color_manager_v1* colorManager );
     ~WaylandOutput();
 
-    [[nodiscard]] wl_output* Output() const { return m_output; }
     [[nodiscard]] uint32_t Id() const { return m_id; }
+    [[nodiscard]] const std::string& Description() const { return m_description; }
+    [[nodiscard]] int MaxLuminance() const { return m_maxLuminance; }
+
+    operator wl_output*() const { return m_output; }
 
 private:
     void Geometry( wl_output* output, int32_t x, int32_t y, int32_t physWidth, int32_t physHeight, int32_t subpixel, const char* make, const char* model, int32_t transform );

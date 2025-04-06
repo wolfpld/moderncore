@@ -472,6 +472,10 @@ void Viewport::KeyEvent( uint32_t key, int mods, bool pressed )
         std::lock_guard lock( m_lock );
         WantRender();
     }
+    else if( mods == 0 && key == KEY_ESC )
+    {
+        Close();
+    }
 }
 
 void Viewport::MouseEnter( float x, float y )

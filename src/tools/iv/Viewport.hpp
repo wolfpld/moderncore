@@ -59,6 +59,7 @@ private:
     [[nodiscard]] std::vector<std::string> ProcessUriList( std::string uriList );
     [[nodiscard]] std::vector<std::string> FindValidFiles( const std::vector<std::string>& uriList );
     [[nodiscard]] std::vector<std::string> FindLoadableImages( const std::vector<std::string>& fileList );
+    [[nodiscard]] std::vector<std::string> FindLoadableImages( const std::vector<const char*>& fileList );
 
     void SetFileList( std::vector<std::string>&& fileList, const std::string& origin );
 

@@ -703,6 +703,17 @@ std::vector<std::string> Viewport::FindLoadableImages( const std::vector<std::st
     return ret;
 }
 
+std::vector<std::string> Viewport::FindLoadableImages( const std::vector<const char*>& fileList )
+{
+    std::vector<std::string> ret;
+    for( const auto& file : fileList )
+    {
+        auto loader = GetImageLoader( file, ToneMap::Operator::PbrNeutral );
+        if( loader ) ret.emplace_back( file );
+    }
+    return ret;
+}
+
 void Viewport::SetFileList( std::vector<std::string>&& fileList, const std::string& origin )
 {
     m_fileList = fileList;

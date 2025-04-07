@@ -60,6 +60,8 @@ private:
     [[nodiscard]] std::vector<std::string> FindValidFiles( const std::vector<std::string>& uriList );
     [[nodiscard]] std::vector<std::string> FindLoadableImages( const std::vector<std::string>& fileList );
 
+    void SetFileList( const std::vector<std::string>& fileList, const std::string& origin );
+
     WaylandDisplay& m_display;
     VlkInstance& m_vkInstance;
 
@@ -78,6 +80,9 @@ private:
     bool m_render = true;
 
     unordered_flat_set<std::string> m_clipboardOffer;
+
+    std::vector<std::string> m_fileList;
+    size_t m_fileIndex = 0;
 
     std::recursive_mutex m_lock;
     bool m_isBusy = false;

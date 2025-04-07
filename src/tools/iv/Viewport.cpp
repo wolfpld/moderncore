@@ -373,6 +373,7 @@ void Viewport::Drop( int fd, const char* mime )
         if( !files.empty() )
         {
             LoadImage( files[0].c_str() );
+            SetFileList( files, files[0] );
         }
     }
     else if( strcmp( mime, "image/png" ) == 0 )
@@ -616,6 +617,7 @@ void Viewport::PasteClipboard()
         if( !files.empty() )
         {
             LoadImage( files[0].c_str() );
+            SetFileList( files, files[0] );
             return;
         }
         else if( !uriList.empty() )
@@ -676,4 +678,13 @@ std::vector<std::string> Viewport::FindLoadableImages( const std::vector<std::st
         if( loader ) ret.emplace_back( file );
     }
     return ret;
+}
+
+void Viewport::SetFileList( const std::vector<std::string>& fileList, const std::string& origin )
+{
+    m_fileList = fileList;
+    auto it = std::ranges::find( m_fileList, origin );
+    CheckPanic( it != m_fileList.end(), "Origin not found in file list" );
+    m_fileIndex = std::distance( m_fileList.begin(), it );
+    mclog( LogLevel::Info, "File list: %zu files, current: %zu", m_fileList.size(), m_fileIndex );
 }

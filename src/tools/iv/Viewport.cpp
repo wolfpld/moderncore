@@ -13,6 +13,7 @@
 #include "BusyIndicator.hpp"
 #include "ImageView.hpp"
 #include "Viewport.hpp"
+#include "image/ImageLoader.hpp"
 #include "image/vector/SvgImage.hpp"
 #include "util/Bitmap.hpp"
 #include "util/BitmapHdr.hpp"
@@ -339,7 +340,7 @@ void Viewport::Drag( const unordered_flat_set<std::string>& mimeTypes )
     if( it != mimeTypes.end() )
     {
         const auto uriList = ProcessUriList( MemoryBuffer( m_window->GetDnd( "text/uri-list" ) ).AsString() );
-        const auto files = FindValidFiles( uriList );
+        const auto files = FindLoadableImages( FindValidFiles( uriList ) );
         if( !files.empty() )
         {
             m_window->AcceptDndMime( "text/uri-list" );
@@ -368,7 +369,7 @@ void Viewport::Drop( int fd, const char* mime )
         auto fn = MemoryBuffer( fd ).AsString();
         m_window->FinishDnd( fd );
         const auto uriList = ProcessUriList( std::move( fn ) );
-        const auto files = FindValidFiles( uriList );
+        const auto files = FindLoadableImages( FindValidFiles( uriList ) );
         if( !files.empty() )
         {
             LoadImage( files[0].c_str() );
@@ -611,7 +612,7 @@ void Viewport::PasteClipboard()
     if( m_clipboardOffer.contains( "text/uri-list" ) )
     {
         const auto uriList = ProcessUriList( MemoryBuffer( m_window->GetClipboard( "text/uri-list" ) ).AsString() );
-        const auto files = FindValidFiles( uriList );
+        const auto files = FindLoadableImages( FindValidFiles( uriList ) );
         if( !files.empty() )
         {
             LoadImage( files[0].c_str() );
@@ -662,6 +663,17 @@ std::vector<std::string> Viewport::FindValidFiles( const std::vector<std::string
                 ret.emplace_back( path );
             }
         }
+    }
+    return ret;
+}
+
+std::vector<std::string> Viewport::FindLoadableImages( const std::vector<std::string>& fileList )
+{
+    std::vector<std::string> ret;
+    for( const auto& file : fileList )
+    {
+        auto loader = GetImageLoader( file.c_str(), ToneMap::Operator::PbrNeutral );
+        if( loader ) ret.emplace_back( file );
     }
     return ret;
 }

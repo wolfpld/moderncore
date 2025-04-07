@@ -73,7 +73,7 @@ std::unique_ptr<ImageLoader> GetImageLoader( const char* filename, ToneMap::Oper
     if( auto loader = CheckImageLoader<ExrLoader>( file, tonemap, td ); loader ) return loader;
     if( auto loader = CheckImageLoader<PcxLoader>( file ); loader ) return loader;
 
-    mclog( LogLevel::Info, "Raster image loaders can't open %s", path.c_str() );
+    mclog( LogLevel::Debug, "Raster image loaders can't open %s", path.c_str() );
     return nullptr;
 }
 

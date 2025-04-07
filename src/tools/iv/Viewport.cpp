@@ -376,11 +376,11 @@ void Viewport::Drop( int fd, const char* mime )
         auto fn = MemoryBuffer( fd ).AsString();
         m_window->FinishDnd( fd );
         const auto uriList = ProcessUriList( std::move( fn ) );
-        const auto files = FindLoadableImages( FindValidFiles( uriList ) );
+        auto files = FindLoadableImages( FindValidFiles( uriList ) );
         if( !files.empty() )
         {
             LoadImage( files[0].c_str() );
-            SetFileList( files, files[0] );
+            SetFileList( std::move( files ), files[0] );
         }
     }
     else if( strcmp( mime, "image/png" ) == 0 )
@@ -636,11 +636,11 @@ void Viewport::PasteClipboard()
     if( m_clipboardOffer.contains( "text/uri-list" ) )
     {
         const auto uriList = ProcessUriList( MemoryBuffer( m_window->GetClipboard( "text/uri-list" ) ).AsString() );
-        const auto files = FindLoadableImages( FindValidFiles( uriList ) );
+        auto files = FindLoadableImages( FindValidFiles( uriList ) );
         if( !files.empty() )
         {
             LoadImage( files[0].c_str() );
-            SetFileList( files, files[0] );
+            SetFileList( std::move( files ), files[0] );
             return;
         }
         else if( !uriList.empty() )
@@ -703,7 +703,7 @@ std::vector<std::string> Viewport::FindLoadableImages( const std::vector<std::st
     return ret;
 }
 
-void Viewport::SetFileList( const std::vector<std::string>& fileList, const std::string& origin )
+void Viewport::SetFileList( std::vector<std::string>&& fileList, const std::string& origin )
 {
     m_fileList = fileList;
     auto it = std::ranges::find( m_fileList, origin );

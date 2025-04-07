@@ -60,7 +60,7 @@ private:
     [[nodiscard]] std::vector<std::string> FindValidFiles( const std::vector<std::string>& uriList );
     [[nodiscard]] std::vector<std::string> FindLoadableImages( const std::vector<std::string>& fileList );
 
-    void SetFileList( const std::vector<std::string>& fileList, const std::string& origin );
+    void SetFileList( std::vector<std::string>&& fileList, const std::string& origin );
 
     WaylandDisplay& m_display;
     VlkInstance& m_vkInstance;

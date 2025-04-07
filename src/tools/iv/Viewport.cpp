@@ -176,6 +176,31 @@ void Viewport::LoadImage( int fd, const char* origin, int flags )
     SetBusy( id );
 }
 
+void Viewport::LoadImage( const std::vector<const char*>& paths )
+{
+    ZoneScoped;
+    CheckPanic( !paths.empty(), "No files to load" );
+
+    auto files = FindLoadableImages( paths );
+    if( files.empty() )
+    {
+        mclog( LogLevel::Error, "No valid files to load" );
+        return;
+    }
+
+    if( files.size() == 1 )
+    {
+        LoadImage( files[0].c_str() );
+    }
+    else
+    {
+        m_fileList = std::move( files );
+        m_fileIndex = 0;
+        m_origin = m_fileList[0];
+        LoadImage( m_fileList[0].c_str() );
+    }
+}
+
 void Viewport::SetBusy( int64_t job )
 {
     std::lock_guard lock( m_lock );

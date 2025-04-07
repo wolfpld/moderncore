@@ -32,6 +32,8 @@ public:
     void LoadImage( std::unique_ptr<DataBuffer>&& data );
     void LoadImage( int fd, const char* origin, int flags = 0 );
 
+    void LoadImage( const std::vector<const char*>& paths );
+
 private:
     void SetBusy( int64_t job );
     void Update( float delta );

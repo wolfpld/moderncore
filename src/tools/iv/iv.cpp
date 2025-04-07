@@ -1,6 +1,7 @@
 #include <getopt.h>
 #include <memory>
 #include <stdlib.h>
+#include <vector>
 
 #include "GitRef.hpp"
 #include "Viewport.hpp"
@@ -77,7 +78,20 @@ int main( int argc, char** argv )
     auto waylandDisplay = std::make_unique<WaylandDisplay>();
 
     auto viewport = std::make_unique<Viewport>( *waylandDisplay, *vkInstance, gpu );
-    if( optind != argc ) viewport->LoadImage( argv[optind] );
+    if( optind != argc )
+    {
+        const auto sz = argc - optind;
+        if( sz == 1 )
+        {
+            viewport->LoadImage( argv[optind] );
+        }
+        else
+        {
+            std::vector<const char*> files;
+            for( int i = optind; i < argc; ++i ) files.emplace_back( argv[i] );
+            viewport->LoadImage( files );
+        }
+    }
 
     waylandDisplay->Run();
 

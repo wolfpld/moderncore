@@ -339,8 +339,8 @@ void Viewport::Drag( const unordered_flat_set<std::string>& mimeTypes )
     if( it != mimeTypes.end() )
     {
         const auto uriList = ProcessUriList( MemoryBuffer( m_window->GetDnd( "text/uri-list" ) ).AsString() );
-        const auto file = FindValidFile( uriList );
-        if( !file.empty() )
+        const auto files = FindValidFiles( uriList );
+        if( !files.empty() )
         {
             m_window->AcceptDndMime( "text/uri-list" );
             return;
@@ -368,8 +368,11 @@ void Viewport::Drop( int fd, const char* mime )
         auto fn = MemoryBuffer( fd ).AsString();
         m_window->FinishDnd( fd );
         const auto uriList = ProcessUriList( std::move( fn ) );
-        const auto file = FindValidFile( uriList );
-        if( !file.empty() ) LoadImage( file.c_str() );
+        const auto files = FindValidFiles( uriList );
+        if( !files.empty() )
+        {
+            LoadImage( files[0].c_str() );
+        }
     }
     else if( strcmp( mime, "image/png" ) == 0 )
     {
@@ -608,10 +611,10 @@ void Viewport::PasteClipboard()
     if( m_clipboardOffer.contains( "text/uri-list" ) )
     {
         const auto uriList = ProcessUriList( MemoryBuffer( m_window->GetClipboard( "text/uri-list" ) ).AsString() );
-        const auto file = FindValidFile( uriList );
-        if( !file.empty() )
+        const auto files = FindValidFiles( uriList );
+        if( !files.empty() )
         {
-            LoadImage( file.c_str() );
+            LoadImage( files[0].c_str() );
             return;
         }
         else if( !uriList.empty() )
@@ -645,16 +648,20 @@ std::vector<std::string> Viewport::ProcessUriList( std::string uriList )
     return ret;
 }
 
-std::string Viewport::FindValidFile( const std::vector<std::string>& uriList )
+std::vector<std::string> Viewport::FindValidFiles( const std::vector<std::string>& uriList )
 {
+    std::vector<std::string> ret;
     for( const auto& uri : uriList )
     {
         if( uri.starts_with( "file://" ) )
         {
             const auto path = uri.substr( 7 );
             struct stat st;
-            if( stat( path.c_str(), &st ) == 0 && S_ISREG( st.st_mode ) ) return path;
+            if( stat( path.c_str(), &st ) == 0 && S_ISREG( st.st_mode ) ) 
+            {
+                ret.emplace_back( path );
+            }
         }
     }
-    return {};
+    return ret;
 }

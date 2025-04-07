@@ -57,7 +57,7 @@ private:
 
     void PasteClipboard();
     [[nodiscard]] std::vector<std::string> ProcessUriList( std::string uriList );
-    [[nodiscard]] std::string FindValidFile( const std::vector<std::string>& uriList );
+    [[nodiscard]] std::vector<std::string> FindValidFiles( const std::vector<std::string>& uriList );
 
     WaylandDisplay& m_display;
     VlkInstance& m_vkInstance;

@@ -488,6 +488,22 @@ void Viewport::KeyEvent( uint32_t key, int mods, bool pressed )
     {
         Close();
     }
+    else if( mods == 0 && key == KEY_RIGHT )
+    {
+        if( m_fileList.size() > 1 )
+        {
+            m_fileIndex = ( m_fileIndex + 1 ) % m_fileList.size();
+            LoadImage( m_fileList[m_fileIndex].c_str() );
+        }
+    }
+    else if( mods == 0 && key == KEY_LEFT )
+    {
+        if( m_fileList.size() > 1 )
+        {
+            m_fileIndex = ( m_fileIndex + m_fileList.size() - 1 ) % m_fileList.size();
+            LoadImage( m_fileList[m_fileIndex].c_str() );
+        }
+    }
 }
 
 void Viewport::MouseEnter( float x, float y )

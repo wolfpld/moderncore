@@ -214,7 +214,14 @@ void Viewport::Update( float delta )
     {
         m_updateTitle = false;
         const auto extent = m_view->GetBitmapExtent();
-        m_window->SetTitle( std::format( "{} - {}×{} - {:.2f}% — IV", m_origin, extent.width, extent.height, m_viewScale * 100 ).c_str() );
+        if( m_fileList.size() > 1 )
+        {
+            m_window->SetTitle( std::format( "{} [{}/{}] - {}×{} - {:.2f}% — IV", m_origin, m_fileIndex + 1, m_fileList.size(), extent.width, extent.height, m_viewScale * 100 ).c_str() );
+        }
+        else
+        {
+            m_window->SetTitle( std::format( "{} - {}×{} - {:.2f}% — IV", m_origin, extent.width, extent.height, m_viewScale * 100 ).c_str() );
+        }
     }
 }
 

@@ -1,17 +1,44 @@
 #include <libraw.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "RawLoader.hpp"
 #include "util/Bitmap.hpp"
 #include "util/BitmapHdr.hpp"
-#include "util/FileBuffer.hpp"
+#include "util/FileWrapper.hpp"
 #include "util/Panic.hpp"
+
+class RawLoaderDataStream : public LibRaw_abstract_datastream
+{
+public:
+    RawLoaderDataStream( std::shared_ptr<FileWrapper> _file ) : file( std::move( _file ) )
+    {
+        fseek( *file, 0, SEEK_END );
+        sz = ftell( *file );
+        fseek( *file, 0, SEEK_SET );
+    }
+
+    int valid() override { return 1; }
+    int read(void *ptr, size_t size, size_t nmemb) override { return fread( ptr, size, nmemb, *file ); }
+    int eof() override { return feof( *file ); }
+    int seek(INT64 o, int whence) override { return fseek( *file, o, whence ); }
+    INT64 tell() override { return ftell( *file ); }
+    INT64 size() override { return sz; }
+    int get_char() override { return fgetc( *file ); }
+    char *gets(char *str, int sz) override { if( sz < 1 ) return nullptr; return fgets( str, sz, *file ); }
+    int scanf_one(const char *fmt, void *val) override { return fscanf( *file, fmt, val ); }
+    const char *fname() override { return nullptr; }
+
+private:
+    std::shared_ptr<FileWrapper> file;
+    int64_t sz;
+};
 
 RawLoader::RawLoader( const std::shared_ptr<FileWrapper>& file )
     : m_raw( std::make_unique<LibRaw>() )
+    , m_stream( std::make_unique<RawLoaderDataStream>( file ) )
 {
-    m_buf = std::make_unique<FileBuffer>( file );
-    m_valid = m_raw->open_buffer( m_buf->data(), m_buf->size() ) == 0;
+    m_valid = m_raw->open_datastream( m_stream.get() ) == 0;
 }
 
 RawLoader::~RawLoader()

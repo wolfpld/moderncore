@@ -6,9 +6,9 @@
 #include "util/NoCopy.hpp"
 
 class Bitmap;
-class FileBuffer;
 class FileWrapper;
 class LibRaw;
+class RawLoaderDataStream;
 
 class RawLoader : public ImageLoader
 {
@@ -25,7 +25,7 @@ public:
 
 private:
     std::unique_ptr<LibRaw> m_raw;
-    std::unique_ptr<FileBuffer> m_buf;
+    std::unique_ptr<RawLoaderDataStream> m_stream;
 
     bool m_valid;
 };

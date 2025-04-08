@@ -65,11 +65,11 @@ std::unique_ptr<ImageLoader> GetImageLoader( const char* path, ToneMap::Operator
     if( auto loader = CheckImageLoader<HeifLoader>( file, tonemap, td ); loader ) return loader;
     if( auto loader = CheckImageLoader<PvrLoader>( file ); loader ) return loader;
     if( auto loader = CheckImageLoader<DdsLoader>( file ); loader ) return loader;
+    if( auto loader = CheckImageLoader<PcxLoader>( file ); loader ) return loader;
     if( auto loader = CheckImageLoader<StbImageLoader>( file ); loader ) return loader;
+    if( auto loader = CheckImageLoader<ExrLoader>( file, tonemap, td ); loader ) return loader;
     if( auto loader = CheckImageLoader<RawLoader>( file ); loader ) return loader;
     if( auto loader = CheckImageLoader<TiffLoader>( file ); loader ) return loader;
-    if( auto loader = CheckImageLoader<ExrLoader>( file, tonemap, td ); loader ) return loader;
-    if( auto loader = CheckImageLoader<PcxLoader>( file ); loader ) return loader;
 
     mclog( LogLevel::Debug, "Raster image loaders can't open %s", path );
     return nullptr;

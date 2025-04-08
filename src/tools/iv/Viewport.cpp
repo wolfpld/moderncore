@@ -193,7 +193,7 @@ void Viewport::LoadImage( int fd, const char* origin, int flags )
     SetBusy( id );
 }
 
-void Viewport::LoadImage( const std::vector<const char*>& paths )
+void Viewport::LoadImage( const std::vector<std::string>& paths )
 {
     ZoneScoped;
     CheckPanic( !paths.empty(), "No files to load" );
@@ -762,17 +762,6 @@ std::vector<std::string> Viewport::FindLoadableImages( const std::vector<std::st
     for( const auto& file : fileList )
     {
         auto loader = GetImageLoader( file.c_str(), ToneMap::Operator::PbrNeutral );
-        if( loader ) ret.emplace_back( file );
-    }
-    return ret;
-}
-
-std::vector<std::string> Viewport::FindLoadableImages( const std::vector<const char*>& fileList )
-{
-    std::vector<std::string> ret;
-    for( const auto& file : fileList )
-    {
-        auto loader = GetImageLoader( file, ToneMap::Operator::PbrNeutral );
         if( loader ) ret.emplace_back( file );
     }
     return ret;

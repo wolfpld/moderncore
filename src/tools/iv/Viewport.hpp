@@ -32,7 +32,7 @@ public:
     void LoadImage( std::unique_ptr<DataBuffer>&& data );
     void LoadImage( int fd, const char* origin, int flags = 0 );
 
-    void LoadImage( const std::vector<const char*>& paths );
+    void LoadImage( const std::vector<std::string>& paths );
 
 private:
     void SetBusy( int64_t job );
@@ -61,7 +61,6 @@ private:
     [[nodiscard]] std::vector<std::string> ProcessUriList( std::string uriList );
     [[nodiscard]] std::vector<std::string> FindValidFiles( const std::vector<std::string>& uriList );
     [[nodiscard]] std::vector<std::string> FindLoadableImages( const std::vector<std::string>& fileList );
-    [[nodiscard]] std::vector<std::string> FindLoadableImages( const std::vector<const char*>& fileList );
     [[nodiscard]] std::vector<std::string> ListDirectory( const std::string& path );
 
     void SetFileList( std::vector<std::string>&& fileList, const std::string& origin );

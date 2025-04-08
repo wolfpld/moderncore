@@ -8,6 +8,7 @@
 #include "util/Ansi.hpp"
 #include "util/ArgParser.hpp"
 #include "util/Callstack.hpp"
+#include "util/Home.hpp"
 #include "util/Logs.hpp"
 #include "vulkan/VlkInstance.hpp"
 #include "wayland/WaylandDisplay.hpp"
@@ -83,12 +84,20 @@ int main( int argc, char** argv )
         const auto sz = argc - optind;
         if( sz == 1 )
         {
-            viewport->LoadImage( argv[optind], true );
+            const auto path = argv[optind];
+            if( path[0] == '~' )
+            {
+                viewport->LoadImage( ExpandHome( path ).c_str(), true );
+            }
+            else
+            {
+                viewport->LoadImage( argv[optind], true );
+            }
         }
         else
         {
-            std::vector<const char*> files;
-            for( int i = optind; i < argc; ++i ) files.emplace_back( argv[i] );
+            std::vector<std::string> files;
+            for( int i = optind; i < argc; ++i ) files.emplace_back( ExpandHome( argv[i] ) );
             viewport->LoadImage( files );
         }
     }

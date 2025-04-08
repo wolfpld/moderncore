@@ -21,6 +21,13 @@ PngLoader::PngLoader( std::shared_ptr<DataBuffer> buf )
     m_offset = 8;
 }
 
+bool PngLoader::IsValidSignature( const uint8_t* buf, size_t size )
+{
+    if( size < 8 ) return false;
+    if( png_sig_cmp( (png_const_bytep)buf, 0, 8 ) != 0 ) return false;
+    return true;
+}
+
 bool PngLoader::IsValid() const
 {
     return m_buf != nullptr;

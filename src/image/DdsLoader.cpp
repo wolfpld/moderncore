@@ -509,6 +509,13 @@ DdsLoader::DdsLoader( std::shared_ptr<FileWrapper> file )
     }
 }
 
+bool DdsLoader::IsValidSignature( const uint8_t* buf, size_t size )
+{
+    if( size < 4 ) return false;
+    uint32_t magic = *(uint32_t*)buf;
+    return magic == 0x20534444;
+}
+
 bool DdsLoader::IsValid() const
 {
     return m_valid;

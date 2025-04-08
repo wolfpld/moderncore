@@ -272,6 +272,13 @@ HeifLoader::~HeifLoader()
     if( m_ctx ) heif_context_free( m_ctx );
 }
 
+bool HeifLoader::IsValidSignature( const uint8_t* buf, size_t size )
+{
+    if( size < 12 ) return false;
+    const auto res = heif_check_filetype( buf, size );
+    return res == heif_filetype_yes_supported || res == heif_filetype_maybe;
+}
+
 bool HeifLoader::IsValid() const
 {
     return m_valid;

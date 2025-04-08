@@ -12,7 +12,6 @@ class StbImageLoader : public ImageLoader
 {
 public:
     explicit StbImageLoader( std::shared_ptr<FileWrapper> file );
-
     NoCopy( StbImageLoader );
 
     [[nodiscard]] bool IsValid() const override;

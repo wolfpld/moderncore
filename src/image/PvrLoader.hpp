@@ -13,8 +13,9 @@ class PvrLoader : public ImageLoader
 {
 public:
     explicit PvrLoader( std::shared_ptr<FileWrapper> file );
-
     NoCopy( PvrLoader );
+
+    static bool IsValidSignature( const uint8_t* buf, size_t size );
 
     [[nodiscard]] bool IsValid() const override;
     [[nodiscard]] std::unique_ptr<Bitmap> Load() override;

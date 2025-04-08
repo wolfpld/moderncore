@@ -107,6 +107,13 @@ JxlLoader::~JxlLoader()
     if( m_runner ) JxlResizableParallelRunnerDestroy( m_runner );
 }
 
+bool JxlLoader::IsValidSignature( const uint8_t* buf, size_t size )
+{
+    if( size < 12 ) return false;
+    const auto res = JxlSignatureCheck( buf, size );
+    return res == JXL_SIG_CODESTREAM || res == JXL_SIG_CONTAINER;
+}
+
 bool JxlLoader::IsValid() const
 {
     return m_valid;

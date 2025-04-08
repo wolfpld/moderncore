@@ -15,7 +15,6 @@ class RawLoader : public ImageLoader
 public:
     explicit RawLoader( const std::shared_ptr<FileWrapper>& file );
     ~RawLoader() override;
-
     NoCopy( RawLoader );
 
     [[nodiscard]] bool IsValid() const override;

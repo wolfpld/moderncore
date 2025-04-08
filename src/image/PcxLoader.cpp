@@ -31,6 +31,16 @@ PcxLoader::PcxLoader( std::shared_ptr<FileWrapper> file )
     m_valid = true;
 }
 
+bool PcxLoader::IsValidSignature( const uint8_t* buf, size_t size )
+{
+    if( size < 4 ) return false;
+    if( buf[0] != 0x0A ) return false;
+    if( buf[1] == 1 || buf[1] > 5 ) return false;
+    if( buf[2] != 1 ) return false;
+    if( buf[3] != 1 && buf[3] != 2 && buf[3] != 4 && buf[3] != 8 ) return false;
+    return true;
+}
+
 bool PcxLoader::IsValid() const
 {
     return m_valid;

@@ -13,8 +13,9 @@ class DdsLoader : public ImageLoader
 {
 public:
     explicit DdsLoader( std::shared_ptr<FileWrapper> file );
-
     NoCopy( DdsLoader );
+
+    static bool IsValidSignature( const uint8_t* buf, size_t size );
 
     [[nodiscard]] bool IsValid() const override;
     [[nodiscard]] std::unique_ptr<Bitmap> Load() override;

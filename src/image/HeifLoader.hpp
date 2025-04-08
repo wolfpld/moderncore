@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <stdint.h>
 
 #include "ImageLoader.hpp"
 #include "util/NoCopy.hpp"
@@ -29,8 +30,9 @@ class HeifLoader : public ImageLoader
 public:
     explicit HeifLoader( std::shared_ptr<FileWrapper> file, ToneMap::Operator tonemap, TaskDispatch* td );
     ~HeifLoader() override;
-
     NoCopy( HeifLoader );
+
+    static bool IsValidSignature( const uint8_t* buf, size_t size );
 
     [[nodiscard]] bool IsValid() const override;
     [[nodiscard]] bool IsHdr() override;

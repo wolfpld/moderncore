@@ -19,7 +19,6 @@ class ExrLoader : public ImageLoader
 public:
     explicit ExrLoader( std::shared_ptr<FileWrapper> file, ToneMap::Operator tonemap, TaskDispatch* td );
     ~ExrLoader() override;
-
     NoCopy( ExrLoader );
 
     [[nodiscard]] bool IsValid() const override;

@@ -861,6 +861,12 @@ bool PvrLoader::IsValid() const
     return m_valid;
 }
 
+bool PvrLoader::IsValidSignature(const uint8_t *buf, size_t size)
+{
+    if( size < 4 ) return false;
+    return *(uint32_t*)buf == 0x03525650;
+}
+
 std::unique_ptr<Bitmap> PvrLoader::Load()
 {
     CheckPanic( m_valid, "Invalid PVR file" );

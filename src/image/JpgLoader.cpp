@@ -23,6 +23,13 @@ JpgLoader::JpgLoader( std::shared_ptr<FileWrapper> file )
     m_valid = fread( hdr, 1, 2, *m_file ) == 2 && hdr[0] == 0xFF && hdr[1] == 0xD8;
 }
 
+bool JpgLoader::IsValidSignature( const uint8_t* buf, size_t size )
+{
+    if( size < 2 ) return false;
+    if( buf[0] != 0xFF || buf[1] != 0xD8 ) return false;
+    return true;
+}
+
 bool JpgLoader::IsValid() const
 {
     return m_valid;

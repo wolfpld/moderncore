@@ -17,8 +17,9 @@ class WebpLoader : public ImageLoader
 public:
     explicit WebpLoader( std::shared_ptr<FileWrapper> file );
     ~WebpLoader() override;
-
     NoCopy( WebpLoader );
+
+    static bool IsValidSignature( const uint8_t* buf, size_t size );
 
     [[nodiscard]] bool IsValid() const override;
     [[nodiscard]] bool IsAnimated() override;

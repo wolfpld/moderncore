@@ -24,6 +24,12 @@ TiffLoader::~TiffLoader()
     if( m_tiff ) TIFFClose( m_tiff );
 }
 
+bool TiffLoader::IsValidSignature( const uint8_t* buf, size_t size )
+{
+    if( size < 4 ) return false;
+    return ( memcmp( buf, "II*\0", 4 ) == 0 || memcmp( buf, "MM\0*", 4 ) == 0 );
+}
+
 bool TiffLoader::IsValid() const
 {
     return m_tiff != nullptr;

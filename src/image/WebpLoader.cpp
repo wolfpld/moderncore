@@ -22,6 +22,11 @@ WebpLoader::~WebpLoader()
     if( m_dec ) WebPAnimDecoderDelete( m_dec );
 }
 
+bool WebpLoader::IsValidSignature( const uint8_t* buf, size_t size )
+{
+    return size >= 12 && memcmp( buf, "RIFF", 4 ) == 0 && memcmp( buf + 8, "WEBP", 4 ) == 0;
+}
+
 bool WebpLoader::IsValid() const
 {
     return m_valid;

@@ -2,6 +2,7 @@
 
 #include <jxl/codestream_header.h>
 #include <memory>
+#include <stdint.h>
 #include <vector>
 
 #include "ImageLoader.hpp"
@@ -30,8 +31,9 @@ public:
 
     explicit JxlLoader( std::shared_ptr<FileWrapper> file );
     ~JxlLoader() override;
-
     NoCopy( JxlLoader );
+
+    static bool IsValidSignature( const uint8_t* buf, size_t size );
 
     [[nodiscard]] bool IsValid() const override;
     [[nodiscard]] bool IsHdr() override;

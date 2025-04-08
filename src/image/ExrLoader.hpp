@@ -21,6 +21,8 @@ public:
     ~ExrLoader() override;
     NoCopy( ExrLoader );
 
+    static bool IsValidSignature( const uint8_t* buf, size_t size );
+
     [[nodiscard]] bool IsValid() const override;
     [[nodiscard]] bool IsHdr() override { return true; }
 

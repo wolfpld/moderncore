@@ -74,6 +74,12 @@ ExrLoader::~ExrLoader()
 {
 }
 
+bool ExrLoader::IsValidSignature( const uint8_t* buf, size_t size )
+{
+    if( size < 4 ) return false;
+    return memcmp( buf, "\x76\x2f\x31\x01", 4 ) == 0;
+}
+
 bool ExrLoader::IsValid() const
 {
     return m_valid;

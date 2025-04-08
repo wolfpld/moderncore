@@ -1,4 +1,5 @@
 #include <concepts>
+#include <stdint.h>
 #include <tracy/Tracy.hpp>
 
 #include "DdsLoader.hpp"
@@ -37,6 +38,15 @@ static inline std::unique_ptr<ImageLoader> CheckImageLoader( const std::shared_p
     return nullptr;
 }
 
+template<ImageLoaderConcept T, typename... Args>
+static inline std::unique_ptr<ImageLoader> CheckImageLoader( const uint8_t* buf, size_t size, const std::shared_ptr<FileWrapper>& file, Args&&... args )
+{
+    if( !T::IsValidSignature( buf, size ) ) return nullptr;
+    auto loader = std::make_unique<T>( file, std::forward<Args>( args )... );
+    if( loader->IsValid() ) return loader;
+    return nullptr;
+}
+
 std::unique_ptr<BitmapAnim> ImageLoader::LoadAnim()
 {
     return nullptr;
@@ -58,18 +68,26 @@ std::unique_ptr<ImageLoader> GetImageLoader( const char* path, ToneMap::Operator
         return nullptr;
     }
 
-    if( auto loader = CheckImageLoader<PngLoader>( file ); loader ) return loader;
-    if( auto loader = CheckImageLoader<JpgLoader>( file ); loader ) return loader;
-    if( auto loader = CheckImageLoader<JxlLoader>( file ); loader ) return loader;
-    if( auto loader = CheckImageLoader<WebpLoader>( file ); loader ) return loader;
-    if( auto loader = CheckImageLoader<HeifLoader>( file, tonemap, td ); loader ) return loader;
-    if( auto loader = CheckImageLoader<PvrLoader>( file ); loader ) return loader;
-    if( auto loader = CheckImageLoader<DdsLoader>( file ); loader ) return loader;
-    if( auto loader = CheckImageLoader<PcxLoader>( file ); loader ) return loader;
+    uint8_t buf[12];       // Loaders test at most 12 bytes.
+    const size_t sz = fread( buf, 1, sizeof( buf ), *file );
+    if( sz == 0 )
+    {
+        mclog( LogLevel::Error, "Image %s is empty.", path );
+        return nullptr;
+    }
+
+    if( auto loader = CheckImageLoader<PngLoader>( buf, sz, file ); loader ) return loader;
+    if( auto loader = CheckImageLoader<JpgLoader>( buf, sz, file ); loader ) return loader;
+    if( auto loader = CheckImageLoader<JxlLoader>( buf, sz, file ); loader ) return loader;
+    if( auto loader = CheckImageLoader<WebpLoader>( buf, sz, file ); loader ) return loader;
+    if( auto loader = CheckImageLoader<HeifLoader>( buf, sz, file, tonemap, td ); loader ) return loader;
+    if( auto loader = CheckImageLoader<PvrLoader>( buf, sz, file ); loader ) return loader;
+    if( auto loader = CheckImageLoader<DdsLoader>( buf, sz, file ); loader ) return loader;
+    if( auto loader = CheckImageLoader<PcxLoader>( buf, sz, file ); loader ) return loader;
     if( auto loader = CheckImageLoader<StbImageLoader>( file ); loader ) return loader;
     if( auto loader = CheckImageLoader<ExrLoader>( file, tonemap, td ); loader ) return loader;
     if( auto loader = CheckImageLoader<RawLoader>( file ); loader ) return loader;
-    if( auto loader = CheckImageLoader<TiffLoader>( file ); loader ) return loader;
+    if( auto loader = CheckImageLoader<TiffLoader>( buf, sz, file ); loader ) return loader;
 
     mclog( LogLevel::Debug, "Raster image loaders can't open %s", path );
     return nullptr;

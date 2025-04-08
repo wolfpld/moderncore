@@ -759,11 +759,32 @@ std::vector<std::string> Viewport::FindValidFiles( const std::vector<std::string
 
 std::vector<std::string> Viewport::FindLoadableImages( const std::vector<std::string>& fileList )
 {
-    std::vector<std::string> ret;
-    for( const auto& file : fileList )
+    const auto cpus = std::thread::hardware_concurrency();
+    std::vector<std::vector<std::string>> tmp( cpus );
+    const auto batchSize = ( fileList.size() + cpus - 1 ) / cpus;
+    size_t start = 0;
+    int n;
+    for( n=0; n<cpus; n++ )
     {
-        auto loader = GetImageLoader( file.c_str(), ToneMap::Operator::PbrNeutral );
-        if( loader ) ret.emplace_back( file );
+        if( start >= fileList.size() ) break;
+        tmp[n].reserve( batchSize );
+        m_td->Queue( [&fileList, &tmp, n, batchSize, start]() {
+            const auto end = std::min( start + batchSize, fileList.size() );
+            for( size_t i = start; i < end; i++ )
+            {
+                auto loader = GetImageLoader( fileList[i].c_str(), ToneMap::Operator::PbrNeutral );
+                if( loader ) tmp[n].emplace_back( fileList[i] );
+            }
+        } );
+        start += batchSize;
+    }
+    m_td->Sync();
+
+    std::vector<std::string> ret;
+    for( int i=0; i<n; i++ )
+    {
+        auto& v = tmp[i];
+        ret.insert( ret.end(), v.begin(), v.end() );
     }
     return ret;
 }

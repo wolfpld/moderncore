@@ -14,6 +14,7 @@ static inline T* RegistryBindImpl( wl_registry* reg, uint32_t name, const char* 
         mclog( LogLevel::Debug, "Wayland interface %s version %u is newer than supported version %u", interfaceName, version, versionMax );
         version = versionMax;
     }
+    mclog( LogLevel::Debug, "Wayland interface %s version %u", interfaceName, version );
     return (T*)wl_registry_bind( reg, name, interface, version );
 }
 

@@ -91,7 +91,7 @@ void TaskDispatch::Worker()
         f();
         lock.lock();
         m_jobs--;
-        if( m_jobs == 0 && m_queue.empty() ) m_cvJobs.notify_one();
+        if( m_jobs == 0 && m_queue.empty() ) m_cvJobs.notify_all();
         lock.unlock();
     }
 }

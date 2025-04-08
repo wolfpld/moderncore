@@ -270,6 +270,7 @@ void Viewport::Update( float delta )
 void Viewport::WantRender()
 {
     if( m_render ) return;
+    m_lastTime = Now();
     m_render = true;
     m_window->ResumeIfIdle();
 }

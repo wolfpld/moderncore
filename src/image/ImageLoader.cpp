@@ -18,7 +18,6 @@
 #include "util/BitmapAnim.hpp"
 #include "util/BitmapHdr.hpp"
 #include "util/FileWrapper.hpp"
-#include "util/Home.hpp"
 #include "util/Logs.hpp"
 #include "vector/PdfImage.hpp"
 #include "vector/SvgImage.hpp"
@@ -48,15 +47,14 @@ std::unique_ptr<BitmapHdr> ImageLoader::LoadHdr( Colorspace colorspace )
     return nullptr;
 }
 
-std::unique_ptr<ImageLoader> GetImageLoader( const char* filename, ToneMap::Operator tonemap, TaskDispatch* td )
+std::unique_ptr<ImageLoader> GetImageLoader( const char* path, ToneMap::Operator tonemap, TaskDispatch* td )
 {
     ZoneScoped;
 
-    auto path = ExpandHome( filename );
-    auto file = std::make_shared<FileWrapper>( path.c_str(), "rb" );
+    auto file = std::make_shared<FileWrapper>( path, "rb" );
     if( !*file )
     {
-        mclog( LogLevel::Error, "Image %s does not exist.", path.c_str() );
+        mclog( LogLevel::Error, "Image %s does not exist.", path );
         return nullptr;
     }
 
@@ -73,16 +71,16 @@ std::unique_ptr<ImageLoader> GetImageLoader( const char* filename, ToneMap::Oper
     if( auto loader = CheckImageLoader<ExrLoader>( file, tonemap, td ); loader ) return loader;
     if( auto loader = CheckImageLoader<PcxLoader>( file ); loader ) return loader;
 
-    mclog( LogLevel::Debug, "Raster image loaders can't open %s", path.c_str() );
+    mclog( LogLevel::Debug, "Raster image loaders can't open %s", path );
     return nullptr;
 }
 
-std::unique_ptr<Bitmap> LoadImage( const char* filename )
+std::unique_ptr<Bitmap> LoadImage( const char* path )
 {
     ZoneScoped;
-    mclog( LogLevel::Info, "Loading image %s", filename );
+    mclog( LogLevel::Info, "Loading image %s", path );
 
-    auto loader = GetImageLoader( filename, ToneMap::Operator::PbrNeutral );
+    auto loader = GetImageLoader( path, ToneMap::Operator::PbrNeutral );
     if( loader ) return loader->Load();
     return nullptr;
 }

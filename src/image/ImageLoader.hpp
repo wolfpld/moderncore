@@ -26,6 +26,6 @@ public:
     [[nodiscard]] virtual std::unique_ptr<BitmapHdr> LoadHdr( Colorspace colorspace = Colorspace::BT709 );
 };
 
-std::unique_ptr<ImageLoader> GetImageLoader( const char* filename, ToneMap::Operator tonemap, TaskDispatch* td = nullptr );
-std::unique_ptr<Bitmap> LoadImage( const char* filename );
+std::unique_ptr<ImageLoader> GetImageLoader( const char* path, ToneMap::Operator tonemap, TaskDispatch* td = nullptr );
+std::unique_ptr<Bitmap> LoadImage( const char* path );
 std::unique_ptr<VectorImage> LoadVectorImage( const char* path );

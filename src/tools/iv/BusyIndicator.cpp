@@ -175,20 +175,25 @@ BusyIndicator::~BusyIndicator()
 
 void BusyIndicator::Update( float delta )
 {
-    m_time += delta * 0.35f;
-    float intpart;
-    if( m_time >= 1 ) m_time = std::modff( m_time, &intpart );
+    m_time += delta;
 
-    m_rot = M_PI * ( SmootherStep( 0, 0.2f, m_time ) + SmootherStep( 0, 0.2f, m_time - 0.5f ) );
+    m_timeRot += delta * 0.35f;
+    float intpart;
+    if( m_timeRot >= 1 ) m_timeRot = std::modff( m_timeRot, &intpart );
+
+    m_rot = M_PI * ( SmootherStep( 0, 0.2f, m_timeRot ) + SmootherStep( 0, 0.2f, m_timeRot - 0.5f ) );
 }
 
 void BusyIndicator::ResetTime()
 {
     m_time = 0;
+    m_timeRot = 0;
 }
 
 void BusyIndicator::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
 {
+    if( m_time < 0.05f ) return;
+
     VkViewport viewport = {
         .width = float( extent.width ),
         .height = float( extent.height )

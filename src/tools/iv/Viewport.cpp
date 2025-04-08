@@ -23,6 +23,7 @@
 #include "util/DataBuffer.hpp"
 #include "util/EmbedData.hpp"
 #include "util/Filesystem.hpp"
+#include "util/Home.hpp"
 #include "util/Invoke.hpp"
 #include "util/MemoryBuffer.hpp"
 #include "util/Panic.hpp"
@@ -737,11 +738,18 @@ std::vector<std::string> Viewport::FindValidFiles( const std::vector<std::string
     {
         if( uri.starts_with( "file://" ) )
         {
-            const auto path = uri.substr( 7 );
+            auto path = uri.substr( 7 );
             struct stat st;
             if( stat( path.c_str(), &st ) == 0 && S_ISREG( st.st_mode ) ) 
             {
-                ret.emplace_back( path );
+                if( path[0] == '~' )
+                {
+                    ret.emplace_back( ExpandHome( path.c_str() ) );
+                }
+                else
+                {
+                    ret.emplace_back( std::move( path ) );
+                }
             }
         }
     }

@@ -87,24 +87,22 @@ std::unique_ptr<Bitmap> LoadImage( const char* filename )
     return nullptr;
 }
 
-std::unique_ptr<VectorImage> LoadVectorImage( const char* filename )
+std::unique_ptr<VectorImage> LoadVectorImage( const char* path )
 {
     ZoneScoped;
 
-    auto path = ExpandHome( filename );
-
-    FileWrapper file( path.c_str(), "rb" );
+    FileWrapper file( path, "rb" );
     if( !file )
     {
-        mclog( LogLevel::Error, "Vector image %s does not exist.", path.c_str() );
+        mclog( LogLevel::Error, "Vector image %s does not exist.", path );
         return nullptr;
     }
 
-    mclog( LogLevel::Info, "Loading vector image %s", path.c_str() );
+    mclog( LogLevel::Info, "Loading vector image %s", path );
 
     if( auto img = std::make_unique<SvgImage>( file ); img->IsValid() ) return img;
     if( auto img = std::make_unique<PdfImage>( file ); img->IsValid() ) return img;
 
-    mclog( LogLevel::Info, "Vector loaders can't open %s", path.c_str() );
+    mclog( LogLevel::Info, "Vector loaders can't open %s", path );
     return nullptr;
 }

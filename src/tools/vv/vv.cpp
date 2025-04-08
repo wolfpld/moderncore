@@ -21,6 +21,7 @@
 #include "util/BitmapAnim.hpp"
 #include "util/BitmapHdr.hpp"
 #include "util/Callstack.hpp"
+#include "util/Home.hpp"
 #include "util/Logs.hpp"
 #include "util/Panic.hpp"
 #include "util/TaskDispatch.hpp"
@@ -458,7 +459,8 @@ int main( int argc, char** argv )
     const auto workerThreads = std::max( 1u, std::thread::hardware_concurrency() - 1 );
     TaskDispatch td( workerThreads, "Worker" );
 
-    const char* imageFile = argv[optind];
+    const auto imageFileStr = ExpandHome( argv[optind] );
+    const auto imageFile = imageFileStr.c_str();
     std::unique_ptr<Bitmap> bitmap;
     std::unique_ptr<BitmapAnim> anim;
     std::unique_ptr<VectorImage> vectorImage;

@@ -83,7 +83,7 @@ int main( int argc, char** argv )
         const auto sz = argc - optind;
         if( sz == 1 )
         {
-            viewport->LoadImage( argv[optind] );
+            viewport->LoadImage( argv[optind], true );
         }
         else
         {

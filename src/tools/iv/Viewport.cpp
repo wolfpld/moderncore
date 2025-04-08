@@ -4,6 +4,7 @@
 #include <linux/input-event-codes.h>
 #include <numbers>
 #include <stdlib.h>
+#include <string_view>
 #include <sys/stat.h>
 #include <time.h>
 #include <tracy/Tracy.hpp>
@@ -153,12 +154,26 @@ Viewport::~Viewport()
     }
 }
 
-void Viewport::LoadImage( const char* path )
+void Viewport::LoadImage( const char* path, bool scanDirectory )
 {
     ZoneScoped;
     const auto id = m_provider->LoadImage( path, m_window->HdrCapable(), Method( ImageHandler ), this );
     ZoneTextF( "id %ld", id );
     SetBusy( id );
+
+    if( scanDirectory )
+    {
+        auto pos = std::string_view( path ).find_last_of( '/' );
+        if( pos != std::string_view::npos )
+        {
+            const auto dir = std::string( path, 0, pos );
+            mclog( LogLevel::Info, "Scanning directory %s", dir.c_str() );
+            auto files = FindLoadableImages( ListDirectory( dir ) );
+            if( files.empty() ) return;
+            mclog( LogLevel::Info, "Found %zu files", files.size() );
+            SetFileList( std::move( files ), path );
+        }
+    }
 }
 
 void Viewport::LoadImage( std::unique_ptr<DataBuffer>&& data )
@@ -191,14 +206,14 @@ void Viewport::LoadImage( const std::vector<const char*>& paths )
 
     if( files.size() == 1 )
     {
-        LoadImage( files[0].c_str() );
+        LoadImage( files[0].c_str(), true );
     }
     else
     {
         m_fileList = std::move( files );
         m_fileIndex = 0;
         m_origin = m_fileList[0];
-        LoadImage( m_fileList[0].c_str() );
+        LoadImage( m_fileList[0].c_str(), false );
     }
 }
 
@@ -405,8 +420,15 @@ void Viewport::Drop( int fd, const char* mime )
         auto files = FindLoadableImages( FindValidFiles( uriList ) );
         if( !files.empty() )
         {
-            LoadImage( files[0].c_str() );
-            SetFileList( std::move( files ), files[0] );
+            if( files.size() == 1 )
+            {
+                LoadImage( files[0].c_str(), true );
+            }
+            else
+            {
+                LoadImage( files[0].c_str(), false );
+                SetFileList( std::move( files ), files[0] );
+            }
         }
     }
     else if( strcmp( mime, "image/png" ) == 0 )
@@ -519,7 +541,7 @@ void Viewport::KeyEvent( uint32_t key, int mods, bool pressed )
         if( m_fileList.size() > 1 )
         {
             m_fileIndex = ( m_fileIndex + 1 ) % m_fileList.size();
-            LoadImage( m_fileList[m_fileIndex].c_str() );
+            LoadImage( m_fileList[m_fileIndex].c_str(), false );
         }
     }
     else if( mods == 0 && key == KEY_LEFT )
@@ -527,7 +549,7 @@ void Viewport::KeyEvent( uint32_t key, int mods, bool pressed )
         if( m_fileList.size() > 1 )
         {
             m_fileIndex = ( m_fileIndex + m_fileList.size() - 1 ) % m_fileList.size();
-            LoadImage( m_fileList[m_fileIndex].c_str() );
+            LoadImage( m_fileList[m_fileIndex].c_str(), false );
         }
     }
 }
@@ -665,8 +687,15 @@ void Viewport::PasteClipboard()
         auto files = FindLoadableImages( FindValidFiles( uriList ) );
         if( !files.empty() )
         {
-            LoadImage( files[0].c_str() );
-            SetFileList( std::move( files ), files[0] );
+            if( files.size() == 1 )
+            {
+                LoadImage( files[0].c_str(), true );
+            }
+            else
+            {
+                LoadImage( files[0].c_str(), false );
+                SetFileList( std::move( files ), files[0] );
+            }
             return;
         }
         else if( !uriList.empty() )

@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <dirent.h>
 #include <format>
 #include <linux/input-event-codes.h>
 #include <numbers>
@@ -746,4 +747,36 @@ void Viewport::SetFileList( std::vector<std::string>&& fileList, const std::stri
     CheckPanic( it != m_fileList.end(), "Origin not found in file list" );
     m_fileIndex = std::distance( m_fileList.begin(), it );
     mclog( LogLevel::Info, "File list: %zu files, current: %zu", m_fileList.size(), m_fileIndex );
+}
+
+std::vector<std::string> Viewport::ListDirectory( const std::string& path )
+{
+    std::vector<std::string> ret;
+    DIR* dir = opendir( path.c_str() );
+    if( !dir ) return ret;
+
+    struct dirent* entry;
+    while( ( entry = readdir( dir ) ) )
+    {
+        if( entry->d_type == DT_REG )
+        {
+            ret.emplace_back( path + "/" + entry->d_name );
+        }
+        else if( entry->d_type == DT_LNK )
+        {
+            auto srcPath = path + "/" + entry->d_name;
+            char link[PATH_MAX];
+            if( readlink( srcPath.c_str(), link, sizeof( link ) ) != -1 )
+            {
+                struct stat st;
+                if( stat( link, &st ) == 0 && S_ISREG( st.st_mode ) )
+                {
+                    ret.emplace_back( std::move( srcPath ) );
+                }
+            }
+        }
+    }
+    closedir( dir );
+    std::ranges::sort( ret );
+    return ret;
 }

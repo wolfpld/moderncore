@@ -51,21 +51,21 @@ void TaskDispatch::WaitInit()
 
 void TaskDispatch::Queue( const std::function<void(void)>& f )
 {
-    std::lock_guard<std::mutex> lock( m_queueLock );
+    std::lock_guard lock( m_queueLock );
     m_queue.emplace_back( f );
     m_cvWork.notify_one();
 }
 
 void TaskDispatch::Queue( std::function<void(void)>&& f )
 {
-    std::lock_guard<std::mutex> lock( m_queueLock );
+    std::lock_guard lock( m_queueLock );
     m_queue.emplace_back( std::move( f ) );
     m_cvWork.notify_one();
 }
 
 void TaskDispatch::Sync()
 {
-    std::unique_lock<std::mutex> lock( m_queueLock );
+    std::unique_lock lock( m_queueLock );
     while( !m_queue.empty() )
     {
         auto f = m_queue.back();
@@ -81,7 +81,7 @@ void TaskDispatch::Worker()
 {
     for(;;)
     {
-        std::unique_lock<std::mutex> lock( m_queueLock );
+        std::unique_lock lock( m_queueLock );
         m_cvWork.wait( lock, [this]{ return !m_queue.empty() || m_exit.load( std::memory_order_acquire ); } );
         if( m_exit.load( std::memory_order_acquire ) ) return;
         auto f = m_queue.back();

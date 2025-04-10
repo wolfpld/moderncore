@@ -188,7 +188,7 @@ void Viewport::LoadImage( std::unique_ptr<DataBuffer>&& data )
 void Viewport::LoadImage( int fd, const char* origin, int dndFd )
 {
     ZoneScoped;
-    const auto id = m_provider->LoadImage( fd, m_window->HdrCapable(), Method( ImageHandler ), this, m_loadOrigin.c_str(), { .dndFd = dndFd } );
+    const auto id = m_provider->LoadImage( fd, m_window->HdrCapable(), Method( ImageHandler ), this, origin, { .dndFd = dndFd } );
     ZoneTextF( "id %ld", id );
     SetBusy( id );
 }

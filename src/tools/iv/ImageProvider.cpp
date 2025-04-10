@@ -31,7 +31,7 @@ ImageProvider::~ImageProvider()
     m_thread.join();
 }
 
-int64_t ImageProvider::LoadImage( const char* path, bool hdr, Callback callback, void* userData, int flags )
+int64_t ImageProvider::LoadImage( const char* path, bool hdr, Callback callback, void* userData, Flags flags )
 {
     ZoneScoped;
     const auto id = m_nextId++;
@@ -49,7 +49,7 @@ int64_t ImageProvider::LoadImage( const char* path, bool hdr, Callback callback,
     return id;
 }
 
-int64_t ImageProvider::LoadImage( std::unique_ptr<DataBuffer>&& buffer, bool hdr, Callback callback, void* userData, int flags )
+int64_t ImageProvider::LoadImage( std::unique_ptr<DataBuffer>&& buffer, bool hdr, Callback callback, void* userData, Flags flags )
 {
     ZoneScoped;
     const auto id = m_nextId++;
@@ -67,7 +67,7 @@ int64_t ImageProvider::LoadImage( std::unique_ptr<DataBuffer>&& buffer, bool hdr
     return id;
 }
 
-int64_t ImageProvider::LoadImage( int fd, bool hdr, Callback callback, void* userData, const char* origin, int flags )
+int64_t ImageProvider::LoadImage( int fd, bool hdr, Callback callback, void* userData, const char* origin, Flags flags )
 {
     ZoneScoped;
     const auto id = m_nextId++;
@@ -101,7 +101,7 @@ void ImageProvider::Cancel( int64_t id )
             auto job = std::move( *it );
             m_jobs.erase( it );
             lock.unlock();
-            job.callback( job.userData, job.id, Result::Cancelled, job.flags, {} );
+            job.callback( job.userData, job.id, Result::Cancelled, { .flags = job.flags } );
         }
     }
 }
@@ -118,7 +118,7 @@ void ImageProvider::CancelAll()
 
     for( auto& job : tmp )
     {
-        job.callback( job.userData, job.id, Result::Cancelled, job.flags, {} );
+        job.callback( job.userData, job.id, Result::Cancelled, { .flags = job.flags } );
     }
 }
 
@@ -195,23 +195,24 @@ void ImageProvider::Worker()
 
         if( cancelled )
         {
-            job.callback( job.userData, job.id, Result::Cancelled, job.flags, {} );
+            job.callback( job.userData, job.id, Result::Cancelled, { .flags = job.flags } );
         }
         else if( bitmap || bitmapHdr )
         {
             uint32_t width, height;
             if( bitmap ) bitmap->NormalizeOrientation();
             mclog( LogLevel::Info, "Image loaded: %ux%u", bitmap ? bitmap->Width() : bitmapHdr->Width(), bitmap ? bitmap->Height() : bitmapHdr->Height() );
-            job.callback( job.userData, job.id, Result::Success, job.flags, {
+            job.callback( job.userData, job.id, Result::Success, {
                 .bitmap = std::move( bitmap ),
                 .bitmapHdr = std::move( bitmapHdr ),
-                .origin = job.path
+                .origin = job.path,
+                .flags = job.flags
             } );
         }
         else
         {
             mclog( LogLevel::Error, "Failed to load image %s", job.path.c_str() );
-            job.callback( job.userData, job.id, Result::Error, job.flags, {} );
+            job.callback( job.userData, job.id, Result::Error, { .flags = job.flags } );
         }
 
         lock.lock();

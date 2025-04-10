@@ -24,21 +24,27 @@ public:
         Cancelled
     };
 
+    struct Flags
+    {
+        int dndFd;
+    };
+
     struct ReturnData
     {
         std::shared_ptr<Bitmap> bitmap;
         std::shared_ptr<BitmapHdr> bitmapHdr;
         std::string origin;
+        Flags flags;
     };
 
-    using Callback = void (*)(void *, int64_t, Result, int, ReturnData);
+    using Callback = void (*)(void *, int64_t, Result, ReturnData);
 
     ImageProvider( TaskDispatch& td );
     ~ImageProvider();
 
-    int64_t LoadImage( const char* path, bool hdr, Callback callback, void* userData, int flags = 0 );
-    int64_t LoadImage( std::unique_ptr<DataBuffer>&& buffer, bool hdr, Callback callback, void* userData, int flags = 0 );
-    int64_t LoadImage( int fd, bool hdr, Callback callback, void* userData, const char* origin, int flags = 0 );
+    int64_t LoadImage( const char* path, bool hdr, Callback callback, void* userData, Flags flags = {} );
+    int64_t LoadImage( std::unique_ptr<DataBuffer>&& buffer, bool hdr, Callback callback, void* userData, Flags flags = {} );
+    int64_t LoadImage( int fd, bool hdr, Callback callback, void* userData, const char* origin, Flags flags = {} );
 
     void Cancel( int64_t id );
     void CancelAll();
@@ -53,7 +59,7 @@ private:
         bool hdr;
         Callback callback;
         void* userData;
-        int flags;
+        Flags flags;
     };
 
     void Worker();

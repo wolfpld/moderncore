@@ -185,10 +185,10 @@ void Viewport::LoadImage( std::unique_ptr<DataBuffer>&& data )
     SetBusy( id );
 }
 
-void Viewport::LoadImage( int fd, const char* origin, int flags )
+void Viewport::LoadImage( int fd, const char* origin, int dndFd )
 {
     ZoneScoped;
-    const auto id = m_provider->LoadImage( fd, m_window->HdrCapable(), Method( ImageHandler ), this, m_loadOrigin.c_str(), flags );
+    const auto id = m_provider->LoadImage( fd, m_window->HdrCapable(), Method( ImageHandler ), this, m_loadOrigin.c_str(), { .dndFd = dndFd } );
     ZoneTextF( "id %ld", id );
     SetBusy( id );
 }
@@ -623,12 +623,12 @@ void Viewport::Scroll( const WaylandScroll& scroll )
     }
 }
 
-void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, int flags, const ImageProvider::ReturnData& data )
+void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, const ImageProvider::ReturnData& data )
 {
     ZoneScoped;
     ZoneTextF( "id %ld, result %d", id, result );
 
-    if( flags != 0 ) m_window->FinishDnd( flags - 1 );
+    if( data.flags.dndFd != 0 ) m_window->FinishDnd( data.flags.dndFd - 1 );
 
     if( result == ImageProvider::Result::Success )
     {

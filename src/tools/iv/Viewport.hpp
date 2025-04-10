@@ -30,7 +30,7 @@ public:
 
     void LoadImage( const char* path, bool scanDirectory );
     void LoadImage( std::unique_ptr<DataBuffer>&& data );
-    void LoadImage( int fd, const char* origin, int flags = 0 );
+    void LoadImage( int fd, const char* origin, int dndFd = 0 );
 
     void LoadImage( const std::vector<std::string>& paths );
 
@@ -55,7 +55,7 @@ private:
     void MouseButton( uint32_t button, bool pressed );
     void Scroll( const WaylandScroll& scroll );
 
-    void ImageHandler( int64_t id, ImageProvider::Result result, int flags, const ImageProvider::ReturnData& data );
+    void ImageHandler( int64_t id, ImageProvider::Result result, const ImageProvider::ReturnData& data );
 
     void PasteClipboard();
     [[nodiscard]] std::vector<std::string> ProcessUriList( std::string uriList );

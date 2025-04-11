@@ -431,8 +431,8 @@ void Viewport::Drop( int fd, const char* mime )
             }
             else
             {
-                LoadImage( files[0].c_str(), false );
                 SetFileList( std::move( files ), files[0] );
+                LoadImage( files[0].c_str(), false );
             }
         }
     }
@@ -699,8 +699,8 @@ void Viewport::PasteClipboard()
             }
             else
             {
-                LoadImage( files[0].c_str(), false );
                 SetFileList( std::move( files ), files[0] );
+                LoadImage( files[0].c_str(), false );
             }
             return;
         }

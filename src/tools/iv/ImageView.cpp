@@ -260,39 +260,41 @@ void ImageView::Resize( const VkExtent2D& extent )
     UpdateVertexBuffer();
 }
 
-void ImageView::SetBitmap( const std::shared_ptr<Bitmap>& bitmap, TaskDispatch& td )
+std::shared_ptr<Texture> ImageView::SetBitmap( const std::shared_ptr<Bitmap>& bitmap, TaskDispatch& td )
 {
     if( !bitmap )
     {
         std::lock_guard lock( m_lock );
         Cleanup();
-        return;
+        return {};
     }
 
     std::vector<std::shared_ptr<VlkFence>> texFences;
     auto texture = std::make_shared<Texture>( *m_device, *bitmap, VK_FORMAT_R8G8B8A8_SRGB, true, texFences, &td );
     for( auto& fence : texFences ) fence->Wait();
 
-    FinishSetBitmap( std::move( texture ), bitmap->Width(), bitmap->Height() );
+    FinishSetBitmap( texture, bitmap->Width(), bitmap->Height() );
+    return texture;
 }
 
-void ImageView::SetBitmap( const std::shared_ptr<BitmapHdr>& bitmap, TaskDispatch& td )
+std::shared_ptr<Texture> ImageView::SetBitmap( const std::shared_ptr<BitmapHdr>& bitmap, TaskDispatch& td )
 {
     if( !bitmap )
     {
         std::lock_guard lock( m_lock );
         Cleanup();
-        return;
+        return {};
     }
 
     std::vector<std::shared_ptr<VlkFence>> texFences;
     auto texture = std::make_shared<Texture>( *m_device, *bitmap, VK_FORMAT_R16G16B16A16_SFLOAT, true, texFences, &td );
     for( auto& fence : texFences ) fence->Wait();
 
-    FinishSetBitmap( std::move( texture ), bitmap->Width(), bitmap->Height() );
+    FinishSetBitmap( texture, bitmap->Width(), bitmap->Height() );
+    return texture;
 }
 
-void ImageView::FinishSetBitmap( std::shared_ptr<Texture>&& texture, uint32_t width, uint32_t height )
+void ImageView::FinishSetBitmap( std::shared_ptr<Texture> texture, uint32_t width, uint32_t height )
 {
     std::lock_guard lock( m_lock );
     Cleanup();

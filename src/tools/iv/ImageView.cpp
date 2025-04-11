@@ -271,17 +271,9 @@ void ImageView::SetBitmap( const std::shared_ptr<Bitmap>& bitmap, TaskDispatch& 
 
     std::vector<std::shared_ptr<VlkFence>> texFences;
     auto texture = std::make_shared<Texture>( *m_device, *bitmap, VK_FORMAT_R8G8B8A8_SRGB, true, texFences, &td );
-
-    constexpr VkBufferCreateInfo vinfo = {
-        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-        .size = sizeof( Vertex ) * 4,
-        .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-        .sharingMode = VK_SHARING_MODE_EXCLUSIVE
-    };
-    auto vb = std::make_shared<VlkBuffer>( *m_device, vinfo, VlkBuffer::PreferDevice | VlkBuffer::WillWrite );
-
     for( auto& fence : texFences ) fence->Wait();
-    FinishSetBitmap( std::move( texture ), std::move( vb ), bitmap->Width(), bitmap->Height() );
+
+    FinishSetBitmap( std::move( texture ), bitmap->Width(), bitmap->Height() );
 }
 
 void ImageView::SetBitmap( const std::shared_ptr<BitmapHdr>& bitmap, TaskDispatch& td )
@@ -295,20 +287,12 @@ void ImageView::SetBitmap( const std::shared_ptr<BitmapHdr>& bitmap, TaskDispatc
 
     std::vector<std::shared_ptr<VlkFence>> texFences;
     auto texture = std::make_shared<Texture>( *m_device, *bitmap, VK_FORMAT_R16G16B16A16_SFLOAT, true, texFences, &td );
-
-    constexpr VkBufferCreateInfo vinfo = {
-        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-        .size = sizeof( Vertex ) * 4,
-        .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-        .sharingMode = VK_SHARING_MODE_EXCLUSIVE
-    };
-    auto vb = std::make_shared<VlkBuffer>( *m_device, vinfo, VlkBuffer::PreferDevice | VlkBuffer::WillWrite );
-
     for( auto& fence : texFences ) fence->Wait();
-    FinishSetBitmap( std::move( texture ), std::move( vb ), bitmap->Width(), bitmap->Height() );
+
+    FinishSetBitmap( std::move( texture ), bitmap->Width(), bitmap->Height() );
 }
 
-void ImageView::FinishSetBitmap( std::shared_ptr<Texture>&& texture, std::shared_ptr<VlkBuffer>&& vb, uint32_t width, uint32_t height )
+void ImageView::FinishSetBitmap( std::shared_ptr<Texture>&& texture, uint32_t width, uint32_t height )
 {
     std::lock_guard lock( m_lock );
     Cleanup();

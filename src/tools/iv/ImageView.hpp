@@ -69,7 +69,7 @@ private:
     void Cleanup();
     [[nodiscard]] std::array<Vertex, 4> SetupVertexBuffer() const;
     void UpdateVertexBuffer();
-    void FinishSetBitmap( std::shared_ptr<Texture>&& texture, std::shared_ptr<VlkBuffer>&& vb, uint32_t width, uint32_t height );
+    void FinishSetBitmap( std::shared_ptr<Texture>&& texture, uint32_t width, uint32_t height );
 
     void ClampImagePosition();
     void SetImgScale( float scale );

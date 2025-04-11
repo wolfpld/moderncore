@@ -186,12 +186,9 @@ void Viewport::LoadImage( int fd, const char* origin, int dndFd )
 {
     ZoneScoped;
     std::lock_guard lock( m_lock );
-    const auto id = m_provider->LoadImage( fd, m_window->HdrCapable(), Method( ImageHandler ), this, origin, { .dndFd = dndFd } );
-    ZoneTextF( "id %ld", id );
-
-    if( m_currentJob != -1 ) m_provider->Cancel( m_currentJob );
-    m_currentJob = id;
-
+    m_provider->CancelAll();
+    m_currentJob = m_provider->LoadImage( fd, m_window->HdrCapable(), Method( ImageHandler ), this, origin, { .dndFd = dndFd } );
+    ZoneTextF( "id %ld", m_currentJob );
     SetBusy();
 }
 

@@ -49,24 +49,6 @@ int64_t ImageProvider::LoadImage( const char* path, bool hdr, Callback callback,
     return id;
 }
 
-int64_t ImageProvider::LoadImage( std::unique_ptr<DataBuffer>&& buffer, bool hdr, Callback callback, void* userData, Flags flags )
-{
-    ZoneScoped;
-    const auto id = m_nextId++;
-    std::lock_guard lock( m_lock );
-    m_jobs.emplace_back( Job {
-        .id = id,
-        .buffer = std::move( buffer ),
-        .fd = -1,
-        .hdr = hdr,
-        .callback = callback,
-        .userData = userData,
-        .flags = flags
-    } );
-    m_cv.notify_one();
-    return id;
-}
-
 int64_t ImageProvider::LoadImage( int fd, bool hdr, Callback callback, void* userData, const char* origin, Flags flags )
 {
     ZoneScoped;
@@ -147,12 +129,6 @@ void ImageProvider::Worker()
             mclog( LogLevel::Info, "Loading image from file descriptor" );
             auto buffer = std::make_shared<MemoryBuffer>( job.fd );
             PngLoader loader( std::move( buffer ) );
-            if( loader.IsValid() ) bitmap = loader.Load();
-        }
-        else if( job.buffer )
-        {
-            mclog( LogLevel::Info, "Loading image from buffer" );
-            PngLoader loader( std::move( job.buffer ) );
             if( loader.IsValid() ) bitmap = loader.Load();
         }
         else

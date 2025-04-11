@@ -178,15 +178,6 @@ void Viewport::LoadImage( const char* path, bool scanDirectory )
     }
 }
 
-void Viewport::LoadImage( std::unique_ptr<DataBuffer>&& data )
-{
-    ZoneScoped;
-    std::lock_guard lock( m_lock );
-    const auto id = m_provider->LoadImage( std::move( data ), m_window->HdrCapable(), Method( ImageHandler ), this );
-    ZoneTextF( "id %ld", id );
-    SetBusy( id );
-}
-
 void Viewport::LoadImage( int fd, const char* origin, int dndFd )
 {
     ZoneScoped;

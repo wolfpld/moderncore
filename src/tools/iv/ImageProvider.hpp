@@ -45,7 +45,6 @@ public:
     ~ImageProvider();
 
     int64_t LoadImage( const char* path, bool hdr, Callback callback, void* userData, Flags flags = {} );
-    int64_t LoadImage( std::unique_ptr<DataBuffer>&& buffer, bool hdr, Callback callback, void* userData, Flags flags = {} );
     int64_t LoadImage( int fd, bool hdr, Callback callback, void* userData, const char* origin, Flags flags = {} );
 
     void Cancel( int64_t id );
@@ -56,7 +55,6 @@ private:
     {
         int64_t id;
         std::string path;
-        std::unique_ptr<DataBuffer> buffer;
         int fd;
         bool hdr;
         Callback callback;

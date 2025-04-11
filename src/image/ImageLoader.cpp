@@ -1,5 +1,6 @@
 #include <concepts>
 #include <stdint.h>
+#include <sys/stat.h>
 #include <tracy/Tracy.hpp>
 
 #include "DdsLoader.hpp"
@@ -57,7 +58,7 @@ std::unique_ptr<BitmapHdr> ImageLoader::LoadHdr( Colorspace colorspace )
     return nullptr;
 }
 
-std::unique_ptr<ImageLoader> GetImageLoader( const char* path, ToneMap::Operator tonemap, TaskDispatch* td )
+std::unique_ptr<ImageLoader> GetImageLoader( const char* path, ToneMap::Operator tonemap, TaskDispatch* td, struct timespec* mtime )
 {
     ZoneScoped;
 
@@ -74,6 +75,12 @@ std::unique_ptr<ImageLoader> GetImageLoader( const char* path, ToneMap::Operator
     {
         mclog( LogLevel::Error, "Image %s is empty.", path );
         return nullptr;
+    }
+
+    if( mtime )
+    {
+        struct stat st;
+        if( fstat( fileno( *file ), &st ) == 0 ) *mtime = st.st_mtim;
     }
 
     if( auto loader = CheckImageLoader<PngLoader>( buf, sz, file ); loader ) return loader;

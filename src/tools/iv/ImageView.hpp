@@ -46,6 +46,8 @@ public:
 
     std::shared_ptr<Texture> SetBitmap( const std::shared_ptr<Bitmap>& bitmap, TaskDispatch& td );      // call with no lock
     std::shared_ptr<Texture> SetBitmap( const std::shared_ptr<BitmapHdr>& bitmap, TaskDispatch& td );   // call with no lock
+    void SetTexture( std::shared_ptr<Texture> texture, uint32_t width, uint32_t height );               // call with no lock
+
     void SetScale( float scale, const VkExtent2D& extent );
     void FormatChange( VkFormat format );
 
@@ -69,7 +71,6 @@ private:
     void Cleanup();
     [[nodiscard]] std::array<Vertex, 4> SetupVertexBuffer() const;
     void UpdateVertexBuffer();
-    void FinishSetBitmap( std::shared_ptr<Texture> texture, uint32_t width, uint32_t height );
 
     void ClampImagePosition();
     void SetImgScale( float scale );

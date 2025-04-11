@@ -158,6 +158,7 @@ Viewport::~Viewport()
 void Viewport::LoadImage( const char* path, bool scanDirectory )
 {
     ZoneScoped;
+    std::lock_guard lock( m_lock );
     const auto id = m_provider->LoadImage( path, m_window->HdrCapable(), Method( ImageHandler ), this );
     ZoneTextF( "id %ld", id );
     SetBusy( id );
@@ -180,6 +181,7 @@ void Viewport::LoadImage( const char* path, bool scanDirectory )
 void Viewport::LoadImage( std::unique_ptr<DataBuffer>&& data )
 {
     ZoneScoped;
+    std::lock_guard lock( m_lock );
     const auto id = m_provider->LoadImage( std::move( data ), m_window->HdrCapable(), Method( ImageHandler ), this );
     ZoneTextF( "id %ld", id );
     SetBusy( id );
@@ -188,6 +190,7 @@ void Viewport::LoadImage( std::unique_ptr<DataBuffer>&& data )
 void Viewport::LoadImage( int fd, const char* origin, int dndFd )
 {
     ZoneScoped;
+    std::lock_guard lock( m_lock );
     const auto id = m_provider->LoadImage( fd, m_window->HdrCapable(), Method( ImageHandler ), this, origin, { .dndFd = dndFd } );
     ZoneTextF( "id %ld", id );
     SetBusy( id );
@@ -220,8 +223,6 @@ void Viewport::LoadImage( const std::vector<std::string>& paths )
 
 void Viewport::SetBusy( int64_t job )
 {
-    std::lock_guard lock( m_lock );
-
     if( m_currentJob != -1 ) m_provider->Cancel( m_currentJob );
     m_currentJob = job;
 

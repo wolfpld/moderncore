@@ -161,7 +161,11 @@ void Viewport::LoadImage( const char* path, bool scanDirectory )
     std::lock_guard lock( m_lock );
     const auto id = m_provider->LoadImage( path, m_window->HdrCapable(), Method( ImageHandler ), this );
     ZoneTextF( "id %ld", id );
-    SetBusy( id );
+
+    if( m_currentJob != -1 ) m_provider->Cancel( m_currentJob );
+    m_currentJob = id;
+
+    SetBusy();
 
     if( scanDirectory )
     {
@@ -184,7 +188,11 @@ void Viewport::LoadImage( int fd, const char* origin, int dndFd )
     std::lock_guard lock( m_lock );
     const auto id = m_provider->LoadImage( fd, m_window->HdrCapable(), Method( ImageHandler ), this, origin, { .dndFd = dndFd } );
     ZoneTextF( "id %ld", id );
-    SetBusy( id );
+
+    if( m_currentJob != -1 ) m_provider->Cancel( m_currentJob );
+    m_currentJob = id;
+
+    SetBusy();
 }
 
 void Viewport::LoadImage( const std::vector<std::string>& paths )
@@ -212,11 +220,8 @@ void Viewport::LoadImage( const std::vector<std::string>& paths )
     }
 }
 
-void Viewport::SetBusy( int64_t job )
+void Viewport::SetBusy()
 {
-    if( m_currentJob != -1 ) m_provider->Cancel( m_currentJob );
-    m_currentJob = job;
-
     if( !m_isBusy )
     {
         m_isBusy = true;

@@ -34,7 +34,7 @@ public:
     void LoadImage( const std::vector<std::string>& paths );
 
 private:
-    void SetBusy( int64_t job );
+    void SetBusy();
     void Update( float delta );
 
     void WantRender();

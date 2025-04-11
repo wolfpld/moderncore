@@ -704,6 +704,7 @@ void Viewport::PasteClipboard()
     }
     if( m_clipboardOffer.contains( "image/png" ) )
     {
+        m_fileList.clear();
         LoadImage( m_window->GetClipboard( "image/png" ), loadOrigin.c_str() );
     }
 }

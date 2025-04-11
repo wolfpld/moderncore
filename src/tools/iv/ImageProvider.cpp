@@ -140,6 +140,7 @@ void ImageProvider::Worker()
         ZoneScopedN( "Image load" );
         std::unique_ptr<Bitmap> bitmap;
         std::unique_ptr<BitmapHdr> bitmapHdr;
+        struct timespec mtime = {};
 
         if( job.fd >= 0 )
         {
@@ -157,7 +158,7 @@ void ImageProvider::Worker()
         else
         {
             mclog( LogLevel::Info, "Loading image %s", job.path.c_str() );
-            auto loader = GetImageLoader( job.path.c_str(), ToneMap::Operator::PbrNeutral, &m_td );
+            auto loader = GetImageLoader( job.path.c_str(), ToneMap::Operator::PbrNeutral, &m_td, &mtime );
             if( loader )
             {
                 if( loader->IsHdr() && ( job.hdr || loader->PreferHdr() ) )
@@ -206,7 +207,8 @@ void ImageProvider::Worker()
                 .bitmap = std::move( bitmap ),
                 .bitmapHdr = std::move( bitmapHdr ),
                 .origin = job.path,
-                .flags = job.flags
+                .flags = job.flags,
+                .mtime = mtime
             } );
         }
         else

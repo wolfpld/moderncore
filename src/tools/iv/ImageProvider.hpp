@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <string>
 #include <thread>
+#include <time.h>
 #include <vector>
 
 class Bitmap;
@@ -35,6 +36,7 @@ public:
         std::shared_ptr<BitmapHdr> bitmapHdr;
         std::string origin;
         Flags flags;
+        struct timespec mtime;
     };
 
     using Callback = void (*)(void *, int64_t, Result, ReturnData);

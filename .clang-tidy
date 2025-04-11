@@ -12,6 +12,7 @@ Checks:
 	-bugprone-easily-swappable-parameters,
 	-bugprone-implicit-widening-of-multiplication-result,
 	-bugprone-narrowing-conversions,
+	-bugprone-string-constructor,
 	-bugprone-reserved-identifier,
 	-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,
 	-google-explicit-constructor,

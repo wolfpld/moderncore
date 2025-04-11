@@ -431,8 +431,8 @@ void Viewport::Drop( int fd, const char* mime )
     }
     else if( strcmp( mime, "image/png" ) == 0 )
     {
-        LoadImage( fd, m_loadOrigin.c_str(), fd + 1 );
         m_fileList.clear();
+        LoadImage( fd, m_loadOrigin.c_str(), fd + 1 );
     }
     else
     {

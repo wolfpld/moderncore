@@ -285,9 +285,11 @@ bool Viewport::Render()
 {
     ZoneScoped;
 
+    m_lock.lock();
     const auto now = Now();
     const auto delta = std::min( now - m_lastTime, uint64_t( 1000000000 ) ) / 1000000000.f;
     m_lastTime = now;
+    m_lock.unlock();
 
     m_window->Update();
 

@@ -698,15 +698,23 @@ void WaylandWindow::XdgToplevelConfigure( struct xdg_toplevel* toplevel, int32_t
         if( state == XDG_TOPLEVEL_STATE_MAXIMIZED ) maximized = true;
         if( state == XDG_TOPLEVEL_STATE_FULLSCREEN ) fullscreen = true;
     }
+
+    const auto wasMaximized = m_maximized;
     m_maximized = maximized;
     m_fullscreen = fullscreen;
 
-    if( width == 0 || height == 0 ) return;
-
-    m_staged = {
-        .width = uint32_t( width ),
-        .height = uint32_t( height )
-    };
+    if( width == 0 || height == 0 )
+    {
+        if( !wasMaximized ) return;
+        m_staged = m_floatingExtent;
+    }
+    else
+    {
+        m_staged = {
+            .width = uint32_t( width ),
+            .height = uint32_t( height )
+        };
+    }
 
     ResumeIfIdle();
 }

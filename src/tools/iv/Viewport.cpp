@@ -169,16 +169,25 @@ void Viewport::LoadImage( const char* path, bool scanDirectory )
 
     if( scanDirectory )
     {
+        std::string dir, origin;
+
         auto pos = std::string_view( path ).find_last_of( '/' );
-        if( pos != std::string_view::npos )
+        if( pos == std::string_view::npos )
         {
-            const auto dir = std::string( path, 0, pos );
-            mclog( LogLevel::Info, "Scanning directory %s", dir.c_str() );
-            auto files = FindLoadableImages( ListDirectory( dir ) );
-            if( files.empty() ) return;
-            mclog( LogLevel::Info, "Found %zu files", files.size() );
-            SetFileList( std::move( files ), path );
+            dir = ".";
+            origin = dir + '/' + path;
         }
+        else
+        {
+            dir = std::string( path, 0, pos );
+            origin = path;
+        }
+
+        mclog( LogLevel::Info, "Scanning directory %s", dir.c_str() );
+        auto files = FindLoadableImages( ListDirectory( dir ) );
+        if( files.empty() ) return;
+        mclog( LogLevel::Info, "Found %zu files", files.size() );
+        SetFileList( std::move( files ), origin );
     }
 }
 

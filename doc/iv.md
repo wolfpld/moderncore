@@ -59,6 +59,8 @@ To load an image in iv you can:
  - Drag and drop the image on the viewer window,
  - Copy and paste the image.
 
+When you open a single image, its directory will be scanned for other images so that you can switch between them. Providing multiple images with the above actions only allows switching between them.
+
 You can pan the image by holding down the right mouse button. Zoom is done with the mouse wheel.
 
 Keybindings:
@@ -70,6 +72,8 @@ Keybindings:
  - `ctrl+f` makes the image fill the window (will also scale up).
  - `shift+f` resizes the window to fit the image.
  - `F11` enables fullscreen mode.
+ - `Escape` exits the application.
+ - `←` and `→` switch between images.
 
 ### Future plans
 

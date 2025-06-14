@@ -73,8 +73,6 @@ int main( int argc, char** argv )
         }
     }
 
-    setenv( "ENABLE_HDR_WSI", "1", 0 );
-
     auto vkInstance = std::make_unique<VlkInstance>( VlkInstanceType::Wayland, enableValidation );
     auto waylandDisplay = std::make_unique<WaylandDisplay>();
 

@@ -38,14 +38,14 @@ CPMAddPackage(
 CPMAddPackage(
     NAME vma
     GITHUB_REPOSITORY GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
-    GIT_TAG v3.2.1
+    GIT_TAG v3.3.0
     EXCLUDE_FROM_ALL TRUE
 )
 
 CPMAddPackage(
     NAME stb
     GITHUB_REPOSITORY nothings/stb
-    GIT_TAG 2e2bef463a5b53ddf8bb788e25da6b8506314c08
+    GIT_TAG f58f558c120e9b32c217290b80bad1a0729fbb2c
     DOWNLOAD_ONLY TRUE
 )
 

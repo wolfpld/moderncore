@@ -83,7 +83,7 @@ std::unique_ptr<Bitmap> JpgLoader::Load()
 {
     if( !m_cinfo && !Open() ) return nullptr;
 
-    const bool extensions = HasColorspaceExtensions();
+    static const bool extensions = HasColorspaceExtensions();
 
     JpgErrorMgr jerr;
     m_cinfo->err = jpeg_std_error( &jerr.pub );

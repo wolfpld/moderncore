@@ -11,6 +11,7 @@
 #include <string.h>
 
 #include "JpgLoader.hpp"
+#include "util/Colorspace.hpp"
 #include "util/Bitmap.hpp"
 #include "util/BitmapHdr.hpp"
 #include "util/EmbedData.hpp"
@@ -302,6 +303,23 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
         *dst++ = g;
         *dst++ = b;
         *dst++ = 1.0f;
+    }
+
+    if( colorspace == Colorspace::BT2020 )
+    {
+        cmsToneCurve* linear = cmsBuildGamma( nullptr, 1 );
+        cmsToneCurve* linear3[3] = { linear, linear, linear };
+
+        auto profileIn = cmsCreateRGBProfile( &white709, &primaries709, linear3 );
+        auto profileOut = cmsCreateRGBProfile( &white709, &primaries2020, linear3 );
+        auto transform = cmsCreateTransform( profileIn, TYPE_RGBA_FLT, profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA );
+
+        cmsDoTransform( transform, bmp->Data(), bmp->Data(), bmp->Width() * bmp->Height() );
+
+        cmsDeleteTransform( transform );
+        cmsCloseProfile( profileIn );
+        cmsCloseProfile( profileOut );
+        cmsFreeToneCurve( linear );
     }
 
     delete[] gainMap;

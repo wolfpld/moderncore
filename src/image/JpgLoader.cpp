@@ -91,7 +91,7 @@ bool HasColorspaceExtensions()
 }
 }
 
-std::unique_ptr<Bitmap> JpgLoader::Load()
+std::unique_ptr<Bitmap> JpgLoader::LoadNoColorspace()
 {
     if( !m_cinfo && !Open() ) return nullptr;
 
@@ -102,19 +102,18 @@ std::unique_ptr<Bitmap> JpgLoader::Load()
     jerr.pub.error_exit = []( j_common_ptr cinfo ) { longjmp( ((JpgErrorMgr*)cinfo->err)->setjmp_buffer, 1 ); };
     if( setjmp( jerr.setjmp_buffer ) ) return nullptr;
 
-    const bool cmyk = m_cinfo->jpeg_color_space == JCS_CMYK || m_cinfo->jpeg_color_space == JCS_YCCK;
+    m_cmyk = m_cinfo->jpeg_color_space == JCS_CMYK || m_cinfo->jpeg_color_space == JCS_YCCK;
 #ifdef JCS_EXTENSIONS
-    if( extensions && !cmyk ) m_cinfo->out_color_space = JCS_EXT_RGBX;
+    if( extensions && !m_cmyk ) m_cinfo->out_color_space = JCS_EXT_RGBX;
 #endif
     jpeg_start_decompress( m_cinfo );
 
     auto bmp = std::make_unique<Bitmap>( m_cinfo->output_width, m_cinfo->output_height, m_orientation );
     auto ptr = bmp->Data();
 
-    unsigned int iccSz;
-    jpeg_read_icc_profile( m_cinfo, &m_iccData, &iccSz );
+    jpeg_read_icc_profile( m_cinfo, &m_iccData, &m_iccSz );
 
-    if( cmyk || extensions )
+    if( m_cmyk || extensions )
     {
         while( m_cinfo->output_scanline < m_cinfo->output_height )
         {
@@ -140,14 +139,23 @@ std::unique_ptr<Bitmap> JpgLoader::Load()
         delete[] row;
     }
 
-    if( cmyk )
+    jpeg_finish_decompress( m_cinfo );
+    return bmp;
+}
+
+std::unique_ptr<Bitmap> JpgLoader::Load()
+{
+    auto bmp = LoadNoColorspace();
+    if( !bmp ) return nullptr;
+
+    if( m_cmyk )
     {
         cmsHPROFILE profileIn;
 
         if( m_iccData )
         {
-            mclog( LogLevel::Info, "ICC profile size: %u", iccSz );
-            profileIn = cmsOpenProfileFromMem( m_iccData, iccSz );
+            mclog( LogLevel::Info, "ICC profile size: %u", m_iccSz );
+            profileIn = cmsOpenProfileFromMem( m_iccData, m_iccSz );
         }
         else
         {
@@ -170,9 +178,9 @@ std::unique_ptr<Bitmap> JpgLoader::Load()
     }
     else if( m_iccData )
     {
-        mclog( LogLevel::Info, "ICC profile size: %u", iccSz );
+        mclog( LogLevel::Info, "ICC profile size: %u", m_iccSz );
 
-        auto profileIn = cmsOpenProfileFromMem( m_iccData, iccSz );
+        auto profileIn = cmsOpenProfileFromMem( m_iccData, m_iccSz );
         auto profileOut = cmsCreate_sRGBProfile();
         auto transform = cmsCreateTransform( profileIn, TYPE_RGBA_8, profileOut, TYPE_RGBA_8, INTENT_PERCEPTUAL, 0 );
 
@@ -185,8 +193,6 @@ std::unique_ptr<Bitmap> JpgLoader::Load()
         cmsCloseProfile( profileOut );
         cmsCloseProfile( profileIn );
     }
-
-    jpeg_finish_decompress( m_cinfo );
 
     bmp->SetAlpha( 0xFF );
     return bmp;

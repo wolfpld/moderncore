@@ -1,3 +1,4 @@
+#include <arpa/inet.h>
 #include <stdio.h>
 #include <jpeglib.h>
 #include <lcms2.h>
@@ -180,6 +181,29 @@ std::unique_ptr<Bitmap> JpgLoader::Load()
     return bmp;
 }
 
+struct Ifd
+{
+    uint16_t tag;
+    uint16_t type;
+    uint32_t count;
+    uint32_t value_offset;
+};
+
+struct MpEntry
+{
+    uint32_t attr;
+    uint32_t size;
+    uint32_t offset;
+    uint16_t dep1, dep2;
+};
+
+struct JpgMarker
+{
+    uint16_t marker;
+    uint16_t size;
+    uint32_t data;
+};
+
 bool JpgLoader::Open()
 {
     CheckPanic( m_valid, "Invalid JPEG file" );
@@ -197,8 +221,127 @@ bool JpgLoader::Open()
 
     jpeg_create_decompress( m_cinfo );
     jpeg_stdio_src( m_cinfo, *m_file );
+    jpeg_save_markers( m_cinfo, JPEG_APP0 + 1, 0xFFFF );
     jpeg_save_markers( m_cinfo, JPEG_APP0 + 2, 0xFFFF );
     jpeg_read_header( m_cinfo, TRUE );
+
+    m_gainMapOffset = -1;
+    bool validGainMap = false;
+    auto doc = LoadXmp( m_cinfo );
+    if( doc )
+    {
+        if( auto root = doc->child( "x:xmpmeta" ).child( "rdf:RDF" ).child( "rdf:Description" ); root )
+        {
+            const auto hdrgmns = root.attribute( "xmlns:hdrgm" );
+            const auto hdrgm = root.attribute( "hdrgm:Version" );
+            const auto containerns = root.attribute( "xmlns:Container" );
+            if( hdrgmns && strcmp( hdrgmns.as_string(), "http://ns.adobe.com/hdr-gain-map/1.0/" ) == 0 &&
+                containerns && strcmp( containerns.as_string(), "http://ns.google.com/photos/1.0/container/" ) == 0 &&
+                hdrgm && strcmp( hdrgm.as_string(), "1.0" ) == 0 )
+            {
+                const auto container = root.child( "Container:Directory" ).child( "rdf:Seq" ).children( "rdf:li" );
+                for( auto li : container )
+                {
+                    if( auto item = li.child( "Container:Item" ); item )
+                    {
+                        if( auto semantic = item.attribute( "Item:Semantic" ); semantic )
+                        {
+                            if( strcmp( semantic.as_string(), "GainMap" ) == 0 )
+                            {
+                                validGainMap = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if( validGainMap )
+    {
+        auto marker = m_cinfo->marker_list;
+        while( marker )
+        {
+            if( marker->marker == JPEG_APP0 + 2 && marker->data_length > 4 && memcmp( marker->data, "MPF\0", 4 ) == 0 )
+            {
+                auto ptr = marker->data + 4;
+                bool bigEndian = ptr[0] == 0x4D;
+
+                uint32_t offset;
+                memcpy( &offset, ptr + 4, 4 );
+                if( bigEndian ) offset = ntohl( offset );
+
+                uint16_t count;
+                memcpy( &count, ptr + offset, 2 );
+                if( bigEndian ) count = ntohs( count );
+                offset += 2;
+
+                int numImages = 0;
+                while( count-- > 0 )
+                {
+                    Ifd ifd;
+                    memcpy( &ifd, ptr + offset, sizeof( Ifd ) );
+                    offset += sizeof( Ifd );
+                    if( bigEndian )
+                    {
+                        ifd.tag = ntohs( ifd.tag );
+                        ifd.value_offset = ntohl( ifd.value_offset );
+                    }
+
+                    if( ifd.tag == 0xB001 )
+                    {
+                        numImages = ifd.value_offset;
+                    }
+                    else if( ifd.tag == 0xB002 )
+                    {
+                        auto mpe = ptr + ifd.value_offset;
+                        for( int i=0; i<numImages; i++ )
+                        {
+                            MpEntry entry;
+                            memcpy( &entry, mpe, sizeof( MpEntry ) );
+                            mpe += sizeof( MpEntry );
+
+                            if( entry.attr == 0 )
+                            {
+                                m_gainMapOffset = bigEndian ? ntohl( entry.offset ) : entry.offset;
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                }
+                break;
+            }
+            marker = marker->next;
+        }
+    }
+
+    // Gain map offset is relative to MFD Endian marker, the location of which is not provided by the library.
+    // Do the incredibly stupid thing and search for it in raw file data.
+    if( m_gainMapOffset >= 0 )
+    {
+        const auto filePos = ftell( *m_file );
+        fseek( *m_file, 2, SEEK_SET );  // skip Start-Of-Image
+        for(;;)
+        {
+            JpgMarker marker;
+            fread( &marker, sizeof( JpgMarker ), 1, *m_file );
+            marker.size = ntohs( marker.size );
+
+            if( marker.marker == 0xE2FF && marker.size > 6 && memcmp( &marker.data, "MPF\0", 4 ) == 0 )
+            {
+                m_gainMapOffset += ftell( *m_file );
+                mclog( LogLevel::Info, "Gain map offset: %d", m_gainMapOffset );
+                break;
+            }
+            else
+            {
+                fseek( *m_file, marker.size - 6, SEEK_CUR );
+            }
+        }
+        fseek( *m_file, filePos, SEEK_SET );
+    }
 
     return true;
 }
@@ -222,4 +365,27 @@ int JpgLoader::LoadOrientation()
     }
 
     return orientation;
+}
+
+std::unique_ptr<pugi::xml_document> JpgLoader::LoadXmp( jpeg_decompress_struct* cinfo )
+{
+    constexpr const char XmpSig[] = "http://ns.adobe.com/xap/1.0/";
+    constexpr size_t XmpSigLen = sizeof( XmpSig );
+
+    auto marker = cinfo->marker_list;
+    while( marker )
+    {
+        if( marker->marker == JPEG_APP0 + 1 )
+        {
+            if( marker->data_length > XmpSigLen && memcmp( marker->data, XmpSig, XmpSigLen ) == 0 )
+            {
+                auto doc = std::make_unique<pugi::xml_document>();
+                if( doc->load_buffer( marker->data + XmpSigLen, marker->data_length - XmpSigLen ) ) return doc;
+                break;
+            }
+        }
+        marker = marker->next;
+    }
+
+    return nullptr;
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <pugixml.hpp>
 #include <stdint.h>
 
 #include "ImageLoader.hpp"
@@ -26,6 +27,7 @@ private:
     [[nodiscard]] bool Open();
 
     int LoadOrientation();
+    std::unique_ptr<pugi::xml_document> LoadXmp( jpeg_decompress_struct* cinfo );
 
     bool m_valid;
     std::shared_ptr<FileWrapper> m_file;
@@ -33,4 +35,5 @@ private:
     jpeg_decompress_struct* m_cinfo;
     uint8_t* m_iccData;
     int m_orientation;
+    int m_gainMapOffset;
 };

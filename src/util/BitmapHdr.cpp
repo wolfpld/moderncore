@@ -1,5 +1,6 @@
 #include <cmath>
 #include <stb_image_resize2.h>
+#include <string.h>
 
 #include "Bitmap.hpp"
 #include "BitmapHdr.hpp"
@@ -72,6 +73,19 @@ std::unique_ptr<BitmapHdr> BitmapHdr::ResizeNew( uint32_t width, uint32_t height
         stbir_resize_extended( &resize );
     }
     return ret;
+}
+
+void BitmapHdr::SetAlpha( float alpha )
+{
+    auto ptr = m_data;
+    size_t sz = m_width * m_height;
+
+    ptr += 3;
+    while( sz-- )
+    {
+        memcpy( ptr, &alpha, sizeof( float ) );
+        ptr += 4;
+    }
 }
 
 std::unique_ptr<Bitmap> BitmapHdr::Tonemap( ToneMap::Operator op )

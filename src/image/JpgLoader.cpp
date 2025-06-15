@@ -111,8 +111,6 @@ std::unique_ptr<Bitmap> JpgLoader::LoadNoColorspace()
     auto bmp = std::make_unique<Bitmap>( m_cinfo->output_width, m_cinfo->output_height, m_orientation );
     auto ptr = bmp->Data();
 
-    jpeg_read_icc_profile( m_cinfo, &m_iccData, &m_iccSz );
-
     if( m_cmyk || extensions )
     {
         while( m_cinfo->output_scanline < m_cinfo->output_height )
@@ -413,6 +411,8 @@ bool JpgLoader::Open()
     jpeg_save_markers( m_cinfo, JPEG_APP0 + 1, 0xFFFF );
     jpeg_save_markers( m_cinfo, JPEG_APP0 + 2, 0xFFFF );
     jpeg_read_header( m_cinfo, TRUE );
+
+    jpeg_read_icc_profile( m_cinfo, &m_iccData, &m_iccSz );
 
     m_gainMapOffset = -1;
     bool validGainMap = false;

@@ -21,7 +21,10 @@ public:
     static bool IsValidSignature( const uint8_t* buf, size_t size );
 
     [[nodiscard]] bool IsValid() const override;
+    [[nodiscard]] bool IsHdr() override;
+
     [[nodiscard]] std::unique_ptr<Bitmap> Load() override;
+    [[nodiscard]] std::unique_ptr<BitmapHdr> LoadHdr( Colorspace colorspace ) override;
 
 private:
     [[nodiscard]] bool Open();

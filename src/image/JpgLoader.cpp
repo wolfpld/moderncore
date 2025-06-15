@@ -1,14 +1,18 @@
+#include <algorithm>
 #include <arpa/inet.h>
 #include <stdio.h>
 #include <jpeglib.h>
 #include <lcms2.h>
 #include <libexif/exif-data.h>
+#include <math.h>
 #include <setjmp.h>
+#include <stb_image_resize2.h>
 #include <stdint.h>
 #include <string.h>
 
 #include "JpgLoader.hpp"
 #include "util/Bitmap.hpp"
+#include "util/BitmapHdr.hpp"
 #include "util/EmbedData.hpp"
 #include "util/FileBuffer.hpp"
 #include "util/FileWrapper.hpp"
@@ -42,6 +46,12 @@ bool JpgLoader::IsValidSignature( const uint8_t* buf, size_t size )
 bool JpgLoader::IsValid() const
 {
     return m_valid;
+}
+
+bool JpgLoader::IsHdr()
+{
+    if( !m_cinfo && !Open() ) return false;
+    return m_gainMapOffset >= 0;
 }
 
 struct JpgErrorMgr
@@ -178,6 +188,123 @@ std::unique_ptr<Bitmap> JpgLoader::Load()
     jpeg_finish_decompress( m_cinfo );
 
     bmp->SetAlpha( 0xFF );
+    return bmp;
+}
+
+std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
+{
+    if( !m_cinfo && !Open() ) return nullptr;
+    if( m_gainMapOffset < 0 ) return nullptr;
+
+    auto base = Load();
+    if( !base ) return nullptr;
+
+    fseek( *m_file, m_gainMapOffset, SEEK_SET );
+
+    uint8_t* gainMap = nullptr;
+
+    jpeg_decompress_struct gcinfo;
+    JpgErrorMgr jerr;
+    gcinfo.err = jpeg_std_error( &jerr.pub );
+    jerr.pub.error_exit = []( j_common_ptr cinfo ) { longjmp( ((JpgErrorMgr*)cinfo->err)->setjmp_buffer, 1 ); };
+    if( setjmp( jerr.setjmp_buffer ) )
+    {
+        jpeg_destroy_decompress( &gcinfo );
+        delete[] gainMap;
+        return nullptr;
+    }
+
+    jpeg_create_decompress( &gcinfo );
+    jpeg_stdio_src( &gcinfo, *m_file );
+    jpeg_save_markers( &gcinfo, JPEG_APP0 + 1, 0xFFFF );
+    jpeg_read_header( &gcinfo, TRUE );
+    jpeg_start_decompress( &gcinfo );
+
+    auto doc = LoadXmp( &gcinfo );
+    if( !doc )
+    {
+        mclog( LogLevel::Warning, "JPEG: No XMP metadata found for gain map" );
+        jpeg_finish_decompress( &gcinfo );
+        jpeg_destroy_decompress( &gcinfo );
+        delete[] gainMap;
+        return nullptr;
+    }
+
+    auto root = doc->child( "x:xmpmeta" ).child( "rdf:RDF" ).child( "rdf:Description" );
+    if( !root )
+    {
+        mclog( LogLevel::Warning, "JPEG: No gain map metadata found in XMP" );
+        jpeg_finish_decompress( &gcinfo );
+        jpeg_destroy_decompress( &gcinfo );
+        delete[] gainMap;
+        return nullptr;
+    }
+
+    const auto attrGamma = root.attribute( "hdrgm:Gamma" );
+    const auto attrHdrCapMin = root.attribute( "hdrgm:HDRCapacityMin" );
+    const auto attrHdrCapMax = root.attribute( "hdrgm:HDRCapacityMax" );
+    const auto attrGainMapMin = root.attribute( "hdrgm:GainMapMin" );
+    const auto attrGainMapMax = root.attribute( "hdrgm:GainMapMax" );
+    const auto attrOffsetSdr = root.attribute( "hdrgm:OffsetSDR" );
+    const auto attrOffsetHdr = root.attribute( "hdrgm:OffsetHDR" );
+
+    const auto gamma = attrGamma ? attrGamma.as_float() : 1.0f;
+    const auto hdrCapMin = attrHdrCapMin ? attrHdrCapMin.as_float() : 0.0f;
+    const auto hdrCapMax = attrHdrCapMax ? attrHdrCapMax.as_float() : 1.0f;     // required value
+    const auto gainMapMin = attrGainMapMin ? attrGainMapMin.as_float() : 0.0f;
+    const auto gainMapMax = attrGainMapMax ? attrGainMapMax.as_float() : 1.0f;  // required value
+    const auto offsetSdr = attrOffsetSdr ? attrOffsetSdr.as_float() : (1.f/64);
+    const auto offsetHdr = attrOffsetHdr ? attrOffsetHdr.as_float() : (1.f/64);
+
+    gainMap = new uint8_t[gcinfo.output_width * gcinfo.output_height];
+    auto ptr = gainMap;
+    while( gcinfo.output_scanline < gcinfo.output_height )
+    {
+        jpeg_read_scanlines( &gcinfo, &ptr, 1 );
+        ptr += gcinfo.output_width;
+    }
+    jpeg_finish_decompress( &gcinfo );
+
+    if( gcinfo.output_width != base->Width() || gcinfo.output_height != base->Height() )
+    {
+        auto tmp = new uint8_t[base->Width() * base->Height()];
+        stbir_resize_uint8_linear( gainMap, gcinfo.output_width, gcinfo.output_height, 0, tmp, base->Width(), base->Height(), 0, STBIR_1CHANNEL );
+        delete[] gainMap;
+        gainMap = tmp;
+    }
+
+    jpeg_destroy_decompress( &gcinfo );
+
+    auto bmp = std::make_unique<BitmapHdr>( base->Width(), base->Height(), colorspace );
+    auto sz = base->Width() * base->Height();
+
+    auto dst = bmp->Data();
+    auto sdr = base->Data();
+    auto gm = gainMap;
+
+    const auto revGamma = 1.0f / gamma;
+    const float maxDisplayBoost = 10000.f / 100.f;
+    const auto unclampedWeightFactor = ( log2( maxDisplayBoost ) - hdrCapMin ) / ( hdrCapMax - hdrCapMin );
+    const auto weightFactor = std::clamp( unclampedWeightFactor, 0.f, 1.f );
+
+    while( sz-- > 0 )
+    {
+        const auto recovery = *gm++ / 255.f;
+        const auto logRecovery = gamma == 1.0f ? recovery : powf( recovery, revGamma );
+        const auto logBoost = gainMapMin * ( 1.f - logRecovery ) + gainMapMax * logRecovery;
+
+        const auto r = ( pow( *sdr++ / 255.f, 2.2f ) + offsetSdr ) * exp2( logBoost * weightFactor ) - offsetHdr;
+        const auto g = ( pow( *sdr++ / 255.f, 2.2f ) + offsetSdr ) * exp2( logBoost * weightFactor ) - offsetHdr;
+        const auto b = ( pow( *sdr++ / 255.f, 2.2f ) + offsetSdr ) * exp2( logBoost * weightFactor ) - offsetHdr;
+        sdr++;
+
+        *dst++ = r;
+        *dst++ = g;
+        *dst++ = b;
+        *dst++ = 1.0f;
+    }
+
+    delete[] gainMap;
     return bmp;
 }
 

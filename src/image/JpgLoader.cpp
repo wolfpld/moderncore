@@ -203,8 +203,63 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
     if( !m_cinfo && !Open() ) return nullptr;
     if( m_gainMapOffset < 0 ) return nullptr;
 
-    auto base = Load();
+    auto base = LoadNoColorspace();
     if( !base ) return nullptr;
+
+    cmsToneCurve* linear = cmsBuildGamma( nullptr, 1 );
+    cmsToneCurve* linear3[3] = { linear, linear, linear };
+    cmsHPROFILE profileIn;
+    auto profileOut = cmsCreateRGBProfile( &white709, colorspace == Colorspace::BT2020 ? &primaries2020 : &primaries709, linear3 );
+
+    auto baseFloat = std::make_unique<BitmapHdr>( base->Width(), base->Height(), colorspace );
+
+    if( m_cmyk )
+    {
+        if( m_iccData )
+        {
+            mclog( LogLevel::Info, "ICC profile size: %u", m_iccSz );
+            profileIn = cmsOpenProfileFromMem( m_iccData, m_iccSz );
+        }
+        else
+        {
+            mclog( LogLevel::Info, "No ICC profile found, using default" );
+            Unembed( CmykIcm );
+            profileIn = cmsOpenProfileFromMem( CmykIcm->data(), CmykIcm->size() );
+        }
+
+        auto transform = cmsCreateTransform( profileIn, TYPE_CMYK_8_REV, profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, 0 );
+        if( transform )
+        {
+            cmsDoTransform( transform, base->Data(), baseFloat->Data(), base->Width() * base->Height() );
+            cmsDeleteTransform( transform );
+        }
+    }
+    else
+    {
+        if( m_iccData )
+        {
+            mclog( LogLevel::Info, "ICC profile size: %u", m_iccSz );
+            profileIn = cmsOpenProfileFromMem( m_iccData, m_iccSz );
+        }
+        else
+        {
+            profileIn = cmsCreate_sRGBProfile();
+        }
+
+        auto transform = cmsCreateTransform( profileIn, TYPE_RGBA_8, profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, 0 );
+        if( transform )
+        {
+            cmsDoTransform( transform, base->Data(), baseFloat->Data(), base->Width() * base->Height() );
+            cmsDeleteTransform( transform );
+        }
+    }
+
+    cmsCloseProfile( profileIn );
+    cmsCloseProfile( profileOut );
+    cmsFreeToneCurve( linear );
+
+    base.reset();
+    baseFloat->SetAlpha( 1.f );
 
     fseek( *m_file, m_gainMapOffset, SEEK_SET );
 
@@ -272,21 +327,21 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
     }
     jpeg_finish_decompress( &gcinfo );
 
-    if( gcinfo.output_width != base->Width() || gcinfo.output_height != base->Height() )
+    if( gcinfo.output_width != baseFloat->Width() || gcinfo.output_height != baseFloat->Height() )
     {
-        auto tmp = new uint8_t[base->Width() * base->Height()];
-        stbir_resize_uint8_linear( gainMap, gcinfo.output_width, gcinfo.output_height, 0, tmp, base->Width(), base->Height(), 0, STBIR_1CHANNEL );
+        auto tmp = new uint8_t[baseFloat->Width() * baseFloat->Height()];
+        stbir_resize_uint8_linear( gainMap, gcinfo.output_width, gcinfo.output_height, 0, tmp, baseFloat->Width(), baseFloat->Height(), 0, STBIR_1CHANNEL );
         delete[] gainMap;
         gainMap = tmp;
     }
 
     jpeg_destroy_decompress( &gcinfo );
 
-    auto bmp = std::make_unique<BitmapHdr>( base->Width(), base->Height(), colorspace );
-    auto sz = base->Width() * base->Height();
+    auto bmp = std::make_unique<BitmapHdr>( baseFloat->Width(), baseFloat->Height(), colorspace );
+    auto sz = baseFloat->Width() * baseFloat->Height();
 
     auto dst = bmp->Data();
-    auto sdr = base->Data();
+    auto sdr = baseFloat->Data();
     auto gm = gainMap;
 
     const auto revGamma = 1.0f / gamma;
@@ -300,32 +355,15 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
         const auto logRecovery = gamma == 1.0f ? recovery : powf( recovery, revGamma );
         const auto logBoost = gainMapMin * ( 1.f - logRecovery ) + gainMapMax * logRecovery;
 
-        const auto r = ( pow( *sdr++ / 255.f, 2.2f ) + offsetSdr ) * exp2( logBoost * weightFactor ) - offsetHdr;
-        const auto g = ( pow( *sdr++ / 255.f, 2.2f ) + offsetSdr ) * exp2( logBoost * weightFactor ) - offsetHdr;
-        const auto b = ( pow( *sdr++ / 255.f, 2.2f ) + offsetSdr ) * exp2( logBoost * weightFactor ) - offsetHdr;
+        const auto r = ( *sdr++ + offsetSdr ) * exp2( logBoost * weightFactor ) - offsetHdr;
+        const auto g = ( *sdr++ + offsetSdr ) * exp2( logBoost * weightFactor ) - offsetHdr;
+        const auto b = ( *sdr++ + offsetSdr ) * exp2( logBoost * weightFactor ) - offsetHdr;
         sdr++;
 
         *dst++ = r;
         *dst++ = g;
         *dst++ = b;
         *dst++ = 1.0f;
-    }
-
-    if( colorspace == Colorspace::BT2020 )
-    {
-        cmsToneCurve* linear = cmsBuildGamma( nullptr, 1 );
-        cmsToneCurve* linear3[3] = { linear, linear, linear };
-
-        auto profileIn = cmsCreateRGBProfile( &white709, &primaries709, linear3 );
-        auto profileOut = cmsCreateRGBProfile( &white709, &primaries2020, linear3 );
-        auto transform = cmsCreateTransform( profileIn, TYPE_RGBA_FLT, profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA );
-
-        cmsDoTransform( transform, bmp->Data(), bmp->Data(), bmp->Width() * bmp->Height() );
-
-        cmsDeleteTransform( transform );
-        cmsCloseProfile( profileIn );
-        cmsCloseProfile( profileOut );
-        cmsFreeToneCurve( linear );
     }
 
     delete[] gainMap;

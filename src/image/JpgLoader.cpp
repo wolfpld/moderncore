@@ -301,46 +301,105 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
     const auto offsetHdr = attrOffsetHdr ? attrOffsetHdr.as_float() : (1.f/64);
 
     jpeg_start_decompress( &gcinfo );
-    gainMap = new uint8_t[gcinfo.output_width * gcinfo.output_height];
+    const auto gmChannels = gcinfo.output_components;
+    gainMap = new uint8_t[gcinfo.output_width * gcinfo.output_height * gmChannels];
     auto ptr = gainMap;
     while( gcinfo.output_scanline < gcinfo.output_height )
     {
         jpeg_read_scanlines( &gcinfo, &ptr, 1 );
-        ptr += gcinfo.output_width;
+        ptr += gcinfo.output_width * gmChannels;
     }
     jpeg_finish_decompress( &gcinfo );
 
-    if( gcinfo.output_width != baseFloat->Width() || gcinfo.output_height != baseFloat->Height() )
-    {
-        auto tmp = new uint8_t[baseFloat->Width() * baseFloat->Height()];
-        stbir_resize_uint8_linear( gainMap, gcinfo.output_width, gcinfo.output_height, 0, tmp, baseFloat->Width(), baseFloat->Height(), 0, STBIR_1CHANNEL );
-        delete[] gainMap;
-        gainMap = tmp;
-    }
-
+    auto gmFloat = std::make_unique<BitmapHdr>( gcinfo.output_width, gcinfo.output_height, colorspace );
     jpeg_destroy_decompress( &gcinfo );
 
+    auto src = gainMap;
+    auto dst = gmFloat->Data();
+    auto sz = gmFloat->Width() * gmFloat->Height();
+    if( gmChannels == 1 )
+    {
+        if( gamma == 1.f )
+        {
+            while( sz-- > 0 )
+            {
+                const auto v = *src++ / 255.f;
+                *dst++ = v;
+                *dst++ = v;
+                *dst++ = v;
+                *dst++ = 1.f;
+            }
+        }
+        else
+        {
+            const auto revGamma = 1.0f / gamma;
+            while( sz-- > 0 )
+            {
+                const auto v = powf( *src++ / 255.f, revGamma );
+                *dst++ = v;
+                *dst++ = v;
+                *dst++ = v;
+                *dst++ = 1.f;
+            }
+        }
+    }
+    else
+    {
+        CheckPanic( gmChannels == 3, "Unsupported JPEG gain map format" );
+        if( gamma == 1.f )
+        {
+            while( sz-- > 0 )
+            {
+                *dst++ = *src++ / 255.f;
+                *dst++ = *src++ / 255.f;
+                *dst++ = *src++ / 255.f;
+                *dst++ = 1.f;
+            }
+        }
+        else
+        {
+            const auto revGamma = 1.0f / gamma;
+            while( sz-- > 0 )
+            {
+                *dst++ = powf( *src++ / 255.f, revGamma );
+                *dst++ = powf( *src++ / 255.f, revGamma );
+                *dst++ = powf( *src++ / 255.f, revGamma );
+                *dst++ = 1.f;
+            }
+        }
+    }
+    delete[] gainMap;
+
+    if( gmFloat->Width() != baseFloat->Width() || gmFloat->Height() != baseFloat->Height() )
+    {
+        gmFloat->Resize( baseFloat->Width(), baseFloat->Height() );
+    }
+
     auto bmp = std::make_unique<BitmapHdr>( baseFloat->Width(), baseFloat->Height(), colorspace );
-    auto sz = baseFloat->Width() * baseFloat->Height();
+    sz = baseFloat->Width() * baseFloat->Height();
 
-    auto dst = bmp->Data();
+    dst = bmp->Data();
     auto sdr = baseFloat->Data();
-    auto gm = gainMap;
+    auto gm = gmFloat->Data();
 
-    const auto revGamma = 1.0f / gamma;
     const float maxDisplayBoost = 10000.f / 100.f;
     const auto unclampedWeightFactor = ( log2( maxDisplayBoost ) - hdrCapMin ) / ( hdrCapMax - hdrCapMin );
     const auto weightFactor = std::clamp( unclampedWeightFactor, 0.f, 1.f );
 
     while( sz-- > 0 )
     {
-        const auto recovery = *gm++ / 255.f;
-        const auto logRecovery = gamma == 1.0f ? recovery : powf( recovery, revGamma );
-        const auto logBoost = gainMapMin * ( 1.f - logRecovery ) + gainMapMax * logRecovery;
+        const auto gmR = *gm++;
+        const auto gmG = *gm++;
+        const auto gmB = *gm++;
+        gm++;
 
-        const auto r = ( *sdr++ + offsetSdr ) * exp2( logBoost * weightFactor ) - offsetHdr;
-        const auto g = ( *sdr++ + offsetSdr ) * exp2( logBoost * weightFactor ) - offsetHdr;
-        const auto b = ( *sdr++ + offsetSdr ) * exp2( logBoost * weightFactor ) - offsetHdr;
+        const auto logBoostR = gainMapMin * ( 1.f - gmR ) + gainMapMax * gmR;
+        const auto logBoostG = gainMapMin * ( 1.f - gmG ) + gainMapMax * gmG;
+        const auto logBoostB = gainMapMin * ( 1.f - gmB ) + gainMapMax * gmB;
+
+        const auto r = ( *sdr++ + offsetSdr ) * exp2( logBoostR * weightFactor ) - offsetHdr;
+        const auto g = ( *sdr++ + offsetSdr ) * exp2( logBoostG * weightFactor ) - offsetHdr;
+        const auto b = ( *sdr++ + offsetSdr ) * exp2( logBoostB * weightFactor ) - offsetHdr;
         sdr++;
 
         *dst++ = r;
@@ -349,7 +408,6 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
         *dst++ = 1.0f;
     }
 
-    delete[] gainMap;
     return bmp;
 }
 

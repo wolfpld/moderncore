@@ -265,13 +265,11 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
     jpeg_stdio_src( &gcinfo, *m_file );
     jpeg_save_markers( &gcinfo, JPEG_APP0 + 1, 0xFFFF );
     jpeg_read_header( &gcinfo, TRUE );
-    jpeg_start_decompress( &gcinfo );
 
     auto doc = LoadXmp( &gcinfo );
     if( !doc )
     {
         mclog( LogLevel::Warning, "JPEG: No XMP metadata found for gain map" );
-        jpeg_finish_decompress( &gcinfo );
         jpeg_destroy_decompress( &gcinfo );
         delete[] gainMap;
         return nullptr;
@@ -281,7 +279,6 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
     if( !root )
     {
         mclog( LogLevel::Warning, "JPEG: No gain map metadata found in XMP" );
-        jpeg_finish_decompress( &gcinfo );
         jpeg_destroy_decompress( &gcinfo );
         delete[] gainMap;
         return nullptr;
@@ -303,6 +300,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
     const auto offsetSdr = attrOffsetSdr ? attrOffsetSdr.as_float() : (1.f/64);
     const auto offsetHdr = attrOffsetHdr ? attrOffsetHdr.as_float() : (1.f/64);
 
+    jpeg_start_decompress( &gcinfo );
     gainMap = new uint8_t[gcinfo.output_width * gcinfo.output_height];
     auto ptr = gainMap;
     while( gcinfo.output_scanline < gcinfo.output_height )

@@ -178,54 +178,52 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
     auto base = LoadNoColorspace();
     if( !base ) return nullptr;
 
+    auto baseFloat = std::make_unique<BitmapHdr>( base->Width(), base->Height(), colorspace );
+
     cmsToneCurve* linear = cmsBuildGamma( nullptr, 1 );
     cmsToneCurve* linear3[3] = { linear, linear, linear };
     cmsHPROFILE profileIn;
     auto profileOut = cmsCreateRGBProfile( &white709, colorspace == Colorspace::BT2020 ? &primaries2020 : &primaries709, linear3 );
-
-    auto baseFloat = std::make_unique<BitmapHdr>( base->Width(), base->Height(), colorspace );
-
-    if( m_cmyk )
+    if( m_iccData )
     {
-        if( m_iccData )
-        {
-            mclog( LogLevel::Info, "ICC profile size: %u", m_iccSz );
-            profileIn = cmsOpenProfileFromMem( m_iccData, m_iccSz );
-        }
-        else
-        {
-            mclog( LogLevel::Info, "No ICC profile found, using default" );
-            Unembed( CmykIcm );
-            profileIn = cmsOpenProfileFromMem( CmykIcm->data(), CmykIcm->size() );
-        }
-
-        auto transform = cmsCreateTransform( profileIn, TYPE_CMYK_8_REV, profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, 0 );
-        if( transform )
-        {
-            cmsDoTransform( transform, base->Data(), baseFloat->Data(), base->Width() * base->Height() );
-            cmsDeleteTransform( transform );
-        }
+        mclog( LogLevel::Info, "ICC profile size: %u", m_iccSz );
+        profileIn = cmsOpenProfileFromMem( m_iccData, m_iccSz );
+    }
+    else if( m_cmyk )
+    {
+        Unembed( CmykIcm );
+        profileIn = cmsOpenProfileFromMem( CmykIcm->data(), CmykIcm->size() );
     }
     else
     {
-        if( m_iccData )
-        {
-            mclog( LogLevel::Info, "ICC profile size: %u", m_iccSz );
-            profileIn = cmsOpenProfileFromMem( m_iccData, m_iccSz );
-        }
-        else
-        {
-            profileIn = cmsCreate_sRGBProfile();
-        }
-
-        auto transform = cmsCreateTransform( profileIn, TYPE_RGBA_8, profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, 0 );
-        if( transform )
-        {
-            cmsDoTransform( transform, base->Data(), baseFloat->Data(), base->Width() * base->Height() );
-            cmsDeleteTransform( transform );
-        }
+        profileIn = cmsCreate_sRGBProfile();
     }
-
+    auto transform = cmsCreateTransform( profileIn, m_cmyk ? TYPE_CMYK_8_REV : TYPE_RGBA_8, profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, 0 );
+    if( transform )
+    {
+        cmsDoTransform( transform, base->Data(), baseFloat->Data(), base->Width() * base->Height() );
+    }
+    else
+    {
+        auto sz = base->Width() * base->Height();
+        cmsHPROFILE profileSrgb = cmsCreate_sRGBProfile();
+        transform = cmsCreateTransform( profileIn, m_cmyk ? TYPE_CMYK_8_REV : TYPE_RGBA_8, profileSrgb, TYPE_RGBA_8, INTENT_PERCEPTUAL, 0 );
+        if( !transform )
+        {
+            cmsCloseProfile( profileIn );
+            cmsCloseProfile( profileOut );
+            cmsFreeToneCurve( linear );
+            mclog( LogLevel::Error, "JPEG: Failed to create transform to sRGB" );
+            return nullptr;
+        }
+        cmsDoTransform( transform, base->Data(), base->Data(), sz );
+        cmsDeleteTransform( transform );
+        transform = cmsCreateTransform( profileSrgb, TYPE_RGBA_8, profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, 0 );
+        CheckPanic( transform, "Failed to create sRGB to HDR transform" );
+        cmsDoTransform( transform, base->Data(), baseFloat->Data(), sz );
+        cmsCloseProfile( profileSrgb );
+    }
+    if( transform ) cmsDeleteTransform( transform );
     cmsCloseProfile( profileIn );
     cmsCloseProfile( profileOut );
     cmsFreeToneCurve( linear );

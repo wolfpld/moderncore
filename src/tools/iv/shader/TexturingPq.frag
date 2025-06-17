@@ -7,5 +7,5 @@ layout(binding = 0) uniform sampler2D tex;
 
 void main() {
     vec4 color = texture(tex, outTexCoord);
-    outColor = vec4( Pq( color.rgb ), color.a );
+    outColor = vec4( Pq( color.rgb * 2.03 ), color.a );
 }

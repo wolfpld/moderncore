@@ -145,51 +145,27 @@ std::unique_ptr<Bitmap> JpgLoader::Load()
     auto bmp = LoadNoColorspace();
     if( !bmp ) return nullptr;
 
-    if( m_cmyk )
-    {
-        cmsHPROFILE profileIn;
-
-        if( m_iccData )
-        {
-            mclog( LogLevel::Info, "ICC profile size: %u", m_iccSz );
-            profileIn = cmsOpenProfileFromMem( m_iccData, m_iccSz );
-        }
-        else
-        {
-            mclog( LogLevel::Info, "No ICC profile found, using default" );
-            Unembed( CmykIcm );
-            profileIn = cmsOpenProfileFromMem( CmykIcm->data(), CmykIcm->size() );
-        }
-
-        auto profileOut = cmsCreate_sRGBProfile();
-        auto transform = cmsCreateTransform( profileIn, TYPE_CMYK_8_REV, profileOut, TYPE_RGBA_8, INTENT_PERCEPTUAL, 0 );
-
-        if( transform )
-        {
-            cmsDoTransform( transform, bmp->Data(), bmp->Data(), bmp->Width() * bmp->Height() );
-            cmsDeleteTransform( transform );
-        }
-
-        cmsCloseProfile( profileOut );
-        cmsCloseProfile( profileIn );
-    }
-    else if( m_iccData )
+    cmsHTRANSFORM transform = nullptr;
+    cmsHPROFILE profileIn = nullptr;
+    auto profileOut = cmsCreate_sRGBProfile();
+    if( m_iccData )
     {
         mclog( LogLevel::Info, "ICC profile size: %u", m_iccSz );
-
-        auto profileIn = cmsOpenProfileFromMem( m_iccData, m_iccSz );
-        auto profileOut = cmsCreate_sRGBProfile();
-        auto transform = cmsCreateTransform( profileIn, TYPE_RGBA_8, profileOut, TYPE_RGBA_8, INTENT_PERCEPTUAL, 0 );
-
-        if( transform )
-        {
-            cmsDoTransform( transform, bmp->Data(), bmp->Data(), bmp->Width() * bmp->Height() );
-            cmsDeleteTransform( transform );
-        }
-
-        cmsCloseProfile( profileOut );
-        cmsCloseProfile( profileIn );
+        profileIn = cmsOpenProfileFromMem( m_iccData, m_iccSz );
     }
+    else if( m_cmyk )
+    {
+        Unembed( CmykIcm );
+        profileIn = cmsOpenProfileFromMem( CmykIcm->data(), CmykIcm->size() );
+    }
+    if( profileIn ) transform = cmsCreateTransform( profileIn, m_cmyk ? TYPE_CMYK_8_REV : TYPE_RGBA_8, profileOut, TYPE_RGBA_8, INTENT_PERCEPTUAL, 0 );
+    if( transform )
+    {
+        cmsDoTransform( transform, bmp->Data(), bmp->Data(), bmp->Width() * bmp->Height() );
+        cmsDeleteTransform( transform );
+    }
+    if( profileIn ) cmsCloseProfile( profileIn );
+    cmsCloseProfile( profileOut );
 
     bmp->SetAlpha( 0xFF );
     return bmp;

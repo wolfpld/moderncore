@@ -40,6 +40,7 @@ private:
     unsigned int m_iccSz;
     uint8_t* m_iccData;
     bool m_cmyk;
+    bool m_grayScale;
     int m_orientation;
     int m_gainMapOffset;
 };

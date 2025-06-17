@@ -52,7 +52,7 @@ bool JpgLoader::IsValid() const
 bool JpgLoader::IsHdr()
 {
     if( !m_cinfo && !Open() ) return false;
-    return m_iccData || m_gainMapOffset >= 0;
+    return !m_grayScale && ( m_iccData || m_gainMapOffset >= 0 );
 }
 
 struct JpgErrorMgr
@@ -401,6 +401,7 @@ bool JpgLoader::Open()
 
     jpeg_read_icc_profile( m_cinfo, &m_iccData, &m_iccSz );
     m_cmyk = m_cinfo->jpeg_color_space == JCS_CMYK || m_cinfo->jpeg_color_space == JCS_YCCK;
+    m_grayScale = m_cinfo->jpeg_color_space == JCS_GRAYSCALE;
 
     m_gainMapOffset = -1;
     bool validGainMap = false;

@@ -102,7 +102,6 @@ std::unique_ptr<Bitmap> JpgLoader::LoadNoColorspace()
     jerr.pub.error_exit = []( j_common_ptr cinfo ) { longjmp( ((JpgErrorMgr*)cinfo->err)->setjmp_buffer, 1 ); };
     if( setjmp( jerr.setjmp_buffer ) ) return nullptr;
 
-    m_cmyk = m_cinfo->jpeg_color_space == JCS_CMYK || m_cinfo->jpeg_color_space == JCS_YCCK;
 #ifdef JCS_EXTENSIONS
     if( extensions && !m_cmyk ) m_cinfo->out_color_space = JCS_EXT_RGBX;
 #endif
@@ -413,6 +412,7 @@ bool JpgLoader::Open()
     jpeg_read_header( m_cinfo, TRUE );
 
     jpeg_read_icc_profile( m_cinfo, &m_iccData, &m_iccSz );
+    m_cmyk = m_cinfo->jpeg_color_space == JCS_CMYK || m_cinfo->jpeg_color_space == JCS_YCCK;
 
     m_gainMapOffset = -1;
     bool validGainMap = false;

@@ -52,7 +52,7 @@ bool JpgLoader::IsValid() const
 bool JpgLoader::IsHdr()
 {
     if( !m_cinfo && !Open() ) return false;
-    return m_gainMapOffset >= 0;
+    return m_iccData || m_gainMapOffset >= 0;
 }
 
 struct JpgErrorMgr
@@ -173,8 +173,7 @@ std::unique_ptr<Bitmap> JpgLoader::Load()
 
 std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
 {
-    if( !m_cinfo && !Open() ) return nullptr;
-    if( m_gainMapOffset < 0 ) return nullptr;
+    if( !IsHdr() ) return nullptr;
 
     auto base = LoadNoColorspace();
     if( !base ) return nullptr;
@@ -233,6 +232,21 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
 
     base.reset();
     baseFloat->SetAlpha( 1.f );
+
+    if( m_gainMapOffset < 0 )
+    {
+        auto sz = baseFloat->Width() * baseFloat->Height();
+        auto ptr = baseFloat->Data();
+        while( sz-- > 0 )
+        {
+            // ITU-R BT.2408 reference white is 203 nits
+            *ptr++ *= 2.03f;
+            *ptr++ *= 2.03f;
+            *ptr++ *= 2.03f;
+            ptr++;
+        }
+        return baseFloat;
+    }
 
     fseek( *m_file, m_gainMapOffset, SEEK_SET );
 

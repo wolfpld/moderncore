@@ -171,6 +171,65 @@ std::unique_ptr<Bitmap> JpgLoader::Load()
     return bmp;
 }
 
+#pragma pack( push, 1 )
+struct IsoHeader
+{
+    uint32_t version;
+    uint8_t flags;
+    uint32_t baseHdrHeadroomNumerator;
+    uint32_t baseHdrHeadroomDenominator;
+    uint32_t alternateHdrHeadroomNumerator;
+    uint32_t alternateHdrHeadroomDenominator;
+};
+#pragma pack( pop )
+
+struct IsoChannel
+{
+    int32_t gainMapMinNumerator;
+    uint32_t gainMapMinDenominator;
+    int32_t gainMapMaxNumerator;
+    uint32_t gainMapMaxDenominator;
+    uint32_t gammaNumerator;
+    uint32_t gammaDenominator;
+    int32_t baseOffsetNumerator;
+    uint32_t baseOffsetDenominator;
+    int32_t alternateOffsetNumerator;
+    uint32_t alternateOffsetDenominator;
+};
+
+struct Channel
+{
+    float gamma;
+    float gainMapMin, gainMapMax;
+    float offsetSdr, offsetHdr;
+};
+
+static Channel ReadIsoChannel( uint8_t*& ptr )
+{
+    IsoChannel ch;
+    memcpy( &ch, ptr, sizeof( IsoChannel ) );
+    ptr += sizeof( IsoChannel );
+
+    ch.gainMapMinNumerator = ntohl( ch.gainMapMinNumerator );
+    ch.gainMapMinDenominator = ntohl( ch.gainMapMinDenominator );
+    ch.gainMapMaxNumerator = ntohl( ch.gainMapMaxNumerator );
+    ch.gainMapMaxDenominator = ntohl( ch.gainMapMaxDenominator );
+    ch.gammaNumerator = ntohl( ch.gammaNumerator );
+    ch.gammaDenominator = ntohl( ch.gammaDenominator );
+    ch.baseOffsetNumerator = ntohl( ch.baseOffsetNumerator );
+    ch.baseOffsetDenominator = ntohl( ch.baseOffsetDenominator );
+    ch.alternateOffsetNumerator = ntohl( ch.alternateOffsetNumerator );
+    ch.alternateOffsetDenominator = ntohl( ch.alternateOffsetDenominator );
+
+    return {
+        .gamma = float( ch.gammaNumerator ) / float( ch.gammaDenominator ),
+        .gainMapMin = float( ch.gainMapMinNumerator ) / float( ch.gainMapMinDenominator ),
+        .gainMapMax = float( ch.gainMapMaxNumerator ) / float( ch.gainMapMaxDenominator ),
+        .offsetSdr = float( ch.baseOffsetNumerator ) / float( ch.baseOffsetDenominator ),
+        .offsetHdr = float( ch.alternateOffsetNumerator ) / float( ch.alternateOffsetDenominator )
+    };
+}
+
 std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
 {
     if( !IsHdr() ) return nullptr;
@@ -264,41 +323,91 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
     jpeg_create_decompress( &gcinfo );
     jpeg_stdio_src( &gcinfo, *m_file );
     jpeg_save_markers( &gcinfo, JPEG_APP0 + 1, 0xFFFF );
+    jpeg_save_markers( &gcinfo, JPEG_APP0 + 2, 0xFFFF );
     jpeg_read_header( &gcinfo, TRUE );
 
-    auto doc = LoadXmp( &gcinfo );
-    if( !doc )
+    float hdrCapMin, hdrCapMax;
+    Channel ch[3];
+
+    bool loaded = false;
+    if( m_isIso )
     {
-        mclog( LogLevel::Warning, "JPEG: No XMP metadata found for gain map" );
-        jpeg_destroy_decompress( &gcinfo );
-        delete[] gainMap;
-        return nullptr;
+        auto marker = gcinfo.marker_list;
+        while( marker )
+        {
+            if( marker->marker == JPEG_APP0 + 2 && marker->data_length > 28 &&
+                memcmp( marker->data, "urn:iso:std:iso:ts:21496:-1\0", 28 ) == 0 )
+            {
+                auto ptr = marker->data + 28;
+                IsoHeader hdr;
+                memcpy( &hdr, ptr, sizeof( IsoHeader ) );
+                ptr += sizeof( IsoHeader );
+                const bool multichannel = ( hdr.flags & 0x80 ) != 0;
+
+                ch[0] = ReadIsoChannel( ptr );
+                if( multichannel )
+                {
+                    ch[1] = ReadIsoChannel( ptr );
+                    ch[2] = ReadIsoChannel( ptr );
+                }
+                else
+                {
+                    ch[1] = ch[2] = ch[0];
+                }
+
+                loaded = true;
+                break;
+            }
+            marker = marker->next;
+        }
+    }
+    else
+    {
+        auto doc = LoadXmp( &gcinfo );
+        if( !doc )
+        {
+            mclog( LogLevel::Warning, "JPEG: No XMP metadata found for gain map" );
+            jpeg_destroy_decompress( &gcinfo );
+            return nullptr;
+        }
+
+        auto root = doc->child( "x:xmpmeta" ).child( "rdf:RDF" ).child( "rdf:Description" );
+        if( !root )
+        {
+            mclog( LogLevel::Warning, "JPEG: No gain map metadata found in XMP" );
+            jpeg_destroy_decompress( &gcinfo );
+            return nullptr;
+        }
+
+        const auto attrGamma = root.attribute( "hdrgm:Gamma" );
+        const auto attrHdrCapMin = root.attribute( "hdrgm:HDRCapacityMin" );
+        const auto attrHdrCapMax = root.attribute( "hdrgm:HDRCapacityMax" );
+        const auto attrGainMapMin = root.attribute( "hdrgm:GainMapMin" );
+        const auto attrGainMapMax = root.attribute( "hdrgm:GainMapMax" );
+        const auto attrOffsetSdr = root.attribute( "hdrgm:OffsetSDR" );
+        const auto attrOffsetHdr = root.attribute( "hdrgm:OffsetHDR" );
+
+        ch[0] = {
+            .gamma = attrGamma ? attrGamma.as_float() : 1.0f,
+            .gainMapMin = attrGainMapMin ? attrGainMapMin.as_float() : 0.0f,
+            .gainMapMax = attrGainMapMax ? attrGainMapMax.as_float() : 1.0f,  // required value
+            .offsetSdr = attrOffsetSdr ? attrOffsetSdr.as_float() : (1.f/64),
+            .offsetHdr = attrOffsetHdr ? attrOffsetHdr.as_float() : (1.f/64)
+        };
+        ch[2] = ch[1] = ch[0];
+
+        hdrCapMin = attrHdrCapMin ? attrHdrCapMin.as_float() : 0.0f;
+        hdrCapMax = attrHdrCapMax ? attrHdrCapMax.as_float() : 1.0f;     // required value
+
+        loaded = true;
     }
 
-    auto root = doc->child( "x:xmpmeta" ).child( "rdf:RDF" ).child( "rdf:Description" );
-    if( !root )
+    if( !loaded )
     {
-        mclog( LogLevel::Warning, "JPEG: No gain map metadata found in XMP" );
+        mclog( LogLevel::Warning, "JPEG: No gain map metadata found" );
         jpeg_destroy_decompress( &gcinfo );
-        delete[] gainMap;
         return nullptr;
     }
-
-    const auto attrGamma = root.attribute( "hdrgm:Gamma" );
-    const auto attrHdrCapMin = root.attribute( "hdrgm:HDRCapacityMin" );
-    const auto attrHdrCapMax = root.attribute( "hdrgm:HDRCapacityMax" );
-    const auto attrGainMapMin = root.attribute( "hdrgm:GainMapMin" );
-    const auto attrGainMapMax = root.attribute( "hdrgm:GainMapMax" );
-    const auto attrOffsetSdr = root.attribute( "hdrgm:OffsetSDR" );
-    const auto attrOffsetHdr = root.attribute( "hdrgm:OffsetHDR" );
-
-    const auto gamma = attrGamma ? attrGamma.as_float() : 1.0f;
-    const auto hdrCapMin = attrHdrCapMin ? attrHdrCapMin.as_float() : 0.0f;
-    const auto hdrCapMax = attrHdrCapMax ? attrHdrCapMax.as_float() : 1.0f;     // required value
-    const auto gainMapMin = attrGainMapMin ? attrGainMapMin.as_float() : 0.0f;
-    const auto gainMapMax = attrGainMapMax ? attrGainMapMax.as_float() : 1.0f;  // required value
-    const auto offsetSdr = attrOffsetSdr ? attrOffsetSdr.as_float() : (1.f/64);
-    const auto offsetHdr = attrOffsetHdr ? attrOffsetHdr.as_float() : (1.f/64);
 
     jpeg_start_decompress( &gcinfo );
     const auto gmChannels = gcinfo.output_components;
@@ -319,7 +428,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
     auto sz = gmFloat->Width() * gmFloat->Height();
     if( gmChannels == 1 )
     {
-        if( gamma == 1.f )
+        if( ch[0].gamma == 1.f )
         {
             while( sz-- > 0 )
             {
@@ -332,7 +441,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
         }
         else
         {
-            const auto revGamma = 1.0f / gamma;
+            const auto revGamma = 1.0f / ch[0].gamma;
             while( sz-- > 0 )
             {
                 const auto v = powf( *src++ / 255.f, revGamma );
@@ -346,7 +455,9 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
     else
     {
         CheckPanic( gmChannels == 3, "Unsupported JPEG gain map format" );
-        if( gamma == 1.f )
+        if( ch[0].gamma == 1.f &&
+            ch[1].gamma == 1.f &&
+            ch[2].gamma == 1.f )
         {
             while( sz-- > 0 )
             {
@@ -358,12 +469,14 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
         }
         else
         {
-            const auto revGamma = 1.0f / gamma;
+            const auto revGammaR = 1.0f / ch[0].gamma;
+            const auto revGammaG = 1.0f / ch[1].gamma;
+            const auto revGammaB = 1.0f / ch[2].gamma;
             while( sz-- > 0 )
             {
-                *dst++ = powf( *src++ / 255.f, revGamma );
-                *dst++ = powf( *src++ / 255.f, revGamma );
-                *dst++ = powf( *src++ / 255.f, revGamma );
+                *dst++ = powf( *src++ / 255.f, revGammaR );
+                *dst++ = powf( *src++ / 255.f, revGammaG );
+                *dst++ = powf( *src++ / 255.f, revGammaB );
                 *dst++ = 1.f;
             }
         }
@@ -382,9 +495,12 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
     auto sdr = baseFloat->Data();
     auto gm = gmFloat->Data();
 
+    /*
     const float maxDisplayBoost = 10000.f / 100.f;
     const auto unclampedWeightFactor = ( log2( maxDisplayBoost ) - hdrCapMin ) / ( hdrCapMax - hdrCapMin );
     const auto weightFactor = std::clamp( unclampedWeightFactor, 0.f, 1.f );
+    */
+    const auto weightFactor = 1.f;
 
     while( sz-- > 0 )
     {
@@ -393,13 +509,13 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
         const auto gmB = *gm++;
         gm++;
 
-        const auto logBoostR = gainMapMin * ( 1.f - gmR ) + gainMapMax * gmR;
-        const auto logBoostG = gainMapMin * ( 1.f - gmG ) + gainMapMax * gmG;
-        const auto logBoostB = gainMapMin * ( 1.f - gmB ) + gainMapMax * gmB;
+        const auto logBoostR = ch[0].gainMapMin * ( 1.f - gmR ) + ch[0].gainMapMax * gmR;
+        const auto logBoostG = ch[1].gainMapMin * ( 1.f - gmG ) + ch[1].gainMapMax * gmG;
+        const auto logBoostB = ch[2].gainMapMin * ( 1.f - gmB ) + ch[2].gainMapMax * gmB;
 
-        const auto r = ( *sdr++ + offsetSdr ) * exp2( logBoostR * weightFactor ) - offsetHdr;
-        const auto g = ( *sdr++ + offsetSdr ) * exp2( logBoostG * weightFactor ) - offsetHdr;
-        const auto b = ( *sdr++ + offsetSdr ) * exp2( logBoostB * weightFactor ) - offsetHdr;
+        const auto r = ( *sdr++ + ch[0].offsetSdr ) * exp2( logBoostR * weightFactor ) - ch[0].offsetHdr;
+        const auto g = ( *sdr++ + ch[1].offsetSdr ) * exp2( logBoostG * weightFactor ) - ch[1].offsetHdr;
+        const auto b = ( *sdr++ + ch[2].offsetSdr ) * exp2( logBoostB * weightFactor ) - ch[2].offsetHdr;
         sdr++;
 
         *dst++ = r;
@@ -460,30 +576,53 @@ bool JpgLoader::Open()
     m_grayScale = m_cinfo->jpeg_color_space == JCS_GRAYSCALE;
 
     m_gainMapOffset = -1;
+    m_isIso = false;
+
     bool validGainMap = false;
-    auto doc = LoadXmp( m_cinfo );
-    if( doc )
+    auto marker = m_cinfo->marker_list;
+    while( marker )
     {
-        if( auto root = doc->child( "x:xmpmeta" ).child( "rdf:RDF" ).child( "rdf:Description" ); root )
+        if( marker->marker == JPEG_APP0 + 2 && marker->data_length > 28 &&
+            memcmp( marker->data, "urn:iso:std:iso:ts:21496:-1\0", 28 ) == 0 )
         {
-            const auto hdrgmns = root.attribute( "xmlns:hdrgm" );
-            const auto hdrgm = root.attribute( "hdrgm:Version" );
-            const auto containerns = root.attribute( "xmlns:Container" );
-            if( hdrgmns && strcmp( hdrgmns.as_string(), "http://ns.adobe.com/hdr-gain-map/1.0/" ) == 0 &&
-                containerns && strcmp( containerns.as_string(), "http://ns.google.com/photos/1.0/container/" ) == 0 &&
-                hdrgm && strcmp( hdrgm.as_string(), "1.0" ) == 0 )
+            uint16_t version;
+            memcpy( &version, marker->data + 28, 2 );
+            version = ntohs( version );
+            if( version == 0 )
             {
-                const auto container = root.child( "Container:Directory" ).child( "rdf:Seq" ).children( "rdf:li" );
-                for( auto li : container )
+                validGainMap = true;
+                m_isIso = true;
+            }
+            break;
+        }
+        marker = marker->next;
+    }
+    if( !m_isIso )
+    {
+        auto doc = LoadXmp( m_cinfo );
+        if( doc )
+        {
+            if( auto root = doc->child( "x:xmpmeta" ).child( "rdf:RDF" ).child( "rdf:Description" ); root )
+            {
+                const auto hdrgmns = root.attribute( "xmlns:hdrgm" );
+                const auto hdrgm = root.attribute( "hdrgm:Version" );
+                const auto containerns = root.attribute( "xmlns:Container" );
+                if( hdrgmns && strcmp( hdrgmns.as_string(), "http://ns.adobe.com/hdr-gain-map/1.0/" ) == 0 &&
+                    containerns && strcmp( containerns.as_string(), "http://ns.google.com/photos/1.0/container/" ) == 0 &&
+                    hdrgm && strcmp( hdrgm.as_string(), "1.0" ) == 0 )
                 {
-                    if( auto item = li.child( "Container:Item" ); item )
+                    const auto container = root.child( "Container:Directory" ).child( "rdf:Seq" ).children( "rdf:li" );
+                    for( auto li : container )
                     {
-                        if( auto semantic = item.attribute( "Item:Semantic" ); semantic )
+                        if( auto item = li.child( "Container:Item" ); item )
                         {
-                            if( strcmp( semantic.as_string(), "GainMap" ) == 0 )
+                            if( auto semantic = item.attribute( "Item:Semantic" ); semantic )
                             {
-                                validGainMap = true;
-                                break;
+                                if( strcmp( semantic.as_string(), "GainMap" ) == 0 )
+                                {
+                                    validGainMap = true;
+                                    break;
+                                }
                             }
                         }
                     }
@@ -535,8 +674,10 @@ bool JpgLoader::Open()
                             MpEntry entry;
                             memcpy( &entry, mpe, sizeof( MpEntry ) );
                             mpe += sizeof( MpEntry );
+                            if( bigEndian ) entry.attr = ntohl( entry.attr );
 
-                            if( entry.attr == 0 )
+                            // Undefined or GainMap
+                            if( entry.attr == 0 || ( entry.attr & 0xFFFFFF ) == 0x050000 )
                             {
                                 m_gainMapOffset = bigEndian ? ntohl( entry.offset ) : entry.offset;
                                 break;

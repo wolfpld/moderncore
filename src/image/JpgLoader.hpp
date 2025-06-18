@@ -43,4 +43,5 @@ private:
     bool m_grayScale;
     int m_orientation;
     int m_gainMapOffset;
+    bool m_isIso;
 };

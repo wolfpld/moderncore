@@ -927,7 +927,7 @@ void HeifLoader::ApplyTransfer( float* ptr, size_t sz, size_t offset )
         CheckPanic( m_nclx, "No nclx color profile found" );
         CheckPanic( m_colorspace == Colorspace::BT709 || m_colorspace == Colorspace::BT2020, "Invalid colorspace" );
 
-        const auto NominalLuminanceMul = 1.0f / ( m_colorspace == Colorspace::BT709 ? 250.f : 100.f );
+        const auto NominalLuminanceMul = 1.0f / 203.f;
         switch( m_nclx->transfer_characteristics )
         {
         case heif_transfer_characteristic_ITU_R_BT_2100_0_PQ:

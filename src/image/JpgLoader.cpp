@@ -495,13 +495,6 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
     auto sdr = baseFloat->Data();
     auto gm = gmFloat->Data();
 
-    /*
-    const float maxDisplayBoost = 10000.f / 100.f;
-    const auto unclampedWeightFactor = ( log2( maxDisplayBoost ) - hdrCapMin ) / ( hdrCapMax - hdrCapMin );
-    const auto weightFactor = std::clamp( unclampedWeightFactor, 0.f, 1.f );
-    */
-    const auto weightFactor = 1.f;
-
     while( sz-- > 0 )
     {
         const auto gmR = *gm++;
@@ -513,9 +506,9 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
         const auto logBoostG = ch[1].gainMapMin * ( 1.f - gmG ) + ch[1].gainMapMax * gmG;
         const auto logBoostB = ch[2].gainMapMin * ( 1.f - gmB ) + ch[2].gainMapMax * gmB;
 
-        const auto r = ( *sdr++ + ch[0].offsetSdr ) * exp2( logBoostR * weightFactor ) - ch[0].offsetHdr;
-        const auto g = ( *sdr++ + ch[1].offsetSdr ) * exp2( logBoostG * weightFactor ) - ch[1].offsetHdr;
-        const auto b = ( *sdr++ + ch[2].offsetSdr ) * exp2( logBoostB * weightFactor ) - ch[2].offsetHdr;
+        const auto r = ( *sdr++ + ch[0].offsetSdr ) * exp2( logBoostR ) - ch[0].offsetHdr;
+        const auto g = ( *sdr++ + ch[1].offsetSdr ) * exp2( logBoostG ) - ch[1].offsetHdr;
+        const auto b = ( *sdr++ + ch[2].offsetSdr ) * exp2( logBoostB ) - ch[2].offsetHdr;
         sdr++;
 
         *dst++ = r;

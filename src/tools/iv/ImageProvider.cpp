@@ -178,6 +178,7 @@ void ImageProvider::Worker()
         {
             uint32_t width, height;
             if( bitmap ) bitmap->NormalizeOrientation();
+            if( bitmapHdr ) bitmapHdr->NormalizeOrientation();
             mclog( LogLevel::Info, "Image loaded: %ux%u", bitmap ? bitmap->Width() : bitmapHdr->Width(), bitmap ? bitmap->Height() : bitmapHdr->Height() );
             job.callback( job.userData, job.id, Result::Success, {
                 .bitmap = std::move( bitmap ),

@@ -237,7 +237,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
     auto base = LoadNoColorspace();
     if( !base ) return nullptr;
 
-    auto baseFloat = std::make_unique<BitmapHdr>( base->Width(), base->Height(), colorspace );
+    auto baseFloat = std::make_unique<BitmapHdr>( base->Width(), base->Height(), colorspace, m_orientation );
 
     cmsToneCurve* linear = cmsBuildGamma( nullptr, 1 );
     cmsToneCurve* linear3[3] = { linear, linear, linear };
@@ -488,7 +488,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
         gmFloat->Resize( baseFloat->Width(), baseFloat->Height() );
     }
 
-    auto bmp = std::make_unique<BitmapHdr>( baseFloat->Width(), baseFloat->Height(), colorspace );
+    auto bmp = std::make_unique<BitmapHdr>( baseFloat->Width(), baseFloat->Height(), colorspace, m_orientation );
     sz = baseFloat->Width() * baseFloat->Height();
 
     dst = bmp->Data();

@@ -269,6 +269,34 @@ static void ApplyGainMap( float* dst, const float* sdr, const float* gm, size_t 
     __m128 vOffsetSdr = _mm_loadu_ps( offsetSdr );
     __m128 vOffsetHdr = _mm_loadu_ps( offsetHdr );
 
+#ifdef __AVX2__
+    __m256 vGainMapMin256 = _mm256_broadcastsi128_si256( vGainMapMin );
+    __m256 vGainMapMax256 = _mm256_broadcastsi128_si256( vGainMapMax );
+    __m256 vOffsetSdr256 = _mm256_broadcastsi128_si256( vOffsetSdr );
+    __m256 vOffsetHdr256 = _mm256_broadcastsi128_si256( vOffsetHdr );
+
+    while( sz >= 2 )
+    {
+        __m256 vGm = _mm256_loadu_ps( gm );
+        __m256 vGm1 = _mm256_sub_ps( _mm256_set1_ps( 1.f ), vGm );
+        __m256 vGm2 = _mm256_mul_ps( vGm, vGainMapMax256 );
+        __m256 logBoost = _mm256_fmadd_ps( vGm1, vGainMapMin256, vGm2 );
+        __m256 logBoostExp = _mm256_exp_ps( logBoost );
+
+        __m256 vSdr = _mm256_loadu_ps( sdr );
+        __m256 vSdr1 = _mm256_add_ps( vSdr, vOffsetSdr256 );
+        __m256 vHdr = _mm256_fmsub_ps( vSdr1, logBoostExp, vOffsetHdr256 );
+        __m256 vHdr1 = _mm256_blend_ps( vHdr, _mm256_set1_ps( 1.f ), 0x88 );
+
+        _mm256_storeu_ps( dst, vHdr1 );
+
+        gm += 8;
+        sdr += 8;
+        dst += 8;
+        sz -= 2;
+    }
+#endif
+
     while( sz-- > 0 )
     {
         __m128 vGm = _mm_loadu_ps( gm );

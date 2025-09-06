@@ -298,10 +298,10 @@ static void ApplyGainMap( float* dst, const float* sdr, const float* gm, size_t 
 #endif
 
 #ifdef __AVX2__
-    __m256 vGainMapMin256 = _mm256_broadcastsi128_si256( vGainMapMin );
-    __m256 vGainMapMax256 = _mm256_broadcastsi128_si256( vGainMapMax );
-    __m256 vOffsetSdr256 = _mm256_broadcastsi128_si256( vOffsetSdr );
-    __m256 vOffsetHdr256 = _mm256_broadcastsi128_si256( vOffsetHdr );
+    __m256 vGainMapMin256 = _mm256_set_m128( vGainMapMin, vGainMapMin );
+    __m256 vGainMapMax256 = _mm256_set_m128( vGainMapMax, vGainMapMax );
+    __m256 vOffsetSdr256 = _mm256_set_m128( vOffsetSdr, vOffsetSdr );
+    __m256 vOffsetHdr256 = _mm256_set_m128( vOffsetHdr, vOffsetHdr );
 
     while( sz >= 2 )
     {

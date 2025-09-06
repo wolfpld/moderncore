@@ -269,6 +269,34 @@ static void ApplyGainMap( float* dst, const float* sdr, const float* gm, size_t 
     __m128 vOffsetSdr = _mm_loadu_ps( offsetSdr );
     __m128 vOffsetHdr = _mm_loadu_ps( offsetHdr );
 
+#ifdef __AVX512F__
+    __m512 vGainMapMin512 = _mm512_broadcast_f32x4( vGainMapMin );
+    __m512 vGainMapMax512 = _mm512_broadcast_f32x4( vGainMapMax );
+    __m512 vOffsetSdr512 = _mm512_broadcast_f32x4( vOffsetSdr );
+    __m512 vOffsetHdr512 = _mm512_broadcast_f32x4( vOffsetHdr );
+
+    while( sz >= 4 )
+    {
+        __m512 vGm = _mm512_loadu_ps( gm );
+        __m512 vGm1 = _mm512_sub_ps( _mm512_set1_ps( 1.f ), vGm );
+        __m512 vGm2 = _mm512_mul_ps( vGm, vGainMapMax512 );
+        __m512 logBoost = _mm512_fmadd_ps( vGm1, vGainMapMin512, vGm2 );
+        __m512 logBoostExp = _mm512_exp_ps( logBoost );
+
+        __m512 vSdr = _mm512_loadu_ps( sdr );
+        __m512 vSdr1 = _mm512_add_ps( vSdr, vOffsetSdr512 );
+        __m512 vHdr = _mm512_fmsub_ps( vSdr1, logBoostExp, vOffsetHdr512 );
+        __m512 vHdr1 = _mm512_mask_blend_ps( 0x8888, vHdr, _mm512_set1_ps( 1.f ) );
+
+        _mm512_storeu_ps( dst, vHdr1 );
+
+        dst += 16;
+        gm += 16;
+        sdr += 16;
+        sz -= 4;
+    }
+#endif
+
 #ifdef __AVX2__
     __m256 vGainMapMin256 = _mm256_broadcastsi128_si256( vGainMapMin );
     __m256 vGainMapMax256 = _mm256_broadcastsi128_si256( vGainMapMax );

@@ -427,7 +427,6 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
     cmsFreeToneCurve( linear );
 
     base.reset();
-    baseFloat->SetAlpha( 1.f );
 
     if( m_gainMapOffset < 0 )
     {
@@ -439,7 +438,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
             *ptr++ *= 2.03f;
             *ptr++ *= 2.03f;
             *ptr++ *= 2.03f;
-            ptr++;
+            *ptr++ = 1.f;
         }
         return baseFloat;
     }

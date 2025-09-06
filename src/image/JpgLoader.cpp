@@ -510,7 +510,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
 
     if( gmFloat->Width() != baseFloat->Width() || gmFloat->Height() != baseFloat->Height() )
     {
-        gmFloat->Resize( baseFloat->Width(), baseFloat->Height() );
+        gmFloat->Resize( baseFloat->Width(), baseFloat->Height(), m_td );
     }
 
     auto bmp = std::make_unique<BitmapHdr>( baseFloat->Width(), baseFloat->Height(), colorspace, m_orientation );

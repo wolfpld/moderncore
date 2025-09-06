@@ -82,6 +82,17 @@ void BitmapHdr::SetAlpha( float alpha )
     auto ptr = m_data;
     size_t sz = m_width * m_height;
 
+#ifdef __AVX512F__
+    while( sz >= 4 )
+    {
+        __m512 px = _mm512_loadu_ps( ptr );
+        __m512 pxa = _mm512_mask_blend_ps( 0x8888, px, _mm512_set1_ps( alpha ) );
+        _mm512_storeu_ps( ptr, pxa );
+        ptr += 16;
+        sz -= 4;
+    }
+#endif
+
 #ifdef __AVX2__
     while( sz >= 2 )
     {

@@ -18,6 +18,7 @@
 #include "util/FileBuffer.hpp"
 #include "util/FileWrapper.hpp"
 #include "util/Panic.hpp"
+#include "util/Simd.hpp"
 #include "util/TaskDispatch.hpp"
 
 #include "data/CmykIcm.hpp"
@@ -257,6 +258,37 @@ static Channel ReadIsoChannel( uint8_t*& ptr )
 
 static void ApplyGainMap( float* dst, const float* sdr, const float* gm, size_t sz, Channel* ch )
 {
+#if defined __SSE4_1__ && defined __FMA__
+    const float gainMapMin[4] = { ch[0].gainMapMin, ch[1].gainMapMin, ch[2].gainMapMin, 0 };
+    const float gainMapMax[4] = { ch[0].gainMapMax, ch[1].gainMapMax, ch[2].gainMapMax, 0 };
+    const float offsetSdr[4] = { ch[0].offsetSdr, ch[1].offsetSdr, ch[2].offsetSdr, 0 };
+    const float offsetHdr[4] = { ch[0].offsetHdr, ch[1].offsetHdr, ch[2].offsetHdr, 0 };
+
+    __m128 vGainMapMin = _mm_loadu_ps( gainMapMin );
+    __m128 vGainMapMax = _mm_loadu_ps( gainMapMax );
+    __m128 vOffsetSdr = _mm_loadu_ps( offsetSdr );
+    __m128 vOffsetHdr = _mm_loadu_ps( offsetHdr );
+
+    while( sz-- > 0 )
+    {
+        __m128 vGm = _mm_loadu_ps( gm );
+        __m128 vGm1 = _mm_sub_ps( _mm_set1_ps( 1.f ), vGm );
+        __m128 vGm2 = _mm_mul_ps( vGm, vGainMapMax );
+        __m128 logBoost = _mm_fmadd_ps( vGm1, vGainMapMin, vGm2 );
+        __m128 logBoostExp = _mm_exp_ps( logBoost );
+
+        __m128 vSdr = _mm_loadu_ps( sdr );
+        __m128 vSdr1 = _mm_add_ps( vSdr, vOffsetSdr );
+        __m128 vHdr = _mm_fmsub_ps( vSdr1, logBoostExp, vOffsetHdr );
+        __m128 vHdr1 = _mm_blend_ps( vHdr, _mm_set1_ps( 1.f ), 0x8 );
+
+        _mm_storeu_ps( dst, vHdr1 );
+
+        gm += 4;
+        sdr += 4;
+        dst += 4;
+    }
+#else
     while( sz-- > 0 )
     {
         const auto gmR = *gm++;
@@ -278,6 +310,7 @@ static void ApplyGainMap( float* dst, const float* sdr, const float* gm, size_t 
         *dst++ = b;
         *dst++ = 1.0f;
     }
+#endif
 }
 
 std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )

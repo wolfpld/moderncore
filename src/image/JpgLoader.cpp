@@ -21,8 +21,9 @@
 
 #include "data/CmykIcm.hpp"
 
-JpgLoader::JpgLoader( std::shared_ptr<FileWrapper> file )
+JpgLoader::JpgLoader( std::shared_ptr<FileWrapper> file, TaskDispatch* td )
     : m_file( std::move( file ) )
+    , m_td( td )
     , m_cinfo( nullptr )
     , m_iccData( nullptr )
 {

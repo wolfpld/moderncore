@@ -84,7 +84,7 @@ std::unique_ptr<ImageLoader> GetImageLoader( const char* path, ToneMap::Operator
     }
 
     if( auto loader = CheckImageLoader<PngLoader>( buf, sz, file ); loader ) return loader;
-    if( auto loader = CheckImageLoader<JpgLoader>( buf, sz, file ); loader ) return loader;
+    if( auto loader = CheckImageLoader<JpgLoader>( buf, sz, file, td ); loader ) return loader;
     if( auto loader = CheckImageLoader<JxlLoader>( buf, sz, file ); loader ) return loader;
     if( auto loader = CheckImageLoader<WebpLoader>( buf, sz, file ); loader ) return loader;
     if( auto loader = CheckImageLoader<HeifLoader>( buf, sz, file, tonemap, td ); loader ) return loader;

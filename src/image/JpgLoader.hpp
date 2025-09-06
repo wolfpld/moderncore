@@ -9,12 +9,13 @@
 
 class Bitmap;
 class FileWrapper;
+class TaskDispatch;
 struct jpeg_decompress_struct;
 
 class JpgLoader : public ImageLoader
 {
 public:
-    explicit JpgLoader( std::shared_ptr<FileWrapper> file );
+    explicit JpgLoader( std::shared_ptr<FileWrapper> file, TaskDispatch* td );
     ~JpgLoader() override;
     NoCopy( JpgLoader );
 
@@ -35,6 +36,8 @@ private:
 
     bool m_valid;
     std::shared_ptr<FileWrapper> m_file;
+
+    TaskDispatch* m_td;
 
     jpeg_decompress_struct* m_cinfo;
     unsigned int m_iccSz;

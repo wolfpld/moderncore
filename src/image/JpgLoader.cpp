@@ -255,6 +255,31 @@ static Channel ReadIsoChannel( uint8_t*& ptr )
     };
 }
 
+static void ApplyGainMap( float* dst, const float* sdr, const float* gm, size_t sz, Channel* ch )
+{
+    while( sz-- > 0 )
+    {
+        const auto gmR = *gm++;
+        const auto gmG = *gm++;
+        const auto gmB = *gm++;
+        gm++;
+
+        const auto logBoostR = ch[0].gainMapMin * ( 1.f - gmR ) + ch[0].gainMapMax * gmR;
+        const auto logBoostG = ch[1].gainMapMin * ( 1.f - gmG ) + ch[1].gainMapMax * gmG;
+        const auto logBoostB = ch[2].gainMapMin * ( 1.f - gmB ) + ch[2].gainMapMax * gmB;
+
+        const auto r = ( *sdr++ + ch[0].offsetSdr ) * exp2( logBoostR ) - ch[0].offsetHdr;
+        const auto g = ( *sdr++ + ch[1].offsetSdr ) * exp2( logBoostG ) - ch[1].offsetHdr;
+        const auto b = ( *sdr++ + ch[2].offsetSdr ) * exp2( logBoostB ) - ch[2].offsetHdr;
+        sdr++;
+
+        *dst++ = r;
+        *dst++ = g;
+        *dst++ = b;
+        *dst++ = 1.0f;
+    }
+}
+
 std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
 {
     if( !IsHdr() ) return nullptr;
@@ -520,27 +545,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
     auto sdr = baseFloat->Data();
     auto gm = gmFloat->Data();
 
-    while( sz-- > 0 )
-    {
-        const auto gmR = *gm++;
-        const auto gmG = *gm++;
-        const auto gmB = *gm++;
-        gm++;
-
-        const auto logBoostR = ch[0].gainMapMin * ( 1.f - gmR ) + ch[0].gainMapMax * gmR;
-        const auto logBoostG = ch[1].gainMapMin * ( 1.f - gmG ) + ch[1].gainMapMax * gmG;
-        const auto logBoostB = ch[2].gainMapMin * ( 1.f - gmB ) + ch[2].gainMapMax * gmB;
-
-        const auto r = ( *sdr++ + ch[0].offsetSdr ) * exp2( logBoostR ) - ch[0].offsetHdr;
-        const auto g = ( *sdr++ + ch[1].offsetSdr ) * exp2( logBoostG ) - ch[1].offsetHdr;
-        const auto b = ( *sdr++ + ch[2].offsetSdr ) * exp2( logBoostB ) - ch[2].offsetHdr;
-        sdr++;
-
-        *dst++ = r;
-        *dst++ = g;
-        *dst++ = b;
-        *dst++ = 1.0f;
-    }
+    ApplyGainMap( dst, sdr, gm, sz, ch );
 
     return bmp;
 }

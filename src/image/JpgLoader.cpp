@@ -18,6 +18,7 @@
 #include "util/FileBuffer.hpp"
 #include "util/FileWrapper.hpp"
 #include "util/Panic.hpp"
+#include "util/TaskDispatch.hpp"
 
 #include "data/CmykIcm.hpp"
 
@@ -61,6 +62,29 @@ struct JpgErrorMgr
     jpeg_error_mgr pub;
     jmp_buf setjmp_buffer;
 };
+
+template<typename TInput, typename TOutput>
+static void CmsTransform( TaskDispatch* td, cmsHTRANSFORM transform, const TInput* input, TOutput* output, uint32_t size )
+{
+    if( !td )
+    {
+        cmsDoTransform( transform, input, output, size );
+    }
+    else
+    {
+        while( size > 0 )
+        {
+            auto chunk = std::min<uint32_t>( size, 16 * 1024 );
+            td->Queue( [input, output, chunk, transform] {
+                cmsDoTransform( transform, input, output, chunk );
+            } );
+            input += chunk * 4;
+            output += chunk * 4;
+            size -= chunk;
+        }
+        td->Sync();
+    }
+}
 
 namespace
 {
@@ -162,7 +186,7 @@ std::unique_ptr<Bitmap> JpgLoader::Load()
     if( profileIn ) transform = cmsCreateTransform( profileIn, m_cmyk ? TYPE_CMYK_8_REV : TYPE_RGBA_8, profileOut, TYPE_RGBA_8, INTENT_PERCEPTUAL, 0 );
     if( transform )
     {
-        cmsDoTransform( transform, bmp->Data(), bmp->Data(), bmp->Width() * bmp->Height() );
+        CmsTransform( m_td, transform, bmp->Data(), bmp->Data(), bmp->Width() * bmp->Height() );
         cmsDeleteTransform( transform );
     }
     if( profileIn ) cmsCloseProfile( profileIn );
@@ -261,7 +285,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
     auto transform = cmsCreateTransform( profileIn, m_cmyk ? TYPE_CMYK_8_REV : TYPE_RGBA_8, profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, 0 );
     if( transform )
     {
-        cmsDoTransform( transform, base->Data(), baseFloat->Data(), base->Width() * base->Height() );
+        CmsTransform( m_td, transform, base->Data(), baseFloat->Data(), base->Width() * base->Height() );
     }
     else
     {
@@ -276,11 +300,11 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
             mclog( LogLevel::Error, "JPEG: Failed to create transform to sRGB" );
             return nullptr;
         }
-        cmsDoTransform( transform, base->Data(), base->Data(), sz );
+        CmsTransform( m_td, transform, base->Data(), base->Data(), sz );
         cmsDeleteTransform( transform );
         transform = cmsCreateTransform( profileSrgb, TYPE_RGBA_8, profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, 0 );
         CheckPanic( transform, "Failed to create sRGB to HDR transform" );
-        cmsDoTransform( transform, base->Data(), baseFloat->Data(), sz );
+        CmsTransform( m_td, transform, base->Data(), baseFloat->Data(), sz );
         cmsCloseProfile( profileSrgb );
     }
     if( transform ) cmsDeleteTransform( transform );

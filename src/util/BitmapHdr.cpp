@@ -5,6 +5,7 @@
 #include "Bitmap.hpp"
 #include "BitmapHdr.hpp"
 #include "Panic.hpp"
+#include "Simd.hpp"
 #include "TaskDispatch.hpp"
 
 BitmapHdr::BitmapHdr( uint32_t width, uint32_t height, Colorspace colorspace, int orientation )
@@ -80,6 +81,17 @@ void BitmapHdr::SetAlpha( float alpha )
 {
     auto ptr = m_data;
     size_t sz = m_width * m_height;
+
+#ifdef __AVX2__
+    while( sz >= 2 )
+    {
+        __m256 px = _mm256_loadu_ps( ptr );
+        __m256 pxa = _mm256_blend_ps( px, _mm256_set1_ps( alpha ), 0x88 );
+        _mm256_storeu_ps( ptr, pxa );
+        ptr += 8;
+        sz -= 2;
+    }
+#endif
 
     ptr += 3;
     while( sz-- )

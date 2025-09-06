@@ -42,9 +42,9 @@ For viewing PDF files, you must have the Poppler library (glib backend) installe
 
 ## High dynamic range
 
-Loading of HDR images is supported for OpenEXR, HEIC, AVIF, JPEG XL, and RGBE formats.
+Loading of HDR images is supported for OpenEXR, HEIC, AVIF, JPEG, JPEG XL, and RGBE formats.
 
-HDR gain maps are supported in Apple HEIC files.
+HDR gain maps are supported in JPEG and Apple HEIC files.
 
 There is initial support for extracting HDR content from RAW images. Some images may not appear as expected.
 

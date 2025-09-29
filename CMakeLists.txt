@@ -491,12 +491,30 @@ target_link_libraries(vv PRIVATE
     ${ZLIB_LINK_LIBRARIES}
 )
 
+# exrconv
+
+set(EXRCONV_SRC
+    src/tools/exrconv/exrconv.cpp
+)
+
+add_executable(exrconv ${EXRCONV_SRC})
+add_dependencies(exrconv git-ref)
+target_link_libraries(exrconv PRIVATE
+    mcoreutil
+    mcoreimage
+    Tracy::TracyClient
+    ${EXR_LINK_LIBRARIES}
+)
+target_include_directories(exrconv PRIVATE
+    ${EXR_INCLUDE_DIRS}
+)
 
 # install
 
 install(TARGETS
     iv
     vv
+    exrconv
     mcoreutil
     mcoreimage
     mcorevulkan

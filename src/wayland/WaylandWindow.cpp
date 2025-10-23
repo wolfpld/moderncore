@@ -90,8 +90,6 @@ WaylandWindow::WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance )
         zxdg_toplevel_decoration_v1_add_listener( m_xdgToplevelDecoration, &decorationListener, this );
         zxdg_toplevel_decoration_v1_set_mode( m_xdgToplevelDecoration, ZXDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE );
     }
-
-    m_vkSurface = std::make_shared<VlkSurface>( m_vkInstance, display.Display(), m_surface );
 }
 
 WaylandWindow::~WaylandWindow()
@@ -685,6 +683,7 @@ void WaylandWindow::SurfacePreferredBufferTransform( wl_surface* surface, int32_
 void WaylandWindow::XdgSurfaceConfigure( struct xdg_surface *xdg_surface, uint32_t serial )
 {
     xdg_surface_ack_configure( xdg_surface, serial );
+    if( !m_vkSurface ) m_vkSurface = std::make_shared<VlkSurface>( m_vkInstance, m_display.Display(), m_surface );
 }
 
 void WaylandWindow::XdgToplevelConfigure( struct xdg_toplevel* toplevel, int32_t width, int32_t height, struct wl_array* states )

@@ -219,7 +219,6 @@ void WaylandWindow::ResizeNoScale( uint32_t width, uint32_t height, bool reposit
         m_floatingExtent = m_staged = m_extent = VkExtent2D( width, height );
         CreateSwapchain( m_extent );
 
-        wp_viewport_set_source( m_viewport, 0, 0, wl_fixed_from_double( m_extent.width * m_scale / 120.f ), wl_fixed_from_double( m_extent.height * m_scale / 120.f ) );
         wp_viewport_set_destination( m_viewport, m_extent.width, m_extent.height );
     }
 }
@@ -307,7 +306,6 @@ void WaylandWindow::Update()
 
         CreateSwapchain( m_extent );
 
-        wp_viewport_set_source( m_viewport, 0, 0, wl_fixed_from_double( m_extent.width * m_scale / 120.f ), wl_fixed_from_double( m_extent.height * m_scale / 120.f ) );
         wp_viewport_set_destination( m_viewport, m_extent.width, m_extent.height );
 
         const auto extent = m_extent;
@@ -589,8 +587,8 @@ void WaylandWindow::Recycle( std::vector<std::shared_ptr<VlkBase>>&& garbage )
 void WaylandWindow::CreateSwapchain( const VkExtent2D& extent )
 {
     const auto scaled = VkExtent2D {
-        .width = extent.width * m_scale / 120,
-        .height = extent.height * m_scale / 120
+        .width = uint32_t( round( extent.width * m_scale / 120.f ) ),
+        .height = uint32_t( round( extent.height * m_scale / 120.f ) )
     };
 
     auto oldSwapchain = m_swapchain;

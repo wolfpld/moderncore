@@ -452,6 +452,7 @@ set(IV_SRC
     src/tools/iv/ImageProvider.cpp
     src/tools/iv/ImageView.cpp
     src/tools/iv/iv.cpp
+    src/tools/iv/Selection.cpp
     src/tools/iv/Viewport.cpp
 )
 

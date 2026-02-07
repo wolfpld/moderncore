@@ -17,6 +17,7 @@
 #include "Background.hpp"
 #include "BusyIndicator.hpp"
 #include "ImageView.hpp"
+#include "Selection.hpp"
 #include "TextureFormats.hpp"
 #include "Viewport.hpp"
 #include "image/ImageLoader.hpp"
@@ -134,6 +135,7 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
     const auto scale = m_window->GetScale() / 120.f;
     m_background = std::make_shared<Background>( *m_window, m_device, format );
     m_busyIndicator = std::make_shared<BusyIndicator>( *m_window, m_device, format, scale );
+    m_selection = std::make_shared<Selection>( *m_window, m_device, format );
     m_view = std::make_shared<ImageView>( *m_window, m_device, format, m_window->GetSize(), scale );
 
     const char* token = getenv( "XDG_ACTIVATION_TOKEN" );

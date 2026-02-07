@@ -15,6 +15,7 @@ class Background;
 class BusyIndicator;
 class DataBuffer;
 class ImageView;
+class Selection;
 class TaskDispatch;
 class Texture;
 class VlkDevice;
@@ -78,6 +79,7 @@ private:
 
     std::shared_ptr<Background> m_background;
     std::shared_ptr<BusyIndicator> m_busyIndicator;
+    std::shared_ptr<Selection> m_selection;
 
     std::shared_ptr<ImageProvider> m_provider;
     std::shared_ptr<ImageView> m_view;

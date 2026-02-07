@@ -5,6 +5,7 @@
 
 class GarbageChute;
 class VlkDevice;
+class VlkShader;
 
 class Selection
 {
@@ -15,4 +16,7 @@ public:
 private:
     GarbageChute& m_garbage;
     std::shared_ptr<VlkDevice> m_device;
+
+    std::shared_ptr<VlkShader> m_shader;
+    std::shared_ptr<VlkShader> m_shaderPq;
 };

@@ -345,6 +345,7 @@ bool Viewport::Render()
         ZoneVk( *m_device, cmdbuf, "Viewport", true );
         m_background->Render( cmdbuf, m_window->GetSize() );
         if( m_view->HasBitmap() ) m_view->Render( cmdbuf, m_window->GetSize() );
+        m_selection->Render( cmdbuf, m_window->GetSize() );
         if( m_isBusy )
         {
             m_busyIndicator->Render( cmdbuf, m_window->GetSize() );

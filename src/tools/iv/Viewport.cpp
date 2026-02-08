@@ -268,6 +268,9 @@ void Viewport::Update( float delta )
 
     if( m_view->HasBitmap() )
     {
+        m_selection->Update( delta );
+        WantRender();
+
         const auto imgScale = m_view->GetImgScale();
         if( imgScale != m_viewScale )
         {

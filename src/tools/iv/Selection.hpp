@@ -17,6 +17,7 @@ public:
     Selection( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, float scale );
     ~Selection();
 
+    void Update( float delta );
     void Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent );
     void SetScale( float scale );
     void FormatChange( VkFormat format );
@@ -35,4 +36,5 @@ private:
     std::shared_ptr<VlkBuffer> m_indexBuffer;
 
     float m_div;
+    float m_offset = 0;
 };

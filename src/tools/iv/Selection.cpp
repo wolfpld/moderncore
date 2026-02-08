@@ -1,4 +1,5 @@
 #include <array>
+#include <math.h>
 #include <string.h>
 
 #include "Selection.hpp"
@@ -20,6 +21,13 @@
 struct Vertex
 {
     float x, y;
+};
+
+struct PushConstant
+{
+    float screenSize[2];
+    float div;
+    float offset;
 };
 
 Selection::Selection( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, float scale )
@@ -45,8 +53,22 @@ Selection::Selection( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, 
     m_shaderPq = std::make_shared<VlkShader>( stagesPq );
 
 
+    static constexpr std::array pushConstantRange = {
+        VkPushConstantRange {
+            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+            .offset = offsetof( PushConstant, screenSize ),
+            .size = sizeof( float ) * 2
+        },
+        VkPushConstantRange {
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .offset = offsetof( PushConstant, div ),
+            .size = sizeof( float ) * 2
+        }
+    };
     constexpr VkPipelineLayoutCreateInfo pipelineLayoutInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .pushConstantRangeCount = pushConstantRange.size(),
+        .pPushConstantRanges = pushConstantRange.data()
     };
     m_pipelineLayout = std::make_shared<VlkPipelineLayout>( *m_device, pipelineLayoutInfo );
     CreatePipeline( format );
@@ -92,6 +114,11 @@ Selection::~Selection()
     } );
 }
 
+void Selection::Update( float delta )
+{
+    m_offset += delta * 20;
+}
+
 void Selection::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
 {
     VkViewport viewport = {
@@ -102,11 +129,20 @@ void Selection::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
         .extent = extent
     };
 
+    const PushConstant pushConstant = {
+        float( extent.width ),
+        float( extent.height ),
+        m_div,
+        m_offset
+    };
+
     std::array<VkBuffer, 1> vertexBuffers = { *m_vertexBuffer };
     constexpr std::array<VkDeviceSize, 1> offsets = { 0 };
 
     ZoneVk( *m_device, cmdbuf, "Selection", true );
     vkCmdBindPipeline( cmdbuf, VK_PIPELINE_BIND_POINT_GRAPHICS, *m_pipeline );
+    vkCmdPushConstants( cmdbuf, *m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, offsetof( PushConstant, screenSize ), sizeof( float ) * 2, &pushConstant );
+    vkCmdPushConstants( cmdbuf, *m_pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, offsetof( PushConstant, div ), sizeof( float ) * 2, &pushConstant.div );
     vkCmdSetViewport( cmdbuf, 0, 1, &viewport );
     vkCmdSetScissor( cmdbuf, 0, 1, &scissor );
     vkCmdBindVertexBuffers( cmdbuf, 0, 1, vertexBuffers.data(), offsets.data() );
@@ -116,7 +152,9 @@ void Selection::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
 
 void Selection::SetScale( float scale )
 {
-    m_div = 1.f / 4.f / scale;
+    // Use 180° as a base to make the divider specify width
+    // of a single segment, not the full white + black cycle.
+    m_div = M_PI / 4.f / scale;
 }
 
 void Selection::FormatChange( VkFormat format )

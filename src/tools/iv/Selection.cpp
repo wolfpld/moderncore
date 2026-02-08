@@ -22,10 +22,12 @@ struct Vertex
     float x, y;
 };
 
-Selection::Selection( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format )
+Selection::Selection( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, float scale )
     : m_garbage( garbage )
     , m_device( std::move( device ) )
 {
+    SetScale( scale );
+
     Unembed( SelectionVert );
     Unembed( SelectionFrag );
 

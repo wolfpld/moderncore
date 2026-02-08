@@ -14,7 +14,7 @@ class VlkShader;
 class Selection
 {
 public:
-    Selection( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format );
+    Selection( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, float scale );
     ~Selection();
 
     void Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent );

@@ -144,8 +144,8 @@ BusyIndicator::BusyIndicator( GarbageChute& garbage, std::shared_ptr<VlkDevice> 
     memcpy( m_vertexBuffer->Ptr(), vdata, sizeof( vdata ) );
     m_vertexBuffer->Flush();
 
-    uint16_t idata[] = { 0, 1, 2, 2, 3, 0 };
-    VkBufferCreateInfo iinfo = {
+    constexpr uint16_t idata[] = { 0, 1, 2, 2, 3, 0 };
+    constexpr VkBufferCreateInfo iinfo = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .size = sizeof( idata ),
         .usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT,

@@ -15,6 +15,7 @@
 #include "vulkan/ext/Tracy.hpp"
 
 #include "shader/SelectionFrag.hpp"
+#include "shader/SelectionPqFrag.hpp"
 #include "shader/SelectionVert.hpp"
 
 
@@ -38,6 +39,7 @@ Selection::Selection( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, 
 
     Unembed( SelectionVert );
     Unembed( SelectionFrag );
+    Unembed( SelectionPqFrag );
 
     const std::array stages = {
         VlkShader::Stage { std::make_shared<VlkShaderModule>( *m_device, *SelectionVert ), VK_SHADER_STAGE_VERTEX_BIT },
@@ -48,7 +50,7 @@ Selection::Selection( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, 
 
     const std::array stagesPq = {
         stages[0],
-        VlkShader::Stage { std::make_shared<VlkShaderModule>( *m_device, *SelectionFrag ), VK_SHADER_STAGE_FRAGMENT_BIT }
+        VlkShader::Stage { std::make_shared<VlkShaderModule>( *m_device, *SelectionPqFrag ), VK_SHADER_STAGE_FRAGMENT_BIT }
     };
     m_shaderPq = std::make_shared<VlkShader>( stagesPq );
 

@@ -366,6 +366,7 @@ void Viewport::Scale( uint32_t width, uint32_t height, uint32_t scale )
     mclog( LogLevel::Info, "Preferred window scale: %g, size: %ux%u", normScale, width, height );
 
     m_busyIndicator->SetScale( normScale );
+    m_selection->SetScale( normScale );
 
     m_view->lock();
     m_view->SetScale( normScale, m_window->GetSize() );

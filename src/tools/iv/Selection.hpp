@@ -18,6 +18,7 @@ public:
     ~Selection();
 
     void Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent );
+    void SetScale( float scale );
     void FormatChange( VkFormat format );
 
 private:
@@ -32,4 +33,6 @@ private:
     std::shared_ptr<VlkPipeline> m_pipeline;
     std::shared_ptr<VlkBuffer> m_vertexBuffer;
     std::shared_ptr<VlkBuffer> m_indexBuffer;
+
+    float m_div;
 };

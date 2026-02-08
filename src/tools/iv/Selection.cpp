@@ -112,6 +112,11 @@ void Selection::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
     vkCmdDrawIndexed( cmdbuf, 5, 1, 0, 0, 0 );
 }
 
+void Selection::SetScale( float scale )
+{
+    m_div = 1.f / 4.f / scale;
+}
+
 void Selection::FormatChange( VkFormat format )
 {
     m_garbage.Recycle( std::move( m_pipeline ) );

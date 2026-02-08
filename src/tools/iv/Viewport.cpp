@@ -362,12 +362,13 @@ void Viewport::Scale( uint32_t width, uint32_t height, uint32_t scale )
     ZoneScoped;
     ZoneTextF( "scale %u, width %u, height %u", scale, width, height );
 
-    mclog( LogLevel::Info, "Preferred window scale: %g, size: %ux%u", scale / 120.f, width, height );
+    const auto normScale = scale / 120.f;
+    mclog( LogLevel::Info, "Preferred window scale: %g, size: %ux%u", normScale, width, height );
 
-    m_busyIndicator->SetScale( scale / 120.f );
+    m_busyIndicator->SetScale( normScale );
 
     m_view->lock();
-    m_view->SetScale( scale / 120.f, m_window->GetSize() );
+    m_view->SetScale( normScale, m_window->GetSize() );
     m_view->unlock();
 
     std::lock_guard lock( m_lock );

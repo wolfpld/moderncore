@@ -5,6 +5,7 @@
 
 #include "ImageView.hpp"
 #include "TextureFormats.hpp"
+#include "Selection.hpp"
 #include "util/Bitmap.hpp"
 #include "util/BitmapHdr.hpp"
 #include "util/EmbedData.hpp"
@@ -37,11 +38,12 @@ struct PushConstant
     float div;
 };
 
-ImageView::ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, const VkExtent2D& extent, float scale )
+ImageView::ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, const VkExtent2D& extent, float scale, std::shared_ptr<Selection> selection )
     : m_garbage( garbage )
     , m_device( std::move( device ) )
     , m_extent( extent )
     , m_filteredNearest( false )
+    , m_selection( std::move( selection ) )
     , m_scale( scale )
     , m_fitMode( FitMode::TooSmall )
 {

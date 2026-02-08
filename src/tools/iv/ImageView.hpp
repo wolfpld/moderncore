@@ -10,6 +10,7 @@
 class Bitmap;
 class BitmapHdr;
 class GarbageChute;
+class Selection;
 class TaskDispatch;
 class Texture;
 class VlkBuffer;
@@ -38,7 +39,7 @@ class ImageView
     };
 
 public:
-    ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, const VkExtent2D& extent, float scale );
+    ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, const VkExtent2D& extent, float scale, std::shared_ptr<Selection> selection );
     ~ImageView();
 
     void Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent );
@@ -99,6 +100,8 @@ private:
     Vector2<float> m_imgOrigin;
     float m_imgScale;
     bool m_filteredNearest;
+
+    std::shared_ptr<Selection> m_selection;
 
     VkDescriptorImageInfo m_imageInfo;
     VkWriteDescriptorSet m_descWrite;

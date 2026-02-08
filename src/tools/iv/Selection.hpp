@@ -31,4 +31,5 @@ private:
     std::shared_ptr<VlkPipelineLayout> m_pipelineLayout;
     std::shared_ptr<VlkPipeline> m_pipeline;
     std::shared_ptr<VlkBuffer> m_vertexBuffer;
+    std::shared_ptr<VlkBuffer> m_indexBuffer;
 };

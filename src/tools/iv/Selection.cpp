@@ -54,18 +54,28 @@ Selection::Selection( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, 
         { -0.5f, -0.5f },
         {  0.5f, -0.5f },
         {  0.5f,  0.5f },
-        { -0.5f,  0.5f },
-        { -0.5f, -0.5f }
+        { -0.5f,  0.5f }
     };
-    constexpr VkBufferCreateInfo bufferInfo = {
+    constexpr VkBufferCreateInfo vinfo = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .size = sizeof( vdata ),
         .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE
     };
-    m_vertexBuffer = std::make_shared<VlkBuffer>( *m_device, bufferInfo, VlkBuffer::PreferDevice | VlkBuffer::WillWrite );
+    m_vertexBuffer = std::make_shared<VlkBuffer>( *m_device, vinfo, VlkBuffer::PreferDevice | VlkBuffer::WillWrite );
     memcpy( m_vertexBuffer->Ptr(), vdata, sizeof( vdata ) );
     m_vertexBuffer->Flush();
+
+    constexpr uint16_t idata[] = { 0, 1, 2, 3, 0 };
+    constexpr VkBufferCreateInfo iinfo = {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .size = sizeof( idata ),
+        .usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE
+    };
+    m_indexBuffer = std::make_shared<VlkBuffer>( *m_device, iinfo, VlkBuffer::PreferDevice | VlkBuffer::WillWrite );
+    memcpy( m_indexBuffer->Ptr(), idata, sizeof( idata ) );
+    m_indexBuffer->Flush();
 }
 
 Selection::~Selection()
@@ -75,7 +85,8 @@ Selection::~Selection()
         std::move( m_pipelineLayout ),
         std::move( m_shader ),
         std::move( m_shaderPq ),
-        std::move( m_vertexBuffer )
+        std::move( m_vertexBuffer ),
+        std::move( m_indexBuffer )
     } );
 }
 
@@ -97,7 +108,8 @@ void Selection::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
     vkCmdSetViewport( cmdbuf, 0, 1, &viewport );
     vkCmdSetScissor( cmdbuf, 0, 1, &scissor );
     vkCmdBindVertexBuffers( cmdbuf, 0, 1, vertexBuffers.data(), offsets.data() );
-    vkCmdDraw( cmdbuf, 5, 1, 0, 0 );
+    vkCmdBindIndexBuffer( cmdbuf, *m_indexBuffer, 0, VK_INDEX_TYPE_UINT16 );
+    vkCmdDrawIndexed( cmdbuf, 5, 1, 0, 0, 0 );
 }
 
 void Selection::FormatChange( VkFormat format )

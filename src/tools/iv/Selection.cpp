@@ -117,6 +117,7 @@ Selection::~Selection()
 void Selection::Update( float delta )
 {
     m_offset += delta * 20;
+    m_offset = fmod( m_offset, 2 * M_PI / m_div );
 }
 
 void Selection::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )

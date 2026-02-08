@@ -394,6 +394,7 @@ void Viewport::FormatChange( VkFormat format )
 
     m_background->FormatChange( format );
     m_busyIndicator->FormatChange( format );
+    m_selection->FormatChange( format );
 
     m_view->lock();
     m_view->FormatChange( format );

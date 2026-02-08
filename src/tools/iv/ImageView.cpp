@@ -265,6 +265,8 @@ void ImageView::Resize( const VkExtent2D& extent )
 
 std::shared_ptr<Texture> ImageView::SetBitmap( const std::shared_ptr<Bitmap>& bitmap, TaskDispatch& td )
 {
+    m_selection->Unselect();
+
     if( !bitmap )
     {
         std::lock_guard lock( m_lock );
@@ -282,6 +284,8 @@ std::shared_ptr<Texture> ImageView::SetBitmap( const std::shared_ptr<Bitmap>& bi
 
 std::shared_ptr<Texture> ImageView::SetBitmap( const std::shared_ptr<BitmapHdr>& bitmap, TaskDispatch& td )
 {
+    m_selection->Unselect();
+
     if( !bitmap )
     {
         std::lock_guard lock( m_lock );

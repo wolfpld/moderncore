@@ -268,14 +268,17 @@ void Viewport::Update( float delta )
 
     if( m_view->HasBitmap() )
     {
-        m_selection->Update( delta );
-        WantRender();
-
         const auto imgScale = m_view->GetImgScale();
         if( imgScale != m_viewScale )
         {
             m_viewScale = imgScale;
             m_updateTitle = true;
+        }
+
+        if( m_selection->IsActive() )
+        {
+            m_selection->Update( delta );
+            WantRender();
         }
     }
     if( m_updateTitle )
@@ -347,8 +350,14 @@ bool Viewport::Render()
         std::lock_guard lock( m_lock );
         ZoneVk( *m_device, cmdbuf, "Viewport", true );
         m_background->Render( cmdbuf, m_window->GetSize() );
-        if( m_view->HasBitmap() ) m_view->Render( cmdbuf, m_window->GetSize() );
-        m_selection->Render( cmdbuf, m_window->GetSize() );
+        if( m_view->HasBitmap() )
+        {
+            m_view->Render( cmdbuf, m_window->GetSize() );
+            if( m_selection->IsActive() )
+            {
+                m_selection->Render( cmdbuf, m_window->GetSize() );
+            }
+        }
         if( m_isBusy )
         {
             m_busyIndicator->Render( cmdbuf, m_window->GetSize() );

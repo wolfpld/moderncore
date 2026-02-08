@@ -22,6 +22,10 @@ public:
     void SetScale( float scale );
     void FormatChange( VkFormat format );
 
+    void Unselect() { m_active = false; }
+
+    [[nodiscard]] bool IsActive() const { return m_active; }
+
 private:
     void CreatePipeline( VkFormat format );
 
@@ -37,4 +41,6 @@ private:
 
     float m_div;
     float m_offset = 0;
+
+    bool m_active;
 };

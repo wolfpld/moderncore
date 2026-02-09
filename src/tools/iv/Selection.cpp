@@ -79,22 +79,6 @@ Selection::Selection( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, 
     CreatePipeline( format );
 
 
-    constexpr Vertex vdata[] = {
-        { -0.5f, -0.5f },
-        {  0.5f, -0.5f },
-        {  0.5f,  0.5f },
-        { -0.5f,  0.5f }
-    };
-    constexpr VkBufferCreateInfo vinfo = {
-        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-        .size = sizeof( vdata ),
-        .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-        .sharingMode = VK_SHARING_MODE_EXCLUSIVE
-    };
-    m_vertexBuffer = std::make_shared<VlkBuffer>( *m_device, vinfo, VlkBuffer::PreferDevice | VlkBuffer::WillWrite );
-    memcpy( m_vertexBuffer->Ptr(), vdata, sizeof( vdata ) );
-    m_vertexBuffer->Flush();
-
     constexpr uint16_t idata[] = { 0, 1, 2, 3, 0 };
     constexpr VkBufferCreateInfo iinfo = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
@@ -187,6 +171,7 @@ void Selection::MouseMove( const Vector2<float>& pos )
     m_posMax.x = std::max( m_origin.x, imgPos.x );
     m_posMin.y = std::min( m_origin.y, imgPos.y );
     m_posMax.y = std::max( m_origin.y, imgPos.y );
+    UpdateVertexBuffer();
 }
 
 bool Selection::IsActive() const
@@ -277,6 +262,32 @@ void Selection::CreatePipeline( VkFormat format )
         .layout = *m_pipelineLayout,
     };
     m_pipeline = std::make_shared<VlkPipeline>( *m_device, pipelineInfo );
+}
+
+void Selection::UpdateVertexBuffer()
+{
+    const auto fMin = ImageToScreenPos( m_posMin );
+    const auto fMax = ImageToScreenPos( m_posMax );
+
+    const std::array<Vertex, 4> vdata = {
+        Vertex{ fMin.x, fMin.y },
+        Vertex{ fMax.x, fMin.y },
+        Vertex{ fMax.x, fMax.y },
+        Vertex{ fMin.x, fMax.y }
+    };
+
+    constexpr VkBufferCreateInfo vinfo = {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .size = sizeof( Vertex ) * 4,
+        .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE
+    };
+    auto vb = std::make_shared<VlkBuffer>( *m_device, vinfo, VlkBuffer::PreferDevice | VlkBuffer::WillWrite );
+    memcpy( vb->Ptr(), vdata.data(), sizeof( Vertex ) * 4 );
+    vb->Flush();
+
+    if( m_vertexBuffer ) m_garbage.Recycle( std::move( m_vertexBuffer ) );
+    std::swap( m_vertexBuffer, vb );
 }
 
 Vector2<uint32_t> Selection::ScreenToImagePos( const Vector2<float>& pos ) const

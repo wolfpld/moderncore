@@ -31,6 +31,7 @@ public:
     bool MouseMove( const Vector2<float>& pos );
 
     [[nodiscard]] bool IsActive() const;
+    [[nodiscard]] VkRect2D GetSelection() const;
 
     void SetImageView( ImageView* imageView );
     void UpdateVertexBuffer();

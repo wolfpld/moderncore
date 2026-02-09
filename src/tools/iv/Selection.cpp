@@ -184,6 +184,24 @@ bool Selection::IsActive() const
     return m_posMin.x != m_posMax.x && m_posMin.y != m_posMax.y;
 }
 
+VkRect2D Selection::GetSelection() const
+{
+    if( IsActive() )
+    {
+        return VkRect2D {
+            .offset = { int32_t( m_posMin.x ), int32_t( m_posMin.y ) },
+            .extent = { m_posMax.x - m_posMin.x, m_posMax.y - m_posMin.y }
+        };
+    }
+    else
+    {
+        return VkRect2D {
+            .offset = { 0, 0 },
+            .extent = m_imageView->GetBitmapExtent()
+        };
+    }
+}
+
 void Selection::SetImageView( ImageView* imageView )
 {
     m_imageView = imageView;

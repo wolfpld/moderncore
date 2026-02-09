@@ -289,3 +289,11 @@ Vector2<uint32_t> Selection::ScreenToImagePos( const Vector2<float>& pos ) const
     const auto clamped = Vector2<uint32_t>( uint32_t( std::clamp<int32_t>( iPos.x, 0, imgSize.width ) ), uint32_t( std::clamp<int32_t>( iPos.y, 0, imgSize.height ) ) );
     return clamped;
 }
+
+[[nodiscard]] Vector2<float> Selection::ImageToScreenPos( const Vector2<uint32_t>& pos ) const
+{
+    auto& imgOrigin = m_imageView->GetImgOrigin();
+    const auto imgScale = m_imageView->GetImgScale();
+    const auto fPos = Vector2<float>( pos.x, pos.y ) * imgScale + imgOrigin;
+    return fPos;
+}

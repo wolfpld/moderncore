@@ -39,6 +39,7 @@ private:
     void UpdateVertexBuffer();
 
     [[nodiscard]] Vector2<uint32_t> ScreenToImagePos( const Vector2<float>& pos ) const;
+    [[nodiscard]] Vector2<float> ImageToScreenPos( const Vector2<uint32_t>& pos ) const;
 
     GarbageChute& m_garbage;
     std::shared_ptr<VlkDevice> m_device;

@@ -38,12 +38,12 @@ struct PushConstant
     float div;
 };
 
-ImageView::ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, const VkExtent2D& extent, float scale, std::shared_ptr<Selection> selection )
+ImageView::ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, const VkExtent2D& extent, float scale, Selection& selection )
     : m_garbage( garbage )
     , m_device( std::move( device ) )
     , m_extent( extent )
     , m_filteredNearest( false )
-    , m_selection( std::move( selection ) )
+    , m_selection( selection )
     , m_scale( scale )
     , m_fitMode( FitMode::TooSmall )
 {
@@ -265,7 +265,7 @@ void ImageView::Resize( const VkExtent2D& extent )
 
 std::shared_ptr<Texture> ImageView::SetBitmap( const std::shared_ptr<Bitmap>& bitmap, TaskDispatch& td )
 {
-    m_selection->Unselect();
+    m_selection.Unselect();
 
     if( !bitmap )
     {
@@ -284,7 +284,7 @@ std::shared_ptr<Texture> ImageView::SetBitmap( const std::shared_ptr<Bitmap>& bi
 
 std::shared_ptr<Texture> ImageView::SetBitmap( const std::shared_ptr<BitmapHdr>& bitmap, TaskDispatch& td )
 {
-    m_selection->Unselect();
+    m_selection.Unselect();
 
     if( !bitmap )
     {

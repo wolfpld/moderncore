@@ -284,7 +284,7 @@ void Viewport::Update( float delta )
     if( m_updateTitle )
     {
         m_updateTitle = false;
-        const auto extent = m_view->GetBitmapExtent();
+        auto& extent = m_view->GetBitmapExtent();
         if( m_fileList.size() > 1 )
         {
             m_window->SetTitle( std::format( "{} [{}/{}] - {}×{} - {:.2f}% — IV", m_origin, m_fileIndex + 1, m_fileList.size(), extent.width, extent.height, m_viewScale * 100 ).c_str() );
@@ -617,7 +617,7 @@ void Viewport::KeyEvent( uint32_t key, int mods, bool pressed )
             }
             else
             {
-                const auto size = m_view->GetBitmapExtent();
+                auto& size = m_view->GetBitmapExtent();
                 const auto bounds = m_window->GetBounds();
                 if( bounds.width != 0 && bounds.height != 0 )
                 {

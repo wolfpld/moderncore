@@ -61,7 +61,7 @@ public:
     void Zoom( const Vector2<float>& focus, float factor );
 
     [[nodiscard]] bool HasBitmap() const { return m_texture != nullptr; };
-    [[nodiscard]] VkExtent2D GetBitmapExtent() const { return m_bitmapExtent; }
+    [[nodiscard]] const VkExtent2D& GetBitmapExtent() const { return m_bitmapExtent; }
     [[nodiscard]] float GetImgScale() const { return m_imgScale; }
 
     void lock() { m_lock.lock(); }

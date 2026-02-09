@@ -3,6 +3,8 @@
 #include <memory>
 #include <vulkan/vulkan.h>
 
+#include "util/Vector2.hpp"
+
 class GarbageChute;
 class VlkBuffer;
 class VlkCommandBuffer;
@@ -24,7 +26,7 @@ public:
 
     void Unselect() { m_active = false; }
 
-    [[nodiscard]] bool IsActive() const { return m_active; }
+    [[nodiscard]] bool IsActive() const;
 
 private:
     void CreatePipeline( VkFormat format );
@@ -43,4 +45,6 @@ private:
     float m_offset = 0;
 
     bool m_active;
+
+    Vector2<uint32_t> m_posMin, m_posMax;
 };

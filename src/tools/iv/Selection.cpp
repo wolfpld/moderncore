@@ -166,6 +166,13 @@ void Selection::FormatChange( VkFormat format )
     CreatePipeline( format );
 }
 
+bool Selection::IsActive() const
+{
+    return m_active &&
+        m_posMin.x != m_posMax.x &&
+        m_posMin.y != m_posMax.y;
+}
+
 void Selection::CreatePipeline( VkFormat format )
 {
     static constexpr VkVertexInputBindingDescription vertexBindingDescription = {

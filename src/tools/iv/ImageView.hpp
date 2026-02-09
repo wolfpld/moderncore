@@ -63,6 +63,7 @@ public:
     [[nodiscard]] bool HasBitmap() const { return m_texture != nullptr; };
     [[nodiscard]] const VkExtent2D& GetBitmapExtent() const { return m_bitmapExtent; }
     [[nodiscard]] float GetImgScale() const { return m_imgScale; }
+    [[nodiscard]] const Vector2<float>& GetImgOrigin() const { return m_imgOrigin; }
 
     void lock() { m_lock.lock(); }
     void unlock() { m_lock.unlock(); }

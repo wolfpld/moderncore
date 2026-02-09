@@ -4,6 +4,7 @@
 
 #include "Selection.hpp"
 #include "util/EmbedData.hpp"
+#include "util/Panic.hpp"
 #include "vulkan/VlkBuffer.hpp"
 #include "vulkan/VlkCommandBuffer.hpp"
 #include "vulkan/VlkDevice.hpp"
@@ -164,6 +165,19 @@ void Selection::FormatChange( VkFormat format )
 {
     m_garbage.Recycle( std::move( m_pipeline ) );
     CreatePipeline( format );
+}
+
+void Selection::MouseButton( const Vector2<float>& pos, bool pressed )
+{
+    m_drag = pressed;
+    if( !pressed ) return;
+
+    Unselect();
+}
+
+void Selection::MouseMove( const Vector2<float>& pos )
+{
+    CheckPanic( m_drag, "Selection::MouseMove called but no drag active!" );
 }
 
 bool Selection::IsActive() const

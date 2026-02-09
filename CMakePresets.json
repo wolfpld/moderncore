@@ -34,6 +34,15 @@
       "cacheVariables": {
         "BUILD_SHARED_LIBS": "OFF"
       }
+    },
+    {
+      "name": "tsan",
+      "displayName": "ThreadSanitizer configuration",
+      "inherits": "common",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "SANITIZE": "thread"
+      }
     }
   ]
 }

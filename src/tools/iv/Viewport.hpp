@@ -100,7 +100,7 @@ private:
 
     Vector2<float> m_mousePos;
     bool m_mouseFocus = false;
-    bool m_dragActive = false;
+    bool m_imageDrag = false;
 
     bool m_updateTitle = false;
     std::string m_origin;

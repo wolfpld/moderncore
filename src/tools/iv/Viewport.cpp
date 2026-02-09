@@ -703,7 +703,7 @@ void Viewport::MouseLeave()
 
 void Viewport::MouseMove( float x, float y )
 {
-    if( m_dragActive )
+    if( m_imageDrag )
     {
         m_view->lock();
         m_view->Pan( { x - m_mousePos.x, y - m_mousePos.y } );
@@ -722,8 +722,8 @@ void Viewport::MouseButton( uint32_t button, bool pressed )
         std::lock_guard lock( *m_view );
         if( m_view->HasBitmap() )
         {
-            m_dragActive = pressed;
-            m_window->SetCursor( m_dragActive ? WaylandCursor::Grabbing : WaylandCursor::Default );
+            m_imageDrag = pressed;
+            m_window->SetCursor( m_imageDrag ? WaylandCursor::Grabbing : WaylandCursor::Default );
             m_window->ResumeIfIdle();
         }
     }

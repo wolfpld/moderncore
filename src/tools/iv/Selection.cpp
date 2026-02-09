@@ -166,7 +166,7 @@ void Selection::MouseMove( const Vector2<float>& pos )
 {
     CheckPanic( m_drag, "Selection::MouseMove called but no drag active!" );
     m_active = true;
-    auto imgPos = ScreenToImagePos( pos );
+    auto imgPos = ScreenToImagePosWithOrigin( pos );
     m_posMin.x = std::min( m_origin.x, imgPos.x );
     m_posMax.x = std::max( m_origin.x, imgPos.x );
     m_posMin.y = std::min( m_origin.y, imgPos.y );
@@ -297,6 +297,19 @@ Vector2<uint32_t> Selection::ScreenToImagePos( const Vector2<float>& pos ) const
     const auto imgScale = m_imageView->GetImgScale();
     const auto fPos = ( pos - imgOrigin ) / imgScale;
     const auto iPos = Vector2<int32_t>( int32_t( round( fPos.x ) ), int32_t( round( fPos.y ) ) );
+    const auto clamped = Vector2<uint32_t>( uint32_t( std::clamp<int32_t>( iPos.x, 0, imgSize.width ) ), uint32_t( std::clamp<int32_t>( iPos.y, 0, imgSize.height ) ) );
+    return clamped;
+}
+
+Vector2<uint32_t> Selection::ScreenToImagePosWithOrigin( const Vector2<float>& pos ) const
+{
+    auto& imgSize = m_imageView->GetBitmapExtent();
+    auto& imgOrigin = m_imageView->GetImgOrigin();
+    const auto imgScale = m_imageView->GetImgScale();
+    const auto fPos = ( pos - imgOrigin ) / imgScale;
+    auto x = fPos.x > m_origin.x ? ceil( fPos.x ) : floor( fPos.x );
+    auto y = fPos.y > m_origin.y ? ceil( fPos.y ) : floor( fPos.y );
+    const auto iPos = Vector2<int32_t>( int32_t( x ), int32_t( y ) );
     const auto clamped = Vector2<uint32_t>( uint32_t( std::clamp<int32_t>( iPos.x, 0, imgSize.width ) ), uint32_t( std::clamp<int32_t>( iPos.y, 0, imgSize.height ) ) );
     return clamped;
 }

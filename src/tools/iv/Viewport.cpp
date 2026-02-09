@@ -717,7 +717,7 @@ void Viewport::MouseMove( float x, float y )
 
     if( m_selectionDrag )
     {
-        m_selection->MouseMove( m_mousePos );
+        if( !m_selection->MouseMove( m_mousePos ) ) m_selectionDrag = false;
 
         std::lock_guard lock( m_lock );
         WantRender();

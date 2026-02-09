@@ -25,10 +25,10 @@ public:
     void SetScale( float scale );
     void FormatChange( VkFormat format );
 
-    void Unselect() { m_active = false; }
+    void AbortDrag();
 
     void MouseButton( const Vector2<float>& pos, bool pressed );
-    void MouseMove( const Vector2<float>& pos );
+    bool MouseMove( const Vector2<float>& pos );
 
     [[nodiscard]] bool IsActive() const;
 
@@ -56,7 +56,6 @@ private:
     float m_div;
     float m_offset = 0;
 
-    bool m_active = false;
     bool m_drag = false;
 
     Vector2<uint32_t> m_posMin, m_posMax, m_origin;

@@ -153,32 +153,35 @@ void Selection::FormatChange( VkFormat format )
     CreatePipeline( format );
 }
 
+void Selection::AbortDrag()
+{
+    m_drag = false;
+    m_posMin = m_posMax;
+}
+
 void Selection::MouseButton( const Vector2<float>& pos, bool pressed )
 {
     m_drag = pressed;
     if( !pressed ) return;
 
-    Unselect();
     m_posMin = m_posMax = m_origin = ScreenToImagePos( pos );
 }
 
-void Selection::MouseMove( const Vector2<float>& pos )
+bool Selection::MouseMove( const Vector2<float>& pos )
 {
-    CheckPanic( m_drag, "Selection::MouseMove called but no drag active!" );
-    m_active = true;
+    if( !m_drag ) return false;
     auto imgPos = ScreenToImagePosWithOrigin( pos );
     m_posMin.x = std::min( m_origin.x, imgPos.x );
     m_posMax.x = std::max( m_origin.x, imgPos.x );
     m_posMin.y = std::min( m_origin.y, imgPos.y );
     m_posMax.y = std::max( m_origin.y, imgPos.y );
     UpdateVertexBuffer();
+    return true;
 }
 
 bool Selection::IsActive() const
 {
-    return m_active &&
-        m_posMin.x != m_posMax.x &&
-        m_posMin.y != m_posMax.y;
+    return m_posMin.x != m_posMax.x && m_posMin.y != m_posMax.y;
 }
 
 void Selection::SetImageView( ImageView* imageView )

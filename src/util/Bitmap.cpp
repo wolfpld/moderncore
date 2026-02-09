@@ -120,6 +120,8 @@ void Bitmap::Extend( uint32_t width, uint32_t height )
 
     delete[] m_data;
     m_data = data;
+    m_width = width;
+    m_height = height;
 }
 
 void Bitmap::FlipVertical()

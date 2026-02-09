@@ -173,6 +173,11 @@ bool Selection::IsActive() const
         m_posMin.y != m_posMax.y;
 }
 
+void Selection::SetImageView( ImageView* imageView )
+{
+    m_imageView = imageView;
+}
+
 void Selection::CreatePipeline( VkFormat format )
 {
     static constexpr VkVertexInputBindingDescription vertexBindingDescription = {

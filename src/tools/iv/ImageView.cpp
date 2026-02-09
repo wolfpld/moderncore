@@ -168,6 +168,8 @@ ImageView::ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, 
     m_indexBuffer = std::make_shared<VlkBuffer>( *m_device, iinfo, VlkBuffer::PreferDevice | VlkBuffer::WillWrite );
     memcpy( m_indexBuffer->Ptr(), idata, sizeof( idata ) );
     m_indexBuffer->Flush();
+
+    m_selection.SetImageView( this );
 }
 
 ImageView::~ImageView()

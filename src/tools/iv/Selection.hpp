@@ -5,6 +5,7 @@
 
 #include "util/Vector2.hpp"
 
+class ImageView;
 class GarbageChute;
 class VlkBuffer;
 class VlkCommandBuffer;
@@ -28,11 +29,14 @@ public:
 
     [[nodiscard]] bool IsActive() const;
 
+    void SetImageView( ImageView* imageView );
+
 private:
     void CreatePipeline( VkFormat format );
 
     GarbageChute& m_garbage;
     std::shared_ptr<VlkDevice> m_device;
+    ImageView* m_imageView;
 
     std::shared_ptr<VlkShader> m_shader;
     std::shared_ptr<VlkShader> m_shaderPq;

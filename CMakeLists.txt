@@ -3,8 +3,8 @@ cmake_minimum_required(VERSION 3.29)
 option(TRACY_ENABLE "Enable Tracy" OFF)
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 option(MARCH_NATIVE "Enable -march=native" ON)
-option(SANITIZE "Sanitizer parameters" OFF)
 option(BUILD_MCORE "Build defunct mcore binary" OFF)
+set(SANITIZE "" CACHE STRING "Sanitizer parameters")
 
 set(CMAKE_CXX_STANDARD 20)
 

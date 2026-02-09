@@ -531,6 +531,7 @@ void Viewport::KeyEvent( uint32_t key, int mods, bool pressed )
     {
         m_clipboard = m_view->GetTexture();
         if( !m_clipboard ) return;
+        m_clipboardClip = m_selection->GetSelection();
 
         static constexpr WaylandDataSource::Listener listener = {
             .OnSend = Method( SendClipboard ),
@@ -796,6 +797,12 @@ bool Viewport::SendClipboard( const char* mimeType, int32_t fd )
             bmp = hdr->Tonemap( ToneMap::Operator::PbrNeutral );
         }
 
+        if( m_clipboardClip.offset.x != 0 || m_clipboardClip.offset.y != 0 ||
+            m_clipboardClip.extent.width != bmp->Width() || m_clipboardClip.extent.height != bmp->Height() )
+        {
+            bmp->Crop( m_clipboardClip.offset.x, m_clipboardClip.offset.y, m_clipboardClip.extent.width, m_clipboardClip.extent.height );
+        }
+
         std::thread thread( [bmp = std::move( bmp ), fd]() {
             ZoneScoped;
             signal( SIGPIPE, SIG_IGN );
@@ -814,6 +821,13 @@ bool Viewport::SendClipboard( const char* mimeType, int32_t fd )
 
         auto bmp = m_clipboard->ReadbackHdr( *m_device );
         bmp->SetColorspace( Colorspace::BT709, m_td.get() );
+
+        if( m_clipboardClip.offset.x != 0 || m_clipboardClip.offset.y != 0 ||
+            m_clipboardClip.extent.width != bmp->Width() || m_clipboardClip.extent.height != bmp->Height() )
+        {
+            bmp->Crop( m_clipboardClip.offset.x, m_clipboardClip.offset.y, m_clipboardClip.extent.width, m_clipboardClip.extent.height );
+        }
+
         std::thread thread( [bmp = std::move( bmp ), fd]() {
             ZoneScoped;
             signal( SIGPIPE, SIG_IGN );

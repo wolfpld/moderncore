@@ -85,6 +85,7 @@ private:
     std::shared_ptr<ImageView> m_view;
 
     std::shared_ptr<Texture> m_clipboard;
+    VkRect2D m_clipboardClip;
 
     uint64_t m_lastTime = 0;
     bool m_render = true;

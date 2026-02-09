@@ -133,6 +133,27 @@ std::unique_ptr<BitmapHdrHalf> BitmapHdrHalf::ResizeNew( uint32_t width, uint32_
     return ret;
 }
 
+void BitmapHdrHalf::Crop( uint32_t x, uint32_t y, uint32_t width, uint32_t height )
+{
+    CheckPanic( x + width <= m_width && y + height <= m_height, "Invalid crop" );
+
+    auto data = new half_float::half[width*height*4];
+    auto dst = data;
+    auto src = m_data + ( y * m_width + x ) * 4;
+
+    for( uint32_t i=0; i<height; i++ )
+    {
+        memcpy( dst, src, width * 4 * sizeof( half_float::half ) );
+        src += m_width * 4;
+        dst += width * 4;
+    }
+
+    delete[] m_data;
+    m_data = data;
+    m_width = width;
+    m_height = height;
+}
+
 void BitmapHdrHalf::SetColorspace( Colorspace colorspace, TaskDispatch* td )
 {
     if( m_colorspace == colorspace )

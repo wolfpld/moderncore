@@ -22,6 +22,7 @@ public:
     void Resize( uint32_t width, uint32_t height, TaskDispatch* td = nullptr );
     [[nodiscard]] std::unique_ptr<BitmapHdr> ResizeNew( uint32_t width, uint32_t height, TaskDispatch* td = nullptr ) const;
     void SetAlpha( float alpha );
+    void Crop( uint32_t x, uint32_t y, uint32_t width, uint32_t height );
     void NormalizeOrientation();
     void SetColorspace( Colorspace colorspace, TaskDispatch* td = nullptr );
 

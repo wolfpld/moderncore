@@ -135,6 +135,27 @@ std::unique_ptr<BitmapHdr> BitmapHdr::ResizeNew( uint32_t width, uint32_t height
     return ret;
 }
 
+void BitmapHdr::Crop( uint32_t x, uint32_t y, uint32_t width, uint32_t height )
+{
+    CheckPanic( x + width <= m_width && y + height <= m_height, "Invalid crop" );
+
+    auto data = new float[width*height*4];
+    auto dst = data;
+    auto src = m_data + ( y * m_width + x ) * 4;
+
+    for( uint32_t i=0; i<height; i++ )
+    {
+        memcpy( dst, src, width * 4 * sizeof( float ) );
+        src += m_width * 4;
+        dst += width * 4;
+    }
+
+    delete[] m_data;
+    m_data = data;
+    m_width = width;
+    m_height = height;
+}
+
 void BitmapHdr::SetAlpha( float alpha )
 {
     auto ptr = m_data;

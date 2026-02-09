@@ -718,6 +718,9 @@ void Viewport::MouseMove( float x, float y )
     if( m_selectionDrag )
     {
         m_selection->MouseMove( m_mousePos );
+
+        std::lock_guard lock( m_lock );
+        WantRender();
     }
 }
 
@@ -731,7 +734,7 @@ void Viewport::MouseButton( uint32_t button, bool pressed )
             m_selectionDrag = pressed;
             m_selection->MouseButton( m_mousePos, pressed );
             m_window->SetCursor( m_selectionDrag ? WaylandCursor::Crosshair : WaylandCursor::Default );
-            m_window->ResumeIfIdle();
+            WantRender();
         }
     }
     if( button == BTN_RIGHT && !m_selectionDrag )

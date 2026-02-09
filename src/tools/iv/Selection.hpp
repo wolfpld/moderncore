@@ -36,6 +36,9 @@ public:
 
 private:
     void CreatePipeline( VkFormat format );
+    void UpdateVertexBuffer();
+
+    [[nodiscard]] Vector2<uint32_t> ScreenToImagePos( const Vector2<float>& pos ) const;
 
     GarbageChute& m_garbage;
     std::shared_ptr<VlkDevice> m_device;
@@ -54,5 +57,5 @@ private:
     bool m_active = false;
     bool m_drag = false;
 
-    Vector2<uint32_t> m_posMin, m_posMax;
+    Vector2<uint32_t> m_posMin, m_posMax, m_origin;
 };

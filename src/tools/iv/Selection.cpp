@@ -1,7 +1,9 @@
+#include <algorithm>
 #include <array>
 #include <math.h>
 #include <string.h>
 
+#include "ImageView.hpp"
 #include "Selection.hpp"
 #include "util/EmbedData.hpp"
 #include "util/Panic.hpp"
@@ -173,11 +175,18 @@ void Selection::MouseButton( const Vector2<float>& pos, bool pressed )
     if( !pressed ) return;
 
     Unselect();
+    m_posMin = m_posMax = m_origin = ScreenToImagePos( pos );
 }
 
 void Selection::MouseMove( const Vector2<float>& pos )
 {
     CheckPanic( m_drag, "Selection::MouseMove called but no drag active!" );
+    m_active = true;
+    auto imgPos = ScreenToImagePos( pos );
+    m_posMin.x = std::min( m_origin.x, imgPos.x );
+    m_posMax.x = std::max( m_origin.x, imgPos.x );
+    m_posMin.y = std::min( m_origin.y, imgPos.y );
+    m_posMax.y = std::max( m_origin.y, imgPos.y );
 }
 
 bool Selection::IsActive() const
@@ -268,4 +277,15 @@ void Selection::CreatePipeline( VkFormat format )
         .layout = *m_pipelineLayout,
     };
     m_pipeline = std::make_shared<VlkPipeline>( *m_device, pipelineInfo );
+}
+
+Vector2<uint32_t> Selection::ScreenToImagePos( const Vector2<float>& pos ) const
+{
+    auto& imgSize = m_imageView->GetBitmapExtent();
+    auto& imgOrigin = m_imageView->GetImgOrigin();
+    const auto imgScale = m_imageView->GetImgScale();
+    const auto fPos = ( pos - imgOrigin ) / imgScale;
+    const auto iPos = Vector2<int32_t>( int32_t( round( fPos.x ) ), int32_t( round( fPos.y ) ) );
+    const auto clamped = Vector2<uint32_t>( uint32_t( std::clamp<int32_t>( iPos.x, 0, imgSize.width ) ), uint32_t( std::clamp<int32_t>( iPos.y, 0, imgSize.height ) ) );
+    return clamped;
 }

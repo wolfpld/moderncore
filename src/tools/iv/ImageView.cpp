@@ -586,4 +586,6 @@ void ImageView::UpdateVertexBuffer()
 
     if( m_vertexBuffer ) m_garbage.Recycle( std::move( m_vertexBuffer ) );
     std::swap( m_vertexBuffer, vb );
+
+    if( m_selection.IsActive() ) m_selection.UpdateVertexBuffer();
 }

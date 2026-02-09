@@ -33,10 +33,10 @@ public:
     [[nodiscard]] bool IsActive() const;
 
     void SetImageView( ImageView* imageView );
+    void UpdateVertexBuffer();
 
 private:
     void CreatePipeline( VkFormat format );
-    void UpdateVertexBuffer();
 
     [[nodiscard]] Vector2<uint32_t> ScreenToImagePos( const Vector2<float>& pos ) const;
     [[nodiscard]] Vector2<float> ImageToScreenPos( const Vector2<uint32_t>& pos ) const;

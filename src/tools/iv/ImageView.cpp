@@ -339,7 +339,8 @@ void ImageView::FormatChange( VkFormat format )
 {
     m_garbage.Recycle( {
         std::move( m_pipelineMin ),
-        std::move( m_pipelineExact )
+        std::move( m_pipelineExact ),
+        std::move( m_pipelineNearest )
     } );
     CreatePipeline( format );
 }

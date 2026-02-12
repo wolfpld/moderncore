@@ -549,9 +549,13 @@ enable_testing()
 
 # tests - mcoreutil
 set(UTIL_TESTS_SRC
-    tests/util/Url.cpp
-    tests/util/Filesystem.cpp
     tests/util/ArgParser.cpp
+    tests/util/Clock.cpp
+    tests/util/Config.cpp
+    tests/util/DataBuffer.cpp
+    tests/util/DataContainer.cpp
+    tests/util/Filesystem.cpp
+    tests/util/Url.cpp
 )
 
 add_executable(mcoreutil_tests ${UTIL_TESTS_SRC})

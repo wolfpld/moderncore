@@ -64,7 +64,7 @@ CPMAddPackage(
 CPMAddPackage(
     NAME nfd
     GITHUB_REPOSITORY btzy/nativefiledialog-extended
-    GIT_TAG v1.2.1
+    GIT_TAG v1.3.0
     EXCLUDE_FROM_ALL TRUE
     OPTIONS
         "NFD_PORTAL ON"

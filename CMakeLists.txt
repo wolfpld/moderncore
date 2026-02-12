@@ -542,3 +542,27 @@ install(FILES src/tools/iv/assets/icon.svg DESTINATION share/icons/hicolor/scala
 if(BUILD_MCORE)
     install(TARGETS mcore)
 endif()
+
+# Catch2 testing
+find_package(Catch2 3 REQUIRED)
+enable_testing()
+
+# tests - mcoreutil
+set(UTIL_TESTS_SRC
+    tests/util/Url.cpp
+    tests/util/Filesystem.cpp
+    tests/util/ArgParser.cpp
+)
+
+add_executable(mcoreutil_tests ${UTIL_TESTS_SRC})
+target_link_libraries(mcoreutil_tests PRIVATE
+    mcoreutil
+    Catch2::Catch2WithMain
+)
+target_include_directories(mcoreutil_tests PRIVATE
+    ${CATCH2_INCLUDE_DIRS}
+)
+target_compile_options(mcoreutil_tests PRIVATE ${CATCH2_CFLAGS})
+
+include(Catch)
+catch_discover_tests(mcoreutil_tests)

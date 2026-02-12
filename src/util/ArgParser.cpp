@@ -53,5 +53,5 @@ bool ParseBoolean( const char* str )
         }
     }
     mclog( LogLevel::Error, "Argument '%s' is not a valid boolean", str );
-    exit( 1 );
+    throw ArgParseException( std::string( str ) + " is not a valid boolean argument" );
 }

@@ -734,7 +734,7 @@ void Viewport::MouseButton( uint32_t button, bool pressed )
         {
             m_selectionDrag = pressed;
             m_selection->MouseButton( m_mousePos, pressed );
-            m_window->SetCursor( m_selectionDrag ? WaylandCursor::Crosshair : WaylandCursor::Default );
+            SetMousePointer();
             WantRender();
         }
     }
@@ -744,7 +744,7 @@ void Viewport::MouseButton( uint32_t button, bool pressed )
         if( m_view->HasBitmap() )
         {
             m_imageDrag = pressed;
-            m_window->SetCursor( m_imageDrag ? WaylandCursor::Grabbing : WaylandCursor::Default );
+            SetMousePointer();
             m_window->ResumeIfIdle();
         }
     }
@@ -774,6 +774,22 @@ void Viewport::Scroll( const WaylandScroll& scroll )
             std::lock_guard lock( m_lock );
             WantRender();
         }
+    }
+}
+
+void Viewport::SetMousePointer()
+{
+    if( m_imageDrag )
+    {
+        m_window->SetCursor( WaylandCursor::Grabbing );
+    }
+    else if( m_selectionDrag )
+    {
+        m_window->SetCursor( WaylandCursor::Crosshair );
+    }
+    else
+    {
+        m_window->SetCursor( WaylandCursor::Default );
     }
 }
 

@@ -56,6 +56,8 @@ private:
     void MouseButton( uint32_t button, bool pressed );
     void Scroll( const WaylandScroll& scroll );
 
+    void SetMousePointer();
+
     bool SendClipboard( const char* mimeType, int32_t fd );
     void CancelClipboard();
 

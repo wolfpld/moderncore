@@ -13,6 +13,7 @@ class VlkDevice;
 class VlkPipeline;
 class VlkPipelineLayout;
 class VlkShader;
+class WaylandWindow;
 
 class Selection
 {
@@ -30,7 +31,7 @@ public:
         DownRight
     };
 
-    Selection( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, float scale );
+    Selection( std::shared_ptr<WaylandWindow> window, std::shared_ptr<VlkDevice> device, VkFormat format, float scale );
     ~Selection();
 
     void Update( float delta );
@@ -59,6 +60,7 @@ private:
     [[nodiscard]] Vector2<float> ImageToScreenPos( const Vector2<uint32_t>& pos ) const;
 
     GarbageChute& m_garbage;
+    std::shared_ptr<WaylandWindow> m_window;
     std::shared_ptr<VlkDevice> m_device;
     ImageView* m_imageView;
 

@@ -16,6 +16,7 @@
 #include "vulkan/VlkShaderModule.hpp"
 #include "vulkan/ext/GarbageChute.hpp"
 #include "vulkan/ext/Tracy.hpp"
+#include "wayland/WaylandWindow.hpp"
 
 #include "shader/SelectionFrag.hpp"
 #include "shader/SelectionPqFrag.hpp"
@@ -34,8 +35,9 @@ struct PushConstant
     float offset;
 };
 
-Selection::Selection( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, float scale )
-    : m_garbage( garbage )
+Selection::Selection( std::shared_ptr<WaylandWindow> window, std::shared_ptr<VlkDevice> device, VkFormat format, float scale )
+    : m_garbage( *window )
+    , m_window( std::move( window ) )
     , m_device( std::move( device ) )
 {
     SetScale( scale );

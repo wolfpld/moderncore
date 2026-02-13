@@ -723,6 +723,10 @@ void Viewport::MouseMove( float x, float y )
         std::lock_guard lock( m_lock );
         WantRender();
     }
+    else if( !m_imageDrag && m_selection->IsActive() )
+    {
+        SetMousePointer();
+    }
 }
 
 void Viewport::MouseButton( uint32_t button, bool pressed )
@@ -771,6 +775,8 @@ void Viewport::Scroll( const WaylandScroll& scroll )
             m_view->Zoom( m_mousePos, factor );
             viewLock.unlock();
 
+            if( !m_imageDrag && m_selection->IsActive() ) SetMousePointer();
+
             std::lock_guard lock( m_lock );
             WantRender();
         }
@@ -786,6 +792,21 @@ void Viewport::SetMousePointer()
     else if( m_selectionDrag )
     {
         m_window->SetCursor( WaylandCursor::Crosshair );
+    }
+    else if( m_selection->IsActive() )
+    {
+        switch( m_selection->GetResizeArea( m_mousePos, m_window->GetScale() / 120.f ) )
+        {
+        case Selection::ResizeArea::UpLeft: m_window->SetCursor( WaylandCursor::ResizeNW ); break;
+        case Selection::ResizeArea::UpRight: m_window->SetCursor( WaylandCursor::ResizeNE ); break;
+        case Selection::ResizeArea::DownLeft: m_window->SetCursor( WaylandCursor::ResizeSW ); break;
+        case Selection::ResizeArea::DownRight: m_window->SetCursor( WaylandCursor::ResizeSE ); break;
+        case Selection::ResizeArea::Up: m_window->SetCursor( WaylandCursor::ResizeN ); break;
+        case Selection::ResizeArea::Down: m_window->SetCursor( WaylandCursor::ResizeS ); break;
+        case Selection::ResizeArea::Left: m_window->SetCursor( WaylandCursor::ResizeW ); break;
+        case Selection::ResizeArea::Right: m_window->SetCursor( WaylandCursor::ResizeE ); break;
+        case Selection::ResizeArea::None: m_window->SetCursor( WaylandCursor::Default ); break;
+        }
     }
     else
     {

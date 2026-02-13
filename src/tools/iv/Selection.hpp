@@ -17,6 +17,19 @@ class VlkShader;
 class Selection
 {
 public:
+    enum class ResizeArea
+    {
+        None,
+        Up,
+        Down,
+        Left,
+        Right,
+        UpLeft,
+        UpRight,
+        DownLeft,
+        DownRight
+    };
+
     Selection( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, float scale );
     ~Selection();
 
@@ -29,6 +42,8 @@ public:
 
     void MouseButton( const Vector2<float>& pos, bool pressed );
     bool MouseMove( const Vector2<float>& pos );
+
+    [[nodiscard]] ResizeArea GetResizeArea( const Vector2<float>& pos, float scale ) const;
 
     [[nodiscard]] bool IsActive() const;
     [[nodiscard]] VkRect2D GetSelection() const;

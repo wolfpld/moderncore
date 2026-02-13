@@ -179,6 +179,43 @@ bool Selection::MouseMove( const Vector2<float>& pos )
     return true;
 }
 
+Selection::ResizeArea Selection::GetResizeArea( const Vector2<float>& pos, float scale ) const
+{
+    CheckPanic( IsActive(), "GetResizeArea called when selection not active" );
+
+    const auto posMin = ImageToScreenPos( m_posMin );
+    const auto posMax = ImageToScreenPos( m_posMax );
+
+    const auto mid = ( posMin + posMax ) * 0.5f;
+    const auto border = 8.f * scale;
+
+    const auto xRange = pos.x + border > posMin.x && pos.x - border < posMax.x;
+    const auto yRange = pos.y + border > posMin.y && pos.y - border < posMax.y;
+
+    if( !xRange || !yRange ) return ResizeArea::None;
+
+    const auto left = pos.x < mid.x && std::abs( pos.x - posMin.x ) < border;
+    const auto right = pos.x > mid.x && std::abs( pos.x - posMax.x ) < border;
+    const auto up = pos.y < mid.y && std::abs( pos.y - posMin.y ) < border;
+    const auto down = pos.y > mid.y && std::abs( pos.y - posMax.y ) < border;
+
+    if( left )
+    {
+        if( up ) return ResizeArea::UpLeft;
+        if( down ) return ResizeArea::DownLeft;
+        return ResizeArea::Left;
+    }
+    if( right )
+    {
+        if( up ) return ResizeArea::UpRight;
+        if( down ) return ResizeArea::DownRight;
+        return ResizeArea::Right;
+    }
+    if( up ) return ResizeArea::Up;
+    if( down ) return ResizeArea::Down;
+    return ResizeArea::None;
+}
+
 bool Selection::IsActive() const
 {
     return m_posMin.x != m_posMax.x && m_posMin.y != m_posMax.y;

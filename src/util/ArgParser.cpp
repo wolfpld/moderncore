@@ -49,7 +49,7 @@ bool ParseBoolean( const char* str )
     {
         for( const auto& arg : arguments )
         {
-            if( length == arg.length && strcmp( str, arg.name ) == 0 ) return arg.value;
+            if( length == arg.length && strcasecmp( str, arg.name ) == 0 ) return arg.value;
         }
     }
     mclog( LogLevel::Error, "Argument '%s' is not a valid boolean", str );

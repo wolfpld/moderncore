@@ -56,24 +56,19 @@ TEST_CASE( "ParseBoolean functionality", "[argparser][boolean]" )
 
     SECTION( "Case sensitivity" )
     {
-        // ParseBoolean is case-sensitive (uses strcmp)
-        // These should fail (not in the argument list)
+        // ParseBoolean is case-insensitive (uses strcasecmp)
+        // These should all work regardless of case
 
-        // These are the correct case
+        // Lowercase
         REQUIRE( ParseBoolean( "on" ) == true );
+        REQUIRE( ParseBoolean( "true" ) == true );
 
-        // Test invalid case - should throw exception
-        REQUIRE_THROWS( ParseBoolean( "ON" ) );
+        // Uppercase
+        REQUIRE( ParseBoolean( "ON" ) == true );
+        REQUIRE( ParseBoolean( "TRUE" ) == true );
 
-        // Test with specific message
-        try
-        {
-            ParseBoolean( "ON" );
-        }
-        catch( const ArgParseException& e )
-        {
-            std::string msg( e.what() );
-            REQUIRE( msg.find( "ON" ) != std::string::npos );
-        }
+        // Mixed case
+        REQUIRE( ParseBoolean( "On" ) == true );
+        REQUIRE( ParseBoolean( "TrUe" ) == true );
     }
 }

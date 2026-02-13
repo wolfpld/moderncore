@@ -795,7 +795,7 @@ void Viewport::SetMousePointer()
     }
     else if( m_selection->IsActive() )
     {
-        switch( m_selection->GetResizeArea( m_mousePos, m_window->GetScale() / 120.f ) )
+        switch( m_selection->GetResizeArea( m_mousePos ) )
         {
         case Selection::ResizeArea::UpLeft: m_window->SetCursor( WaylandCursor::ResizeNW ); break;
         case Selection::ResizeArea::UpRight: m_window->SetCursor( WaylandCursor::ResizeNE ); break;

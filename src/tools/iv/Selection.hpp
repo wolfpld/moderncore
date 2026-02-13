@@ -44,7 +44,7 @@ public:
     void MouseButton( const Vector2<float>& pos, bool pressed );
     bool MouseMove( const Vector2<float>& pos );
 
-    [[nodiscard]] ResizeArea GetResizeArea( const Vector2<float>& pos, float scale ) const;
+    [[nodiscard]] ResizeArea GetResizeArea( const Vector2<float>& pos ) const;
 
     [[nodiscard]] bool IsActive() const;
     [[nodiscard]] VkRect2D GetSelection() const;

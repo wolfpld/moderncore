@@ -181,7 +181,7 @@ bool Selection::MouseMove( const Vector2<float>& pos )
     return true;
 }
 
-Selection::ResizeArea Selection::GetResizeArea( const Vector2<float>& pos, float scale ) const
+Selection::ResizeArea Selection::GetResizeArea( const Vector2<float>& pos ) const
 {
     CheckPanic( IsActive(), "GetResizeArea called when selection not active" );
 
@@ -189,7 +189,7 @@ Selection::ResizeArea Selection::GetResizeArea( const Vector2<float>& pos, float
     const auto posMax = ImageToScreenPos( m_posMax );
 
     const auto mid = ( posMin + posMax ) * 0.5f;
-    const auto border = 8.f * scale;
+    const auto border = 8.f * m_window->GetScale() / 120.f;
 
     const auto xRange = pos.x + border > posMin.x && pos.x - border < posMax.x;
     const auto yRange = pos.y + border > posMin.y && pos.y - border < posMax.y;

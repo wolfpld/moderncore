@@ -378,6 +378,11 @@ ecm_add_wayland_client_protocol(MCOREWAYLAND_SRC
     BASENAME color-management
 )
 
+ecm_add_wayland_client_protocol(MCOREWAYLAND_SRC
+    PROTOCOL ${WAYLAND_PROTOCOLS_PKGDATADIR}/staging/pointer-warp/pointer-warp-v1.xml
+    BASENAME pointer-warp
+)
+
 add_library(mcorewayland ${MCOREWAYLAND_SRC})
 target_link_libraries(mcorewayland PRIVATE
     mcoreimage

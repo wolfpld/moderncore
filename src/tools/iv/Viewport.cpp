@@ -727,7 +727,7 @@ void Viewport::MouseMove( float x, float y )
 
 void Viewport::MouseButton( uint32_t button, bool pressed )
 {
-    if( button == BTN_LEFT && !m_imageDrag )
+    if( button == BTN_LEFT && ( !m_imageDrag || ( m_selectionDrag && !pressed ) ) )
     {
         std::lock_guard lock( *m_view );
         if( m_view->HasBitmap() )
@@ -738,7 +738,7 @@ void Viewport::MouseButton( uint32_t button, bool pressed )
             WantRender();
         }
     }
-    if( button == BTN_RIGHT && !m_selectionDrag )
+    if( button == BTN_RIGHT )
     {
         std::lock_guard lock( *m_view );
         if( m_view->HasBitmap() )

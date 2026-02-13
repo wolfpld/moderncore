@@ -38,6 +38,7 @@ WaylandDisplay::~WaylandDisplay()
 {
     m_outputs.clear();
     m_seat.reset();
+    if( m_pointerWarp ) wp_pointer_warp_v1_destroy( m_pointerWarp );
     if( m_colorManager ) wp_color_manager_v1_destroy( m_colorManager );
     if( m_activation ) xdg_activation_v1_destroy( m_activation );
     if( m_dataDeviceManager ) wl_data_device_manager_destroy( m_dataDeviceManager );
@@ -141,6 +142,10 @@ void WaylandDisplay::RegistryGlobal( wl_registry* reg, uint32_t name, const char
     else if( strcmp( interface, wp_color_manager_v1_interface.name ) == 0 )
     {
         m_colorManager = RegistryBind( wp_color_manager_v1 );
+    }
+    else if( strcmp( interface, wp_pointer_warp_v1_interface.name ) == 0 )
+    {
+        m_pointerWarp = RegistryBind( wp_pointer_warp_v1 );
     }
 }
 

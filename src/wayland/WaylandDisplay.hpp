@@ -9,6 +9,7 @@
 #include "wayland-color-management-client-protocol.h"
 #include "wayland-cursor-shape-client-protocol.h"
 #include "wayland-fractional-scale-client-protocol.h"
+#include "wayland-pointer-warp-client-protocol.h"
 #include "wayland-viewporter-client-protocol.h"
 #include "wayland-xdg-activation-client-protocol.h"
 #include "wayland-xdg-decoration-client-protocol.h"
@@ -40,6 +41,7 @@ public:
     [[nodiscard]] wp_viewporter* Viewporter() { return m_viewporter; }
     [[nodiscard]] xdg_toplevel_icon_manager_v1* IconManager() { return m_iconManager; }
     [[nodiscard]] xdg_activation_v1* Activation() { return m_activation; }
+    [[nodiscard]] wp_pointer_warp_v1* PointerWarp() { return m_pointerWarp; }
 
     [[nodiscard]] const auto& IconSizes() const { return m_iconSizes; }
     [[nodiscard]] const auto& Outputs() const { return m_outputs; }
@@ -70,6 +72,7 @@ private:
     wl_data_device_manager* m_dataDeviceManager = nullptr;
     xdg_activation_v1* m_activation = nullptr;
     wp_color_manager_v1* m_colorManager = nullptr;
+    wp_pointer_warp_v1* m_pointerWarp = nullptr;
 
     bool m_keepRunning = true;
 

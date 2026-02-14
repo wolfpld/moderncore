@@ -531,6 +531,10 @@ void Viewport::KeyEvent( uint32_t key, int mods, bool pressed )
     {
         CopyToClipboard();
     }
+    else if( mods & CtrlBit && key == KEY_X )
+    {
+        CutSelection();
+    }
     else if( mods & CtrlBit && key == KEY_S )
     {
         auto tex = m_view->GetTexture();
@@ -905,6 +909,30 @@ bool Viewport::CopyToClipboard()
     }
 
     return true;
+}
+
+void Viewport::CutSelection()
+{
+    if( !CopyToClipboard() ) return;
+
+    const auto sel = m_clipboardClip;
+
+    if( m_clipboard->Format() == SdrFormat )
+    {
+        auto bmp = m_clipboard->ReadbackSdr( *m_device );
+        bmp->FillBlack( sel.offset.x, sel.offset.y, sel.extent.width, sel.extent.height );
+        m_view->SetBitmap( bmp, *m_td, false );
+    }
+    else
+    {
+        auto half = m_clipboard->ReadbackHdr( *m_device );
+        half->FillBlack( sel.offset.x, sel.offset.y, sel.extent.width, sel.extent.height );
+        auto hdr = std::make_shared<BitmapHdr>( *half );
+        m_view->SetBitmap( hdr, *m_td, false );
+    }
+
+    std::lock_guard lock( m_lock );
+    WantRender();
 }
 
 void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, const ImageProvider::ReturnData& data )

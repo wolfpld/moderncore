@@ -62,6 +62,7 @@ private:
     void CancelClipboard();
 
     bool CopyToClipboard();
+    void CutSelection();
 
     void ImageHandler( int64_t id, ImageProvider::Result result, const ImageProvider::ReturnData& data );
 

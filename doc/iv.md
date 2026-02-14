@@ -70,10 +70,12 @@ Keybindings:
  - `F11` enables fullscreen mode.
  - `Escape` exits the application.
  - `←` and `→` switch between images.
+ - `ctrl+c` copies the selected region to clipboard (or whole image if no selection).
+ - `ctrl+x` cuts the selected region to clipboard (fills with black).
+ - `ctrl+v` pastes an image from the clipboard.
+ - `ctrl+s` saves the image to a file.
 
 ### Future plans
 
-- Load vector images (SVG, PDF).
-- Animation support.
-- Selection of an image region for copying to the clipboard.
-- Save image to file.
+ - Load vector images (SVG, PDF).
+ - Animation support.

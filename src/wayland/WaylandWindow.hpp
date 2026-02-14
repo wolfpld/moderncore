@@ -92,6 +92,7 @@ public:
     void SetListener( const Listener* listener, void* listenerPtr );
     void SetDevice( std::shared_ptr<VlkDevice> device );
     void SetCursor( WaylandCursor cursor );
+    void WarpPointer( float x, float y );
 
     void InvokeRender();
     void ResumeIfIdle();

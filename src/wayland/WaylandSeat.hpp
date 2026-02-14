@@ -40,6 +40,7 @@ public:
 
     [[nodiscard]] WaylandCursor GetCursor( wl_surface* window );
     void SetCursor( wl_surface* window, WaylandCursor cursor );
+    void WarpPointer( wl_surface* window, wl_fixed_t x, wl_fixed_t y );
 
     [[nodiscard]] int GetClipboard( const char* mime );
     [[nodiscard]] int GetDnd( const char* mime );

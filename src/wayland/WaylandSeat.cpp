@@ -95,6 +95,11 @@ void WaylandSeat::SetCursor( wl_surface* window, WaylandCursor cursor )
     it->second = cursor;
 }
 
+void WaylandSeat::WarpPointer( wl_surface* window, wl_fixed_t x, wl_fixed_t y )
+{
+    if( m_pointer ) m_pointer->Warp( window, x, y );
+}
+
 int WaylandSeat::GetClipboard( const char* mime )
 {
     ZoneScoped;

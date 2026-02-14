@@ -465,6 +465,13 @@ void WaylandWindow::SetCursor( WaylandCursor cursor )
     m_cursor.store( cursor, std::memory_order_release );
 }
 
+void WaylandWindow::WarpPointer( float x, float y )
+{
+    x *= 120.f / m_scale;
+    y *= 120.f / m_scale;
+    m_display.Seat().WarpPointer( m_surface, wl_fixed_from_double( x ), wl_fixed_from_double( y ) );
+}
+
 void WaylandWindow::SetDevice( std::shared_ptr<VlkDevice> device )
 {
     CheckPanic( !m_vkDevice, "Vulkan device already set" );

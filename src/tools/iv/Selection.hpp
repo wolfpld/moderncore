@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <mutex>
 #include <vulkan/vulkan.h>
 
 #include "util/Vector2.hpp"
@@ -45,7 +46,7 @@ public:
     bool MouseMove( const Vector2<float>& pos );
 
     [[nodiscard]] ResizeArea GetResizeArea( const Vector2<float>& pos ) const;
-    [[nodiscard]] ResizeArea ActiveResizeArea() const { return m_resizeArea; }
+    [[nodiscard]] ResizeArea ActiveResizeArea() const;
 
     [[nodiscard]] bool IsActive() const;
     [[nodiscard]] VkRect2D GetSelection() const;
@@ -79,4 +80,6 @@ private:
     ResizeArea m_resizeArea = ResizeArea::None;
 
     Vector2<uint32_t> m_posMin, m_posMax, m_origin;
+
+    mutable std::recursive_mutex m_lock;
 };

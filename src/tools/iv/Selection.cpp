@@ -143,12 +143,14 @@ void Selection::FormatChange( VkFormat format )
 
 void Selection::AbortDrag()
 {
+    std::lock_guard lock( m_lock );
     m_drag = false;
     m_posMin = m_posMax;
 }
 
 void Selection::MouseButton( const Vector2<float>& pos, bool pressed )
 {
+    std::lock_guard lock( m_lock );
     m_drag = pressed;
     if( !pressed ) return;
 
@@ -199,6 +201,7 @@ void Selection::MouseButton( const Vector2<float>& pos, bool pressed )
 
 bool Selection::MouseMove( const Vector2<float>& pos )
 {
+    std::lock_guard lock( m_lock );
     if( !m_drag ) return false;
     if( m_resizeArea == ResizeArea::None )
     {
@@ -253,6 +256,7 @@ bool Selection::MouseMove( const Vector2<float>& pos )
 
 Selection::ResizeArea Selection::GetResizeArea( const Vector2<float>& pos ) const
 {
+    std::lock_guard lock( m_lock );
     CheckPanic( IsActive(), "GetResizeArea called when selection not active" );
 
     const auto posMin = ImageToScreenPos( m_posMin );
@@ -288,13 +292,21 @@ Selection::ResizeArea Selection::GetResizeArea( const Vector2<float>& pos ) cons
     return ResizeArea::None;
 }
 
+Selection::ResizeArea Selection::ActiveResizeArea() const
+{
+    std::lock_guard lock( m_lock );
+    return m_resizeArea;
+}
+
 bool Selection::IsActive() const
 {
+    std::lock_guard lock( m_lock );
     return m_posMin.x != m_posMax.x && m_posMin.y != m_posMax.y;
 }
 
 VkRect2D Selection::GetSelection() const
 {
+    std::lock_guard lock( m_lock );
     if( IsActive() )
     {
         return VkRect2D {
@@ -396,6 +408,7 @@ void Selection::CreatePipeline( VkFormat format )
 
 void Selection::UpdateVertexBuffer()
 {
+    std::lock_guard lock( m_lock );
     const auto fMin = ImageToScreenPos( m_posMin );
     const auto fMax = ImageToScreenPos( m_posMax );
 

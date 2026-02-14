@@ -58,6 +58,7 @@ private:
 
     [[nodiscard]] Vector2<uint32_t> ScreenToImagePos( const Vector2<float>& pos ) const;
     [[nodiscard]] Vector2<uint32_t> ScreenToImagePosWithOrigin( const Vector2<float>& pos ) const;
+    [[nodiscard]] Vector2<uint32_t> ScreenToImagePosRound( const Vector2<float>& pos ) const;
     [[nodiscard]] Vector2<float> ImageToScreenPos( const Vector2<uint32_t>& pos ) const;
 
     GarbageChute& m_garbage;

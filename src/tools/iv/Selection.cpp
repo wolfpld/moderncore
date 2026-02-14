@@ -214,44 +214,51 @@ void Selection::MouseButton( const Vector2<float>& pos, bool pressed )
 bool Selection::MouseMove( const Vector2<float>& pos )
 {
     if( !m_drag ) return false;
-    auto imgPos = ScreenToImagePosWithOrigin( pos );
-
-    switch( m_resizeArea )
+    if( m_resizeArea == ResizeArea::None )
     {
-    case ResizeArea::None:
+        auto imgPos = ScreenToImagePosWithOrigin( pos );
         m_posMin.x = std::min( m_origin.x + 0, imgPos.x );
         m_posMax.x = std::max( m_origin.x + 1, imgPos.x );
         m_posMin.y = std::min( m_origin.y + 0, imgPos.y );
         m_posMax.y = std::max( m_origin.y + 1, imgPos.y );
-        break;
-    case ResizeArea::Up:
-        m_posMin.y = std::min( m_posMax.y - 1, imgPos.y );
-        break;
-    case ResizeArea::Down:
-        m_posMax.y = std::max( m_posMin.y + 1, imgPos.y );
-        break;
-    case ResizeArea::Left:
-        m_posMin.x = std::min( m_posMax.x - 1, imgPos.x );
-        break;
-    case ResizeArea::Right:
-        m_posMax.x = std::max( m_posMin.x + 1, imgPos.x );
-        break;
-    case ResizeArea::UpLeft:
-        m_posMin.y = std::min( m_posMax.y - 1, imgPos.y );
-        m_posMin.x = std::min( m_posMax.x - 1, imgPos.x );
-        break;
-    case ResizeArea::UpRight:
-        m_posMin.y = std::min( m_posMax.y - 1, imgPos.y );
-        m_posMax.x = std::max( m_posMin.x + 1, imgPos.x );
-        break;
-    case ResizeArea::DownLeft:
-        m_posMax.y = std::max( m_posMin.y + 1, imgPos.y );
-        m_posMin.x = std::min( m_posMax.x - 1, imgPos.x );
-        break;
-    case ResizeArea::DownRight:
-        m_posMax.y = std::max( m_posMin.y + 1, imgPos.y );
-        m_posMax.x = std::max( m_posMin.x + 1, imgPos.x );
-        break;
+    }
+    else
+    {
+        auto imgPos = ScreenToImagePosRound( pos );
+        switch( m_resizeArea )
+        {
+        case ResizeArea::None:
+            Panic( "Should not happen" );
+            break;
+        case ResizeArea::Up:
+            m_posMin.y = std::min( m_posMax.y - 1, imgPos.y );
+            break;
+        case ResizeArea::Down:
+            m_posMax.y = std::max( m_posMin.y + 1, imgPos.y );
+            break;
+        case ResizeArea::Left:
+            m_posMin.x = std::min( m_posMax.x - 1, imgPos.x );
+            break;
+        case ResizeArea::Right:
+            m_posMax.x = std::max( m_posMin.x + 1, imgPos.x );
+            break;
+        case ResizeArea::UpLeft:
+            m_posMin.y = std::min( m_posMax.y - 1, imgPos.y );
+            m_posMin.x = std::min( m_posMax.x - 1, imgPos.x );
+            break;
+        case ResizeArea::UpRight:
+            m_posMin.y = std::min( m_posMax.y - 1, imgPos.y );
+            m_posMax.x = std::max( m_posMin.x + 1, imgPos.x );
+            break;
+        case ResizeArea::DownLeft:
+            m_posMax.y = std::max( m_posMin.y + 1, imgPos.y );
+            m_posMin.x = std::min( m_posMax.x - 1, imgPos.x );
+            break;
+        case ResizeArea::DownRight:
+            m_posMax.y = std::max( m_posMin.y + 1, imgPos.y );
+            m_posMax.x = std::max( m_posMin.x + 1, imgPos.x );
+            break;
+        }
     }
 
     UpdateVertexBuffer();
@@ -446,6 +453,19 @@ Vector2<uint32_t> Selection::ScreenToImagePosWithOrigin( const Vector2<float>& p
     const auto fPos = ( pos - imgOrigin ) / imgScale;
     auto x = fPos.x > m_origin.x ? ceil( fPos.x ) : floor( fPos.x );
     auto y = fPos.y > m_origin.y ? ceil( fPos.y ) : floor( fPos.y );
+    const auto iPos = Vector2<int32_t>( int32_t( x ), int32_t( y ) );
+    const auto clamped = Vector2<uint32_t>( uint32_t( std::clamp<int32_t>( iPos.x, 0, imgSize.width ) ), uint32_t( std::clamp<int32_t>( iPos.y, 0, imgSize.height ) ) );
+    return clamped;
+}
+
+Vector2<uint32_t> Selection::ScreenToImagePosRound( const Vector2<float>& pos ) const
+{
+    auto& imgSize = m_imageView->GetBitmapExtent();
+    auto& imgOrigin = m_imageView->GetImgOrigin();
+    const auto imgScale = m_imageView->GetImgScale();
+    const auto fPos = ( pos - imgOrigin ) / imgScale;
+    auto x = round( fPos.x );
+    auto y = round( fPos.y );
     const auto iPos = Vector2<int32_t>( int32_t( x ), int32_t( y ) );
     const auto clamped = Vector2<uint32_t>( uint32_t( std::clamp<int32_t>( iPos.x, 0, imgSize.width ) ), uint32_t( std::clamp<int32_t>( iPos.y, 0, imgSize.height ) ) );
     return clamped;

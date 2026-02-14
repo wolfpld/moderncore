@@ -61,6 +61,8 @@ private:
     bool SendClipboard( const char* mimeType, int32_t fd );
     void CancelClipboard();
 
+    bool CopyToClipboard();
+
     void ImageHandler( int64_t id, ImageProvider::Result result, const ImageProvider::ReturnData& data );
 
     void PasteClipboard();

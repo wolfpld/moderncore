@@ -529,28 +529,7 @@ void Viewport::KeyEvent( uint32_t key, int mods, bool pressed )
     }
     else if( mods & CtrlBit && key == KEY_C )
     {
-        m_clipboard = m_view->GetTexture();
-        if( !m_clipboard ) return;
-        m_clipboardClip = m_selection->GetSelection();
-
-        static constexpr WaylandDataSource::Listener listener = {
-            .OnSend = Method( SendClipboard ),
-            .OnCancelled = Method( CancelClipboard )
-        };
-
-        if( m_clipboard->Format() == SdrFormat )
-        {
-            const char* mime = "image/png";
-            m_window->SetClipboard( &mime, 1, &listener, this );
-        }
-        else
-        {
-            constexpr std::array mime = {
-                "image/x-exr",
-                "image/png"
-            };
-            m_window->SetClipboard( mime.data(), mime.size(), &listener, this );
-        }
+        CopyToClipboard();
     }
     else if( mods & CtrlBit && key == KEY_S )
     {
@@ -898,6 +877,34 @@ bool Viewport::SendClipboard( const char* mimeType, int32_t fd )
 void Viewport::CancelClipboard()
 {
     m_clipboard.reset();
+}
+
+bool Viewport::CopyToClipboard()
+{
+    m_clipboard = m_view->GetTexture();
+    if( !m_clipboard ) return false;
+    m_clipboardClip = m_selection->GetSelection();
+
+    static constexpr WaylandDataSource::Listener listener = {
+        .OnSend = Method( SendClipboard ),
+        .OnCancelled = Method( CancelClipboard )
+    };
+
+    if( m_clipboard->Format() == SdrFormat )
+    {
+        const char* mime = "image/png";
+        m_window->SetClipboard( &mime, 1, &listener, this );
+    }
+    else
+    {
+        constexpr std::array mime = {
+            "image/x-exr",
+            "image/png"
+        };
+        m_window->SetClipboard( mime.data(), mime.size(), &listener, this );
+    }
+
+    return true;
 }
 
 void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, const ImageProvider::ReturnData& data )

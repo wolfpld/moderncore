@@ -265,9 +265,9 @@ void ImageView::Resize( const VkExtent2D& extent )
     UpdateVertexBuffer();
 }
 
-std::shared_ptr<Texture> ImageView::SetBitmap( const std::shared_ptr<Bitmap>& bitmap, TaskDispatch& td, bool abortSelection )
+std::shared_ptr<Texture> ImageView::SetBitmap( const std::shared_ptr<Bitmap>& bitmap, TaskDispatch& td, bool newBitmap )
 {
-    if( abortSelection ) m_selection.AbortDrag();
+    if( newBitmap ) m_selection.AbortDrag();
 
     if( !bitmap )
     {
@@ -280,13 +280,13 @@ std::shared_ptr<Texture> ImageView::SetBitmap( const std::shared_ptr<Bitmap>& bi
     auto texture = std::make_shared<Texture>( *m_device, *bitmap, SdrFormat, true, texFences, &td );
     for( auto& fence : texFences ) fence->Wait();
 
-    SetTexture( texture, bitmap->Width(), bitmap->Height() );
+    SetTexture( texture, bitmap->Width(), bitmap->Height(), newBitmap );
     return texture;
 }
 
-std::shared_ptr<Texture> ImageView::SetBitmap( const std::shared_ptr<BitmapHdr>& bitmap, TaskDispatch& td, bool abortSelection )
+std::shared_ptr<Texture> ImageView::SetBitmap( const std::shared_ptr<BitmapHdr>& bitmap, TaskDispatch& td, bool newBitmap )
 {
-    if( abortSelection ) m_selection.AbortDrag();
+    if( newBitmap ) m_selection.AbortDrag();
 
     if( !bitmap )
     {
@@ -299,11 +299,11 @@ std::shared_ptr<Texture> ImageView::SetBitmap( const std::shared_ptr<BitmapHdr>&
     auto texture = std::make_shared<Texture>( *m_device, *bitmap, HdrFormat, true, texFences, &td );
     for( auto& fence : texFences ) fence->Wait();
 
-    SetTexture( texture, bitmap->Width(), bitmap->Height() );
+    SetTexture( texture, bitmap->Width(), bitmap->Height(), newBitmap );
     return texture;
 }
 
-void ImageView::SetTexture( std::shared_ptr<Texture> texture, uint32_t width, uint32_t height )
+void ImageView::SetTexture( std::shared_ptr<Texture> texture, uint32_t width, uint32_t height, bool newBitmap )
 {
     std::lock_guard lock( m_lock );
     Cleanup();
@@ -311,8 +311,16 @@ void ImageView::SetTexture( std::shared_ptr<Texture> texture, uint32_t width, ui
     std::swap( m_texture, texture );
     m_imageInfo.imageView = *m_texture;
 
-    m_bitmapExtent = { width, height };
-    FitToExtent( m_extent );
+    if( newBitmap )
+    {
+        m_bitmapExtent = { width, height };
+        FitToExtent( m_extent );
+    }
+    else
+    {
+        CheckPanic( m_bitmapExtent.width == width && m_bitmapExtent.height == height, "Bitmap size changed, but newBitmap is false" );
+        UpdateVertexBuffer();
+    }
 }
 
 std::shared_ptr<Texture> ImageView::GetTexture()

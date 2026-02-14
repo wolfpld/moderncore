@@ -45,9 +45,9 @@ public:
     void Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent );
     void Resize( const VkExtent2D& extent );
 
-    std::shared_ptr<Texture> SetBitmap( const std::shared_ptr<Bitmap>& bitmap, TaskDispatch& td, bool abortSelection );     // call with no lock
-    std::shared_ptr<Texture> SetBitmap( const std::shared_ptr<BitmapHdr>& bitmap, TaskDispatch& td, bool abortSelection );  // call with no lock
-    void SetTexture( std::shared_ptr<Texture> texture, uint32_t width, uint32_t height );                                   // call with no lock
+    std::shared_ptr<Texture> SetBitmap( const std::shared_ptr<Bitmap>& bitmap, TaskDispatch& td, bool newBitmap );      // call with no lock
+    std::shared_ptr<Texture> SetBitmap( const std::shared_ptr<BitmapHdr>& bitmap, TaskDispatch& td, bool newBitmap );   // call with no lock
+    void SetTexture( std::shared_ptr<Texture> texture, uint32_t width, uint32_t height, bool newBitmap );               // call with no lock
     std::shared_ptr<Texture> GetTexture();
 
     void SetScale( float scale, const VkExtent2D& extent );

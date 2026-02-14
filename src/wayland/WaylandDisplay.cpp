@@ -95,6 +95,7 @@ void WaylandDisplay::RegistryGlobal( wl_registry* reg, uint32_t name, const char
         auto seat = RegistryBind( wl_seat, 8, 10 );
         m_seat = std::make_unique<WaylandSeat>( seat, *this );
         if( m_dataDeviceManager ) m_seat->SetDataDeviceManager( m_dataDeviceManager );
+        if( m_pointerWarp ) m_seat->SetPointerWarp( m_pointerWarp );
         if( m_cursorShapeManager ) m_seat->SetCursorShapeManager( m_cursorShapeManager );
     }
     else if( strcmp( interface, zxdg_decoration_manager_v1_interface.name ) == 0 )
@@ -146,6 +147,7 @@ void WaylandDisplay::RegistryGlobal( wl_registry* reg, uint32_t name, const char
     else if( strcmp( interface, wp_pointer_warp_v1_interface.name ) == 0 )
     {
         m_pointerWarp = RegistryBind( wp_pointer_warp_v1 );
+        if( m_seat ) m_seat->SetPointerWarp( m_pointerWarp );
     }
 }
 

@@ -6,6 +6,7 @@
 #include "util/NoCopy.hpp"
 
 #include "wayland-cursor-shape-client-protocol.h"
+#include "wayland-pointer-warp-client-protocol.h"
 
 class WaylandSeat;
 enum class WaylandCursor;
@@ -20,8 +21,10 @@ public:
 
     NoCopy( WaylandPointer );
 
-    void SetCursorShapeManager( wp_cursor_shape_manager_v1* cursorShapeManager );
     void SetCursor( wl_surface* window, WaylandCursor cursor );
+
+    void SetCursorShapeManager( wp_cursor_shape_manager_v1* cursorShapeManager );
+    void SetPointerWarp( wp_pointer_warp_v1* pointerWarp );
 
 private:
     void Enter( wl_pointer* pointer, uint32_t serial, wl_surface* window, wl_fixed_t sx, wl_fixed_t sy );
@@ -43,6 +46,7 @@ private:
 
     wp_cursor_shape_manager_v1* m_cursorShapeManager = nullptr;
     wp_cursor_shape_device_v1* m_cursorShapeDevice = nullptr;
+    wp_pointer_warp_v1* m_pointerWarp = nullptr;
 
     WaylandScroll m_scroll;
 };

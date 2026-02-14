@@ -39,6 +39,11 @@ void WaylandPointer::SetCursorShapeManager( wp_cursor_shape_manager_v1* cursorSh
     m_cursorShapeDevice = wp_cursor_shape_manager_v1_get_pointer( m_cursorShapeManager, m_pointer );
 }
 
+void WaylandPointer::SetPointerWarp( wp_pointer_warp_v1* pointerWarp )
+{
+    m_pointerWarp = pointerWarp;
+}
+
 void WaylandPointer::SetCursor( wl_surface* window, WaylandCursor cursor )
 {
     if( !m_cursorShapeDevice ) return;

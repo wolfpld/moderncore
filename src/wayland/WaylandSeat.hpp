@@ -9,6 +9,7 @@
 #include "util/RobinHood.hpp"
 
 #include "wayland-cursor-shape-client-protocol.h"
+#include "wayland-pointer-warp-client-protocol.h"
 
 enum class WaylandCursor;
 class WaylandDataOffer;
@@ -31,6 +32,7 @@ public:
     NoCopy( WaylandSeat );
 
     void SetCursorShapeManager( wp_cursor_shape_manager_v1* cursorShapeManager );
+    void SetPointerWarp( wp_pointer_warp_v1* pointerWarp );
     void SetDataDeviceManager( wl_data_device_manager* dataDeviceManager );
 
     void AddWindow( WaylandWindow* window );
@@ -79,6 +81,7 @@ private:
     uint32_t m_inputSerial = 0;
 
     wp_cursor_shape_manager_v1* m_cursorShapeManager = nullptr;
+    wp_pointer_warp_v1* m_pointerWarp = nullptr;
     wl_data_device_manager* m_dataDeviceManager = nullptr;
     wl_data_device* m_dataDevice = nullptr;
 

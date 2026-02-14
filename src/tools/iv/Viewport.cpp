@@ -701,13 +701,16 @@ void Viewport::MouseMove( float x, float y )
 
     if( m_selectionDrag )
     {
+        m_view->lock();
         if( !m_selection->MouseMove( m_mousePos ) ) m_selectionDrag = false;
+        m_view->unlock();
 
         std::lock_guard lock( m_lock );
         WantRender();
     }
     else if( !m_imageDrag && m_selection->IsActive() )
     {
+        std::lock_guard lock( *m_view );
         SetMousePointer();
     }
 }
@@ -756,9 +759,9 @@ void Viewport::Scroll( const WaylandScroll& scroll )
                 factor = 1 + delta * 0.01f;
             }
             m_view->Zoom( m_mousePos, factor );
-            viewLock.unlock();
 
             if( !m_imageDrag && m_selection->IsActive() ) SetMousePointer();
+            viewLock.unlock();
 
             std::lock_guard lock( m_lock );
             WantRender();
@@ -887,7 +890,9 @@ bool Viewport::CopyToClipboard()
 {
     m_clipboard = m_view->GetTexture();
     if( !m_clipboard ) return false;
+    m_view->lock();
     m_clipboardClip = m_selection->GetSelection();
+    m_view->unlock();
 
     static constexpr WaylandDataSource::Listener listener = {
         .OnSend = Method( SendClipboard ),

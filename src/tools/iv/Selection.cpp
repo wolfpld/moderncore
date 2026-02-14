@@ -166,17 +166,94 @@ void Selection::MouseButton( const Vector2<float>& pos, bool pressed )
     m_drag = pressed;
     if( !pressed ) return;
 
-    m_posMin = m_posMax = m_origin = ScreenToImagePos( pos );
+    m_resizeArea = IsActive() ? GetResizeArea( pos ) : ResizeArea::None;
+    if( m_resizeArea == ResizeArea::None )
+    {
+        m_posMin = m_posMax = m_origin = ScreenToImagePos( pos );
+    }
+    else
+    {
+        Vector2<float> warp = pos;
+
+        switch( m_resizeArea )
+        {
+        case ResizeArea::Up:
+        case ResizeArea::UpLeft:
+        case ResizeArea::UpRight:
+            warp.y = ImageToScreenPos( m_posMin ).y;
+            break;
+        case ResizeArea::Down:
+        case ResizeArea::DownLeft:
+        case ResizeArea::DownRight:
+            warp.y = ImageToScreenPos( m_posMax ).y;
+            break;
+        default:
+            break;
+        }
+
+        switch( m_resizeArea )
+        {
+        case ResizeArea::Left:
+        case ResizeArea::UpLeft:
+        case ResizeArea::DownLeft:
+            warp.x = ImageToScreenPos( m_posMin ).x;
+            break;
+        case ResizeArea::Right:
+        case ResizeArea::UpRight:
+        case ResizeArea::DownRight:
+            warp.x = ImageToScreenPos( m_posMax ).x;
+            break;
+        default:
+            break;
+        }
+
+        if( warp != pos ) m_window->WarpPointer( warp.x, warp.y );
+    }
 }
 
 bool Selection::MouseMove( const Vector2<float>& pos )
 {
     if( !m_drag ) return false;
     auto imgPos = ScreenToImagePosWithOrigin( pos );
-    m_posMin.x = std::min( m_origin.x + 0, imgPos.x );
-    m_posMax.x = std::max( m_origin.x + 1, imgPos.x );
-    m_posMin.y = std::min( m_origin.y + 0, imgPos.y );
-    m_posMax.y = std::max( m_origin.y + 1, imgPos.y );
+
+    switch( m_resizeArea )
+    {
+    case ResizeArea::None:
+        m_posMin.x = std::min( m_origin.x + 0, imgPos.x );
+        m_posMax.x = std::max( m_origin.x + 1, imgPos.x );
+        m_posMin.y = std::min( m_origin.y + 0, imgPos.y );
+        m_posMax.y = std::max( m_origin.y + 1, imgPos.y );
+        break;
+    case ResizeArea::Up:
+        m_posMin.y = std::min( m_posMax.y - 1, imgPos.y );
+        break;
+    case ResizeArea::Down:
+        m_posMax.y = std::max( m_posMin.y + 1, imgPos.y );
+        break;
+    case ResizeArea::Left:
+        m_posMin.x = std::min( m_posMax.x - 1, imgPos.x );
+        break;
+    case ResizeArea::Right:
+        m_posMax.x = std::max( m_posMin.x + 1, imgPos.x );
+        break;
+    case ResizeArea::UpLeft:
+        m_posMin.y = std::min( m_posMax.y - 1, imgPos.y );
+        m_posMin.x = std::min( m_posMax.x - 1, imgPos.x );
+        break;
+    case ResizeArea::UpRight:
+        m_posMin.y = std::min( m_posMax.y - 1, imgPos.y );
+        m_posMax.x = std::max( m_posMin.x + 1, imgPos.x );
+        break;
+    case ResizeArea::DownLeft:
+        m_posMax.y = std::max( m_posMin.y + 1, imgPos.y );
+        m_posMin.x = std::min( m_posMax.x - 1, imgPos.x );
+        break;
+    case ResizeArea::DownRight:
+        m_posMax.y = std::max( m_posMin.y + 1, imgPos.y );
+        m_posMax.x = std::max( m_posMin.x + 1, imgPos.x );
+        break;
+    }
+
     UpdateVertexBuffer();
     return true;
 }

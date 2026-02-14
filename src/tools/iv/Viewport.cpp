@@ -807,7 +807,15 @@ void Viewport::SetMousePointer()
     }
     else if( m_selectionDrag )
     {
-        m_window->SetCursor( WaylandCursor::Crosshair );
+        const auto area = m_selection->ActiveResizeArea();
+        if( area == Selection::ResizeArea::None )
+        {
+            m_window->SetCursor( WaylandCursor::Crosshair );
+        }
+        else
+        {
+            m_window->SetCursor( ResizeAreaToWaylandCursor( area ) );
+        }
     }
     else if( m_selection->IsActive() )
     {

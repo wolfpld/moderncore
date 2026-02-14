@@ -45,6 +45,7 @@ public:
     bool MouseMove( const Vector2<float>& pos );
 
     [[nodiscard]] ResizeArea GetResizeArea( const Vector2<float>& pos ) const;
+    [[nodiscard]] ResizeArea ActiveResizeArea() const { return m_resizeArea; }
 
     [[nodiscard]] bool IsActive() const;
     [[nodiscard]] VkRect2D GetSelection() const;
@@ -75,6 +76,7 @@ private:
     float m_offset = 0;
 
     bool m_drag = false;
+    ResizeArea m_resizeArea = ResizeArea::None;
 
     Vector2<uint32_t> m_posMin, m_posMax, m_origin;
 };

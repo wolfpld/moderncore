@@ -79,18 +79,6 @@ Selection::Selection( std::shared_ptr<WaylandWindow> window, std::shared_ptr<Vlk
     };
     m_pipelineLayout = std::make_shared<VlkPipelineLayout>( *m_device, pipelineLayoutInfo );
     CreatePipeline( format );
-
-
-    constexpr uint16_t idata[] = { 0, 1, 2, 3, 0 };
-    constexpr VkBufferCreateInfo iinfo = {
-        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-        .size = sizeof( idata ),
-        .usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-        .sharingMode = VK_SHARING_MODE_EXCLUSIVE
-    };
-    m_indexBuffer = std::make_shared<VlkBuffer>( *m_device, iinfo, VlkBuffer::PreferDevice | VlkBuffer::WillWrite );
-    memcpy( m_indexBuffer->Ptr(), idata, sizeof( idata ) );
-    m_indexBuffer->Flush();
 }
 
 Selection::~Selection()
@@ -101,7 +89,6 @@ Selection::~Selection()
         std::move( m_shader ),
         std::move( m_shaderPq ),
         std::move( m_vertexBuffer ),
-        std::move( m_indexBuffer )
     } );
 }
 
@@ -138,8 +125,7 @@ void Selection::Render( VlkCommandBuffer& cmdbuf, const VkExtent2D& extent )
     vkCmdSetViewport( cmdbuf, 0, 1, &viewport );
     vkCmdSetScissor( cmdbuf, 0, 1, &scissor );
     vkCmdBindVertexBuffers( cmdbuf, 0, 1, vertexBuffers.data(), offsets.data() );
-    vkCmdBindIndexBuffer( cmdbuf, *m_indexBuffer, 0, VK_INDEX_TYPE_UINT16 );
-    vkCmdDrawIndexed( cmdbuf, 5, 1, 0, 0, 0 );
+    vkCmdDraw( cmdbuf, 5, 1, 0, 0 );
 }
 
 void Selection::SetScale( float scale )
@@ -413,21 +399,25 @@ void Selection::UpdateVertexBuffer()
     const auto fMin = ImageToScreenPos( m_posMin );
     const auto fMax = ImageToScreenPos( m_posMax );
 
-    const std::array<Vertex, 4> vdata = {
-        Vertex{ fMin.x, fMin.y },
-        Vertex{ fMax.x, fMin.y },
-        Vertex{ fMax.x, fMax.y },
-        Vertex{ fMin.x, fMax.y }
+    const auto iMin = Vector2<float>( floor( fMin.x ), floor( fMin.y ) );
+    const auto iMax = Vector2<float>( floor( fMax.x ), floor( fMax.y ) );
+
+    const std::array<Vertex, 5> vdata = {
+        Vertex{ iMin.x, iMin.y },
+        Vertex{ iMax.x, iMin.y },
+        Vertex{ iMax.x, iMax.y },
+        Vertex{ iMin.x, iMax.y },
+        Vertex{ iMin.x, iMin.y - 1 }
     };
 
     constexpr VkBufferCreateInfo vinfo = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-        .size = sizeof( Vertex ) * 4,
+        .size = sizeof( Vertex ) * 5,
         .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE
     };
     auto vb = std::make_shared<VlkBuffer>( *m_device, vinfo, VlkBuffer::PreferDevice | VlkBuffer::WillWrite );
-    memcpy( vb->Ptr(), vdata.data(), sizeof( Vertex ) * 4 );
+    memcpy( vb->Ptr(), vdata.data(), sizeof( Vertex ) * 5 );
     vb->Flush();
 
     if( m_vertexBuffer ) m_garbage.Recycle( std::move( m_vertexBuffer ) );

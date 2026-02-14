@@ -58,18 +58,18 @@ void WaylandSeat::SetDataDeviceManager( wl_data_device_manager* dataDeviceManage
 void WaylandSeat::AddWindow( WaylandWindow* window )
 {
     const auto surface = window->Surface();
-    CheckPanic( m_windows.find( surface ) == m_windows.end(), "Window already added!" );
+    CheckPanic( !m_windows.contains( surface ), "Window already added!" );
     m_windows.emplace( surface, window );
-    CheckPanic( m_cursorMap.find( surface ) == m_cursorMap.end(), "Window already added!" );
+    CheckPanic( !m_cursorMap.contains( surface ), "Window already added!" );
     m_cursorMap.emplace( surface, WaylandCursor::Default );
 }
 
 void WaylandSeat::RemoveWindow( WaylandWindow* window )
 {
     const auto surface = window->Surface();
-    CheckPanic( m_windows.find( surface ) != m_windows.end(), "Window not found!" );
+    CheckPanic( m_windows.contains( surface ), "Window not found!" );
     m_windows.erase( surface );
-    CheckPanic( m_cursorMap.find( surface ) != m_cursorMap.end(), "Window not added!" );
+    CheckPanic( m_cursorMap.contains( surface ), "Window not added!" );
     m_cursorMap.erase( surface );
 }
 

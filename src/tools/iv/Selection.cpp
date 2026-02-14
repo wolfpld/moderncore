@@ -412,7 +412,7 @@ void Selection::UpdateVertexBuffer()
     const auto fMin = ImageToScreenPos( m_posMin );
     const auto fMax = ImageToScreenPos( m_posMax );
 
-    const auto iMin = Vector2<float>( round( fMin.x ), round( fMin.y ) );
+    const auto iMin = Vector2<float>( round( fMin.x ) + 1, round( fMin.y ) + 1 );
     const auto iMax = Vector2<float>( round( fMax.x ), round( fMax.y ) );
 
     const std::array<Vertex, 5> vdata = {

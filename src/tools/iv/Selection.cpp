@@ -399,8 +399,8 @@ void Selection::UpdateVertexBuffer()
     const auto fMin = ImageToScreenPos( m_posMin );
     const auto fMax = ImageToScreenPos( m_posMax );
 
-    const auto iMin = Vector2<float>( floor( fMin.x ), floor( fMin.y ) );
-    const auto iMax = Vector2<float>( floor( fMax.x ), floor( fMax.y ) );
+    const auto iMin = Vector2<float>( round( fMin.x ), round( fMin.y ) );
+    const auto iMax = Vector2<float>( round( fMax.x ), round( fMax.y ) );
 
     const std::array<Vertex, 5> vdata = {
         Vertex{ iMin.x, iMin.y },
@@ -465,6 +465,7 @@ Vector2<uint32_t> Selection::ScreenToImagePosRound( const Vector2<float>& pos ) 
 {
     auto& imgOrigin = m_imageView->GetImgOrigin();
     const auto imgScale = m_imageView->GetImgScale();
-    const auto fPos = Vector2<float>( pos.x, pos.y ) * imgScale + imgOrigin;
+    const auto imgOriginFloored = Vector2<float>( floor( imgOrigin.x ), floor( imgOrigin.y ) );
+    const auto fPos = Vector2<float>( pos.x, pos.y ) * imgScale + imgOriginFloored;
     return fPos;
 }

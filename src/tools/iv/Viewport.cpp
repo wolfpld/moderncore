@@ -913,7 +913,7 @@ void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, const Ima
         if( data.bitmap )
         {
             // must not lock m_view here
-            m_view->SetBitmap( data.bitmap, *m_td );
+            m_view->SetBitmap( data.bitmap, *m_td, true );
             width = data.bitmap->Width();
             height = data.bitmap->Height();
             m_window->EnableHdr( false );
@@ -921,7 +921,7 @@ void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, const Ima
         else
         {
             // must not lock m_view here
-            m_view->SetBitmap( data.bitmapHdr, *m_td );
+            m_view->SetBitmap( data.bitmapHdr, *m_td, true );
             width = data.bitmapHdr->Width();
             height = data.bitmapHdr->Height();
             m_window->EnableHdr( true );

@@ -265,9 +265,9 @@ void ImageView::Resize( const VkExtent2D& extent )
     UpdateVertexBuffer();
 }
 
-std::shared_ptr<Texture> ImageView::SetBitmap( const std::shared_ptr<Bitmap>& bitmap, TaskDispatch& td )
+std::shared_ptr<Texture> ImageView::SetBitmap( const std::shared_ptr<Bitmap>& bitmap, TaskDispatch& td, bool abortSelection )
 {
-    m_selection.AbortDrag();
+    if( abortSelection ) m_selection.AbortDrag();
 
     if( !bitmap )
     {
@@ -284,9 +284,9 @@ std::shared_ptr<Texture> ImageView::SetBitmap( const std::shared_ptr<Bitmap>& bi
     return texture;
 }
 
-std::shared_ptr<Texture> ImageView::SetBitmap( const std::shared_ptr<BitmapHdr>& bitmap, TaskDispatch& td )
+std::shared_ptr<Texture> ImageView::SetBitmap( const std::shared_ptr<BitmapHdr>& bitmap, TaskDispatch& td, bool abortSelection )
 {
-    m_selection.AbortDrag();
+    if( abortSelection ) m_selection.AbortDrag();
 
     if( !bitmap )
     {

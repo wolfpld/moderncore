@@ -783,6 +783,22 @@ void Viewport::Scroll( const WaylandScroll& scroll )
     }
 }
 
+static WaylandCursor ResizeAreaToWaylandCursor( Selection::ResizeArea area )
+{
+    switch( area )
+    {
+    case Selection::ResizeArea::UpLeft: return WaylandCursor::ResizeNW;
+    case Selection::ResizeArea::UpRight: return WaylandCursor::ResizeNE;
+    case Selection::ResizeArea::DownLeft: return WaylandCursor::ResizeSW;
+    case Selection::ResizeArea::DownRight: return WaylandCursor::ResizeSE;
+    case Selection::ResizeArea::Up: return WaylandCursor::ResizeN;
+    case Selection::ResizeArea::Down: return WaylandCursor::ResizeS;
+    case Selection::ResizeArea::Left: return WaylandCursor::ResizeW;
+    case Selection::ResizeArea::Right: return WaylandCursor::ResizeE;
+    case Selection::ResizeArea::None: return WaylandCursor::Default;
+    }
+}
+
 void Viewport::SetMousePointer()
 {
     if( m_imageDrag )
@@ -795,18 +811,7 @@ void Viewport::SetMousePointer()
     }
     else if( m_selection->IsActive() )
     {
-        switch( m_selection->GetResizeArea( m_mousePos ) )
-        {
-        case Selection::ResizeArea::UpLeft: m_window->SetCursor( WaylandCursor::ResizeNW ); break;
-        case Selection::ResizeArea::UpRight: m_window->SetCursor( WaylandCursor::ResizeNE ); break;
-        case Selection::ResizeArea::DownLeft: m_window->SetCursor( WaylandCursor::ResizeSW ); break;
-        case Selection::ResizeArea::DownRight: m_window->SetCursor( WaylandCursor::ResizeSE ); break;
-        case Selection::ResizeArea::Up: m_window->SetCursor( WaylandCursor::ResizeN ); break;
-        case Selection::ResizeArea::Down: m_window->SetCursor( WaylandCursor::ResizeS ); break;
-        case Selection::ResizeArea::Left: m_window->SetCursor( WaylandCursor::ResizeW ); break;
-        case Selection::ResizeArea::Right: m_window->SetCursor( WaylandCursor::ResizeE ); break;
-        case Selection::ResizeArea::None: m_window->SetCursor( WaylandCursor::Default ); break;
-        }
+        m_window->SetCursor( ResizeAreaToWaylandCursor( m_selection->GetResizeArea( m_mousePos ) ) );
     }
     else
     {

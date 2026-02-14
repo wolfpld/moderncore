@@ -71,7 +71,7 @@ static bool HasExtension( const std::vector<VkExtensionProperties>& extensions, 
         t = "[Perf]";
         break;
     default:
-        CheckPanic( false, "Unknown debug message type" );
+        Panic( "Unknown debug message type" );
         break;
     }
 

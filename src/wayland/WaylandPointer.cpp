@@ -131,7 +131,7 @@ void WaylandPointer::AxisSource( wl_pointer* pointer, uint32_t source )
         m_scroll.source = WaylandScroll::Source::Tilt;
         break;
     default:
-        CheckPanic( false, "Unknown scroll source!" );
+        Panic( "Unknown scroll source!" );
     };
 }
 

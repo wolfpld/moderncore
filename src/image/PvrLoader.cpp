@@ -897,7 +897,7 @@ std::unique_ptr<Bitmap> PvrLoader::Load()
         DecodeRg( (uint32_t*)bmp->Data(), (const uint64_t*)(buf.data() + offset), width, height );
         break;
     default:
-        CheckPanic( false, "Unsupported PVR format" );
+        Panic( "Unsupported PVR format" );
     }
 
     return bmp;

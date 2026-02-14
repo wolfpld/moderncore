@@ -555,7 +555,7 @@ std::unique_ptr<Bitmap> DdsLoader::Load()
         DecodeBc7( (uint32_t*)bmp->Data(), (const uint64_t*)(buf.data() + m_offset), width, height );
         break;
     default:
-        CheckPanic( false, "Unsupported DDS format" );
+        Panic( "Unsupported DDS format" );
     }
 
     return bmp;

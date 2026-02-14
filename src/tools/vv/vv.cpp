@@ -745,7 +745,7 @@ int main( int argc, char** argv )
     }
     else
     {
-        CheckPanic( false, "Invalid graphics mode" );
+        Panic( "Invalid graphics mode" );
     }
 
     return 0;

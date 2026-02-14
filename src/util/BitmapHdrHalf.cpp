@@ -154,6 +154,25 @@ void BitmapHdrHalf::Crop( uint32_t x, uint32_t y, uint32_t width, uint32_t heigh
     m_height = height;
 }
 
+void BitmapHdrHalf::FillBlack( uint32_t x, uint32_t y, uint32_t width, uint32_t height )
+{
+    CheckPanic( x + width <= m_width && y + height <= m_height, "Invalid fill" );
+
+    auto row = m_data + ( y * m_width + x ) * 4;
+    for( uint32_t i=0; i<height; i++ )
+    {
+        auto ptr = row;
+        for( uint32_t j=0; j<width; j++ )
+        {
+            *ptr++ = 0;
+            *ptr++ = 0;
+            *ptr++ = 0;
+            *ptr++ = 1;
+        }
+        row += m_width * 4;
+    }
+}
+
 void BitmapHdrHalf::SetColorspace( Colorspace colorspace, TaskDispatch* td )
 {
     if( m_colorspace == colorspace )

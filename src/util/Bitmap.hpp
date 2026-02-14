@@ -20,6 +20,7 @@ public:
     [[nodiscard]] std::unique_ptr<Bitmap> ResizeNew( uint32_t width, uint32_t height, TaskDispatch* td = nullptr ) const;
     void Extend( uint32_t width, uint32_t height );
     void Crop( uint32_t x, uint32_t y, uint32_t width, uint32_t height );
+    void FillBlack( uint32_t x, uint32_t y, uint32_t width, uint32_t height );
     void SetAlpha( uint8_t alpha );
     void NormalizeOrientation();
 

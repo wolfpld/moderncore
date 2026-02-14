@@ -51,6 +51,13 @@ void WaylandPointer::SetCursor( wl_surface* window, WaylandCursor cursor )
     wp_cursor_shape_device_v1_set_shape( m_cursorShapeDevice, m_enterSerial, (wp_cursor_shape_device_v1_shape)cursor );
 }
 
+void WaylandPointer::Warp( wl_surface* window, wl_fixed_t x, wl_fixed_t y )
+{
+    if( !m_pointerWarp ) return;
+    if( m_activeWindow != window ) return;
+    wp_pointer_warp_v1_warp_pointer( m_pointerWarp, window, m_pointer, x, y, m_enterSerial );
+}
+
 void WaylandPointer::Enter( wl_pointer* pointer, uint32_t serial, wl_surface* window, wl_fixed_t sx, wl_fixed_t sy )
 {
     if( m_cursorShapeDevice )

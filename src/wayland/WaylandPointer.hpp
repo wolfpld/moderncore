@@ -22,6 +22,7 @@ public:
     NoCopy( WaylandPointer );
 
     void SetCursor( wl_surface* window, WaylandCursor cursor );
+    void Warp( wl_surface* window, wl_fixed_t x, wl_fixed_t y );
 
     void SetCursorShapeManager( wp_cursor_shape_manager_v1* cursorShapeManager );
     void SetPointerWarp( wp_pointer_warp_v1* pointerWarp );

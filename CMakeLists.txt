@@ -559,6 +559,7 @@ set(UTIL_TESTS_SRC
     tests/util/Config.cpp
     tests/util/DataBuffer.cpp
     tests/util/DataContainer.cpp
+    tests/util/FileBuffer.cpp
     tests/util/Filesystem.cpp
     tests/util/Home.cpp
     tests/util/MemoryBuffer.cpp

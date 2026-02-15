@@ -6,96 +6,125 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-// Helper function to generate unique temporary directory names
-std::string get_unique_temp_dir( const char* base )
-{
-    // Use PID and timestamp for uniqueness
-    char buffer[256];
-    snprintf( buffer, sizeof( buffer ), "/tmp/%s_%d_%ld", base, getpid(), time( NULL ) );
-    return std::string( buffer );
-}
-
 TEST_CASE( "CreateDirectories functionality", "[filesystem][directories]" )
 {
-    SECTION( "Single-level directory creation" )
-    {
-        // Create a unique temporary directory name
-        std::string path = get_unique_temp_dir( "test_mcore_single" );
+    char baseTemplate[] = "/tmp/test_mcore_XXXXXX";
+    char* basePath = mkdtemp( baseTemplate );
+    REQUIRE( basePath != nullptr );
+    std::string base( basePath );
 
-        // Create directory
+    SECTION( "Single subdirectory creation" )
+    {
+        std::string path = base + "/single";
+
         bool result = CreateDirectories( path );
         REQUIRE( result == true );
 
-        // Verify directory exists
         struct stat buf;
         REQUIRE( stat( path.c_str(), &buf ) == 0 );
+        REQUIRE( S_ISDIR( buf.st_mode ) );
 
-        // Clean up
         rmdir( path.c_str() );
     }
 
-    SECTION( "Multi-level nested directory creation" )
+    SECTION( "Multiple sibling directories in parallel" )
     {
-        // Create unique temporary directory names
-        std::string base_path = get_unique_temp_dir( "test_mcore_nested" );
-        std::string path = base_path + "/subdir";
+        std::string pathA = base + "/multi/a";
+        std::string pathB = base + "/multi/b";
+        std::string pathC = base + "/multi/c";
 
-        // Create nested directory
+        bool resultA = CreateDirectories( pathA );
+        bool resultB = CreateDirectories( pathB );
+        bool resultC = CreateDirectories( pathC );
+
+        REQUIRE( resultA == true );
+        REQUIRE( resultB == true );
+        REQUIRE( resultC == true );
+
+        struct stat buf;
+        REQUIRE( stat( pathA.c_str(), &buf ) == 0 );
+        REQUIRE( S_ISDIR( buf.st_mode ) );
+        REQUIRE( stat( pathB.c_str(), &buf ) == 0 );
+        REQUIRE( S_ISDIR( buf.st_mode ) );
+        REQUIRE( stat( pathC.c_str(), &buf ) == 0 );
+        REQUIRE( S_ISDIR( buf.st_mode ) );
+
+        rmdir( ( base + "/multi/a" ).c_str() );
+        rmdir( ( base + "/multi/b" ).c_str() );
+        rmdir( ( base + "/multi/c" ).c_str() );
+        rmdir( ( base + "/multi" ).c_str() );
+    }
+
+    SECTION( "Deep nesting - three levels" )
+    {
+        std::string path = base + "/deep/nested/path";
+
         bool result = CreateDirectories( path );
         REQUIRE( result == true );
 
-        // Verify both levels exist
         struct stat buf;
-        REQUIRE( stat( base_path.c_str(), &buf ) == 0 );
+        REQUIRE( stat( path.c_str(), &buf ) == 0 );
+        REQUIRE( S_ISDIR( buf.st_mode ) );
+        REQUIRE( stat( ( base + "/deep/nested" ).c_str(), &buf ) == 0 );
+        REQUIRE( S_ISDIR( buf.st_mode ) );
+        REQUIRE( stat( ( base + "/deep" ).c_str(), &buf ) == 0 );
+        REQUIRE( S_ISDIR( buf.st_mode ) );
 
-        // Clean up
-        rmdir( ( base_path + "/subdir" ).c_str() );
-        rmdir( base_path.c_str() );
+        rmdir( ( base + "/deep/nested/path" ).c_str() );
+        rmdir( ( base + "/deep/nested" ).c_str() );
+        rmdir( ( base + "/deep" ).c_str() );
     }
 
     SECTION( "Existing directory handling" )
     {
-        // Create a unique temporary directory name
-        std::string path = get_unique_temp_dir( "test_mcore_existing" );
+        std::string path = base + "/existing";
 
-        // Create directory first
-        mkdir( path.c_str(), 0777 );
+        bool result1 = CreateDirectories( path );
+        REQUIRE( result1 == true );
 
-        // Try to create it again
-        bool result = CreateDirectories( path );
-        REQUIRE( result == true );
+        bool result2 = CreateDirectories( path );
+        REQUIRE( result2 == true );
 
-        // Clean up
+        struct stat buf;
+        REQUIRE( stat( path.c_str(), &buf ) == 0 );
+
         rmdir( path.c_str() );
+    }
+
+    SECTION( "Permission denied - read-only parent directory" )
+    {
+        std::string parentPath = base + "/readonly";
+
+        int ret = mkdir( parentPath.c_str(), 0555 );
+        REQUIRE( ret == 0 );
+
+        std::string childPath = parentPath + "/subdir";
+        bool result = CreateDirectories( childPath );
+        REQUIRE( result == false );
+
+        chmod( parentPath.c_str(), 0755 );
+        rmdir( parentPath.c_str() );
     }
 
     SECTION( "Empty path" )
     {
-        // Test the actual function behavior with empty path
-        std::string path = "";
-
-        // Call CreateDirectories with empty path
-        // The function will call stat("", &buf) which will fail with ENOENT
-        // and return false
-        bool result = CreateDirectories( path );
+        bool result = CreateDirectories( "" );
         REQUIRE( result == false );
     }
 
     SECTION( "Path with trailing slash" )
     {
-        // Test path with trailing slash (e.g., "/tmp/test_dir/")
-        std::string base_path = get_unique_temp_dir( "test_mcore_slash" );
-        std::string path = base_path + "/";
+        std::string path = base + "/slash/";
 
-        // Create directory with trailing slash
         bool result = CreateDirectories( path );
         REQUIRE( result == true );
 
-        // Verify directory exists
         struct stat buf;
-        REQUIRE( stat( base_path.c_str(), &buf ) == 0 );
+        REQUIRE( stat( ( base + "/slash" ).c_str(), &buf ) == 0 );
+        REQUIRE( S_ISDIR( buf.st_mode ) );
 
-        // Clean up
-        rmdir( base_path.c_str() );
+        rmdir( ( base + "/slash" ).c_str() );
     }
+
+    rmdir( base.c_str() );
 }

@@ -1,6 +1,6 @@
+#include "TestUtils.hpp"
 #include <catch2/catch_all.hpp>
 #include <src/util/Filesystem.hpp>
-#include "TestUtils.hpp"
 #include <stdio.h>
 #include <sys/stat.h>
 

@@ -2,134 +2,87 @@
 #include <src/util/ArgParser.hpp>
 #include <string.h>
 
-TEST_CASE( "ParseBoolean functionality", "[argparser][boolean]" )
+TEST_CASE( "ParseBoolean valid true values", "[argparser][boolean]" )
 {
-    SECTION( "Valid boolean strings - true values" )
-    {
-        REQUIRE( ParseBoolean( "on" ) == true );
-        REQUIRE( ParseBoolean( "true" ) == true );
-        REQUIRE( ParseBoolean( "t" ) == true );
-        REQUIRE( ParseBoolean( "1" ) == true );
-        REQUIRE( ParseBoolean( "yes" ) == true );
-        REQUIRE( ParseBoolean( "y" ) == true );
-        REQUIRE( ParseBoolean( "enable" ) == true );
-        REQUIRE( ParseBoolean( "enabled" ) == true );
-        REQUIRE( ParseBoolean( "active" ) == true );
-    }
+    auto input = GENERATE( "on", "true", "t", "1", "yes", "y", "enable", "enabled", "active" );
+    REQUIRE( ParseBoolean( input ) == true );
+}
 
-    SECTION( "Valid boolean strings - false values" )
-    {
-        REQUIRE( ParseBoolean( "off" ) == false );
-        REQUIRE( ParseBoolean( "false" ) == false );
-        REQUIRE( ParseBoolean( "f" ) == false );
-        REQUIRE( ParseBoolean( "0" ) == false );
-        REQUIRE( ParseBoolean( "no" ) == false );
-        REQUIRE( ParseBoolean( "n" ) == false );
-        REQUIRE( ParseBoolean( "disable" ) == false );
-        REQUIRE( ParseBoolean( "disabled" ) == false );
-        REQUIRE( ParseBoolean( "inactive" ) == false );
-    }
+TEST_CASE( "ParseBoolean valid false values", "[argparser][boolean]" )
+{
+    auto input = GENERATE( "off", "false", "f", "0", "no", "n", "disable", "disabled", "inactive" );
+    REQUIRE( ParseBoolean( input ) == false );
+}
 
-    SECTION( "Invalid strings - should throw ArgParseException" )
-    {
-        REQUIRE_THROWS_AS( ParseBoolean( "invalid" ), ArgParseException );
-        REQUIRE_THROWS_AS( ParseBoolean( "maybe" ), ArgParseException );
-        REQUIRE_THROWS_AS( ParseBoolean( "" ), ArgParseException );
-        REQUIRE_THROWS_AS( ParseBoolean( " " ), ArgParseException );
-        REQUIRE_THROWS_AS( ParseBoolean( "  " ), ArgParseException );
-    }
+TEST_CASE( "ParseBoolean invalid strings throw", "[argparser][boolean]" )
+{
+    auto input = GENERATE( "invalid", "maybe", "", " ", "  ", "2", "10", "01", "true1", "1true",
+                           "on!", "@yes", "tr ue", "on\n", "\toff", "tru", "truue", "enablee",
+                           "enabl", "activ", "activee", "o", "of" );
+    REQUIRE_THROWS_AS( ParseBoolean( input ), ArgParseException );
+}
 
-    SECTION( "Exception message contains input value" )
-    {
-        try
-        {
-            ParseBoolean( "invalid" );
-            FAIL( "Expected ArgParseException to be thrown" );
-        }
-        catch( const ArgParseException& e )
-        {
-            std::string msg( e.what() );
-            REQUIRE( msg.find( "invalid" ) != std::string::npos );
-            REQUIRE( msg.find( "is not a valid boolean argument" ) != std::string::npos );
-        }
-    }
+TEST_CASE( "ParseBoolean case insensitivity - uppercase", "[argparser][boolean]" )
+{
+    auto [input, expected] = GENERATE( table<const char*, bool>( {
+        { "ON", true },
+        { "OFF", false },
+        { "TRUE", true },
+        { "FALSE", false },
+        { "YES", true },
+        { "NO", false },
+    } ) );
+    REQUIRE( ParseBoolean( input ) == expected );
+}
 
-    SECTION( "Case insensitivity - lowercase" )
-    {
-        REQUIRE( ParseBoolean( "on" ) == true );
-        REQUIRE( ParseBoolean( "off" ) == false );
-        REQUIRE( ParseBoolean( "true" ) == true );
-        REQUIRE( ParseBoolean( "false" ) == false );
-    }
+TEST_CASE( "ParseBoolean case insensitivity - mixed case", "[argparser][boolean]" )
+{
+    auto [input, expected] = GENERATE( table<const char*, bool>( {
+        { "On", true },
+        { "TrUe", true },
+        { "FaLsE", false },
+        { "EnableD", true },
+        { "Disabled", false },
+        { "AcTiVe", true },
+        { "inACTIVE", false },
+    } ) );
+    REQUIRE( ParseBoolean( input ) == expected );
+}
 
-    SECTION( "Case insensitivity - uppercase" )
-    {
-        REQUIRE( ParseBoolean( "ON" ) == true );
-        REQUIRE( ParseBoolean( "OFF" ) == false );
-        REQUIRE( ParseBoolean( "TRUE" ) == true );
-        REQUIRE( ParseBoolean( "FALSE" ) == false );
-        REQUIRE( ParseBoolean( "YES" ) == true );
-        REQUIRE( ParseBoolean( "NO" ) == false );
-    }
+TEST_CASE( "ParseBoolean single character values", "[argparser][boolean]" )
+{
+    auto [input, expected] = GENERATE( table<const char*, bool>( {
+        { "1", true },
+        { "0", false },
+        { "t", true },
+        { "T", true },
+        { "f", false },
+        { "F", false },
+        { "y", true },
+        { "Y", true },
+        { "n", false },
+        { "N", false },
+    } ) );
+    REQUIRE( ParseBoolean( input ) == expected );
+}
 
-    SECTION( "Case insensitivity - mixed case" )
-    {
-        REQUIRE( ParseBoolean( "On" ) == true );
-        REQUIRE( ParseBoolean( "TrUe" ) == true );
-        REQUIRE( ParseBoolean( "FaLsE" ) == false );
-        REQUIRE( ParseBoolean( "EnableD" ) == true );
-        REQUIRE( ParseBoolean( "Disabled" ) == false );
-        REQUIRE( ParseBoolean( "AcTiVe" ) == true );
-        REQUIRE( ParseBoolean( "inACTIVE" ) == false );
-    }
+TEST_CASE( "ParseBoolean long string throws", "[argparser][boolean]" )
+{
+    std::string longString( 1000, 'a' );
+    REQUIRE_THROWS_AS( ParseBoolean( longString.c_str() ), ArgParseException );
+}
 
-    SECTION( "Single character values" )
+TEST_CASE( "ParseBoolean exception message contains input", "[argparser][boolean]" )
+{
+    try
     {
-        REQUIRE( ParseBoolean( "1" ) == true );
-        REQUIRE( ParseBoolean( "0" ) == false );
-        REQUIRE( ParseBoolean( "t" ) == true );
-        REQUIRE( ParseBoolean( "T" ) == true );
-        REQUIRE( ParseBoolean( "f" ) == false );
-        REQUIRE( ParseBoolean( "F" ) == false );
-        REQUIRE( ParseBoolean( "y" ) == true );
-        REQUIRE( ParseBoolean( "Y" ) == true );
-        REQUIRE( ParseBoolean( "n" ) == false );
-        REQUIRE( ParseBoolean( "N" ) == false );
+        ParseBoolean( "invalid" );
+        FAIL( "Expected ArgParseException to be thrown" );
     }
-
-    SECTION( "Strings with numbers should throw" )
+    catch( const ArgParseException& e )
     {
-        REQUIRE_THROWS_AS( ParseBoolean( "2" ), ArgParseException );
-        REQUIRE_THROWS_AS( ParseBoolean( "10" ), ArgParseException );
-        REQUIRE_THROWS_AS( ParseBoolean( "01" ), ArgParseException );
-        REQUIRE_THROWS_AS( ParseBoolean( "true1" ), ArgParseException );
-        REQUIRE_THROWS_AS( ParseBoolean( "1true" ), ArgParseException );
-    }
-
-    SECTION( "Strings with special characters should throw" )
-    {
-        REQUIRE_THROWS_AS( ParseBoolean( "on!" ), ArgParseException );
-        REQUIRE_THROWS_AS( ParseBoolean( "@yes" ), ArgParseException );
-        REQUIRE_THROWS_AS( ParseBoolean( "tr ue" ), ArgParseException );
-        REQUIRE_THROWS_AS( ParseBoolean( "on\n" ), ArgParseException );
-        REQUIRE_THROWS_AS( ParseBoolean( "\toff" ), ArgParseException );
-    }
-
-    SECTION( "Long strings should throw" )
-    {
-        std::string longString( 1000, 'a' );
-        REQUIRE_THROWS_AS( ParseBoolean( longString.c_str() ), ArgParseException );
-    }
-
-    SECTION( "Similar but invalid strings" )
-    {
-        REQUIRE_THROWS_AS( ParseBoolean( "tru" ), ArgParseException );
-        REQUIRE_THROWS_AS( ParseBoolean( "truue" ), ArgParseException );
-        REQUIRE_THROWS_AS( ParseBoolean( "enablee" ), ArgParseException );
-        REQUIRE_THROWS_AS( ParseBoolean( "enabl" ), ArgParseException );
-        REQUIRE_THROWS_AS( ParseBoolean( "activ" ), ArgParseException );
-        REQUIRE_THROWS_AS( ParseBoolean( "activee" ), ArgParseException );
-        REQUIRE_THROWS_AS( ParseBoolean( "o" ), ArgParseException );
-        REQUIRE_THROWS_AS( ParseBoolean( "of" ), ArgParseException );
+        std::string msg( e.what() );
+        REQUIRE( msg.find( "invalid" ) != std::string::npos );
+        REQUIRE( msg.find( "is not a valid boolean argument" ) != std::string::npos );
     }
 }

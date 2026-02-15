@@ -146,3 +146,25 @@ TEST_CASE( "MemoryBuffer functionality", "[memorybuffer][buffer]" )
         REQUIRE( result[7] == 'e' );
     }
 }
+
+TEST_CASE( "MemoryBuffer benchmarks", "[!benchmark][memorybuffer]" )
+{
+    SECTION( "Move construct from vector" )
+    {
+        std::vector<char> data = BinaryPattern::repeated( 'X', 10'000'000 );
+        BENCHMARK( "Move construct 10MB" )
+        {
+            return MemoryBuffer( std::move( data ) );
+        };
+    }
+
+    SECTION( "AsString performance" )
+    {
+        std::vector<char> data = BinaryPattern::repeated( 'A', 1'000'000 );
+        MemoryBuffer buffer( std::move( data ) );
+        BENCHMARK( "AsString 1MB" )
+        {
+            return buffer.AsString();
+        };
+    }
+}

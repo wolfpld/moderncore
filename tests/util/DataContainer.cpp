@@ -1,9 +1,9 @@
+#include <array>
 #include <catch2/catch_all.hpp>
 #include <src/util/DataBuffer.hpp>
 #include <src/util/DataContainer.hpp>
-#include <vector>
 #include <string>
-#include <array>
+#include <vector>
 
 TEST_CASE( "DataContainer concept validation", "[datacontainer][concept]" )
 {

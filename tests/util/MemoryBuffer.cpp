@@ -1,11 +1,29 @@
+#include "TestUtils.hpp"
 #include <catch2/catch_all.hpp>
+#include <fcntl.h>
 #include <src/util/DataBuffer.hpp>
 #include <src/util/MemoryBuffer.hpp>
 #include <string.h>
-#include <fcntl.h>
 #include <string>
 #include <unistd.h>
 #include <vector>
+
+// Helper to create a temp file with content and return an open fd positioned at start
+static int createTempFileWithContent( const char* content, size_t size )
+{
+    char template_path[] = "/tmp/mcore_test_XXXXXX";
+    int fd = mkstemp( template_path );
+    if( fd < 0 ) return -1;
+
+    if( content && size > 0 )
+    {
+        write( fd, content, size );
+    }
+
+    lseek( fd, 0, SEEK_SET );
+    unlink( template_path );
+    return fd;
+}
 
 TEST_CASE( "MemoryBuffer functionality", "[memorybuffer][buffer]" )
 {
@@ -71,23 +89,14 @@ TEST_CASE( "MemoryBuffer functionality", "[memorybuffer][buffer]" )
     SECTION( "Constructor with file descriptor - reads file content" )
     {
         const char* testContent = "Test content from file descriptor";
-        const char* tempFile = "/tmp/mcore_test_fd_XXXXXX";
-        char tempPath[256];
-        strncpy( tempPath, tempFile, sizeof( tempPath ) );
-
-        int fd = mkstemp( tempPath );
+        int fd = createTempFileWithContent( testContent, strlen( testContent ) );
         REQUIRE( fd >= 0 );
-
-        write( fd, testContent, strlen( testContent ) );
-        lseek( fd, 0, SEEK_SET );
 
         MemoryBuffer memBuffer( fd );
 
         REQUIRE( memBuffer.data() != nullptr );
         REQUIRE( memBuffer.size() == strlen( testContent ) );
         REQUIRE( memcmp( memBuffer.data(), testContent, strlen( testContent ) ) == 0 );
-
-        unlink( tempPath );
     }
 
     SECTION( "Constructor with invalid file descriptor" )
@@ -100,41 +109,26 @@ TEST_CASE( "MemoryBuffer functionality", "[memorybuffer][buffer]" )
 
     SECTION( "Constructor with empty file descriptor" )
     {
-        const char* tempFile = "/tmp/mcore_test_empty_XXXXXX";
-        char tempPath[256];
-        strncpy( tempPath, tempFile, sizeof( tempPath ) );
-
-        int fd = mkstemp( tempPath );
+        int fd = createTempFileWithContent( nullptr, 0 );
         REQUIRE( fd >= 0 );
 
         MemoryBuffer memBuffer( fd );
 
         REQUIRE( memBuffer.data() == nullptr );
         REQUIRE( memBuffer.size() == 0 );
-
-        unlink( tempPath );
     }
 
     SECTION( "Constructor with large file content" )
     {
-        const char* tempFile = "/tmp/mcore_test_large_XXXXXX";
-        char tempPath[256];
-        strncpy( tempPath, tempFile, sizeof( tempPath ) );
-
-        int fd = mkstemp( tempPath );
+        std::vector<char> largeContent = BinaryPattern::repeated( 'X', 100000 );
+        int fd = createTempFileWithContent( largeContent.data(), largeContent.size() );
         REQUIRE( fd >= 0 );
-
-        std::vector<char> largeContent( 100000, 'X' );
-        write( fd, largeContent.data(), largeContent.size() );
-        lseek( fd, 0, SEEK_SET );
 
         MemoryBuffer memBuffer( fd );
 
         REQUIRE( memBuffer.data() != nullptr );
         REQUIRE( memBuffer.size() == 100000 );
         REQUIRE( memcmp( memBuffer.data(), largeContent.data(), largeContent.size() ) == 0 );
-
-        unlink( tempPath );
     }
 
     SECTION( "AsString with binary data containing null bytes" )

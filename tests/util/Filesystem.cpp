@@ -76,6 +76,8 @@ TEST_CASE( "CreateDirectories functionality", "[filesystem][directories]" )
 
     SECTION( "Permission denied - read-only parent directory" )
     {
+        if( geteuid() == 0 ) SKIP( "Permission test not applicable when running as root" );
+
         std::string parentPath = baseDir.filePath( "readonly" );
 
         int ret = mkdir( parentPath.c_str(), 0555 );

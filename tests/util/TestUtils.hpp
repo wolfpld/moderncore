@@ -4,6 +4,7 @@
 #include <cstring>
 #include <dirent.h>
 #include <fcntl.h>
+#include <sstream>
 #include <string>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -340,3 +341,51 @@ private:
     int m_original;
     int m_readFd;
 };
+
+inline std::string stripAnsi( const std::string& str )
+{
+    std::string result;
+    result.reserve( str.size() );
+    for( size_t i = 0; i < str.size(); i++ )
+    {
+        if( str[i] == '\x1b' )
+        {
+            while( i < str.size() && str[i] != 'm' ) i++;
+        }
+        else
+        {
+            result += str[i];
+        }
+    }
+    return result;
+}
+
+inline std::vector<std::string> extractFrames( const std::string& output )
+{
+    std::vector<std::string> frames;
+    std::istringstream stream( output );
+    std::string line;
+
+    while( std::getline( stream, line ) )
+    {
+        size_t dotPos = line.find( ". " );
+        if( dotPos == std::string::npos || dotPos == 0 ) continue;
+
+        size_t numStart = dotPos - 1;
+        while( numStart > 0 && std::isdigit( static_cast<unsigned char>( line[numStart - 1] ) ) )
+        {
+            numStart--;
+        }
+
+        if( numStart < dotPos && std::isdigit( static_cast<unsigned char>( line[numStart] ) ) )
+        {
+            frames.push_back( line.substr( dotPos + 2 ) );
+        }
+    }
+    return frames;
+}
+
+inline int countFrames( const std::string& output )
+{
+    return static_cast<int>( extractFrames( output ).size() );
+}

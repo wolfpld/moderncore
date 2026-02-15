@@ -560,6 +560,7 @@ enable_testing()
 # tests - mcoreutil
 set(UTIL_TESTS_SRC
     tests/util/ArgParser.cpp
+    tests/util/Callstack.cpp
     tests/util/Clock.cpp
     tests/util/Config.cpp
     tests/util/DataBuffer.cpp

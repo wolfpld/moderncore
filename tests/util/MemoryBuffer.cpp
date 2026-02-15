@@ -1,7 +1,10 @@
 #include <catch2/catch_all.hpp>
 #include <src/util/DataBuffer.hpp>
 #include <src/util/MemoryBuffer.hpp>
+#include <string.h>
+#include <fcntl.h>
 #include <string>
+#include <unistd.h>
 #include <vector>
 
 TEST_CASE( "MemoryBuffer functionality", "[memorybuffer][buffer]" )
@@ -10,7 +13,6 @@ TEST_CASE( "MemoryBuffer functionality", "[memorybuffer][buffer]" )
     {
         MemoryBuffer memBuffer;
 
-        // Default constructor should have empty buffer
         REQUIRE( memBuffer.data() == nullptr );
         REQUIRE( memBuffer.size() == 0 );
     }
@@ -19,19 +21,15 @@ TEST_CASE( "MemoryBuffer functionality", "[memorybuffer][buffer]" )
     {
         std::vector<char> testData = { 'H', 'e', 'l', 'l', 'o' };
 
-        // Move the vector into MemoryBuffer
         MemoryBuffer memBuffer( std::move( testData ) );
 
-        // Verify data was moved successfully
         REQUIRE( memBuffer.data() != nullptr );
         REQUIRE( memBuffer.size() == 5 );
 
-        // Verify content using memcmp
         const char* dataPtr = memBuffer.data();
         const char* expected = "Hello";
         REQUIRE( memcmp( dataPtr, expected, 5 ) == 0 );
 
-        // Original vector should be empty after move
         REQUIRE( testData.empty() );
     }
 
@@ -42,7 +40,6 @@ TEST_CASE( "MemoryBuffer functionality", "[memorybuffer][buffer]" )
         MemoryBuffer memBuffer( std::move( emptyData ) );
 
         REQUIRE( memBuffer.size() == 0 );
-        // When vector is empty, data() returns nullptr
         REQUIRE( memBuffer.data() == nullptr );
     }
 
@@ -52,10 +49,8 @@ TEST_CASE( "MemoryBuffer functionality", "[memorybuffer][buffer]" )
 
         MemoryBuffer memBuffer( std::move( testData ) );
 
-        // Get string representation
         std::string result = memBuffer.AsString();
 
-        // Verify string content
         const char* expected = "Hello World!";
         REQUIRE( result == expected );
         REQUIRE( result.length() == strlen( expected ) );
@@ -71,5 +66,89 @@ TEST_CASE( "MemoryBuffer functionality", "[memorybuffer][buffer]" )
 
         REQUIRE( result.empty() );
         REQUIRE( result.length() == 0 );
+    }
+
+    SECTION( "Constructor with file descriptor - reads file content" )
+    {
+        const char* testContent = "Test content from file descriptor";
+        const char* tempFile = "/tmp/mcore_test_fd_XXXXXX";
+        char tempPath[256];
+        strncpy( tempPath, tempFile, sizeof( tempPath ) );
+
+        int fd = mkstemp( tempPath );
+        REQUIRE( fd >= 0 );
+
+        write( fd, testContent, strlen( testContent ) );
+        lseek( fd, 0, SEEK_SET );
+
+        MemoryBuffer memBuffer( fd );
+
+        REQUIRE( memBuffer.data() != nullptr );
+        REQUIRE( memBuffer.size() == strlen( testContent ) );
+        REQUIRE( memcmp( memBuffer.data(), testContent, strlen( testContent ) ) == 0 );
+
+        unlink( tempPath );
+    }
+
+    SECTION( "Constructor with invalid file descriptor" )
+    {
+        MemoryBuffer memBuffer( -1 );
+
+        REQUIRE( memBuffer.data() == nullptr );
+        REQUIRE( memBuffer.size() == 0 );
+    }
+
+    SECTION( "Constructor with empty file descriptor" )
+    {
+        const char* tempFile = "/tmp/mcore_test_empty_XXXXXX";
+        char tempPath[256];
+        strncpy( tempPath, tempFile, sizeof( tempPath ) );
+
+        int fd = mkstemp( tempPath );
+        REQUIRE( fd >= 0 );
+
+        MemoryBuffer memBuffer( fd );
+
+        REQUIRE( memBuffer.data() == nullptr );
+        REQUIRE( memBuffer.size() == 0 );
+
+        unlink( tempPath );
+    }
+
+    SECTION( "Constructor with large file content" )
+    {
+        const char* tempFile = "/tmp/mcore_test_large_XXXXXX";
+        char tempPath[256];
+        strncpy( tempPath, tempFile, sizeof( tempPath ) );
+
+        int fd = mkstemp( tempPath );
+        REQUIRE( fd >= 0 );
+
+        std::vector<char> largeContent( 100000, 'X' );
+        write( fd, largeContent.data(), largeContent.size() );
+        lseek( fd, 0, SEEK_SET );
+
+        MemoryBuffer memBuffer( fd );
+
+        REQUIRE( memBuffer.data() != nullptr );
+        REQUIRE( memBuffer.size() == 100000 );
+        REQUIRE( memcmp( memBuffer.data(), largeContent.data(), largeContent.size() ) == 0 );
+
+        unlink( tempPath );
+    }
+
+    SECTION( "AsString with binary data containing null bytes" )
+    {
+        std::vector<char> binaryData = { 'H', 'i', '\0', 'T', 'h', 'e', 'r', 'e' };
+
+        MemoryBuffer memBuffer( std::move( binaryData ) );
+
+        std::string result = memBuffer.AsString();
+
+        REQUIRE( result.size() == 8 );
+        REQUIRE( result[0] == 'H' );
+        REQUIRE( result[1] == 'i' );
+        REQUIRE( result[2] == '\0' );
+        REQUIRE( result[7] == 'e' );
     }
 }

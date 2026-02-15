@@ -1,21 +1,17 @@
 #include <catch2/catch_all.hpp>
 #include <src/util/Filesystem.hpp>
+#include "TestUtils.hpp"
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <sys/stat.h>
-#include <unistd.h>
 
 TEST_CASE( "CreateDirectories functionality", "[filesystem][directories]" )
 {
-    char baseTemplate[] = "/tmp/test_mcore_XXXXXX";
-    char* basePath = mkdtemp( baseTemplate );
-    REQUIRE( basePath != nullptr );
-    std::string base( basePath );
+    TempDir baseDir = TempDir::create();
+    REQUIRE( !baseDir.str().empty() );
 
     SECTION( "Single subdirectory creation" )
     {
-        std::string path = base + "/single";
+        std::string path = baseDir.filePath( "single" );
 
         bool result = CreateDirectories( path );
         REQUIRE( result == true );
@@ -23,15 +19,13 @@ TEST_CASE( "CreateDirectories functionality", "[filesystem][directories]" )
         struct stat buf;
         REQUIRE( stat( path.c_str(), &buf ) == 0 );
         REQUIRE( S_ISDIR( buf.st_mode ) );
-
-        rmdir( path.c_str() );
     }
 
     SECTION( "Multiple sibling directories in parallel" )
     {
-        std::string pathA = base + "/multi/a";
-        std::string pathB = base + "/multi/b";
-        std::string pathC = base + "/multi/c";
+        std::string pathA = baseDir.filePath( "multi/a" );
+        std::string pathB = baseDir.filePath( "multi/b" );
+        std::string pathC = baseDir.filePath( "multi/c" );
 
         bool resultA = CreateDirectories( pathA );
         bool resultB = CreateDirectories( pathB );
@@ -48,16 +42,11 @@ TEST_CASE( "CreateDirectories functionality", "[filesystem][directories]" )
         REQUIRE( S_ISDIR( buf.st_mode ) );
         REQUIRE( stat( pathC.c_str(), &buf ) == 0 );
         REQUIRE( S_ISDIR( buf.st_mode ) );
-
-        rmdir( ( base + "/multi/a" ).c_str() );
-        rmdir( ( base + "/multi/b" ).c_str() );
-        rmdir( ( base + "/multi/c" ).c_str() );
-        rmdir( ( base + "/multi" ).c_str() );
     }
 
     SECTION( "Deep nesting - three levels" )
     {
-        std::string path = base + "/deep/nested/path";
+        std::string path = baseDir.filePath( "deep/nested/path" );
 
         bool result = CreateDirectories( path );
         REQUIRE( result == true );
@@ -65,19 +54,15 @@ TEST_CASE( "CreateDirectories functionality", "[filesystem][directories]" )
         struct stat buf;
         REQUIRE( stat( path.c_str(), &buf ) == 0 );
         REQUIRE( S_ISDIR( buf.st_mode ) );
-        REQUIRE( stat( ( base + "/deep/nested" ).c_str(), &buf ) == 0 );
+        REQUIRE( stat( baseDir.filePath( "deep/nested" ).c_str(), &buf ) == 0 );
         REQUIRE( S_ISDIR( buf.st_mode ) );
-        REQUIRE( stat( ( base + "/deep" ).c_str(), &buf ) == 0 );
+        REQUIRE( stat( baseDir.filePath( "deep" ).c_str(), &buf ) == 0 );
         REQUIRE( S_ISDIR( buf.st_mode ) );
-
-        rmdir( ( base + "/deep/nested/path" ).c_str() );
-        rmdir( ( base + "/deep/nested" ).c_str() );
-        rmdir( ( base + "/deep" ).c_str() );
     }
 
     SECTION( "Existing directory handling" )
     {
-        std::string path = base + "/existing";
+        std::string path = baseDir.filePath( "existing" );
 
         bool result1 = CreateDirectories( path );
         REQUIRE( result1 == true );
@@ -87,13 +72,11 @@ TEST_CASE( "CreateDirectories functionality", "[filesystem][directories]" )
 
         struct stat buf;
         REQUIRE( stat( path.c_str(), &buf ) == 0 );
-
-        rmdir( path.c_str() );
     }
 
     SECTION( "Permission denied - read-only parent directory" )
     {
-        std::string parentPath = base + "/readonly";
+        std::string parentPath = baseDir.filePath( "readonly" );
 
         int ret = mkdir( parentPath.c_str(), 0555 );
         REQUIRE( ret == 0 );
@@ -103,7 +86,6 @@ TEST_CASE( "CreateDirectories functionality", "[filesystem][directories]" )
         REQUIRE( result == false );
 
         chmod( parentPath.c_str(), 0755 );
-        rmdir( parentPath.c_str() );
     }
 
     SECTION( "Empty path" )
@@ -114,17 +96,13 @@ TEST_CASE( "CreateDirectories functionality", "[filesystem][directories]" )
 
     SECTION( "Path with trailing slash" )
     {
-        std::string path = base + "/slash/";
+        std::string path = baseDir.filePath( "slash/" );
 
         bool result = CreateDirectories( path );
         REQUIRE( result == true );
 
         struct stat buf;
-        REQUIRE( stat( ( base + "/slash" ).c_str(), &buf ) == 0 );
+        REQUIRE( stat( baseDir.filePath( "slash" ).c_str(), &buf ) == 0 );
         REQUIRE( S_ISDIR( buf.st_mode ) );
-
-        rmdir( ( base + "/slash" ).c_str() );
     }
-
-    rmdir( base.c_str() );
 }

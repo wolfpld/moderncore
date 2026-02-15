@@ -21,8 +21,10 @@ jobs:
         CXX: clang++
     - name: clang build
       run: ninja -C build
-    - name: run tests
+    - name: clang tests
       run: ninja -C build test
+      env:
+        CTEST_OUTPUT_ON_FAILURE: 1
     - name: install
       run: ninja -C build install
       env:
@@ -36,6 +38,8 @@ jobs:
       run: ninja -C build-gcc
     - name: gcc tests
       run: ninja -C build-gcc test
+      env:
+        CTEST_OUTPUT_ON_FAILURE: 1
     - name: strip
       run: |
         strip ${{ github.workspace }}/install/usr/bin/*

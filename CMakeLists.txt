@@ -568,6 +568,7 @@ set(UTIL_TESTS_SRC
     tests/util/Filesystem.cpp
     tests/util/Home.cpp
     tests/util/MemoryBuffer.cpp
+    tests/util/TaskDispatch.cpp
     tests/util/Url.cpp
 )
 

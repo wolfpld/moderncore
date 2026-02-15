@@ -3,6 +3,7 @@
         "llvm-vs-code-extensions.vscode-clangd",
         "vadimcn.vscode-lldb",
         "slevesque.shader",
-        "ms-vscode.cmake-tools"
+        "ms-vscode.cmake-tools",
+        "ryanluker.vscode-coverage-gutters"
     ]
 }

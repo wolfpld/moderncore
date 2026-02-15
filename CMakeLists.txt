@@ -4,6 +4,7 @@ option(TRACY_ENABLE "Enable Tracy" OFF)
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 option(MARCH_NATIVE "Enable -march=native" ON)
 option(BUILD_MCORE "Build defunct mcore binary" OFF)
+option(COVERAGE "Enable code coverage" OFF)
 set(SANITIZE "" CACHE STRING "Sanitizer parameters")
 
 set(CMAKE_CXX_STANDARD 20)
@@ -25,6 +26,10 @@ endif()
 if(SANITIZE)
     add_compile_options(-fsanitize=${SANITIZE} -fno-omit-frame-pointer)
     add_link_options(-fsanitize=${SANITIZE} -fno-omit-frame-pointer)
+endif()
+
+if(COVERAGE)
+    include(cmake/coverage.cmake)
 endif()
 
 CPMAddPackage(

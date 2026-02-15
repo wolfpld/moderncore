@@ -43,6 +43,16 @@
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
         "SANITIZE": "thread"
       }
+    },
+    {
+      "name": "coverage",
+      "displayName": "Code coverage configuration",
+      "inherits": "common",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "COVERAGE": "ON",
+        "BUILD_SHARED_LIBS": "OFF"
+      }
     }
   ]
 }

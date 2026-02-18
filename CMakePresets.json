@@ -36,6 +36,15 @@
       }
     },
     {
+      "name": "profile",
+      "displayName": "Profiler configuration",
+      "inherits": "common",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "TRACY_ENABLE": "ON"
+      }
+    },
+    {
       "name": "tsan",
       "displayName": "ThreadSanitizer configuration",
       "inherits": "common",

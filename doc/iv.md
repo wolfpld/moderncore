@@ -14,7 +14,7 @@ A lot of care has been taken to make the pictures look the way they should. This
 
 ### High dynamic range
 
-To get HDR working in iv, you may need to install <https://github.com/Zamundaaa/VK_hdr_layer>. The `ENABLE_HDR_WSI=1` flag is automatically set by the viewer, so you don't need to set it up yourself. If a working HDR pipeline is not available, HDR images will be tone mapped to SDR.
+To get HDR working in iv, you may need to install <https://github.com/Zamundaaa/VK_hdr_layer> and set the `ENABLE_HDR_WSI=1` environment variable. If a working HDR pipeline is not available, HDR images will be tone mapped to SDR.
 
 ### Correct gamma handling
 

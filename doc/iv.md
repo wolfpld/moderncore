@@ -57,7 +57,7 @@ To load an image in iv you can:
 
 When you open a single image, its directory will be scanned for other images so that you can switch between them. Providing multiple images with the above actions only allows switching between them.
 
-You can pan the image by holding down the right mouse button. Zoom is done with the mouse wheel.
+You can pan the image by holding down the right mouse button. Zoom is done with the mouse wheel. The left mouse button is used to draw a selection rectangle and to change or cancel it.
 
 Keybindings:
  - `1` sets the zoom level to 100%.

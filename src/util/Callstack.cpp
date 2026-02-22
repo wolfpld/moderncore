@@ -182,7 +182,7 @@ static int CallstackCallback( void*, uintptr_t pc, const char* filename, int lin
         if( filename )
         {
             auto path = NormalizePath( filename );
-            if( IsPathExternal( path ) )
+            if( path && IsPathExternal( path ) )
             {
                 isExternal = true;
                 callstackExternal = true;
@@ -208,7 +208,7 @@ static int CallstackCallback( void*, uintptr_t pc, const char* filename, int lin
     else if( filename )
     {
         auto path = NormalizePath( filename );
-        if( IsPathExternal( path ) )
+        if( path && IsPathExternal( path ) )
         {
             isExternal = true;
             callstackExternal = true;

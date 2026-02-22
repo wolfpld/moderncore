@@ -50,19 +50,11 @@ There is initial support for extracting HDR content from RAW images. Some images
 
 ## Building
 
-Follow the standard CMake build process.
-
-```
-cmake -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build
-cmake --install build
-```
-
-> [!NOTE]
-> Installing the binaries requires setting up proper installation paths and having proper permissions. You must know what you are doing. Installation is not required to get started, you can run the executables from the build directory.
-
-> [!TIP]
-> By default ModernCore is built with the `-march=native` compiler option, to enable SIMD processing. If you want to build an executable that will run on any machine, you may want to disable this with the `MARCH_NATIVE` CMake option. In such a case, it is recommended to manually set an appropriate `-march` level for the CPU architecture baseline you want to support. Not doing so will make everything unnecessarily slow.
+See [INSTALL.md](INSTALL.md) for detailed build instructions, dependencies, and configuration options.
 
 > [!CAUTION]
-> ModernCore is written in and for *the current year*, and it requires *the latest* libraries and other software to be installed on the system. Don't ask me why it won't build or run on your OS, which insists on shipping years old software (it's *always* Ubuntu).
+> ModernCore is written in and for *the current year*, and it requires *the latest* libraries and other software to be installed on the system.
+
+## New features
+
+See [NEWS.md](NEWS.md) for a list of changes in the project.

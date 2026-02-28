@@ -205,11 +205,12 @@ bool Selection::MouseMove( const Vector2<float>& pos )
     if( !m_drag ) return false;
     if( m_resizeArea == ResizeArea::None )
     {
-        auto imgPos = ScreenToImagePosWithOrigin( pos );
-        m_posMin.x = std::min( m_origin.x + 0, imgPos.x );
-        m_posMax.x = std::max( m_origin.x + 1, imgPos.x );
-        m_posMin.y = std::min( m_origin.y + 0, imgPos.y );
-        m_posMax.y = std::max( m_origin.y + 1, imgPos.y );
+        const auto imgPos = ScreenToImagePosWithOrigin( pos );
+        const auto& extent = m_imageView->GetBitmapExtent();
+        m_posMin.x = std::min( { m_origin.x, imgPos.x, extent.width - 1 } );
+        m_posMin.y = std::min( { m_origin.y, imgPos.y, extent.height - 1 } );
+        m_posMax.x = std::min( std::max( m_origin.x + 1, imgPos.x ), extent.width );
+        m_posMax.y = std::min( std::max( m_origin.y + 1, imgPos.y ), extent.height );
     }
     else
     {

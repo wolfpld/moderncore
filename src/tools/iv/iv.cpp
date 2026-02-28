@@ -1,5 +1,6 @@
 #include <getopt.h>
 #include <memory>
+#include <signal.h>
 #include <stdlib.h>
 #include <vector>
 
@@ -27,6 +28,8 @@ static void PrintHelp()
 
 int main( int argc, char** argv )
 {
+    signal( SIGPIPE, SIG_IGN );
+
 #ifdef NDEBUG
     SetLogLevel( LogLevel::Warning );
     bool enableValidation = false;

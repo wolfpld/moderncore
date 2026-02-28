@@ -250,6 +250,9 @@ bool Selection::MouseMove( const Vector2<float>& pos )
         }
     }
 
+    CheckPanic( m_posMin.x >= 0 && m_posMin.y >= 0 && m_posMin.x < m_imageView->GetBitmapExtent().width && m_posMin.y < m_imageView->GetBitmapExtent().height, "Invalid selection position" );
+    CheckPanic( m_posMin.x < m_posMax.x && m_posMin.y < m_posMax.y, "Null selection" );
+
     UpdateVertexBuffer();
     return true;
 }

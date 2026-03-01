@@ -64,12 +64,13 @@ static uint64_t Now()
     return uint64_t( ts.tv_sec ) * 1000000000 + ts.tv_nsec;
 }
 
-Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu )
+Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu, bool hdr )
     : m_display( display )
     , m_vkInstance( vkInstance )
     , m_td( std::make_unique<TaskDispatch>( std::thread::hardware_concurrency() - 1, "Worker" ) )
     , m_window( std::make_shared<WaylandWindow>( display, vkInstance ) )
     , m_provider( std::make_shared<ImageProvider>( *m_td ) )
+    , m_hdr( hdr )
 {
     ZoneScoped;
 
@@ -179,7 +180,7 @@ void Viewport::LoadImage( const char* path, bool scanDirectory )
 {
     ZoneScoped;
     std::lock_guard lock( m_lock );
-    const auto id = m_provider->LoadImage( path, m_window->HdrCapable(), Method( ImageHandler ), this );
+    const auto id = m_provider->LoadImage( path, m_hdr && m_window->HdrCapable(), Method( ImageHandler ), this );
     ZoneTextF( "id %ld", id );
 
     if( m_currentJob != -1 ) m_provider->Cancel( m_currentJob );
@@ -216,7 +217,7 @@ void Viewport::LoadImage( int fd, const char* origin, int dndFd )
     ZoneScoped;
     std::lock_guard lock( m_lock );
     m_provider->CancelAll();
-    m_currentJob = m_provider->LoadImage( fd, m_window->HdrCapable(), Method( ImageHandler ), this, origin, { .dndFd = dndFd } );
+    m_currentJob = m_provider->LoadImage( fd, m_hdr && m_window->HdrCapable(), Method( ImageHandler ), this, origin, { .dndFd = dndFd } );
     ZoneTextF( "id %ld", m_currentJob );
     SetBusy();
 }
@@ -284,14 +285,15 @@ void Viewport::Update( float delta )
     if( m_updateTitle )
     {
         m_updateTitle = false;
+        bool hdr = m_hdr && m_window->HdrCapable();
         auto& extent = m_view->GetBitmapExtent();
         if( m_fileList.size() > 1 )
         {
-            m_window->SetTitle( std::format( "{} [{}/{}] - {}×{} - {:.2f}% — IV", m_origin, m_fileIndex + 1, m_fileList.size(), extent.width, extent.height, m_viewScale * 100 ).c_str() );
+            m_window->SetTitle( std::format( "{} [{}/{}] - {}×{} - {:.2f}% <{}> — IV", m_origin, m_fileIndex + 1, m_fileList.size(), extent.width, extent.height, m_viewScale * 100, hdr ? "h" : "s"  ).c_str() );
         }
         else
         {
-            m_window->SetTitle( std::format( "{} - {}×{} - {:.2f}% — IV", m_origin, extent.width, extent.height, m_viewScale * 100 ).c_str() );
+            m_window->SetTitle( std::format( "{} - {}×{} - {:.2f}% <{}> — IV", m_origin, extent.width, extent.height, m_viewScale * 100, hdr ? "h" : "s"  ).c_str() );
         }
     }
 }
@@ -670,6 +672,16 @@ void Viewport::KeyEvent( uint32_t key, int mods, bool pressed )
         {
             m_fileIndex = ( m_fileIndex + m_fileList.size() - 1 ) % m_fileList.size();
             LoadImage( m_fileList[m_fileIndex].c_str(), false );
+        }
+    }
+    else if( mods == 0 && key == KEY_H )
+    {
+        if( m_window->HdrCapable() )
+        {
+            m_hdr = !m_hdr;
+            if( !m_fileList.empty() ) LoadImage( m_fileList[m_fileIndex].c_str(), false );
+            m_updateTitle = true;
+            WantRender();
         }
     }
 }

@@ -23,6 +23,7 @@ static void PrintHelp()
     printf( "  -e, --external               Show external callstacks\n" );
     printf( "  -V, --validation [on|off]    Enable or disable Vulkan validation layers\n" );
     printf( "  -g, --gpu [id]               Select GPU by id\n" );
+    printf( "  -H, --hdr [on|off]           Enable or disable HDR processing\n" );
     printf( "  --help                       Print this help\n" );
 }
 
@@ -38,6 +39,7 @@ int main( int argc, char** argv )
 #endif
 
     int gpu = -1;
+    bool hdr = true;
 
     enum { OptHelp };
 
@@ -46,12 +48,13 @@ int main( int argc, char** argv )
         { "external", no_argument, nullptr, 'e' },
         { "validation", required_argument, nullptr, 'V' },
         { "gpu", required_argument, nullptr, 'g' },
+        { "hdr", required_argument, nullptr, 'H' },
         { "help", no_argument, nullptr, OptHelp },
         {}
     };
 
     int opt;
-    while( ( opt = getopt_long( argc, argv, "deV:g:", longOptions, nullptr ) ) != -1 )
+    while( ( opt = getopt_long( argc, argv, "deV:g:H:", longOptions, nullptr ) ) != -1 )
     {
         switch (opt)
         {
@@ -67,6 +70,9 @@ int main( int argc, char** argv )
         case 'g':
             gpu = atoi( optarg );
             break;
+        case 'H':
+            hdr = ParseBoolean( optarg );
+            break;
         case OptHelp:
             PrintHelp();
             return 0;
@@ -79,7 +85,7 @@ int main( int argc, char** argv )
     auto vkInstance = std::make_unique<VlkInstance>( VlkInstanceType::Wayland, enableValidation );
     auto waylandDisplay = std::make_unique<WaylandDisplay>();
 
-    auto viewport = std::make_unique<Viewport>( *waylandDisplay, *vkInstance, gpu );
+    auto viewport = std::make_unique<Viewport>( *waylandDisplay, *vkInstance, gpu, hdr );
     if( optind != argc )
     {
         const auto sz = argc - optind;

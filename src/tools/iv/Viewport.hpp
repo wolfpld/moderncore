@@ -27,7 +27,7 @@ class WaylandWindow;
 class Viewport
 {
 public:
-    Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu );
+    Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu, bool hdr );
     ~Viewport();
 
     void LoadImage( const char* path, bool scanDirectory );
@@ -113,4 +113,6 @@ private:
     std::string m_origin;
     std::string m_loadOrigin;
     float m_viewScale;
+
+    bool m_hdr;
 };

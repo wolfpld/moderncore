@@ -1,5 +1,17 @@
 # Changelog
 
+## 20260308
+
+### iv
+
+- Fix crashes when receiving side of clipboard copy operation closes prematurely.
+- Fix invalid selection range when starting selection beyond the bottom or right edge of image.
+- Implemented switch between HDR and SDR modes.
+  - The main motivation is to fix clipboard copy of wide gamut JPG files. The technicality enabling wide gamut was treating the image data as HDR, and that made the clipboard copy perform incorrect tone mapping – the wide gamut image is not HDR after all. The tradeoffs taken since iv is an image viewer and not an image editor make this hard to do properly.
+  - May be toggled with a command-line parameter `-H`, `--hdr`.
+  - May be toggled at runtime with the `H` key.
+  - Will reload the image, if possible (if the image has been loaded from a file on disk and hasn't been modified).
+
 ## 20260222
 
 ### iv

@@ -68,16 +68,17 @@ Keybindings:
  - `2` sets the zoom level to 200%.
  - `3` sets the zoom level to 400%.
  - `4` sets the zoom level to 800%.
- - `f` makes the image fit in the window (will only scale down).
- - `ctrl+f` makes the image fill the window (will also scale up).
- - `shift+f` resizes the window to fit the image.
+ - `F` makes the image fit in the window (will only scale down).
+ - `Ctrl+F` makes the image fill the window (will also scale up).
+ - `Shift+F` resizes the window to fit the image.
  - `F11` enables fullscreen mode.
  - `Escape` exits the application.
  - `←` and `→` switch between images.
- - `ctrl+c` copies the selected region to clipboard (or whole image if no selection).
- - `ctrl+x` cuts the selected region to clipboard (fills with black).
- - `ctrl+v` pastes an image from the clipboard.
- - `ctrl+s` saves the image to a file.
+ - `Ctrl+C` copies the selected region to clipboard (or whole image if no selection).
+ - `Ctrl+X` cuts the selected region to clipboard (fills with black).
+ - `Ctrl+V` pastes an image from the clipboard.
+ - `Ctrl+S` saves the image to a file.
+ - `H` toggles between SDR and HDR mode.
 
 ### Future plans
 

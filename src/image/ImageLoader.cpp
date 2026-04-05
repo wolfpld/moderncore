@@ -16,6 +16,7 @@
 #include "StbImageLoader.hpp"
 #include "TiffLoader.hpp"
 #include "WebpLoader.hpp"
+#include "XCursorLoader.hpp"
 #include "util/Bitmap.hpp"
 #include "util/BitmapAnim.hpp"
 #include "util/BitmapHdr.hpp"
@@ -104,6 +105,7 @@ std::unique_ptr<ImageLoader> GetImageLoader( const char* path, ToneMap::Operator
     if( auto loader = CheckImageLoader<ExrLoader>( buf, sz, file, tonemap, td ); loader ) return loader;
     if( auto loader = CheckImageLoader<RawLoader>( file ); loader ) return loader;
     if( auto loader = CheckImageLoader<TiffLoader>( buf, sz, file ); loader ) return loader;
+    if( auto loader = CheckImageLoader<XCursorLoader>( buf, sz, file ); loader ) return loader;
 
     mclog( LogLevel::Debug, "Raster image loaders can't open %s", path );
     return nullptr;

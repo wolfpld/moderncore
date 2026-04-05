@@ -244,6 +244,7 @@ set(MCOREIMAGE_SRC
     src/image/StbImageLoader.cpp
     src/image/TiffLoader.cpp
     src/image/WebpLoader.cpp
+    src/image/XCursorLoader.cpp
     src/image/vector/PdfImage.cpp
     src/image/vector/SvgImage.cpp
 )

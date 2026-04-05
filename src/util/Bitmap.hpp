@@ -23,6 +23,7 @@ public:
     void FillBlack( uint32_t x, uint32_t y, uint32_t width, uint32_t height );
     void SetAlpha( uint8_t alpha );
     void NormalizeOrientation();
+    void BgrToRgb();
 
     void FlipVertical();
     void FlipHorizontal();

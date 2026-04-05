@@ -376,6 +376,18 @@ void Bitmap::NormalizeOrientation()
     m_orientation = 1;
 }
 
+void Bitmap::BgrToRgb()
+{
+    auto sz = m_width * m_height;
+    auto ptr = (uint32_t*)m_data;
+    while( sz-- )
+    {
+        uint32_t v = *ptr;
+        v = (v & 0xff00ff00) | ((v & 0x00ff0000) >> 16) | ((v & 0x000000ff) << 16);
+        *ptr++ = v;
+    }
+}
+
 bool Bitmap::SavePng( const char* path ) const
 {
     FILE* f = fopen( path, "wb" );

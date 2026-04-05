@@ -381,6 +381,19 @@ void Bitmap::BgrToRgb()
     auto sz = m_width * m_height;
     auto ptr = (uint32_t*)m_data;
 
+#ifdef __AVX2__
+    while( sz >= 8 )
+    {
+        __m256i v = _mm256_loadu_si256( (const __m256i*)ptr );
+        v = _mm256_shuffle_epi8( v, _mm256_set_epi64x(
+            0x1f1c1d1e1b18191a, 0x1714151613101112,
+            0x0f0c0d0e0b08090a, 0x0704050603000102
+        ) );
+        _mm256_storeu_si256( (__m256i*)ptr, v );
+        ptr += 8;
+        sz -= 8;
+    }
+#endif
 #ifdef __SSE2__
     while( sz >= 4 )
     {

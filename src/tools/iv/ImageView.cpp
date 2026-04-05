@@ -16,7 +16,6 @@
 #include "vulkan/VlkFence.hpp"
 #include "vulkan/VlkPipeline.hpp"
 #include "vulkan/VlkPipelineLayout.hpp"
-#include "vulkan/VlkProxy.hpp"
 #include "vulkan/VlkSampler.hpp"
 #include "vulkan/VlkShader.hpp"
 #include "vulkan/VlkShaderModule.hpp"

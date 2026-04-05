@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <ranges>
 #include <tracy/Tracy.hpp>
 
 #include "ImageProvider.hpp"
@@ -7,7 +6,6 @@
 #include "image/PngLoader.hpp"
 #include "util/Bitmap.hpp"
 #include "util/BitmapHdr.hpp"
-#include "util/DataBuffer.hpp"
 #include "util/Logs.hpp"
 #include "util/MemoryBuffer.hpp"
 #include "util/TaskDispatch.hpp"

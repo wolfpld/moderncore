@@ -26,7 +26,6 @@
 #include "util/BitmapHdr.hpp"
 #include "util/BitmapHdrHalf.hpp"
 #include "util/Config.hpp"
-#include "util/DataBuffer.hpp"
 #include "util/EmbedData.hpp"
 #include "util/Filesystem.hpp"
 #include "util/Home.hpp"

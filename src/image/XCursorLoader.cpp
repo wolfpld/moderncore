@@ -87,5 +87,7 @@ std::unique_ptr<Bitmap> XCursorLoader::Load()
 
     auto bitmap = std::make_unique<Bitmap>( img.width, img.height );
     if( !m_file->Read( bitmap->Data(), img.width * img.height * 4 ) ) return nullptr;
+
+    bitmap->BgrToRgb();
     return bitmap;
 }

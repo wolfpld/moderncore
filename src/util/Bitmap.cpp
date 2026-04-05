@@ -381,6 +381,21 @@ void Bitmap::BgrToRgb()
     auto sz = m_width * m_height;
     auto ptr = (uint32_t*)m_data;
 
+#ifdef __AVX512F__
+    while( sz >= 16 )
+    {
+        __m512i v = _mm512_loadu_si512( ptr );
+        v = _mm512_shuffle_epi8( v, _mm512_set_epi64(
+            0x3f3c3d3e3b38393a, 0x3734353633303132,
+            0x2f2c2d2e2b28292a, 0x2724252623202122,
+            0x1f1c1d1e1b18191a, 0x1714151613101112,
+            0x0f0c0d0e0b08090a, 0x0704050603000102
+        ) );
+        _mm512_storeu_si512( ptr, v );
+        ptr += 16;
+        sz -= 16;
+    }
+#endif
 #ifdef __AVX2__
     while( sz >= 8 )
     {

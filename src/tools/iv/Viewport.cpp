@@ -1153,14 +1153,10 @@ std::vector<std::string> Viewport::ListDirectory( const std::string& path )
         else if( entry->d_type == DT_LNK )
         {
             auto srcPath = path + "/" + entry->d_name;
-            char link[PATH_MAX];
-            if( readlink( srcPath.c_str(), link, sizeof( link ) ) != -1 )
+            struct stat st;
+            if( stat( srcPath.c_str(), &st ) == 0 && S_ISREG( st.st_mode ) )
             {
-                struct stat st;
-                if( stat( link, &st ) == 0 && S_ISREG( st.st_mode ) )
-                {
-                    ret.emplace_back( std::move( srcPath ) );
-                }
+                ret.emplace_back( std::move( srcPath ) );
             }
         }
     }

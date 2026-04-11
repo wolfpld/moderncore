@@ -18,17 +18,19 @@ ModernCore requires the following libraries:
 - libwebp
 - OpenEXR
 - pugixml
+- zlib (zlib-ng recommended)
+
+### iv Dependencies
 - Vulkan
 - wayland-client
 - wayland-protocols
 - xkbcommon
-- zlib (zlib-ng recommended)
 
 ### Build Dependencies
 - CMake
 - C++ compiler
 - Python
-- shaderc
+- shaderc (only required when building iv)
 
 ### Build Recommendations
 - ninja
@@ -83,6 +85,7 @@ ninja -C build
 |--------|---------|-------------|
 | `MARCH_NATIVE` | ON | Enable `-march=native` for SIMD |
 | `BUILD_SHARED_LIBS` | ON | Build shared libraries |
+| `BUILD_IV` | ON | Build iv Wayland image viewer (requires Vulkan and Wayland) |
 | `BUILD_MCORE` | OFF | Build legacy mcore binary |
 | `BUILD_TESTS` | ON when top-level | Enable unit testing (requires Catch2) |
 | `TRACY_ENABLE` | OFF | Enable Tracy profiler |
@@ -122,3 +125,14 @@ ModernCore is developed on current versions of libraries and requires:
 - Vulkan 1.4 (for iv)
 - Wayland compositor (for iv)
 - Terminal with Kitty graphics protocol support (for vv full functionality)
+
+### Building only vv
+
+If you are only interested in the terminal image viewer vv and don't have Vulkan or Wayland installed, you can skip building iv:
+
+```bash
+cmake --preset release -DBUILD_IV=OFF
+ninja -C build-release
+```
+
+This removes the requirement for Vulkan, wayland-client, wayland-protocols, xkbcommon, and shaderc.

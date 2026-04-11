@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.29)
 option(TRACY_ENABLE "Enable Tracy" OFF)
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 option(MARCH_NATIVE "Enable -march=native" ON)
+option(BUILD_IV "Build iv Wayland image viewer (requires Vulkan and Wayland)" ON)
 option(BUILD_MCORE "Build defunct mcore binary" OFF)
 option(COVERAGE "Enable code coverage" OFF)
 set(SANITIZE "" CACHE STRING "Sanitizer parameters")
@@ -19,7 +20,9 @@ include(CheckCompilerFlag)
 include(FindPkgConfig)
 include(cmake/config.cmake)
 include(cmake/CPM.cmake)
-include(cmake/FindWaylandScanner.cmake)
+if(BUILD_IV)
+    include(cmake/FindWaylandScanner.cmake)
+endif()
 
 if(NOT TRACY_ENABLE)
     set(TRACY_OPTIONS "TRACY_STATIC ON")
@@ -43,13 +46,6 @@ CPMAddPackage(
 )
 
 CPMAddPackage(
-    NAME vma
-    GITHUB_REPOSITORY GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
-    GIT_TAG v3.3.0
-    EXCLUDE_FROM_ALL TRUE
-)
-
-CPMAddPackage(
     NAME stb
     GITHUB_REPOSITORY nothings/stb
     GIT_TAG f1c79c02822848a9bed4315b12c8c8f3761e1296
@@ -68,17 +64,24 @@ CPMAddPackage(
     EXCLUDE_FROM_ALL TRUE
 )
 
-CPMAddPackage(
-    NAME nfd
-    GITHUB_REPOSITORY btzy/nativefiledialog-extended
-    GIT_TAG v1.3.0
-    EXCLUDE_FROM_ALL TRUE
-    OPTIONS
-        "NFD_PORTAL ON"
-)
-set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_SAVE})
+if(BUILD_IV)
+    CPMAddPackage(
+        NAME vma
+        GITHUB_REPOSITORY GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
+        GIT_TAG v3.3.0
+        EXCLUDE_FROM_ALL TRUE
+    )
 
-find_program(GLSLC glslc REQUIRED)
+    CPMAddPackage(
+        NAME nfd
+        GITHUB_REPOSITORY btzy/nativefiledialog-extended
+        GIT_TAG v1.3.0
+        EXCLUDE_FROM_ALL TRUE
+        OPTIONS
+            "NFD_PORTAL ON"
+    )
+endif()
+set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_SAVE})
 
 pkg_check_modules(CAIRO REQUIRED cairo)
 pkg_check_modules(EXIF REQUIRED libexif)
@@ -94,11 +97,7 @@ pkg_check_modules(RAW REQUIRED libraw)
 pkg_check_modules(RSVG REQUIRED librsvg-2.0)
 pkg_check_modules(SIXEL REQUIRED libsixel)
 pkg_check_modules(TIFF REQUIRED libtiff-4)
-pkg_check_modules(VULKAN REQUIRED vulkan)
-pkg_check_modules(WAYLAND_CLIENT REQUIRED wayland-client)
-pkg_check_modules(WAYLAND_PROTOCOLS REQUIRED wayland-protocols)
 pkg_check_modules(WEBP REQUIRED libwebpdemux)
-pkg_check_modules(XKB REQUIRED xkbcommon)
 pkg_check_modules(ZLIB REQUIRED zlib)
 
 if(BUILD_MCORE)
@@ -109,7 +108,15 @@ if(BUILD_MCORE)
     pkg_check_modules(WAYLAND_SERVER REQUIRED wayland-server)
 endif()
 
-pkg_get_variable(WAYLAND_PROTOCOLS_PKGDATADIR wayland-protocols pkgdatadir)
+if(BUILD_IV)
+    find_program(GLSLC glslc REQUIRED)
+    pkg_check_modules(VULKAN REQUIRED vulkan)
+    pkg_check_modules(WAYLAND_CLIENT REQUIRED wayland-client)
+    pkg_check_modules(WAYLAND_PROTOCOLS REQUIRED wayland-protocols)
+    pkg_check_modules(XKB REQUIRED xkbcommon)
+
+    pkg_get_variable(WAYLAND_PROTOCOLS_PKGDATADIR wayland-protocols pkgdatadir)
+endif()
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/src)
 
@@ -286,6 +293,8 @@ target_include_directories(mcoreimage PRIVATE
     ${stb_SOURCE_DIR}
 )
 
+if(BUILD_IV)
+
 # mcorevulkan
 
 set(MCOREVULKAN_SRC
@@ -407,6 +416,8 @@ target_include_directories(mcorewayland PUBLIC
     ${XKB_INCLUDE_DIRS}
 )
 
+endif()
+
 # mcore
 
 set(MCORE_SRC
@@ -457,6 +468,8 @@ if(BUILD_MCORE)
     )
 endif()
 
+if(BUILD_IV)
+
 # iv
 
 set(IV_SRC
@@ -501,6 +514,8 @@ target_link_libraries(iv PRIVATE
     nfd::nfd
 )
 
+endif()
+
 # vv
 
 set(VV_SRC
@@ -540,17 +555,21 @@ target_link_libraries(exrconv PRIVATE
 # install
 
 install(TARGETS
-    iv
     vv
     exrconv
     mcoreutil
     mcoreimage
-    mcorevulkan
-    mcorewayland
 )
 
-install(FILES src/tools/iv/desktop/iv.desktop DESTINATION share/applications)
-install(FILES src/tools/iv/assets/icon.svg DESTINATION share/icons/hicolor/scalable/apps RENAME iv.svg)
+if(BUILD_IV)
+    install(TARGETS
+        iv
+        mcorevulkan
+        mcorewayland
+    )
+    install(FILES src/tools/iv/desktop/iv.desktop DESTINATION share/applications)
+    install(FILES src/tools/iv/assets/icon.svg DESTINATION share/icons/hicolor/scalable/apps RENAME iv.svg)
+endif()
 
 if(BUILD_MCORE)
     install(TARGETS mcore)

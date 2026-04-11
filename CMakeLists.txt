@@ -13,6 +13,8 @@ project(ModernCore
     LANGUAGES C CXX
 )
 
+option(BUILD_TESTS "Build tests" ${PROJECT_IS_TOP_LEVEL})
+
 include(CheckCompilerFlag)
 include(FindPkgConfig)
 include(cmake/config.cmake)
@@ -555,36 +557,38 @@ if(BUILD_MCORE)
 endif()
 
 # Catch2 testing
-find_package(Catch2 3 REQUIRED)
-enable_testing()
+if(BUILD_TESTS)
+    find_package(Catch2 3 REQUIRED)
+    enable_testing()
 
-# tests - mcoreutil
-set(UTIL_TESTS_SRC
-    tests/util/ArgParser.cpp
-    tests/util/Callstack.cpp
-    tests/util/Clock.cpp
-    tests/util/Config.cpp
-    tests/util/DataBuffer.cpp
-    tests/util/DataContainer.cpp
-    tests/util/FileBuffer.cpp
-    tests/util/Filesystem.cpp
-    tests/util/FileWrapper.cpp
-    tests/util/Home.cpp
-    tests/util/Logs.cpp
-    tests/util/MemoryBuffer.cpp
-    tests/util/TaskDispatch.cpp
-    tests/util/Url.cpp
-)
+    # tests - mcoreutil
+    set(UTIL_TESTS_SRC
+        tests/util/ArgParser.cpp
+        tests/util/Callstack.cpp
+        tests/util/Clock.cpp
+        tests/util/Config.cpp
+        tests/util/DataBuffer.cpp
+        tests/util/DataContainer.cpp
+        tests/util/FileBuffer.cpp
+        tests/util/Filesystem.cpp
+        tests/util/FileWrapper.cpp
+        tests/util/Home.cpp
+        tests/util/Logs.cpp
+        tests/util/MemoryBuffer.cpp
+        tests/util/TaskDispatch.cpp
+        tests/util/Url.cpp
+    )
 
-add_executable(mcoreutil_tests ${UTIL_TESTS_SRC})
-target_link_libraries(mcoreutil_tests PRIVATE
-    mcoreutil
-    Catch2::Catch2WithMain
-)
-target_include_directories(mcoreutil_tests PRIVATE
-    ${CATCH2_INCLUDE_DIRS}
-)
-target_compile_options(mcoreutil_tests PRIVATE ${CATCH2_CFLAGS})
+    add_executable(mcoreutil_tests ${UTIL_TESTS_SRC})
+    target_link_libraries(mcoreutil_tests PRIVATE
+        mcoreutil
+        Catch2::Catch2WithMain
+    )
+    target_include_directories(mcoreutil_tests PRIVATE
+        ${CATCH2_INCLUDE_DIRS}
+    )
+    target_compile_options(mcoreutil_tests PRIVATE ${CATCH2_CFLAGS})
 
-include(Catch)
-catch_discover_tests(mcoreutil_tests)
+    include(Catch)
+    catch_discover_tests(mcoreutil_tests)
+endif()

@@ -84,6 +84,7 @@ ninja -C build
 | `MARCH_NATIVE` | ON | Enable `-march=native` for SIMD |
 | `BUILD_SHARED_LIBS` | ON | Build shared libraries |
 | `BUILD_MCORE` | OFF | Build legacy mcore binary |
+| `BUILD_TESTS` | ON when top-level | Enable unit testing (requires Catch2) |
 | `TRACY_ENABLE` | OFF | Enable Tracy profiler |
 | `COVERAGE` | OFF | Enable code coverage |
 | `SANITIZE` | "" | Sanitizer flags (e.g., `thread`) |

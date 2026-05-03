@@ -1,4 +1,5 @@
 #include <sys/mman.h>
+#include <unistd.h>
 #include <xkbcommon/xkbcommon-compose.h>
 
 #include "WaylandKeyboard.hpp"

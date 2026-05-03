@@ -4,6 +4,7 @@
 #include <lcms2.h>
 #include <stb_image_resize2.h>
 #include <tracy/Tracy.hpp>
+#include <unistd.h>
 
 #if defined __F16C__
 #  include <x86intrin.h>

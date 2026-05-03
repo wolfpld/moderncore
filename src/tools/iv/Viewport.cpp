@@ -519,8 +519,18 @@ static void SaveImage( const char* path, ImageType type, const std::shared_ptr<T
 
 void Viewport::KeyEvent( uint32_t key, int mods, bool pressed )
 {
-    if( !pressed ) return;
+    if( pressed )
+    {
+        KeyDown( key, mods );
+    }
+    else
+    {
+        KeyUp( key, mods );
+    }
+}
 
+void Viewport::KeyDown( uint32_t key, int mods )
+{
     ZoneScoped;
     ZoneValue( key );
 
@@ -683,6 +693,10 @@ void Viewport::KeyEvent( uint32_t key, int mods, bool pressed )
             WantRender();
         }
     }
+}
+
+void Viewport::KeyUp( uint32_t key, int mods )
+{
 }
 
 void Viewport::MouseEnter( float x, float y )

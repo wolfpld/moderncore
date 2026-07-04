@@ -409,7 +409,7 @@ void Bitmap::BgrToRgb()
         sz -= 8;
     }
 #endif
-#ifdef __SSE2__
+#ifdef __SSSE3__
     while( sz >= 4 )
     {
         __m128i v = _mm_loadu_si128( (const __m128i*)ptr );

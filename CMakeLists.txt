@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.29)
+cmake_minimum_required(VERSION 3.30)
 
 option(TRACY_ENABLE "Enable Tracy" OFF)
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
@@ -99,6 +99,8 @@ pkg_check_modules(SIXEL REQUIRED libsixel)
 pkg_check_modules(TIFF REQUIRED libtiff-4)
 pkg_check_modules(WEBP REQUIRED libwebpdemux)
 pkg_check_modules(ZLIB REQUIRED zlib)
+
+find_package(Backtrace)
 
 if(BUILD_MCORE)
     pkg_check_modules(DISPLAYINFO REQUIRED libdisplay-info)
@@ -223,6 +225,7 @@ Embed(MCOREUTIL_SRC CmykIcm src/util/cmyk.icm)
 add_library(mcoreutil ${MCOREUTIL_SRC})
 target_link_libraries(mcoreutil PRIVATE
     Tracy::TracyClient
+    Backtrace::Backtrace
     ${EXR_LINK_LIBRARIES}
     ${LCMS_LINK_LIBRARIES}
     ${LZ4_LINK_LIBRARIES}

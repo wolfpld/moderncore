@@ -1,6 +1,7 @@
 #pragma once
 
 #include <jxl/codestream_header.h>
+#include <jxl/decode.h>
 #include <memory>
 #include <stdint.h>
 #include <vector>
@@ -12,7 +13,6 @@ class Bitmap;
 class BitmapHdr;
 class FileBuffer;
 class FileWrapper;
-typedef struct JxlDecoderStruct JxlDecoder;
 typedef void* cmsHPROFILE;
 typedef void* cmsHTRANSFORM;
 

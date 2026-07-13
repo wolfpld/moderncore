@@ -156,6 +156,12 @@ char* WaylandWindow::MapSharedMemory( size_t total, wl_shm_pool*& pool )
     pool = wl_shm_create_pool( m_display.Shm(), fd, total );
     close( fd );
 
+    if( !pool )
+    {
+        munmap( membuf, total );
+        return nullptr;
+    }
+
     return membuf;
 }
 

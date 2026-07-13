@@ -21,6 +21,12 @@ FileBuffer::FileBuffer( const char* fn )
     m_size = ftell( file );
     fseek( file, 0, SEEK_SET );
 
+    if( m_size == 0 )
+    {
+        mclog( LogLevel::Info, "File is empty: %s", fn );
+        return;
+    }
+
     auto map = mmap( nullptr, m_size, PROT_READ, MAP_SHARED, fileno( file ), 0 );
     if( map == MAP_FAILED )
     {
@@ -37,6 +43,12 @@ FileBuffer::FileBuffer( FILE* file )
     fseek( file, 0, SEEK_END );
     m_size = ftell( file );
     fseek( file, 0, SEEK_SET );
+
+    if( m_size == 0 )
+    {
+        mclog( LogLevel::Info, "File is empty" );
+        return;
+    }
 
     auto map = mmap( nullptr, m_size, PROT_READ, MAP_SHARED, fileno( file ), 0 );
     if( map == MAP_FAILED )

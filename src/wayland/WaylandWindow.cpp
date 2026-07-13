@@ -163,8 +163,8 @@ void WaylandWindow::SetIcon( const SvgImage& icon )
 {
     const auto mgr = m_display.IconManager();
     if( !mgr ) return;
-    const auto sizes = m_display.IconSizes();
-    if( sizes.empty() ) return;
+    auto sizes = m_display.IconSizes();
+    if( sizes.empty() ) sizes.emplace_back( 512 );
     const auto total = CalcTotalIconSize( sizes );
 
     wl_shm_pool* pool = nullptr;

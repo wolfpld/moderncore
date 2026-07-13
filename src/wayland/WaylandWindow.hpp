@@ -162,6 +162,8 @@ private:
 
     void FrameDone( struct wl_callback* cb, uint32_t time );
 
+    char* MapSharedMemory( size_t total, wl_shm_pool*& pool );
+
     WaylandDisplay& m_display;
     wl_surface* m_surface;
     xdg_surface* m_xdgSurface;

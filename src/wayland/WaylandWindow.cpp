@@ -125,36 +125,52 @@ void WaylandWindow::SetTitle( const char* title )
     xdg_toplevel_set_title( m_xdgToplevel, title );
 }
 
-void WaylandWindow::SetIcon( const SvgImage& icon )
+static size_t CalcTotalIconSize( const std::vector<int32_t>& sizes )
 {
-    const auto mgr = m_display.IconManager();
-    if( !mgr ) return;
-    const auto path = getenv( "XDG_RUNTIME_DIR" );
-    if( !path ) return;
-    const auto sizes = m_display.IconSizes();
-    if( sizes.empty() ) return;
-    const auto shm = m_display.Shm();
-
     size_t total = 0;
     for( auto sz : sizes ) total += sz * sz;
     total *= 4;
     CheckPanic( total > 0, "Invalid icon sizes" );
+    return total;
+}
+
+char* WaylandWindow::MapSharedMemory( size_t total, wl_shm_pool*& pool )
+{
+    const auto path = getenv( "XDG_RUNTIME_DIR" );
+    if( !path ) return nullptr;
 
     std::string shmPath = path;
     shmPath.append( "/mcore_icon-XXXXXX" );
     int fd = mkstemp( shmPath.data() );
-    if( fd < 0 ) return;
+    if( fd < 0 ) return nullptr;
     unlink( shmPath.data() );
     ftruncate( fd, total );
+
     auto membuf = (char*)mmap( nullptr, total, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0 );
     if( membuf == MAP_FAILED )
     {
         close( fd );
-        return;
+        return nullptr;
     }
 
-    auto pool = wl_shm_create_pool( shm, fd, total );
+    pool = wl_shm_create_pool( m_display.Shm(), fd, total );
     close( fd );
+
+    return membuf;
+}
+
+void WaylandWindow::SetIcon( const SvgImage& icon )
+{
+    const auto mgr = m_display.IconManager();
+    if( !mgr ) return;
+    const auto sizes = m_display.IconSizes();
+    if( sizes.empty() ) return;
+    const auto total = CalcTotalIconSize( sizes );
+
+    wl_shm_pool* pool = nullptr;
+    auto membuf = MapSharedMemory( total, pool );
+    if( !membuf ) return;
+
     auto wlicon = xdg_toplevel_icon_manager_v1_create_icon( mgr );
 
     std::vector<wl_buffer*> bufs;

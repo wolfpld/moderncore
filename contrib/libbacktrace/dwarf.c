@@ -4135,7 +4135,7 @@ read_function_info (struct backtrace_state *state, struct dwarf_data *ddata,
 
 static int
 report_inlined_functions (struct backtrace_state *state, uintptr_t pc,
-			  struct function *function,
+			  struct function *function, const char* comp_dir,
 			  backtrace_full_callback callback, void *data,
 			  const char **filename, int *lineno,
 			  unsigned int *disc)
@@ -4190,14 +4190,22 @@ report_inlined_functions (struct backtrace_state *state, uintptr_t pc,
   inlined = match->function;
 
   /* Report any calls inlined into this one.  */
-  ret = report_inlined_functions (state, pc, inlined, callback, data,
+  ret = report_inlined_functions (state, pc, inlined, comp_dir, callback, data,
 				  filename, lineno, disc);
   if (ret != 0)
     return ret;
 
   /* Report this inlined call.  */
-  ret = call_callback (state, callback, data, pc, *filename, *lineno,
-		       inlined->name, *disc);
+  if (*filename[0] != '/' && comp_dir)
+  {
+    char buf[1024];
+    snprintf (buf, sizeof(buf), "%s/%s", comp_dir, *filename);
+    ret = call_callback (state, callback, data, pc, buf, *lineno,
+             inlined->name, *disc);
+  }
+  else
+    ret = call_callback (state, callback, data, pc, *filename, *lineno,
+		         inlined->name, *disc);
   if (ret != 0)
     return ret;
 
@@ -4471,13 +4479,21 @@ dwarf_lookup_pc (struct backtrace_state *state, struct dwarf_data *ddata,
   lineno = ln->lineno;
   disc = ln->disc;
 
-  ret = report_inlined_functions (state, pc, function, callback, data,
+  ret = report_inlined_functions (state, pc, function, entry->u->comp_dir, callback, data,
 				  &filename, &lineno, &disc);
   if (ret != 0)
     return ret;
 
-  return call_callback (state, callback, data, pc, filename, lineno,
-			function->name, disc);
+  if (filename[0] != '/' && entry->u->comp_dir)
+  {
+    char buf[1024];
+    snprintf (buf, sizeof(buf), "%s/%s", entry->u->comp_dir, filename);
+    return call_callback (state, callback, data, pc, buf, lineno,
+        function->name, disc);
+  }
+  else
+    return call_callback (state, callback, data, pc, filename, lineno,
+			  function->name, disc);
 }
 
 

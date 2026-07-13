@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
 #include <tracy/Tracy.hpp>
+#include <unistd.h>
 #include <xf86drm.h>
 #include <xf86drmMode.h>
 

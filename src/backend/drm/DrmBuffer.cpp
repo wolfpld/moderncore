@@ -2,6 +2,7 @@
 #include <gbm.h>
 #include <sys/stat.h>
 #include <tracy/Tracy.hpp>
+#include <unistd.h>
 #include <xf86drm.h>
 
 #include "DrmBuffer.hpp"

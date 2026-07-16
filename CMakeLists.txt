@@ -191,14 +191,6 @@ endfunction()
 
 set(MCOREUTIL_SRC
     contrib/ini/ini.c
-    contrib/libbacktrace/alloc.c
-    contrib/libbacktrace/dwarf.c
-    contrib/libbacktrace/elf.c
-    contrib/libbacktrace/fileline.c
-    contrib/libbacktrace/mmapio.c
-    contrib/libbacktrace/posix.c
-    contrib/libbacktrace/sort.c
-    contrib/libbacktrace/state.c
     src/util/ArgParser.cpp
     src/util/Bitmap.cpp
     src/util/BitmapAnim.cpp
@@ -220,6 +212,19 @@ set(MCOREUTIL_SRC
     src/util/stb_image_resize_impl.cpp
 )
 
+if(NOT APPLE)
+    list(APPEND MCOREUTIL_SRC
+        contrib/libbacktrace/alloc.c
+        contrib/libbacktrace/dwarf.c
+        contrib/libbacktrace/elf.c
+        contrib/libbacktrace/fileline.c
+        contrib/libbacktrace/mmapio.c
+        contrib/libbacktrace/posix.c
+        contrib/libbacktrace/sort.c
+        contrib/libbacktrace/state.c
+    )
+endif()
+
 Embed(MCOREUTIL_SRC CmykIcm src/util/cmyk.icm)
 
 add_library(mcoreutil ${MCOREUTIL_SRC})
@@ -238,6 +243,9 @@ target_include_directories(mcoreutil PRIVATE
     ${stb_SOURCE_DIR}
     ${PNG_INCLUDE_DIRS}
 )
+if(APPLE)
+    target_compile_definitions(mcoreutil PRIVATE DISABLE_CALLSTACK)
+endif()
 
 # mcoreimage
 

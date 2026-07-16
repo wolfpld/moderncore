@@ -236,7 +236,7 @@ target_link_libraries(mcoreutil PRIVATE
     ${LZ4_LINK_LIBRARIES}
     ${PNG_LINK_LIBRARIES}
 )
-target_include_directories(mcoreutil PRIVATE
+target_include_directories(mcoreutil PUBLIC
     ${EXR_INCLUDE_DIRS}
     ${LCMS_INCLUDE_DIRS}
     ${LZ4_INCLUDE_DIRS}

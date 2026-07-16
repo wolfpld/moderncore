@@ -90,7 +90,14 @@ std::unique_ptr<ImageLoader> GetImageLoader( const char* path, ToneMap::Operator
     if( mtime )
     {
         struct stat st;
-        if( fstat( fileno( *file ), &st ) == 0 ) *mtime = st.st_mtim;
+        if( fstat( fileno( *file ), &st ) == 0 )
+        {
+#ifdef __APPLE__
+            *mtime = st.st_mtimespec;
+#else
+            *mtime = st.st_mtim;
+#endif
+        }
     }
 
     if( auto loader = CheckImageLoader<PngLoader>( buf, sz, file ); loader ) return loader;

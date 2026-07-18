@@ -286,13 +286,14 @@ void Viewport::Update( float delta )
         m_updateTitle = false;
         bool hdr = m_hdr && m_window->HdrCapable();
         auto& extent = m_view->GetBitmapExtent();
+        const auto origin = m_origin.empty() ? "Untitled" : m_origin.c_str();
         if( m_fileList.size() > 1 )
         {
-            m_window->SetTitle( std::format( "{} [{}/{}] - {}×{} - {:.2f}% <{}> — IV", m_origin, m_fileIndex + 1, m_fileList.size(), extent.width, extent.height, m_viewScale * 100, hdr ? "h" : "s"  ).c_str() );
+            m_window->SetTitle( std::format( "{} [{}/{}] - {}×{} - {:.2f}% <{}> — IV", origin, m_fileIndex + 1, m_fileList.size(), extent.width, extent.height, m_viewScale * 100, hdr ? "h" : "s"  ).c_str() );
         }
         else
         {
-            m_window->SetTitle( std::format( "{} - {}×{} - {:.2f}% <{}> — IV", m_origin, extent.width, extent.height, m_viewScale * 100, hdr ? "h" : "s"  ).c_str() );
+            m_window->SetTitle( std::format( "{} - {}×{} - {:.2f}% <{}> — IV", origin, extent.width, extent.height, m_viewScale * 100, hdr ? "h" : "s"  ).c_str() );
         }
     }
 }
@@ -1010,12 +1011,11 @@ void Viewport::ImageHandler( int64_t id, ImageProvider::Result result, const Ima
         m_lock.lock();
         if( data.origin.empty() )
         {
-            m_origin = "Untitled";
+            m_origin.clear();
         }
         else
         {
             m_origin = data.origin.substr( data.origin.find_last_of( '/' ) + 1 );
-            if( m_origin.empty() ) m_origin = "Untitled";
         }
         m_updateTitle = true;
         WantRender();

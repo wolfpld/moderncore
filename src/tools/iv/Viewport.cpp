@@ -1048,6 +1048,10 @@ void Viewport::PasteClipboard()
             loadOrigin = uriList[0];
         }
     }
+    else if( m_clipboardOffer.contains( "application/x-kde-suggestedfilename" ) )
+    {
+        loadOrigin = MemoryBuffer( m_window->GetClipboard( "application/x-kde-suggestedfilename" ) ).AsString();
+    }
 
     constexpr std::array acceptedMimeTypes = {
         "image/x-exr",

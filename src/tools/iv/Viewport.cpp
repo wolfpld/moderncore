@@ -897,6 +897,17 @@ bool Viewport::SendClipboard( const char* mimeType, int32_t fd )
         } );
         thread.detach();
     }
+    else if( strcmp( mimeType, "application/x-kde-suggestedfilename" ) == 0 )
+    {
+        CheckPanic( !m_clipboardOrigin.empty(), "Clipboard origin is empty" );
+        std::thread thread( [origin = m_clipboardOrigin, fd]() {
+            ZoneScoped;
+            signal( SIGPIPE, SIG_IGN );
+            write( fd, origin.c_str(), origin.size() );
+            close( fd );
+        } );
+        thread.detach();
+    }
     else
     {
         mclog( LogLevel::Error, "Unsupported clipboard format: %s", mimeType );
@@ -909,6 +920,7 @@ bool Viewport::SendClipboard( const char* mimeType, int32_t fd )
 void Viewport::CancelClipboard()
 {
     m_clipboard.reset();
+    m_clipboardOrigin.clear();
 }
 
 bool Viewport::CopyToClipboard()
@@ -924,19 +936,22 @@ bool Viewport::CopyToClipboard()
         .OnCancelled = Method( CancelClipboard )
     };
 
+    std::vector<const char*> mime;
+    if( !m_origin.empty() )
+    {
+        mime.emplace_back( "application/x-kde-suggestedfilename" );
+        m_clipboardOrigin = m_origin;
+    }
     if( m_clipboard->Format() == SdrFormat )
     {
-        const char* mime = "image/png";
-        m_window->SetClipboard( &mime, 1, &listener, this );
+        mime.emplace_back( "image/png" );
     }
     else
     {
-        constexpr std::array mime = {
-            "image/x-exr",
-            "image/png"
-        };
-        m_window->SetClipboard( mime.data(), mime.size(), &listener, this );
+        mime.emplace_back( "image/x-exr" );
+        mime.emplace_back( "image/png" );
     }
+    m_window->SetClipboard( mime.data(), mime.size(), &listener, this );
 
     return true;
 }

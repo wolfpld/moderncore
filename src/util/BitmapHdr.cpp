@@ -58,6 +58,7 @@ BitmapHdr::BitmapHdr( const BitmapHdrHalf& bmp )
     , m_height( bmp.Height() )
     , m_data( new float[m_width*m_height*4] )
     , m_colorspace( bmp.GetColorspace() )
+    , m_orientation( bmp.Orientation() )
 {
     auto src = bmp.Data();
     auto dst = m_data;

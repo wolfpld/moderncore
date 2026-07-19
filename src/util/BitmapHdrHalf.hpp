@@ -30,6 +30,7 @@ public:
     [[nodiscard]] uint32_t Height() const { return m_height; }
     [[nodiscard]] half_float::half* Data() { return m_data; }
     [[nodiscard]] const half_float::half* Data() const { return m_data; }
+    [[nodiscard]] int Orientation() const { return m_orientation; }
     [[nodiscard]] Colorspace GetColorspace() const { return m_colorspace; }
 
     bool SaveExr( const char* path ) const;
@@ -40,4 +41,6 @@ private:
     uint32_t m_height;
     half_float::half* m_data;
     Colorspace m_colorspace;
+
+    int m_orientation;
 };

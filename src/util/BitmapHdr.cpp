@@ -288,7 +288,7 @@ void BitmapHdr::FlipVertical()
 {
     auto ptr1 = m_data;
     auto ptr2 = m_data + ( m_height - 1 ) * m_width * 4;
-    auto tmp = alloca( m_width * 4 * 4 );
+    auto tmp = new char[m_width * 4 * 4];
 
     for( uint32_t y=0; y<m_height/2; y++ )
     {
@@ -298,6 +298,8 @@ void BitmapHdr::FlipVertical()
         ptr1 += m_width * 4;
         ptr2 -= m_width * 4;
     }
+
+    delete[] tmp;
 }
 
 void BitmapHdr::FlipHorizontal()

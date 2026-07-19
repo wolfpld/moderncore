@@ -8,6 +8,7 @@
 #include "Alloca.h"
 #include "Bitmap.hpp"
 #include "Panic.hpp"
+#include "PixelBytes.hpp"
 #include "TaskDispatch.hpp"
 
 #if defined __SSE2__
@@ -17,7 +18,7 @@
 Bitmap::Bitmap( uint32_t width, uint32_t height, int orientation )
     : m_width( width )
     , m_height( height )
-    , m_data( new uint8_t[width*height*4] )
+    , m_data( PixelAlloc<uint8_t>( width, height ) )
     , m_orientation( orientation )
 {
 }
@@ -47,7 +48,7 @@ Bitmap& Bitmap::operator=( Bitmap&& other ) noexcept
 
 void Bitmap::Resize( uint32_t width, uint32_t height, TaskDispatch* td )
 {
-    auto newData = new uint8_t[width*height*4];
+    auto newData = PixelAlloc<uint8_t>( width, height );
     STBIR_RESIZE resize;
     stbir_resize_init( &resize, m_data, m_width, m_height, 0, newData, width, height, 0, STBIR_RGBA, STBIR_TYPE_UINT8_SRGB );
     stbir_set_non_pm_alpha_speed_over_quality( &resize, 1 );
@@ -104,7 +105,7 @@ void Bitmap::Extend( uint32_t width, uint32_t height )
 {
     CheckPanic( width >= m_width && height >= m_height, "Invalid extension" );
 
-    auto data = new uint8_t[width*height*4];
+    auto data = PixelAlloc<uint8_t>( width, height );
     auto stride = width - m_width;
 
     auto src = m_data;
@@ -118,7 +119,7 @@ void Bitmap::Extend( uint32_t width, uint32_t height )
         memset( dst, 0, stride * 4 );
         dst += stride * 4;
     }
-    memset( dst, 0, ( height - m_height ) * width * 4 );
+    memset( dst, 0, PixelChannelCount( width, height - m_height ) );
 
     delete[] m_data;
     m_data = data;
@@ -130,9 +131,9 @@ void Bitmap::Crop( uint32_t x, uint32_t y, uint32_t width, uint32_t height )
 {
     CheckPanic( x + width <= m_width && y + height <= m_height, "Invalid crop" );
 
-    auto data = new uint8_t[width*height*4];
+    auto data = PixelAlloc<uint8_t>( width, height );
     auto dst = data;
-    auto src = m_data + ( y * m_width + x ) * 4;
+    auto src = m_data + ( size_t( y ) * m_width + x ) * 4;
 
     for( uint32_t i=0; i<height; i++ )
     {
@@ -152,7 +153,7 @@ void Bitmap::FillBlack( uint32_t x, uint32_t y, uint32_t width, uint32_t height 
     CheckPanic( x + width <= m_width && y + height <= m_height, "Invalid fill" );
 
     constexpr uint32_t black = 0xff000000;
-    auto row = m_data + ( y * m_width + x ) * 4;
+    auto row = m_data + ( size_t( y ) * m_width + x ) * 4;
     for( uint32_t i=0; i<height; i++ )
     {
         auto ptr = row;
@@ -168,8 +169,8 @@ void Bitmap::FillBlack( uint32_t x, uint32_t y, uint32_t width, uint32_t height 
 void Bitmap::FlipVertical()
 {
     auto ptr1 = m_data;
-    auto ptr2 = m_data + ( m_height - 1 ) * m_width * 4;
-    auto tmp = new char[m_width * 4];
+    auto ptr2 = m_data + size_t( m_height - 1 ) * m_width * 4;
+    auto tmp = PixelAlloc<uint8_t>( m_width, 1 );
 
     for( uint32_t y=0; y<m_height/2; y++ )
     {
@@ -203,14 +204,14 @@ void Bitmap::FlipHorizontal()
 
 void Bitmap::Rotate90()
 {
-    auto tmp = new uint8_t[m_width * m_height * 4];
+    auto tmp = PixelAlloc<uint8_t>( m_width, m_height );
 
     auto src = (uint32_t*)m_data;
     auto dst = (uint32_t*)tmp;
 
-    for( uint32_t y=0; y<m_height; y++ )
+    for( size_t y=0; y<m_height; y++ )
     {
-        for( uint32_t x=0; x<m_width; x++ )
+        for( size_t x=0; x<m_width; x++ )
         {
             dst[x * m_height + m_height - y - 1] = src[y * m_width + x];
         }
@@ -224,9 +225,9 @@ void Bitmap::Rotate90()
 void Bitmap::Rotate180()
 {
     auto ptr1 = (uint32_t*)m_data;
-    auto ptr2 = (uint32_t*)m_data + m_width * m_height - 1;
+    auto ptr2 = (uint32_t*)m_data + PixelCount( m_width, m_height ) - 1;
 
-    for( uint32_t i=0; i<m_width * m_height / 2; i++ )
+    for( size_t i=0; i<PixelCount( m_width, m_height ) / 2; i++ )
     {
         std::swap( *ptr1++, *ptr2-- );
     }
@@ -234,7 +235,7 @@ void Bitmap::Rotate180()
 
 void Bitmap::Rotate270()
 {
-    auto tmp = new uint8_t[m_width * m_height * 4];
+    auto tmp = PixelAlloc<uint8_t>( m_width, m_height );
 
     auto src = (uint32_t*)m_data;
     auto dst = (uint32_t*)tmp;
@@ -243,7 +244,7 @@ void Bitmap::Rotate270()
     {
         for( uint32_t x=0; x<m_width; x++ )
         {
-            dst[( m_width - x - 1 ) * m_height + y] = src[y * m_width + x];
+            dst[size_t( m_width - x - 1 ) * m_height + y] = src[size_t( y ) * m_width + x];
         }
     }
 
@@ -255,7 +256,7 @@ void Bitmap::Rotate270()
 void Bitmap::SetAlpha( uint8_t alpha )
 {
     auto ptr = m_data;
-    size_t sz = m_width * m_height;
+    size_t sz = PixelCount( m_width, m_height );
 
     if( alpha == 0xFF )
     {
@@ -382,7 +383,7 @@ void Bitmap::NormalizeOrientation()
 
 void Bitmap::BgrToRgb()
 {
-    auto sz = m_width * m_height;
+    auto sz = PixelCount( m_width, m_height );
     auto ptr = (uint32_t*)m_data;
 
 #ifdef __AVX512F__

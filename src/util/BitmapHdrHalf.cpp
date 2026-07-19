@@ -16,6 +16,7 @@
 #include "BitmapHdrHalf.hpp"
 #include "Logs.hpp"
 #include "Panic.hpp"
+#include "PixelBytes.hpp"
 #include "TaskDispatch.hpp"
 
 static void FloatToHalf( const float* src, half_float::half* dst, size_t sz )
@@ -56,13 +57,13 @@ static void FloatToHalf( const float* src, half_float::half* dst, size_t sz )
 BitmapHdrHalf::BitmapHdrHalf( const BitmapHdr& bmp )
     : m_width( bmp.Width() )
     , m_height( bmp.Height() )
-    , m_data( new half_float::half[m_width*m_height*4] )
+    , m_data( PixelAlloc<half_float::half>( m_width, m_height ) )
     , m_colorspace( bmp.GetColorspace() )
     , m_orientation( bmp.Orientation() )
 {
     auto src = bmp.Data();
     auto dst = m_data;
-    auto sz = m_width * m_height * 4;
+    auto sz = PixelChannelCount( m_width, m_height );
 
     FloatToHalf( src, dst, sz );
 }
@@ -70,7 +71,7 @@ BitmapHdrHalf::BitmapHdrHalf( const BitmapHdr& bmp )
 BitmapHdrHalf::BitmapHdrHalf( uint32_t width, uint32_t height, Colorspace colorspace )
     : m_width( width )
     , m_height( height )
-    , m_data( new half_float::half[width*height*4] )
+    , m_data( PixelAlloc<half_float::half>( width, height ) )
     , m_colorspace( colorspace )
     , m_orientation( 0 )
 {
@@ -83,7 +84,7 @@ BitmapHdrHalf::~BitmapHdrHalf()
 
 void BitmapHdrHalf::Resize( uint32_t width, uint32_t height, TaskDispatch* td )
 {
-    auto newData = new half_float::half[width*height*4];
+    auto newData = PixelAlloc<half_float::half>( width, height );
     STBIR_RESIZE resize;
     stbir_resize_init( &resize, m_data, m_width, m_height, 0, newData, width, height, 0, STBIR_RGBA, STBIR_TYPE_HALF_FLOAT );
     stbir_set_non_pm_alpha_speed_over_quality( &resize, 1 );
@@ -140,9 +141,9 @@ void BitmapHdrHalf::Crop( uint32_t x, uint32_t y, uint32_t width, uint32_t heigh
 {
     CheckPanic( x + width <= m_width && y + height <= m_height, "Invalid crop" );
 
-    auto data = new half_float::half[width*height*4];
+    auto data = PixelAlloc<half_float::half>( width, height );
     auto dst = data;
-    auto src = m_data + ( y * m_width + x ) * 4;
+    auto src = m_data + ( size_t( y ) * m_width + x ) * 4;
 
     for( uint32_t i=0; i<height; i++ )
     {
@@ -161,7 +162,7 @@ void BitmapHdrHalf::FillBlack( uint32_t x, uint32_t y, uint32_t width, uint32_t 
 {
     CheckPanic( x + width <= m_width && y + height <= m_height, "Invalid fill" );
 
-    auto row = m_data + ( y * m_width + x ) * 4;
+    auto row = m_data + ( size_t( y ) * m_width + x ) * 4;
     for( uint32_t i=0; i<height; i++ )
     {
         auto ptr = row;
@@ -206,13 +207,13 @@ void BitmapHdrHalf::SetColorspace( Colorspace colorspace, TaskDispatch* td )
         Panic( "Invalid colorspace transform!" );
     }
 
+    auto sz = PixelCount( m_width, m_height );
+    auto ptr = m_data;
     if( td )
     {
-        auto ptr = m_data;
-        auto sz = m_width * m_height;
         while( sz > 0 )
         {
-            auto chunk = std::min<uint32_t>( sz, 16 * 1024 );
+            auto chunk = std::min<size_t>( sz, 16 * 1024 );
             td->Queue( [ptr, chunk, transform] {
                 cmsDoTransform( transform, ptr, ptr, chunk );
             } );
@@ -223,7 +224,13 @@ void BitmapHdrHalf::SetColorspace( Colorspace colorspace, TaskDispatch* td )
     }
     else
     {
-        cmsDoTransform( transform, m_data, m_data, m_width * m_height );
+        while( sz > 0 )
+        {
+            auto chunk = std::min<size_t>( sz, UINT32_MAX );
+            cmsDoTransform( transform, ptr, ptr, chunk );
+            ptr += chunk * 4;
+            sz -= chunk;
+        }
     }
 
     cmsDeleteTransform( transform );

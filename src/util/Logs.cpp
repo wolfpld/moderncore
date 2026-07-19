@@ -144,6 +144,7 @@ void MCoreLogMessage( LogLevel level, const char* fileName, size_t line, const c
             case LogLevel::Info: TracyMessage( tmp, res ); break;
             case LogLevel::Warning: TracyMessageC( tmp, res, 0xFFFF00 ); break;
             case LogLevel::Error: TracyMessageCS( tmp, res, 0xFF0000, 64 ); break;
+            case LogLevel::ErrorTrace: TracyMessageCS( tmp, res, 0xFF0000, 64 ); break;
             case LogLevel::Fatal: TracyMessageCS( tmp, res, 0xFF00FF, 64 ); break;
             default: assert( false ); break;
             }

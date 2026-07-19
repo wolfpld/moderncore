@@ -1,6 +1,9 @@
+#include <errno.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "MemoryBuffer.hpp"
+#include "Logs.hpp"
 
 MemoryBuffer::MemoryBuffer( std::vector<char>&& buf )
     : m_buf( std::move( buf ) )
@@ -17,7 +20,14 @@ MemoryBuffer::MemoryBuffer( int fd )
     while( true )
     {
         auto len = read( fd, buf, sizeof( buf ) );
-        if( len <= 0 ) break;
+        if( len == 0 ) break;
+        if( len < 0 )
+        {
+            if( errno == EINTR ) continue;
+            mclog( LogLevel::Error, "MemoryBuffer read error: %s", strerror( errno ) );
+            m_buf.clear();
+            break;
+        }
         m_buf.insert( m_buf.end(), buf, buf + len );
     }
     close( fd );

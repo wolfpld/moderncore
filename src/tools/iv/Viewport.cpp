@@ -1098,8 +1098,15 @@ std::vector<std::string> Viewport::ProcessUriList( std::string uriList )
         if( pos == std::string::npos ) pos = uriList.size();
         auto uri = uriList.substr( 0, pos );
         uriList.erase( 0, pos + 1 );
-        UrlDecode( uri );
-        ret.emplace_back( std::move( uri ) );
+        try
+        {
+            UrlDecode( uri );
+            ret.emplace_back( std::move( uri ) );
+        }
+        catch( std::invalid_argument& e )
+        {
+            mclog( LogLevel::Warning, "Invalid argument exception: '%s' caught when processing URI: %s", e.what(), uri.c_str() );
+        }
     }
     return ret;
 }

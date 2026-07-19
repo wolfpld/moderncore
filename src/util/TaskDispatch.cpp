@@ -7,6 +7,7 @@
 TaskDispatch::TaskDispatch( size_t workers, const char* name )
     : m_exit( false )
     , m_jobs( 0 )
+    , m_numWorkers( workers )
     , m_initDone( false )
 {
     ZoneScoped;

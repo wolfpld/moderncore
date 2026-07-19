@@ -24,7 +24,7 @@ public:
 
     void Sync();
 
-    [[nodiscard]] size_t NumWorkers() const { return m_workers.size(); }
+    [[nodiscard]] size_t NumWorkers() const { return m_numWorkers; }
 
 private:
     void Worker();
@@ -37,6 +37,7 @@ private:
     size_t m_jobs;
 
     std::vector<std::thread> m_workers;
+    size_t m_numWorkers;
 
     std::thread m_init;
     std::mutex m_initLock;

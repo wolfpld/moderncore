@@ -1,8 +1,10 @@
 #include <cmath>
+#include <exception>
 #include <ImfStdIO.h>
 #include <ImfRgbaFile.h>
 #include <lcms2.h>
 #include <stb_image_resize2.h>
+#include <string>
 #include <tracy/Tracy.hpp>
 #include <unistd.h>
 
@@ -243,21 +245,39 @@ void BitmapHdrHalf::SetColorspace( Colorspace colorspace, TaskDispatch* td )
 
 bool BitmapHdrHalf::SaveExr( const char* path ) const
 {
-    Imf::RgbaOutputFile output( path, m_width, m_height, Imf::WRITE_RGBA );
-    output.setFrameBuffer( (const Imf::Rgba*)m_data, 1, m_width );
-    output.writePixels( m_height );
+    try
+    {
+        Imf::RgbaOutputFile output( path, m_width, m_height, Imf::WRITE_RGBA );
+        output.setFrameBuffer( (const Imf::Rgba*)m_data, 1, m_width );
+        output.writePixels( m_height );
+    }
+    catch( const std::exception& e )
+    {
+        mclog( LogLevel::Error, "Failed to save EXR: %s", e.what() );
+        return false;
+    }
     return true;
 }
 
 bool BitmapHdrHalf::SaveExr( int fd ) const
 {
-    Imf::StdOSStream buf;
-    Imf::Header hdr( m_width, m_height );
-    Imf::RgbaOutputFile output( buf, hdr );
-    output.setFrameBuffer( (const Imf::Rgba*)m_data, 1, m_width );
-    output.writePixels( m_height );
+    std::string str;
+    try
+    {
+        Imf::StdOSStream buf;
+        Imf::Header hdr( m_width, m_height );
+        Imf::RgbaOutputFile output( buf, hdr );
+        output.setFrameBuffer( (const Imf::Rgba*)m_data, 1, m_width );
+        output.writePixels( m_height );
 
-    auto str = buf.str();
+        str = buf.str();
+    }
+    catch( const std::exception& e )
+    {
+        mclog( LogLevel::Error, "Failed to save EXR: %s", e.what() );
+        return false;
+    }
+
     auto data = str.data();
     auto sz = str.size();
 

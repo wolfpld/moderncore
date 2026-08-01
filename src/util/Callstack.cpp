@@ -6,6 +6,7 @@
 
 #include "Callstack.hpp"
 #include "Logs.hpp"
+#include "PathNormalize.hpp"
 
 static int callstackIdx;
 static bool callstackExternal;
@@ -21,62 +22,6 @@ constexpr const char* TypesList[] = {
     "int16_t ", "int32_t ", "int64_t ", "intptr_t ", "uint8_t ", "uint16_t ",
     "uint32_t ", "uint64_t ", "ptrdiff_t ", nullptr
 };
-
-static char* NormalizePath( const char* path )
-{
-    if( path[0] != '/' ) return nullptr;
-
-    const char* ptr = path;
-    const char* end = path;
-    while( *end ) end++;
-
-    char* res = (char*)malloc( end - ptr + 1 );
-    size_t rsz = 0;
-
-    while( ptr < end )
-    {
-        const char* next = ptr;
-        while( next < end && *next != '/' ) next++;
-        size_t lsz = next - ptr;
-        switch( lsz )
-        {
-        case 2:
-            if( memcmp( ptr, "..", 2 ) == 0 )
-            {
-                const char* back = res + rsz - 1;
-                while( back > res && *back != '/' ) back--;
-                rsz = back - res;
-                ptr = next + 1;
-                continue;
-            }
-            break;
-        case 1:
-            if( *ptr == '.' )
-            {
-                ptr = next + 1;
-                continue;
-            }
-            break;
-        case 0:
-            ptr = next + 1;
-            continue;
-        }
-        if( rsz != 1 ) res[rsz++] = '/';
-        memcpy( res+rsz, ptr, lsz );
-        rsz += lsz;
-        ptr = next + 1;
-    }
-
-    if( rsz == 0 )
-    {
-        memcpy( res, "/", 2 );
-    }
-    else
-    {
-        res[rsz] = '\0';
-    }
-    return res;
-}
 
 static bool IsPathExternal( const char* path )
 {
@@ -182,20 +127,20 @@ static int CallstackCallback( void*, uintptr_t pc, const char* filename, int lin
         if( filename )
         {
             auto path = NormalizePath( filename );
-            if( path && IsPathExternal( path ) )
+            if( !path.empty() && IsPathExternal( path.c_str() ) )
             {
                 isExternal = true;
                 callstackExternal = true;
             }
+            const auto* shown = path.empty() ? filename : path.c_str();
             if( lineno )
             {
-                msg = std::format( "{}. {} [{}:{}]", callstackIdx++, func, path ? path : filename, lineno );
+                msg = std::format( "{}. {} [{}:{}]", callstackIdx++, func, shown, lineno );
             }
             else
             {
-                msg = std::format( "{}. {} [{}]", callstackIdx++, func, path ? path : filename );
+                msg = std::format( "{}. {} [{}]", callstackIdx++, func, shown );
             }
-            free( path );
         }
         else
         {
@@ -208,20 +153,20 @@ static int CallstackCallback( void*, uintptr_t pc, const char* filename, int lin
     else if( filename )
     {
         auto path = NormalizePath( filename );
-        if( path && IsPathExternal( path ) )
+        if( !path.empty() && IsPathExternal( path.c_str() ) )
         {
             isExternal = true;
             callstackExternal = true;
         }
+        const auto* shown = path.empty() ? filename : path.c_str();
         if( lineno )
         {
-            msg = std::format( "{}. <unknown> [{}:{}]", callstackIdx++, path ? path : filename, lineno );
+            msg = std::format( "{}. <unknown> [{}:{}]", callstackIdx++, shown, lineno );
         }
         else
         {
-            msg = std::format( "{}. <unknown> [{}]", callstackIdx++, path ? path : filename );
+            msg = std::format( "{}. <unknown> [{}]", callstackIdx++, shown );
         }
-        free( path );
     }
     else
     {

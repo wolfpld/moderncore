@@ -17,7 +17,7 @@ std::string GetHome()
 
     struct passwd pass;
     struct passwd* res;
-    getpwuid_r( geteuid(), &pass, buf, bufSz, &res );
+    if( getpwuid_r( geteuid(), &pass, buf, bufSz, &res ) != 0 ) res = nullptr;
 
     return res ? pass.pw_dir : "";
 }

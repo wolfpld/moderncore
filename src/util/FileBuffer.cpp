@@ -38,7 +38,11 @@ FileBuffer::FileBuffer( const char* fn )
 
 FileBuffer::FileBuffer( FILE* file )
 {
-    CheckPanic( file, "File pointer is null" );
+    if( !file )
+    {
+        mclog( LogLevel::Error, "File pointer is null" );
+        throw FileException( "File pointer is null" );
+    }
 
     fseek( file, 0, SEEK_END );
     m_size = ftell( file );
@@ -59,8 +63,18 @@ FileBuffer::FileBuffer( FILE* file )
     m_data = (const char*)map;
 }
 
+static FILE* ResolveFile( const std::shared_ptr<FileWrapper>& file )
+{
+    if( !file || !*file )
+    {
+        mclog( LogLevel::Error, "File handle is null" );
+        throw FileBuffer::FileException( "File handle is null" );
+    }
+    return (FILE*)*file;
+}
+
 FileBuffer::FileBuffer( const std::shared_ptr<FileWrapper>& file )
-    : FileBuffer( *file )
+    : FileBuffer( ResolveFile( file ) )
 {
 }
 

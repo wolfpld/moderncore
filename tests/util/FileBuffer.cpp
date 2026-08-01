@@ -58,6 +58,12 @@ TEST_CASE( "FileBuffer functionality", "[filebuffer][buffer]" )
         REQUIRE( memcmp( buffer.data(), content, strlen( content ) ) == 0 );
     }
 
+    SECTION( "Null shared_ptr<FileWrapper> throws" )
+    {
+        std::shared_ptr<FileWrapper> fileWrapper;
+        REQUIRE_THROWS_AS( FileBuffer( fileWrapper ), FileBuffer::FileException );
+    }
+
     SECTION( "Empty file handling" )
     {
         auto tempFile = TempFile::createEmpty();

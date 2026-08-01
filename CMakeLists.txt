@@ -605,6 +605,7 @@ if(BUILD_TESTS)
         tests/util/Home.cpp
         tests/util/Logs.cpp
         tests/util/MemoryBuffer.cpp
+        tests/util/PathNormalize.cpp
         tests/util/TaskDispatch.cpp
         tests/util/Url.cpp
     )

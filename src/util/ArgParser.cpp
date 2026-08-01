@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string>
 #include <string.h>
+#include <strings.h>
 #include <ranges>
 
 #include "ArgParser.hpp"

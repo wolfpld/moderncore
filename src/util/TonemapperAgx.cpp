@@ -64,6 +64,22 @@ static HdrColor AgxTransform( const HdrColor& hdr )
     return c3;
 }
 
+static HdrColor AgxOutset( const HdrColor& color )
+{
+    constexpr std::array agx_mat_inv = {
+        1.1969986613119143f, -0.053001338688085674f, -0.053001338688085674f,
+        -0.09804562695225345f, 1.1519543730477466f, -0.09804562695225345f,
+        -0.09895303435966087f, -0.09895303435966087f, 1.151046965640339f
+    };
+
+    return HdrColor {
+        agx_mat_inv[0] * color.r + agx_mat_inv[1] * color.g + agx_mat_inv[2] * color.b,
+        agx_mat_inv[3] * color.r + agx_mat_inv[4] * color.g + agx_mat_inv[5] * color.b,
+        agx_mat_inv[6] * color.r + agx_mat_inv[7] * color.g + agx_mat_inv[8] * color.b,
+        color.a
+    };
+}
+
 static HdrColor AgxLookGolden( const HdrColor& color )
 {
     const auto luma = 0.2126f * color.r + 0.7152f * color.g + 0.0722f * color.b;
@@ -92,39 +108,16 @@ static HdrColor AgxLookPunchy( const HdrColor& color )
     };
 }
 
-static HdrColor AgxEotf( const HdrColor& color )
-{
-    constexpr std::array agx_mat_inv = {
-        1.1969986613119143f, -0.053001338688085674f, -0.053001338688085674f,
-        -0.09804562695225345f, 1.1519543730477466f, -0.09804562695225345f,
-        -0.09895303435966087f, -0.09895303435966087f, 1.151046965640339f
-    };
-
-    const HdrColor out = {
-        agx_mat_inv[0] * color.r + agx_mat_inv[1] * color.g + agx_mat_inv[2] * color.b,
-        agx_mat_inv[3] * color.r + agx_mat_inv[4] * color.g + agx_mat_inv[5] * color.b,
-        agx_mat_inv[6] * color.r + agx_mat_inv[7] * color.g + agx_mat_inv[8] * color.b,
-        color.a
-    };
-
-    return HdrColor {
-        std::pow( std::max( 0.f, out.r ), 2.2f ),
-        std::pow( std::max( 0.f, out.g ), 2.2f ),
-        std::pow( std::max( 0.f, out.b ), 2.2f ),
-        out.a
-    };
-}
-
 void AgX( uint32_t* dst, float* src, size_t sz )
 {
     do
     {
         auto color = AgxTransform( { src[0], src[1], src[2] } );
-        color = AgxEotf( color );
+        color = AgxOutset( color );
 
-        const auto r = LinearToSrgb( color.r );
-        const auto g = LinearToSrgb( color.g );
-        const auto b = LinearToSrgb( color.b );
+        const auto r = color.r;
+        const auto g = color.g;
+        const auto b = color.b;
         const auto a = src[3];
 
         *dst++ = (uint32_t( std::clamp( a, 0.0f, 1.0f ) * 255.0f ) << 24) |
@@ -143,11 +136,11 @@ void AgXGolden( uint32_t* dst, float* src, size_t sz )
     {
         auto color = AgxTransform( { src[0], src[1], src[2] } );
         color = AgxLookGolden( color );
-        color = AgxEotf( color );
+        color = AgxOutset( color );
 
-        const auto r = LinearToSrgb( color.r );
-        const auto g = LinearToSrgb( color.g );
-        const auto b = LinearToSrgb( color.b );
+        const auto r = color.r;
+        const auto g = color.g;
+        const auto b = color.b;
         const auto a = src[3];
 
         *dst++ = (uint32_t( std::clamp( a, 0.0f, 1.0f ) * 255.0f ) << 24) |
@@ -166,11 +159,11 @@ void AgXPunchy( uint32_t* dst, float* src, size_t sz )
     {
         auto color = AgxTransform( { src[0], src[1], src[2] } );
         color = AgxLookPunchy( color );
-        color = AgxEotf( color );
+        color = AgxOutset( color );
 
-        const auto r = LinearToSrgb( color.r );
-        const auto g = LinearToSrgb( color.g );
-        const auto b = LinearToSrgb( color.b );
+        const auto r = color.r;
+        const auto g = color.g;
+        const auto b = color.b;
         const auto a = src[3];
 
         *dst++ = (uint32_t( std::clamp( a, 0.0f, 1.0f ) * 255.0f ) << 24) |

@@ -21,6 +21,7 @@ public:
 
     bool Read( void* dst, size_t size )
     {
+        if( !m_file ) return false;
         return fread( dst, 1, size, m_file ) == size;
     }
 

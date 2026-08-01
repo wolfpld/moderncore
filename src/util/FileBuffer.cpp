@@ -27,7 +27,7 @@ FileBuffer::FileBuffer( const char* fn )
         return;
     }
 
-    auto map = mmap( nullptr, m_size, PROT_READ, MAP_SHARED, fileno( file ), 0 );
+    auto map = mmap( nullptr, m_size, PROT_READ, MAP_PRIVATE, fileno( file ), 0 );
     if( map == MAP_FAILED )
     {
         mclog( LogLevel::Error, "Failed to map file: %s", fn );
@@ -50,7 +50,7 @@ FileBuffer::FileBuffer( FILE* file )
         return;
     }
 
-    auto map = mmap( nullptr, m_size, PROT_READ, MAP_SHARED, fileno( file ), 0 );
+    auto map = mmap( nullptr, m_size, PROT_READ, MAP_PRIVATE, fileno( file ), 0 );
     if( map == MAP_FAILED )
     {
         mclog( LogLevel::Error, "Failed to map file" );

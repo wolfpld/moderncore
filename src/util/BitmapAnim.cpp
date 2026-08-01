@@ -21,6 +21,8 @@ void BitmapAnim::Resize( uint32_t width, uint32_t height )
 
 void BitmapAnim::NormalizeSize()
 {
+    if( m_frames.empty() ) return;
+
     bool normalize = false;
     uint32_t mw = m_frames[0].bmp->Width();
     uint32_t mh = m_frames[0].bmp->Height();

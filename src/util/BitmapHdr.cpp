@@ -190,7 +190,7 @@ void BitmapHdr::SetAlpha( float alpha )
     ptr += 3;
     while( sz-- )
     {
-        memcpy( ptr, &alpha, sizeof( float ) );
+        *ptr = alpha;
         ptr += 4;
     }
 }

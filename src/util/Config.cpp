@@ -1,3 +1,5 @@
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string>
 #include <string.h>
@@ -50,9 +52,11 @@ int Config::GetInt( const char* section, const char* key, int def )
     if( !m_config ) return def;
     auto val = ini_get( m_config, section, key );
     if( !val ) return def;
+    errno = 0;
     char* end;
     auto num = strtol( val, &end, 10 );
-    return (end == val) ? def : num;
+    if( end == val || errno == ERANGE || num < INT_MIN || num > INT_MAX ) return def;
+    return (int)num;
 }
 
 uint32_t Config::GetUInt( const char* section, const char* key, uint32_t def )
@@ -60,9 +64,11 @@ uint32_t Config::GetUInt( const char* section, const char* key, uint32_t def )
     if( !m_config ) return def;
     auto val = ini_get( m_config, section, key );
     if( !val ) return def;
+    errno = 0;
     char* end;
-    auto num = strtoul( val, &end, 10 );
-    return (end == val) ? def : num;
+    auto num = strtoll( val, &end, 10 );
+    if( end == val || errno == ERANGE || num < 0 || num > UINT32_MAX ) return def;
+    return (uint32_t)num;
 }
 
 bool Config::GetOptString( const char* section, const char* key, const char*& output )
@@ -77,9 +83,12 @@ bool Config::GetOptInt( const char* section, const char* key, int& output )
     if( !m_config ) return false;
     auto val = ini_get( m_config, section, key );
     if( !val ) return false;
+    errno = 0;
     char* end;
-    output = strtol( val, &end, 10 );
-    return (end != val);
+    auto num = strtol( val, &end, 10 );
+    if( end == val || errno == ERANGE || num < INT_MIN || num > INT_MAX ) return false;
+    output = (int)num;
+    return true;
 }
 
 bool Config::GetOptUInt( const char* section, const char* key, uint32_t& output )
@@ -87,7 +96,10 @@ bool Config::GetOptUInt( const char* section, const char* key, uint32_t& output 
     if( !m_config ) return false;
     auto val = ini_get( m_config, section, key );
     if( !val ) return false;
+    errno = 0;
     char* end;
-    output = strtoul( val, &end, 10 );
-    return (end != val);
+    auto num = strtoll( val, &end, 10 );
+    if( end == val || errno == ERANGE || num < 0 || num > UINT32_MAX ) return false;
+    output = (uint32_t)num;
+    return true;
 }

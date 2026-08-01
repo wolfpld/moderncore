@@ -70,12 +70,12 @@ static void AdjustBitmap( std::unique_ptr<Bitmap>& bitmap, std::unique_ptr<Bitma
             const auto ratio = std::min( float( col ) / w, float( row ) / h );
             const auto rw = uint32_t( w * ratio );
             const auto rh = uint32_t( h * ratio );
-            anim->Resize( rw, rh );
+            anim->Resize( rw, rh, &td );
             mclog( LogLevel::Info, "Animation resized: %ux%u", rw, rh );
         }
         else if( scale == ScaleMode::Scale2x && w * 2 <= col && h * 2 <= row )
         {
-            anim->Resize( w * 2, h * 2 );
+            anim->Resize( w * 2, h * 2, &td );
             mclog( LogLevel::Info, "Animation upscaled: %ux%u", w * 2, h * 2 );
         }
     }

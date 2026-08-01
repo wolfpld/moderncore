@@ -20,7 +20,7 @@ public:
     NoCopy( BitmapAnim );
 
     void AddFrame( std::shared_ptr<Bitmap> bmp, uint32_t delay_us );
-    void Resize( uint32_t width, uint32_t height );
+    void Resize( uint32_t width, uint32_t height, TaskDispatch* td = nullptr );
     void NormalizeSize();
 
     [[nodiscard]] size_t FrameCount() const { return m_frames.size(); }

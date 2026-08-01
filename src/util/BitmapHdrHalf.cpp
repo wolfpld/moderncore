@@ -70,12 +70,12 @@ BitmapHdrHalf::BitmapHdrHalf( const BitmapHdr& bmp )
     FloatToHalf( src, dst, sz );
 }
 
-BitmapHdrHalf::BitmapHdrHalf( uint32_t width, uint32_t height, Colorspace colorspace )
+BitmapHdrHalf::BitmapHdrHalf( uint32_t width, uint32_t height, Colorspace colorspace, int orientation )
     : m_width( width )
     , m_height( height )
     , m_data( PixelAlloc<half_float::half>( width, height ) )
     , m_colorspace( colorspace )
-    , m_orientation( 0 )
+    , m_orientation( orientation )
 {
 }
 
@@ -116,7 +116,7 @@ void BitmapHdrHalf::Resize( uint32_t width, uint32_t height, TaskDispatch* td )
 
 std::unique_ptr<BitmapHdrHalf> BitmapHdrHalf::ResizeNew( uint32_t width, uint32_t height, TaskDispatch* td ) const
 {
-    auto ret = std::make_unique<BitmapHdrHalf>( width, height, m_colorspace );
+    auto ret = std::make_unique<BitmapHdrHalf>( width, height, m_colorspace, m_orientation );
     STBIR_RESIZE resize;
     stbir_resize_init( &resize, m_data, m_width, m_height, 0, ret->m_data, width, height, 0, STBIR_RGBA, STBIR_TYPE_HALF_FLOAT );
     stbir_set_non_pm_alpha_speed_over_quality( &resize, 1 );

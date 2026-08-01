@@ -78,7 +78,7 @@ void Bitmap::Resize( uint32_t width, uint32_t height, TaskDispatch* td )
 
 std::unique_ptr<Bitmap> Bitmap::ResizeNew( uint32_t width, uint32_t height, TaskDispatch* td ) const
 {
-    auto ret = std::make_unique<Bitmap>( width, height );
+    auto ret = std::make_unique<Bitmap>( width, height, m_orientation );
     STBIR_RESIZE resize;
     stbir_resize_init( &resize, m_data, m_width, m_height, 0, ret->m_data, width, height, 0, STBIR_RGBA, STBIR_TYPE_UINT8_SRGB );
     stbir_set_non_pm_alpha_speed_over_quality( &resize, 1 );

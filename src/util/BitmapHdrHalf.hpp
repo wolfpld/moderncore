@@ -16,7 +16,7 @@ class BitmapHdrHalf
 {
 public:
     explicit BitmapHdrHalf( const BitmapHdr& bmp );
-    BitmapHdrHalf( uint32_t width, uint32_t height, Colorspace colorspace );
+    BitmapHdrHalf( uint32_t width, uint32_t height, Colorspace colorspace, int orientation = 0 );
     ~BitmapHdrHalf();
     NoCopy( BitmapHdrHalf );
 

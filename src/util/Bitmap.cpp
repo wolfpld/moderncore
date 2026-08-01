@@ -156,16 +156,12 @@ void Bitmap::FillBlack( uint32_t x, uint32_t y, uint32_t width, uint32_t height 
     CheckPanic( x + width <= m_width && y + height <= m_height, "Invalid fill" );
 
     constexpr uint32_t black = 0xff000000;
-    auto row = m_data + ( size_t( y ) * m_width + x ) * 4;
+    auto row = (uint32_t*)( m_data + ( size_t( y ) * m_width + x ) * 4 );
     for( uint32_t i=0; i<height; i++ )
     {
         auto ptr = row;
-        for( uint32_t j=0; j<width; j++ )
-        {
-            memcpy( ptr, &black, 4 );
-            ptr += 4;
-        }
-        row += m_width * 4;
+        for( uint32_t j=0; j<width; j++ ) *ptr++ = black;
+        row += m_width;
     }
 }
 

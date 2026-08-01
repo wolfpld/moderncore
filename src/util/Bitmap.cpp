@@ -436,7 +436,11 @@ void Bitmap::BgrToRgb()
 bool Bitmap::SavePng( const char* path ) const
 {
     FILE* f = fopen( path, "wb" );
-    CheckPanic( f, "Failed to open %s for writing", path );
+    if( !f )
+    {
+        mclog( LogLevel::Error, "Failed to open %s for writing", path );
+        return false;
+    }
 
     mclog( LogLevel::Info, "Saving PNG: %s", path );
     auto res = SavePng( fileno( f ) );

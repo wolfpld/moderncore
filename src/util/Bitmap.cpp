@@ -1,4 +1,5 @@
 #include <stb_image_resize2.h>
+#include <errno.h>
 #include <png.h>
 #include <string.h>
 #include <tracy/Tracy.hpp>
@@ -464,7 +465,19 @@ bool Bitmap::SavePng( int fd ) const
     }
 
     png_set_write_fn( png_ptr, (png_voidp)(ptrdiff_t)fd, []( png_structp png, png_bytep data, size_t length ) {
-        if( write( (int)(ptrdiff_t)png_get_io_ptr( png ), data, length ) < 0 ) png_error( png, "Write error" );
+        auto ioPtr = (int)(ptrdiff_t)png_get_io_ptr( png );
+        while( length > 0 )
+        {
+            auto cnt = write( ioPtr, data, length );
+            if( cnt < 0 )
+            {
+                if( errno == EINTR ) continue;
+                png_error( png, "Write error" );
+            }
+            if( cnt == 0 ) png_error( png, "Zero-length write" );
+            data += cnt;
+            length -= cnt;
+        }
     }, nullptr );
 
     png_set_IHDR( png_ptr, info_ptr, m_width, m_height, 8, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE );

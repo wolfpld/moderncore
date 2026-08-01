@@ -90,6 +90,21 @@ TEST_CASE( "CreateDirectories functionality", "[filesystem][directories]" )
         chmod( parentPath.c_str(), 0755 );
     }
 
+    SECTION( "Existing file returns false" )
+    {
+        std::string path = baseDir.filePath( "file" );
+        FILE* f = fopen( path.c_str(), "wb" );
+        REQUIRE( f != nullptr );
+        fclose( f );
+
+        struct stat buf;
+        REQUIRE( stat( path.c_str(), &buf ) == 0 );
+        REQUIRE( !S_ISDIR( buf.st_mode ) );
+
+        bool result = CreateDirectories( path );
+        REQUIRE( result == false );
+    }
+
     SECTION( "Empty path" )
     {
         bool result = CreateDirectories( "" );

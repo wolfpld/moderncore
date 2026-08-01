@@ -6,7 +6,11 @@
 bool CreateDirectories( const std::string& path )
 {
     struct stat buf;
-    if( stat( path.c_str(), &buf ) == 0 ) return true;
+    if( stat( path.c_str(), &buf ) == 0 )
+    {
+        if( S_ISDIR( buf.st_mode ) ) return true;
+        return false;
+    }
     if( errno != ENOENT ) return false;
 
     size_t pos = 0;

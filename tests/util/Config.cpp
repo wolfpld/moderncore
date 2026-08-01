@@ -79,6 +79,36 @@ TEST_CASE( "Config functionality", "[config][ini]" )
         REQUIRE( defaultUint == 999 );
     }
 
+    SECTION( "Get with invalid numeric values returns defaults" )
+    {
+        writeConfigFile( configDir, "test.ini", "[test_section]\nneg_uint_key=-1\novf_uint_key=999999999999999999999\novf_int_key=999999999999999999999\ngarbage_int_key=abc" );
+
+        Config config( "test.ini" );
+        auto negUint = config.Get( "test_section", "neg_uint_key", (uint32_t)7 );
+        auto ovfUint = config.Get( "test_section", "ovf_uint_key", (uint32_t)7 );
+        auto ovfInt = config.Get( "test_section", "ovf_int_key", 7 );
+        auto garbageInt = config.Get( "test_section", "garbage_int_key", 7 );
+
+        REQUIRE( negUint == 7 );
+        REQUIRE( ovfUint == 7 );
+        REQUIRE( ovfInt == 7 );
+        REQUIRE( garbageInt == 7 );
+    }
+
+    SECTION( "GetOpt with invalid numeric values returns false" )
+    {
+        writeConfigFile( configDir, "test.ini", "[test_section]\nneg_uint_key=-1\novf_uint_key=999999999999999999999\novf_int_key=999999999999999999999\ngarbage_int_key=abc" );
+
+        Config config( "test.ini" );
+        uint32_t uintOut = 0;
+        int intOut = 0;
+
+        REQUIRE( !config.GetOpt( "test_section", "neg_uint_key", uintOut ) );
+        REQUIRE( !config.GetOpt( "test_section", "ovf_uint_key", uintOut ) );
+        REQUIRE( !config.GetOpt( "test_section", "ovf_int_key", intOut ) );
+        REQUIRE( !config.GetOpt( "test_section", "garbage_int_key", intOut ) );
+    }
+
     SECTION( "GetOpt with existing keys" )
     {
         writeConfigFile( configDir, "test.ini", "[test_section]\nstring_key=test_value" );

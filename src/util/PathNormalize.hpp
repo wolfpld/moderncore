@@ -20,7 +20,7 @@ inline std::string NormalizePath( const char* path )
 
         if( lsz == 2 && ptr[0] == '.' && ptr[1] == '.' )
         {
-            res.resize( res.find_last_of( '/' ) );
+            if( !res.empty() ) res.resize( res.find_last_of( '/' ) );
             ptr = next + 1;
             continue;
         }

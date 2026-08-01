@@ -94,10 +94,11 @@ void BitmapHdrHalf::Resize( uint32_t width, uint32_t height, TaskDispatch* td )
     {
         auto threads = td->NumWorkers() + 1;
         threads = stbir_build_samplers_with_splits( &resize, threads );
+        CheckPanic( threads, "Failed to build resize samplers" );
         for( size_t i=0; i<threads; i++ )
         {
             td->Queue( [i, &resize, threads] {
-                stbir_resize_extended_split( &resize, i, 1 );
+                CheckPanic( stbir_resize_extended_split( &resize, i, 1 ), "Failed to resize image" );
             } );
         }
         td->Sync();
@@ -105,7 +106,7 @@ void BitmapHdrHalf::Resize( uint32_t width, uint32_t height, TaskDispatch* td )
     }
     else
     {
-        stbir_resize_extended( &resize );
+        CheckPanic( stbir_resize_extended( &resize ), "Failed to resize image" );
     }
     delete[] m_data;
     m_data = newData;
@@ -123,10 +124,11 @@ std::unique_ptr<BitmapHdrHalf> BitmapHdrHalf::ResizeNew( uint32_t width, uint32_
     {
         auto threads = td->NumWorkers() + 1;
         threads = stbir_build_samplers_with_splits( &resize, threads );
+        CheckPanic( threads, "Failed to build resize samplers" );
         for( size_t i=0; i<threads; i++ )
         {
             td->Queue( [i, &resize, threads] {
-                stbir_resize_extended_split( &resize, i, 1 );
+                CheckPanic( stbir_resize_extended_split( &resize, i, 1 ), "Failed to resize image" );
             } );
         }
         td->Sync();
@@ -134,7 +136,7 @@ std::unique_ptr<BitmapHdrHalf> BitmapHdrHalf::ResizeNew( uint32_t width, uint32_
     }
     else
     {
-        stbir_resize_extended( &resize );
+        CheckPanic( stbir_resize_extended( &resize ), "Failed to resize image" );
     }
     return ret;
 }

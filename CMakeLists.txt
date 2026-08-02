@@ -598,6 +598,7 @@ if(BUILD_TESTS)
         tests/util/Bitmap.cpp
         tests/util/BitmapAnim.cpp
         tests/util/BitmapHdr.cpp
+        tests/util/BitmapHdrHalf.cpp
         tests/util/Callstack.cpp
         tests/util/Clock.cpp
         tests/util/Config.cpp

@@ -612,6 +612,7 @@ if(BUILD_TESTS)
         tests/util/MemoryBuffer.cpp
         tests/util/PathNormalize.cpp
         tests/util/TaskDispatch.cpp
+        tests/util/Tonemapper.cpp
         tests/util/Url.cpp
     )
 

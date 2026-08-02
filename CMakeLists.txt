@@ -612,7 +612,11 @@ if(BUILD_TESTS)
         tests/util/Logs.cpp
         tests/util/MemoryBuffer.cpp
         tests/util/PathNormalize.cpp
+        tests/util/PixelBytes.cpp
+        tests/util/RobinHood.cpp
         tests/util/TaskDispatch.cpp
+        tests/util/Vector2.cpp
+        tests/util/VectorImage.cpp
         tests/util/Tonemapper.cpp
         tests/util/Url.cpp
     )

@@ -118,7 +118,7 @@ void Bitmap::Extend( uint32_t width, uint32_t height )
     {
         memcpy( dst, src, m_width * 4 );
         src += m_width * 4;
-        dst += width * 4;
+        dst += m_width * 4;
         memset( dst, 0, stride * 4 );
         dst += stride * 4;
     }

@@ -624,11 +624,15 @@ if(BUILD_TESTS)
 
     add_executable(mcoreutil_tests ${UTIL_TESTS_SRC})
     target_link_libraries(mcoreutil_tests PRIVATE
-        mcoreutil
         Catch2::Catch2WithMain
         ${LZ4_LINK_LIBRARIES}
         ${WAYLAND_SERVER_LINK_LIBRARIES}
     )
+    if(NOT BUILD_SHARED_LIBS)
+        target_link_libraries(mcoreutil_tests PRIVATE "$<LINK_LIBRARY:WHOLE_ARCHIVE,mcoreutil>")
+    else()
+        target_link_libraries(mcoreutil_tests PRIVATE mcoreutil)
+    endif()
     target_include_directories(mcoreutil_tests PRIVATE
         ${LZ4_INCLUDE_DIRS}
         ${WAYLAND_SERVER_INCLUDE_DIRS}

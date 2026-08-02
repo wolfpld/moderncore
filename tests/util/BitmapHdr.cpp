@@ -120,6 +120,31 @@ TEST_CASE( "BitmapHdr constructor and accessors", "[bitmaphdr]" )
             }
         }
     }
+
+    SECTION( "Conversion of a 7x1 bitmap exercises the scalar tail" )
+    {
+        BitmapHdrHalf half( 7, 1, Colorspace::BT709 );
+        for( uint32_t i = 0; i < 7 * 4; i++ )
+        {
+            half.Data()[i] = ( i % 4 == 3 ) ? 1.0f : 0.25f;
+        }
+
+        BitmapHdr bmp( half );
+        REQUIRE( bmp.Width() == 7 );
+        REQUIRE( bmp.Height() == 1 );
+
+        for( uint32_t i = 0; i < 7 * 4; i++ )
+        {
+            if( i % 4 == 3 )
+            {
+                REQUIRE( bmp.Data()[i] == Catch::Approx( 1.0f ).margin( 0.01f ) );
+            }
+            else
+            {
+                REQUIRE( bmp.Data()[i] == Catch::Approx( 0.25f ).margin( 0.01f ) );
+            }
+        }
+    }
 }
 
 TEST_CASE( "BitmapHdr resize", "[bitmaphdr][resize]" )
@@ -162,6 +187,20 @@ TEST_CASE( "BitmapHdr resize", "[bitmaphdr][resize]" )
         REQUIRE( bmp.Width() == 5 );
         REQUIRE( bmp.Height() == 5 );
         VerifySolid( bmp, 0.3f, 0.4f, 0.5f, 1.0f );
+    }
+
+    SECTION( "ResizeNew with TaskDispatch" )
+    {
+        BitmapHdr bmp( 12, 12, Colorspace::BT709 );
+        FillSolid( bmp, 0.3f, 0.4f, 0.5f );
+
+        TaskDispatch td( 2, "hdr-resizenew" );
+        auto resized = bmp.ResizeNew( 5, 5, &td );
+
+        REQUIRE( resized != nullptr );
+        REQUIRE( resized->Width() == 5 );
+        REQUIRE( resized->Height() == 5 );
+        VerifySolid( *resized, 0.3f, 0.4f, 0.5f, 1.0f );
     }
 }
 
@@ -214,6 +253,15 @@ TEST_CASE( "BitmapHdr crop and alpha", "[bitmaphdr][crop][alpha]" )
 
         bmp.SetAlpha( 0.25f );
         VerifySolid( bmp, 0.1f, 0.2f, 0.3f, 0.25f );
+    }
+
+    SECTION( "31 pixels exercise all SIMD widths and the scalar tail" )
+    {
+        BitmapHdr bmp( 31, 1, Colorspace::BT709 );
+        FillSolid( bmp, 0.1f, 0.2f, 0.3f, 1.0f );
+
+        bmp.SetAlpha( 0.5f );
+        VerifySolid( bmp, 0.1f, 0.2f, 0.3f, 0.5f );
     }
 }
 
@@ -558,7 +606,7 @@ TEST_CASE( "BitmapHdr tonemap", "[bitmaphdr][tonemap]" )
     SECTION( "Tonemap on non-BT709 colorspace aborts" )
     {
         BitmapHdr bmp( 2, 2, Colorspace::BT2020 );
-        REQUIRE_ABORTS( bmp.Tonemap( ToneMap::Operator::AgX ) );
+        REQUIRE_ABORTS( (void)bmp.Tonemap( ToneMap::Operator::AgX ) );
     }
 }
 

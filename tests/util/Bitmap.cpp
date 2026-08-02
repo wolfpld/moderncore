@@ -370,6 +370,17 @@ TEST_CASE( "Bitmap set alpha", "[bitmap][alpha]" )
         bmp.SetAlpha( 0x40 );
         VerifyAll( bmp, MakePixel( 0x01, 0x02, 0x03, 0x40 ) );
     }
+
+    SECTION( "29 pixels exercise all SIMD widths and the scalar tail" )
+    {
+        Bitmap bmp( 29, 1 );
+        FillSolid( bmp, 0x12, 0x34, 0x56, 0xFF );
+        bmp.SetAlpha( 0xFF );
+        VerifyAll( bmp, MakePixel( 0x12, 0x34, 0x56, 0xFF ) );
+
+        bmp.SetAlpha( 0x80 );
+        VerifyAll( bmp, MakePixel( 0x12, 0x34, 0x56, 0x80 ) );
+    }
 }
 
 TEST_CASE( "Bitmap flips and rotations", "[bitmap][transform]" )
@@ -583,6 +594,24 @@ TEST_CASE( "Bitmap bgr to rgb", "[bitmap][colorspace]" )
         SetPixel( bmp, 0, 0, MakePixel( 0x11, 0x22, 0x33, 0x80 ) );
         bmp.BgrToRgb();
         REQUIRE( GetPixel( bmp, 0, 0 ) == MakePixel( 0x33, 0x22, 0x11, 0x80 ) );
+    }
+
+    SECTION( "Wide image exercises the SIMD paths" )
+    {
+        Bitmap bmp( 20, 1 );
+        FillPattern( bmp );
+        auto snapshot = Snapshot( bmp );
+
+        bmp.BgrToRgb();
+        for( uint32_t x = 0; x < 20; x++ )
+        {
+            const auto src = snapshot[x];
+            const auto r = src & 0xFF;
+            const auto g = ( src >> 8 ) & 0xFF;
+            const auto b = ( src >> 16 ) & 0xFF;
+            const auto a = ( src >> 24 ) & 0xFF;
+            REQUIRE( GetPixel( bmp, x, 0 ) == ( ( uint32_t( a ) << 24 ) | ( uint32_t( r ) << 16 ) | ( uint32_t( g ) << 8 ) | b ) );
+        }
     }
 }
 

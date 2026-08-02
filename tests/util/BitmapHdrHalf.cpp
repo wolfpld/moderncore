@@ -86,6 +86,31 @@ TEST_CASE( "BitmapHdrHalf constructor and accessors", "[bitmaphdrhalf]" )
             }
         }
     }
+
+    SECTION( "Conversion of a 7x1 bitmap exercises the scalar tail" )
+    {
+        BitmapHdr hdr( 7, 1, Colorspace::BT709 );
+        for( uint32_t i = 0; i < 7 * 4; i++ )
+        {
+            hdr.Data()[i] = ( i % 4 == 3 ) ? 1.0f : 0.25f;
+        }
+
+        BitmapHdrHalf bmp( hdr );
+        REQUIRE( bmp.Width() == 7 );
+        REQUIRE( bmp.Height() == 1 );
+
+        for( uint32_t i = 0; i < 7 * 4; i++ )
+        {
+            if( i % 4 == 3 )
+            {
+                REQUIRE( float( bmp.Data()[i] ) == Catch::Approx( 1.0f ).margin( 0.01f ) );
+            }
+            else
+            {
+                REQUIRE( float( bmp.Data()[i] ) == Catch::Approx( 0.25f ).margin( 0.01f ) );
+            }
+        }
+    }
 }
 
 TEST_CASE( "BitmapHdrHalf resize", "[bitmaphdrhalf][resize]" )
@@ -128,6 +153,20 @@ TEST_CASE( "BitmapHdrHalf resize", "[bitmaphdrhalf][resize]" )
         REQUIRE( bmp.Width() == 5 );
         REQUIRE( bmp.Height() == 5 );
         VerifySolid( bmp, 0.3f, 0.4f, 0.5f, 1.0f );
+    }
+
+    SECTION( "ResizeNew with TaskDispatch" )
+    {
+        BitmapHdrHalf bmp( 12, 12, Colorspace::BT709 );
+        FillSolid( bmp, 0.3f, 0.4f, 0.5f );
+
+        TaskDispatch td( 2, "half-resizenew" );
+        auto resized = bmp.ResizeNew( 5, 5, &td );
+
+        REQUIRE( resized != nullptr );
+        REQUIRE( resized->Width() == 5 );
+        REQUIRE( resized->Height() == 5 );
+        VerifySolid( *resized, 0.3f, 0.4f, 0.5f, 1.0f );
     }
 }
 
@@ -287,6 +326,12 @@ TEST_CASE( "BitmapHdrHalf save exr", "[bitmaphdrhalf][exr]" )
     {
         BitmapHdrHalf bmp( 2, 2, Colorspace::BT709 );
         REQUIRE( bmp.SaveExr( "/nonexistent_dir_mcore/file.exr" ) == false );
+    }
+
+    SECTION( "SaveExr to invalid fd returns false" )
+    {
+        BitmapHdrHalf bmp( 2, 2, Colorspace::BT709 );
+        REQUIRE( bmp.SaveExr( -1 ) == false );
     }
 }
 

@@ -12,6 +12,82 @@
 #include <unistd.h>
 #include <vector>
 
+// Restores the previous working directory on destruction
+class CwdGuard
+{
+public:
+    CwdGuard()
+    {
+        char buffer[PATH_MAX];
+        if( getcwd( buffer, sizeof( buffer ) ) )
+        {
+            m_cwd = buffer;
+        }
+    }
+
+    ~CwdGuard()
+    {
+        if( !m_cwd.empty() )
+        {
+            chdir( m_cwd.c_str() );
+        }
+    }
+
+    // No copy
+    CwdGuard( const CwdGuard& ) = delete;
+    CwdGuard& operator=( const CwdGuard& ) = delete;
+
+private:
+    std::string m_cwd;
+};
+
+// Saves and restores an environment variable on destruction
+class EnvGuard
+{
+public:
+    EnvGuard( const char* name )
+        : m_name( name )
+    {
+        const char* value = getenv( name );
+        if( value )
+        {
+            m_value = value;
+            m_wasSet = true;
+        }
+    }
+
+    ~EnvGuard()
+    {
+        if( m_wasSet )
+        {
+            setenv( m_name.c_str(), m_value.c_str(), 1 );
+        }
+        else
+        {
+            unsetenv( m_name.c_str() );
+        }
+    }
+
+    // No copy
+    EnvGuard( const EnvGuard& ) = delete;
+    EnvGuard& operator=( const EnvGuard& ) = delete;
+
+    void Set( const char* value )
+    {
+        setenv( m_name.c_str(), value, 1 );
+    }
+
+    void Unset()
+    {
+        unsetenv( m_name.c_str() );
+    }
+
+private:
+    std::string m_name;
+    std::string m_value;
+    bool m_wasSet = false;
+};
+
 // Helper class for managing temporary files
 class TempFile
 {
@@ -392,6 +468,25 @@ inline int countFrames( const std::string& output )
     return static_cast<int>( extractFrames( output ).size() );
 }
 
+// Clang coverage builds export this from the profile runtime
+#if defined __clang__
+extern "C" void __llvm_profile_write_file( void ) __attribute__( ( weak ) );
+#endif
+
+// Writes coverage data from the forked child before re-raising SIGABRT,
+// so panic paths are counted by the coverage tooling.
+static void FlushCoverageAndAbort( int )
+{
+#if defined __clang__
+    if( __llvm_profile_write_file )
+    {
+        __llvm_profile_write_file();
+    }
+#endif
+    signal( SIGABRT, SIG_DFL );
+    raise( SIGABRT );
+}
+
 // Fork-based death test: runs the given callable in a child process and
 // returns true if the child terminated due to SIGABRT (e.g. from Panic/CheckPanic).
 template<typename F>
@@ -400,9 +495,9 @@ bool DoesAbort( F&& func )
     pid_t pid = fork();
     if( pid == 0 )
     {
-        // Use the default signal handler so the child dies silently on abort,
-        // without Catch2's fatal-error report polluting the test output.
-        signal( SIGABRT, SIG_DFL );
+        // Intercept the abort so the child can flush coverage data, then die
+        // with the default handler (silently, without Catch2's fatal report).
+        signal( SIGABRT, FlushCoverageAndAbort );
         func();
         _exit( 0 );
     }

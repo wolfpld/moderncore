@@ -43,6 +43,38 @@ TEST_CASE( "FileBuffer functionality", "[filebuffer][buffer]" )
         fclose( file );
     }
 
+    SECTION( "Null FILE* throws" )
+    {
+        FILE* file = nullptr;
+        REQUIRE_THROWS_AS( FileBuffer( file ), FileBuffer::FileException );
+    }
+
+    SECTION( "FILE* constructor with empty file" )
+    {
+        auto tempFile = TempFile::createEmpty();
+
+        FILE* file = fopen( tempFile.path(), "rb" );
+        REQUIRE( file != nullptr );
+
+        FileBuffer buffer( file );
+        REQUIRE( buffer.size() == 0 );
+
+        fclose( file );
+    }
+
+    SECTION( "Mmap failure throws" )
+    {
+        auto tempFile = TempFile::create( "content", 7 );
+
+        FILE* file = fopen( tempFile.path(), "rb" );
+        REQUIRE( file != nullptr );
+
+        // Close the underlying descriptor so the mapping fails
+        close( fileno( file ) );
+        REQUIRE_THROWS_AS( FileBuffer( file ), FileBuffer::FileException );
+        fclose( file );
+    }
+
     SECTION( "Constructor with shared_ptr<FileWrapper>" )
     {
         const char* content = "Test via FileWrapper";

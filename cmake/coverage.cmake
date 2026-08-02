@@ -29,14 +29,14 @@ add_custom_target(coverage-report
     COMMAND ${CMAKE_COMMAND} -E rm -f ${COVERAGE_DIR}/*.profraw
     COMMAND ${LLVM_COV} report $<TARGET_FILE:mcoreutil_tests>
             -instr-profile=${COVERAGE_PROFRAW}
-            -ignore-filename-regex="tests/.*|contrib/.*|build.*/.*|\.cache/.*"
+            -ignore-filename-regex="tests/.*|contrib/.*|build.*/.*|\.cache/.*|/usr/.*"
     COMMAND ${LLVM_COV} export -format=lcov $<TARGET_FILE:mcoreutil_tests>
             -instr-profile=${COVERAGE_PROFRAW}
-            -ignore-filename-regex="tests/.*|contrib/.*|build.*/.*|\.cache/.*"
+            -ignore-filename-regex="tests/.*|contrib/.*|build.*/.*|\.cache/.*|/usr/.*"
             > ${COVERAGE_LCOV}
     COMMAND ${LLVM_COV} show $<TARGET_FILE:mcoreutil_tests>
             -instr-profile=${COVERAGE_PROFRAW}
-            -ignore-filename-regex="tests/.*|contrib/.*|build.*/.*|\.cache/.*"
+            -ignore-filename-regex="tests/.*|contrib/.*|build.*/.*|\.cache/.*|/usr/.*"
             -format=html
             -output-dir=${COVERAGE_HTML}
     BYPRODUCTS ${COVERAGE_DIR} ${COVERAGE_PROFRAW} ${COVERAGE_LCOV}

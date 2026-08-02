@@ -4,9 +4,11 @@
 #include <cstring>
 #include <dirent.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <sstream>
 #include <string>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <vector>
 
@@ -389,3 +391,26 @@ inline int countFrames( const std::string& output )
 {
     return static_cast<int>( extractFrames( output ).size() );
 }
+
+// Fork-based death test: runs the given callable in a child process and
+// returns true if the child terminated due to SIGABRT (e.g. from Panic/CheckPanic).
+template<typename F>
+bool DoesAbort( F&& func )
+{
+    pid_t pid = fork();
+    if( pid == 0 )
+    {
+        func();
+        _exit( 0 );
+    }
+
+    REQUIRE( pid > 0 );
+
+    int status = 0;
+    REQUIRE( waitpid( pid, &status, 0 ) == pid );
+
+    return WIFSIGNALED( status ) && WTERMSIG( status ) == SIGABRT;
+}
+
+// Verifies that expr aborts the process (Panic/CheckPanic paths)
+#define REQUIRE_ABORTS( expr ) REQUIRE( DoesAbort( [&] { expr; } ) )

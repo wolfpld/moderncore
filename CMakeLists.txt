@@ -589,6 +589,7 @@ endif()
 # Catch2 testing
 if(BUILD_TESTS)
     find_package(Catch2 3 REQUIRED)
+    pkg_check_modules(WAYLAND_SERVER REQUIRED wayland-server)
     enable_testing()
 
     # tests - mcoreutil
@@ -614,9 +615,11 @@ if(BUILD_TESTS)
     target_link_libraries(mcoreutil_tests PRIVATE
         mcoreutil
         Catch2::Catch2WithMain
+        ${WAYLAND_SERVER_LINK_LIBRARIES}
     )
     target_include_directories(mcoreutil_tests PRIVATE
         ${CATCH2_INCLUDE_DIRS}
+        ${WAYLAND_SERVER_INCLUDE_DIRS}
     )
     target_compile_options(mcoreutil_tests PRIVATE ${CATCH2_CFLAGS})
 

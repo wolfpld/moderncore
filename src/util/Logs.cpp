@@ -8,6 +8,7 @@
 #include "Ansi.hpp"
 #include "Callstack.hpp"
 #include "Logs.hpp"
+#include "Panic.hpp"
 
 namespace
 {
@@ -73,7 +74,7 @@ void PrintLevel( LogLevel level )
     case LogLevel::Error:
     case LogLevel::ErrorTrace: str = ANSI_BOLD ANSI_RED "[ERROR] "; break;
     case LogLevel::Fatal: str = ANSI_BOLD ANSI_MAGENTA "[FATAL] "; break;
-    default: assert( false ); break;
+    default: Panic( "Invalid log level %d", int( level ) );
     }
 
     printf( "%s", str );
@@ -146,7 +147,7 @@ void MCoreLogMessage( LogLevel level, const char* fileName, size_t line, const c
             case LogLevel::Error: TracyMessageCS( tmp, res, 0xFF0000, 64 ); break;
             case LogLevel::ErrorTrace: TracyMessageCS( tmp, res, 0xFF0000, 64 ); break;
             case LogLevel::Fatal: TracyMessageCS( tmp, res, 0xFF00FF, 64 ); break;
-            default: assert( false ); break;
+            default: Panic( "Invalid log level %d", int( level ) );
             }
         }
         va_end( args );

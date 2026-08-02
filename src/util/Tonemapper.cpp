@@ -1,7 +1,7 @@
-#include <assert.h>
 #include <cmath>
 
 #include "Tonemapper.hpp"
+#include "util/Panic.hpp"
 
 namespace ToneMap
 {
@@ -23,7 +23,7 @@ void Process( Operator op, uint32_t* dst, float* src, size_t sz )
         PbrNeutral( dst, src, sz );
         break;
     default:
-        assert( false );
+        Panic( "Invalid tonemapper operator %d", int( op ) );
     }
 }
 

@@ -209,7 +209,7 @@ set(MCOREUTIL_SRC
     src/util/TonemapperAgx.cpp
     src/util/TonemapperPbr.cpp
     src/util/Url.cpp
-    src/util/stb_image_resize_impl.cpp
+    contrib/stb_image_resize_impl.cpp
 )
 
 if(NOT APPLE)
@@ -250,7 +250,7 @@ endif()
 # mcoreimage
 
 set(MCOREIMAGE_SRC
-    src/image/bcdec.c
+    contrib/bcdec.c
     src/image/DdsLoader.cpp
     src/image/ExrLoader.cpp
     src/image/HeifLoader.cpp

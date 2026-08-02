@@ -1,6 +1,6 @@
 #include <string.h>
 
-#include "bcdec.h"
+#include "contrib/bcdec.h"
 #include "DdsLoader.hpp"
 #include "util/Bitmap.hpp"
 #include "util/FileBuffer.hpp"

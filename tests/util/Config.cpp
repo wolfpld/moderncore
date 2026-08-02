@@ -151,3 +151,68 @@ TEST_CASE( "Config functionality", "[config][ini]" )
         unsetenv( "XDG_CONFIG_HOME" );
     }
 }
+
+TEST_CASE( "Config GetOpt with invalid config", "[config][ini]" )
+{
+    Config config( "nonexistent_config_for_test.ini" );
+    REQUIRE( !(bool)config );
+
+    const char* strOut = "unused";
+    int intOut = 0;
+    uint32_t uintOut = 0;
+
+    REQUIRE( !config.GetOpt( "section", "key", strOut ) );
+    REQUIRE( !config.GetOpt( "section", "key", intOut ) );
+    REQUIRE( !config.GetOpt( "section", "key", uintOut ) );
+
+    REQUIRE( strOut == "unused" );
+    REQUIRE( intOut == 0 );
+    REQUIRE( uintOut == 0 );
+}
+
+TEST_CASE( "Config GetOpt missing numeric keys", "[config][ini]" )
+{
+    const char* originalXdgConfig = getenv( "XDG_CONFIG_HOME" );
+    TempDir configDir = setupConfigDir();
+    writeConfigFile( configDir, "test.ini", "[test_section]\nexisting_key=value" );
+
+    Config config( "test.ini" );
+    int intOut = 0;
+    uint32_t uintOut = 0;
+
+    REQUIRE( !config.GetOpt( "test_section", "missing_int_key", intOut ) );
+    REQUIRE( !config.GetOpt( "test_section", "missing_uint_key", uintOut ) );
+
+    REQUIRE( intOut == 0 );
+    REQUIRE( uintOut == 0 );
+
+    if( originalXdgConfig )
+    {
+        setenv( "XDG_CONFIG_HOME", originalXdgConfig, 1 );
+    }
+    else
+    {
+        unsetenv( "XDG_CONFIG_HOME" );
+    }
+}
+
+TEST_CASE( "Config GetPath without XDG_CONFIG_HOME", "[config][ini]" )
+{
+    const char* originalXdgConfig = getenv( "XDG_CONFIG_HOME" );
+    unsetenv( "XDG_CONFIG_HOME" );
+
+    auto home = getenv( "HOME" );
+    REQUIRE( home != nullptr );
+
+    auto path = Config::GetPath( "test.ini" );
+    REQUIRE( path == std::string( home ) + "/.config/ModernCore/test.ini" );
+
+    if( originalXdgConfig )
+    {
+        setenv( "XDG_CONFIG_HOME", originalXdgConfig, 1 );
+    }
+    else
+    {
+        unsetenv( "XDG_CONFIG_HOME" );
+    }
+}

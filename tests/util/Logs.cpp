@@ -1,8 +1,53 @@
 #include "TestUtils.hpp"
+#include <atomic>
 #include <catch2/catch_all.hpp>
 #include <src/util/Logs.hpp>
 #include <sys/stat.h>
+#include <thread>
 #include <unistd.h>
+
+class LogLevelGuard
+{
+public:
+    LogLevelGuard() { m_original = GetLogLevel(); }
+    ~LogLevelGuard() { SetLogLevel( m_original ); }
+
+private:
+    LogLevel m_original;
+};
+
+class LogSyncGuard
+{
+public:
+    ~LogSyncGuard() { SetLogSynchronized( false ); }
+};
+
+class LogFileGuard
+{
+public:
+    ~LogFileGuard()
+    {
+        if( m_enabled )
+        {
+            SetLogToFile( false );
+        }
+    }
+
+    void Enable()
+    {
+        SetLogToFile( true );
+        m_enabled = true;
+    }
+
+    void Disable()
+    {
+        SetLogToFile( false );
+        m_enabled = false;
+    }
+
+private:
+    bool m_enabled = false;
+};
 
 static std::string captureLogOutput( LogLevel level, const char* msg )
 {
@@ -13,7 +58,7 @@ static std::string captureLogOutput( LogLevel level, const char* msg )
 
 TEST_CASE( "SetLogLevel and GetLogLevel", "[logs][level]" )
 {
-    LogLevel originalLevel = GetLogLevel();
+    LogLevelGuard levelGuard;
 
     SECTION( "Set and get each log level" )
     {
@@ -21,58 +66,66 @@ TEST_CASE( "SetLogLevel and GetLogLevel", "[logs][level]" )
         SetLogLevel( level );
         REQUIRE( GetLogLevel() == level );
     }
-
-    SetLogLevel( originalLevel );
 }
 
-TEST_CASE( "SetLogSynchronized toggles synchronized mode", "[logs][sync]" )
+TEST_CASE( "LogBlockBegin/End synchronize logging", "[logs][sync][block]" )
 {
-    bool originalSync = false;
-
-    SECTION( "Enable synchronized mode" )
+    SECTION( "Synchronized mode blocks other threads until LogBlockEnd" )
     {
+        LogSyncGuard syncGuard;
         SetLogSynchronized( true );
+
+        LogBlockBegin();
+
+        std::atomic<bool> started{ false };
+        std::atomic<bool> finished{ false };
+        std::thread worker( [&] {
+            started = true;
+            mclog( LogLevel::Info, "worker message" );
+            finished = true;
+        } );
+
+        while( !started.load() ) {}
+
+        REQUIRE( !finished.load() );
+
+        LogBlockEnd();
+        worker.join();
+        REQUIRE( finished.load() );
     }
 
-    SECTION( "Disable synchronized mode" )
+    SECTION( "Unsynchronized mode does not block other threads" )
     {
+        LogSyncGuard syncGuard;
         SetLogSynchronized( false );
+
+        LogBlockBegin();
+        std::atomic<bool> finished{ false };
+        std::thread worker( [&] {
+            mclog( LogLevel::Info, "worker message" );
+            finished = true;
+        } );
+        worker.join();
+        LogBlockEnd();
+
+        REQUIRE( finished.load() );
     }
 
-    SetLogSynchronized( originalSync );
-}
-
-TEST_CASE( "LogBlockBegin and LogBlockEnd work correctly", "[logs][block]" )
-{
-    SECTION( "Block with synchronized mode enabled" )
+    SECTION( "Nested blocks with synchronized mode" )
     {
+        LogSyncGuard syncGuard;
         SetLogSynchronized( true );
-        LogBlockBegin();
-        LogBlockEnd();
-        SetLogSynchronized( false );
-    }
 
-    SECTION( "Block with synchronized mode disabled" )
-    {
-        SetLogSynchronized( false );
-        LogBlockBegin();
-        LogBlockEnd();
-    }
-
-    SECTION( "Nested blocks" )
-    {
-        SetLogSynchronized( true );
         LogBlockBegin();
         LogBlockBegin();
         LogBlockEnd();
         LogBlockEnd();
-        SetLogSynchronized( false );
     }
 }
 
 TEST_CASE( "MCoreLogMessage filters by log level", "[logs][filter]" )
 {
-    LogLevel originalLevel = GetLogLevel();
+    LogLevelGuard levelGuard;
 
     SECTION( "Messages below current level are filtered" )
     {
@@ -131,13 +184,11 @@ TEST_CASE( "MCoreLogMessage filters by log level", "[logs][filter]" )
         REQUIRE( !callstackOutput.empty() );
         REQUIRE( callstackOutput.find( "callstack message" ) != std::string::npos );
     }
-
-    SetLogLevel( originalLevel );
 }
 
 TEST_CASE( "MCoreLogMessage format handling", "[logs][format]" )
 {
-    LogLevel originalLevel = GetLogLevel();
+    LogLevelGuard levelGuard;
     SetLogLevel( LogLevel::Debug );
 
     SECTION( "Simple string message" )
@@ -176,13 +227,11 @@ TEST_CASE( "MCoreLogMessage format handling", "[logs][format]" )
         REQUIRE( !output.empty() );
         REQUIRE( output.find( longMsg ) != std::string::npos );
     }
-
-    SetLogLevel( originalLevel );
 }
 
 TEST_CASE( "MCoreLogMessage level indicators", "[logs][indicator]" )
 {
-    LogLevel originalLevel = GetLogLevel();
+    LogLevelGuard levelGuard;
     SetLogLevel( LogLevel::Debug );
 
     SECTION( "Debug level indicator" )
@@ -220,13 +269,11 @@ TEST_CASE( "MCoreLogMessage level indicators", "[logs][indicator]" )
         std::string output = captureLogOutput( LogLevel::Callstack, "msg" );
         REQUIRE( output.find( "[STACK]" ) != std::string::npos );
     }
-
-    SetLogLevel( originalLevel );
 }
 
 TEST_CASE( "MCoreLogMessage source location", "[logs][location]" )
 {
-    LogLevel originalLevel = GetLogLevel();
+    LogLevelGuard levelGuard;
     SetLogLevel( LogLevel::Debug );
 
     SECTION( "Output contains source file information" )
@@ -250,37 +297,48 @@ TEST_CASE( "MCoreLogMessage source location", "[logs][location]" )
         REQUIRE( hasLineNumber );
     }
 
-    SetLogLevel( originalLevel );
+    SECTION( "Short file name is right-aligned in the source column" )
+    {
+        SetLogLevel( LogLevel::Info );
+
+        OutputCapture capture;
+#line 42 "short"
+        mclog( LogLevel::Info, "hello" );
+        auto output = stripAnsi( capture.getOutput() );
+
+        REQUIRE( output.find( "short" ) != std::string::npos );
+        REQUIRE( output.find( ":42" ) != std::string::npos );
+        REQUIRE( output.find( "hello" ) != std::string::npos );
+    }
 }
 
 TEST_CASE( "SetLogToFile writes to file", "[logs][file]" )
 {
-    LogLevel originalLevel = GetLogLevel();
+    LogLevelGuard levelGuard;
     SetLogLevel( LogLevel::Debug );
 
-    char originalCwd[PATH_MAX];
-    getcwd( originalCwd, sizeof( originalCwd ) );
+    CwdGuard cwdGuard;
 
     TempDir tempDir = TempDir::create();
     chdir( tempDir.path() );
 
     SECTION( "Enable file logging creates file" )
     {
-        SetLogToFile( true );
+        LogFileGuard fileGuard;
+        fileGuard.Enable();
 
         struct stat buf;
         REQUIRE( stat( "mcore.log", &buf ) == 0 );
-
-        SetLogToFile( false );
     }
 
     SECTION( "Log messages written to file" )
     {
-        SetLogToFile( true );
+        LogFileGuard fileGuard;
+        fileGuard.Enable();
 
         mclog( LogLevel::Info, "file test message" );
 
-        SetLogToFile( false );
+        fileGuard.Disable();
 
         FILE* f = fopen( "mcore.log", "r" );
         REQUIRE( f != nullptr );
@@ -298,13 +356,14 @@ TEST_CASE( "SetLogToFile writes to file", "[logs][file]" )
 
     SECTION( "Multiple messages logged to file" )
     {
-        SetLogToFile( true );
+        LogFileGuard fileGuard;
+        fileGuard.Enable();
 
         mclog( LogLevel::Info, "message one" );
         mclog( LogLevel::Warning, "message two" );
         mclog( LogLevel::Error, "message three" );
 
-        SetLogToFile( false );
+        fileGuard.Disable();
 
         FILE* f = fopen( "mcore.log", "r" );
         REQUIRE( f != nullptr );
@@ -324,13 +383,14 @@ TEST_CASE( "SetLogToFile writes to file", "[logs][file]" )
 
     SECTION( "File logging can be re-enabled" )
     {
-        SetLogToFile( true );
+        LogFileGuard fileGuard;
+        fileGuard.Enable();
         mclog( LogLevel::Info, "first batch" );
-        SetLogToFile( false );
+        fileGuard.Disable();
 
-        SetLogToFile( true );
+        fileGuard.Enable();
         mclog( LogLevel::Info, "second batch" );
-        SetLogToFile( false );
+        fileGuard.Disable();
 
         FILE* f = fopen( "mcore.log", "r" );
         REQUIRE( f != nullptr );
@@ -346,14 +406,18 @@ TEST_CASE( "SetLogToFile writes to file", "[logs][file]" )
         REQUIRE( content.find( "first batch" ) == std::string::npos );
         REQUIRE( content.find( "second batch" ) != std::string::npos );
     }
+}
 
-    chdir( originalCwd );
-    SetLogLevel( originalLevel );
+TEST_CASE( "MCoreLogMessage invalid level aborts", "[logs][panic]" )
+{
+    LogLevelGuard levelGuard;
+    SetLogLevel( LogLevel::Info );
+    REQUIRE_ABORTS( mclog( (LogLevel)999, "invalid level" ) );
 }
 
 TEST_CASE( "Log levels can be changed multiple times", "[logs][state]" )
 {
-    LogLevel originalLevel = GetLogLevel();
+    LogLevelGuard levelGuard;
 
     SetLogLevel( LogLevel::Debug );
     REQUIRE( GetLogLevel() == LogLevel::Debug );
@@ -366,6 +430,4 @@ TEST_CASE( "Log levels can be changed multiple times", "[logs][state]" )
 
     SetLogLevel( LogLevel::Info );
     REQUIRE( GetLogLevel() == LogLevel::Info );
-
-    SetLogLevel( originalLevel );
 }

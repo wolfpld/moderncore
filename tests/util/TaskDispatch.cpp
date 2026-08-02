@@ -1,6 +1,7 @@
 #include <atomic>
 #include <catch2/catch_all.hpp>
 #include <chrono>
+#include <functional>
 #include <src/util/TaskDispatch.hpp>
 #include <thread>
 
@@ -87,6 +88,15 @@ TEST_CASE( "TaskDispatch basic task execution", "[taskdispatch][execution]" )
         dispatch.Queue( [&result, v = std::move( value )] { result = v; } );
         dispatch.Sync();
         REQUIRE( result == 42 );
+    }
+
+    SECTION( "Queue with lvalue function uses const-ref overload" )
+    {
+        std::atomic<int> result{ 0 };
+        std::function<void()> task = [&result] { result = 7; };
+        dispatch.Queue( task );
+        dispatch.Sync();
+        REQUIRE( result == 7 );
     }
 
     SECTION( "Task with captured data executes correctly" )

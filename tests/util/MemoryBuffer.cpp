@@ -118,6 +118,17 @@ TEST_CASE( "MemoryBuffer functionality", "[memorybuffer][buffer]" )
         REQUIRE( memBuffer.size() == 0 );
     }
 
+    SECTION( "Read error on closed descriptor clears the buffer" )
+    {
+        int fd = createTempFileWithContent( "content", 7 );
+        REQUIRE( fd >= 0 );
+        close( fd ); // descriptor is closed before reading
+
+        MemoryBuffer memBuffer( fd );
+
+        REQUIRE( memBuffer.size() == 0 );
+    }
+
     SECTION( "Constructor with large file content" )
     {
         std::vector<char> largeContent = BinaryPattern::repeated( 'X', 100000 );

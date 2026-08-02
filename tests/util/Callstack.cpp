@@ -156,3 +156,28 @@ TEST_CASE( "Callstack edge cases", "[callstack][edge]" )
         REQUIRE_NOTHROW( PrintCallstack( data, data.count ) );
     }
 }
+
+TEST_CASE( "ShowExternalCallstacks toggles external frames", "[callstack][external]" )
+{
+    GetCallstack( data );
+
+    SECTION( "External frames are printed when enabled" )
+    {
+        ShowExternalCallstacks( true );
+
+        std::string output = capturePrintCallstack( data, 0 );
+        REQUIRE( output.find( "Callstack:" ) != std::string::npos );
+
+        ShowExternalCallstacks( false );
+    }
+
+    SECTION( "External frames are hidden when disabled" )
+    {
+        ShowExternalCallstacks( false );
+
+        std::string output = capturePrintCallstack( data, 0 );
+        REQUIRE( output.find( "Callstack:" ) != std::string::npos );
+
+        ShowExternalCallstacks( false );
+    }
+}

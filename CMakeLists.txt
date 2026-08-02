@@ -630,11 +630,9 @@ if(BUILD_TESTS)
         ${WAYLAND_SERVER_LINK_LIBRARIES}
     )
     target_include_directories(mcoreutil_tests PRIVATE
-        ${CATCH2_INCLUDE_DIRS}
         ${LZ4_INCLUDE_DIRS}
         ${WAYLAND_SERVER_INCLUDE_DIRS}
     )
-    target_compile_options(mcoreutil_tests PRIVATE ${CATCH2_CFLAGS})
 
     include(Catch)
     catch_discover_tests(mcoreutil_tests)

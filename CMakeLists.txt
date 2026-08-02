@@ -609,6 +609,7 @@ if(BUILD_TESTS)
         tests/util/Filesystem.cpp
         tests/util/FileWrapper.cpp
         tests/util/Home.cpp
+        tests/util/Listener.cpp
         tests/util/Logs.cpp
         tests/util/MemoryBuffer.cpp
         tests/util/PathNormalize.cpp

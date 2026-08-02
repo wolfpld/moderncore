@@ -595,6 +595,7 @@ if(BUILD_TESTS)
     # tests - mcoreutil
     set(UTIL_TESTS_SRC
         tests/util/ArgParser.cpp
+        tests/util/Bitmap.cpp
         tests/util/Callstack.cpp
         tests/util/Clock.cpp
         tests/util/Config.cpp

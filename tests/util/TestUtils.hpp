@@ -400,6 +400,9 @@ bool DoesAbort( F&& func )
     pid_t pid = fork();
     if( pid == 0 )
     {
+        // Use the default signal handler so the child dies silently on abort,
+        // without Catch2's fatal-error report polluting the test output.
+        signal( SIGABRT, SIG_DFL );
         func();
         _exit( 0 );
     }
@@ -413,4 +416,10 @@ bool DoesAbort( F&& func )
 }
 
 // Verifies that expr aborts the process (Panic/CheckPanic paths)
-#define REQUIRE_ABORTS( expr ) REQUIRE( DoesAbort( [&] { expr; } ) )
+#define REQUIRE_ABORTS( expr ) \
+    do \
+    { \
+        const bool caughtAbort = DoesAbort( [&] { expr; } ); \
+        REQUIRE( caughtAbort ); \
+    } \
+    while( 0 )

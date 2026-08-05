@@ -147,9 +147,9 @@ void WaylandSeat::FinishDnd( int fd )
     auto it = m_pendingDnd.find( fd );
     CheckPanic( it != m_pendingDnd.end(), "DnD not pending!" );
 
-    close( it->first );
     wl_data_offer_finish( *it->second );
     m_pendingDnd.erase( it );
+    close( fd );
 }
 
 void WaylandSeat::SetClipboard( const char* const* mime, size_t count, const WaylandDataSource::Listener* listener, void* listenerPtr )

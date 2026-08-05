@@ -126,7 +126,9 @@ void ImageProvider::Worker()
         if( job.fd >= 0 )
         {
             mclog( LogLevel::Info, "Loading image from file descriptor" );
-            auto buffer = std::make_shared<MemoryBuffer>( job.fd );
+            auto buffer = job.flags.dndFd == 0 ?
+                std::make_shared<MemoryBuffer>( job.fd ) :
+                std::make_shared<MemoryBuffer>( job.fd, MemoryBuffer::Borrow );
             loader = GetImageLoader( buffer, ToneMap::Operator::PbrNeutral, &m_td );
         }
         else

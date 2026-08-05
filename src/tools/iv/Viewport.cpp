@@ -459,7 +459,7 @@ void Viewport::Drop( int fd, const char* mime )
 {
     if( strcmp( mime, "text/uri-list" ) == 0 )
     {
-        auto fn = MemoryBuffer( fd ).AsString();
+        auto fn = MemoryBuffer( fd, MemoryBuffer::Borrow ).AsString();
         m_window->FinishDnd( fd );
         const auto uriList = ProcessUriList( std::move( fn ) );
         auto files = FindLoadableImages( FindValidFiles( uriList ) );

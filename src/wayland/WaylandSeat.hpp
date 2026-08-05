@@ -73,6 +73,7 @@ private:
 
     void SetInputSerial( uint32_t serial );
     void CancelDataSource();
+    void DrainDnd();
 
     [[nodiscard]] WaylandWindow* GetFocusedWindow() const;
     [[nodiscard]] WaylandWindow* GetWindow( wl_surface* surf ) const;

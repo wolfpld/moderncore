@@ -24,6 +24,7 @@ WaylandSeat::WaylandSeat( wl_seat* seat, WaylandDisplay& dpy )
 
 WaylandSeat::~WaylandSeat()
 {
+    DrainDnd();
     m_pointer.reset();
     m_keyboard.reset();
     m_nextOffer.reset();
@@ -77,6 +78,7 @@ void WaylandSeat::RemoveWindow( WaylandWindow* window )
     m_windows.erase( surface );
     CheckPanic( m_cursorMap.contains( surface ), "Window not added!" );
     m_cursorMap.erase( surface );
+    if( m_dndSurface == surface ) DrainDnd();
 }
 
 WaylandCursor WaylandSeat::GetCursor( wl_surface* window )
@@ -283,6 +285,7 @@ void WaylandSeat::DataLeave( wl_data_device* dev )
     mclog( LogLevel::Debug, "Drag and drop leave" );
     m_dndMime.clear();
     m_dndOffer.reset();
+    DrainDnd();
     GetWindow( m_dndSurface )->InvokeDrag( {} );
 }
 
@@ -352,6 +355,13 @@ void WaylandSeat::CancelDataSource()
 {
     CheckPanic( m_dataSource, "No data source!" );
     m_dataSource.reset();
+}
+
+void WaylandSeat::DrainDnd()
+{
+    std::lock_guard lock( m_dndMutex );
+    for( auto& v : m_pendingDnd ) wl_data_offer_finish( *v.second );
+    m_pendingDnd.clear();
 }
 
 WaylandWindow* WaylandSeat::GetFocusedWindow() const

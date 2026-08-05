@@ -312,6 +312,14 @@ void WaylandSeat::DataDrop( wl_data_device* dev )
     auto dndOffer = std::move( m_dndOffer );
     m_dndOffer.reset();
 
+    auto window = GetWindow( m_dndSurface );
+    auto listener = window->GetListener();
+    if( !listener || !listener->OnDrop )
+    {
+        wl_data_offer_finish( *dndOffer );
+        return;
+    }
+
     int fd[2];
     if( pipe( fd ) != 0 ) return;
     wl_data_offer_receive( *dndOffer, dndMime.c_str(), fd[1] );
@@ -324,7 +332,7 @@ void WaylandSeat::DataDrop( wl_data_device* dev )
         m_pendingDnd.emplace( fd[0], std::move( dndOffer ) );
     }
 
-    GetWindow( m_dndSurface )->InvokeDrop( fd[0], dndMime.c_str() );
+    window->InvokeDrop( fd[0], dndMime.c_str() );
 }
 
 void WaylandSeat::DataSelection( wl_data_device* dev, wl_data_offer* offer )
@@ -359,9 +367,10 @@ void WaylandSeat::CancelDataSource()
 
 void WaylandSeat::DrainDnd()
 {
-    std::lock_guard lock( m_dndMutex );
-    for( auto& v : m_pendingDnd ) wl_data_offer_finish( *v.second );
-    m_pendingDnd.clear();
+    m_dndMutex.lock();
+    auto pending = std::move( m_pendingDnd );
+    m_dndMutex.unlock();
+    for( auto& v : pending ) wl_data_offer_finish( *v.second );
 }
 
 WaylandWindow* WaylandSeat::GetFocusedWindow() const

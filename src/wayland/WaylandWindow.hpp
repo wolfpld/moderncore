@@ -113,6 +113,7 @@ public:
     [[nodiscard]] xdg_toplevel* XdgToplevel() { return m_xdgToplevel; }
     [[nodiscard]] VkSurfaceKHR VkSurface() { return *m_vkSurface; }
     [[nodiscard]] VlkDevice& Device() { return *m_vkDevice; }
+    [[nodiscard]] const Listener* GetListener() const { return m_listener; }
 
     void SetClipboard( const char* const* mime, size_t count, const WaylandDataSource::Listener* listener, void* listenerPtr );
     [[nodiscard]] int GetClipboard( const char* mime );

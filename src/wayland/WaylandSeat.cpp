@@ -144,11 +144,19 @@ void WaylandSeat::AcceptDndMime( const char* mime )
 
 void WaylandSeat::FinishDnd( int fd )
 {
+    m_dndMutex.lock();
     auto it = m_pendingDnd.find( fd );
-    CheckPanic( it != m_pendingDnd.end(), "DnD not pending!" );
-
-    wl_data_offer_finish( *it->second );
-    m_pendingDnd.erase( it );
+    if( it == m_pendingDnd.end() )
+    {
+        m_dndMutex.unlock();
+    }
+    else
+    {
+        auto offer = std::move( it->second );
+        m_pendingDnd.erase( it );
+        m_dndMutex.unlock();
+        wl_data_offer_finish( *offer );
+    }
     close( fd );
 }
 
@@ -307,8 +315,11 @@ void WaylandSeat::DataDrop( wl_data_device* dev )
     close( fd[1] );
     wl_display_roundtrip( m_dpy.Display() );
 
-    CheckPanic( !m_pendingDnd.contains( fd[0] ), "DnD already pending!" );
-    m_pendingDnd.emplace( fd[0], std::move( dndOffer ) );
+    {
+        std::lock_guard lock( m_dndMutex );
+        CheckPanic( !m_pendingDnd.contains( fd[0] ), "DnD already pending!" );
+        m_pendingDnd.emplace( fd[0], std::move( dndOffer ) );
+    }
 
     GetWindow( m_dndSurface )->InvokeDrop( fd[0], dndMime.c_str() );
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <mutex>
 #include <string>
 #include <wayland-client.h>
 
@@ -97,6 +98,8 @@ private:
 
     unordered_flat_map<wl_surface*, WaylandWindow*> m_windows;
     unordered_flat_map<wl_surface*, WaylandCursor> m_cursorMap;
+
+    std::mutex m_dndMutex;
     unordered_flat_map<int, std::unique_ptr<WaylandDataOffer>> m_pendingDnd;
 
     WaylandDisplay& m_dpy;

@@ -14,6 +14,16 @@ MemoryBuffer::MemoryBuffer( std::vector<char>&& buf )
 
 MemoryBuffer::MemoryBuffer( int fd )
 {
+    InitFromFd( fd, true );
+}
+
+MemoryBuffer::MemoryBuffer( int fd, BorrowTag )
+{
+    InitFromFd( fd, false );
+}
+
+void MemoryBuffer::InitFromFd( int fd, bool owning )
+{
     if( fd < 0 ) return;
 
     char buf[64*1024];
@@ -30,7 +40,7 @@ MemoryBuffer::MemoryBuffer( int fd )
         }
         m_buf.insert( m_buf.end(), buf, buf + len );
     }
-    close( fd );
+    if( owning ) close( fd );
 
     m_data = m_buf.data();
     m_size = m_buf.size();

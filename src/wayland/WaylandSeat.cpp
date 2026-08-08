@@ -321,7 +321,11 @@ void WaylandSeat::DataDrop( wl_data_device* dev )
     }
 
     int fd[2];
-    if( pipe( fd ) != 0 ) return;
+    if( pipe( fd ) != 0 )
+    {
+        wl_data_offer_finish( *dndOffer );
+        return;
+    }
     wl_data_offer_receive( *dndOffer, dndMime.c_str(), fd[1] );
     close( fd[1] );
     wl_display_roundtrip( m_dpy.Display() );

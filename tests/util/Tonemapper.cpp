@@ -14,16 +14,6 @@ uint32_t Pack( float r, float g, float b, float a )
     return ( uint32_t( a * 255.0f ) << 24 ) | ( uint32_t( b * 255.0f ) << 16 ) | ( uint32_t( g * 255.0f ) << 8 ) | uint32_t( r * 255.0f );
 }
 
-void VerifyPixel( uint32_t px, float r, float g, float b, float a )
-{
-    // Tonemappers may round or truncate when packing, and the SIMD sRGB
-    // curve is an approximation; allow ±2 per channel
-    REQUIRE( ( px >> 24 ) == Catch::Approx( a * 255.0f ).margin( 2.0f ) );
-    REQUIRE( ( ( px >> 16 ) & 0xFF ) == Catch::Approx( b * 255.0f ).margin( 2.0f ) );
-    REQUIRE( ( ( px >> 8 ) & 0xFF ) == Catch::Approx( g * 255.0f ).margin( 2.0f ) );
-    REQUIRE( ( px & 0xFF ) == Catch::Approx( r * 255.0f ).margin( 2.0f ) );
-}
-
 }
 
 TEST_CASE( "Tonemapper process dispatch", "[tonemapper][process]" )
@@ -142,18 +132,6 @@ TEST_CASE( "Tonemapper direct operators", "[tonemapper][operators]" )
         }
     }
 
-    SECTION( "PbrNeutral applies the offset and sRGB curve for dim input" )
-    {
-        // Peak below startCompression (0.76): only the offset and sRGB
-        // encoding are applied, no compression
-        float src[4] = { 0.1f, 0.2f, 0.3f, 1.0f };
-        uint32_t dst[1];
-        ToneMap::Process( ToneMap::Operator::PbrNeutral, dst, src, 1 );
-
-        const auto offset = 0.1f - 6.25f * 0.1f * 0.1f;
-        VerifyPixel( dst[0], ToneMap::LinearToSrgb( 0.1f - offset ), ToneMap::LinearToSrgb( 0.2f - offset ), ToneMap::LinearToSrgb( 0.3f - offset ), 1.0f );
-    }
-
     SECTION( "PbrNeutral compresses bright input" )
     {
         // Peak above startCompression: output is compressed below the input
@@ -186,6 +164,74 @@ TEST_CASE( "Tonemapper direct operators", "[tonemapper][operators]" )
             const auto cur = ToneMap::LinearToSrgb( x );
             REQUIRE( cur >= prev );
             prev = cur;
+        }
+    }
+}
+
+TEST_CASE( "Tonemapper known values", "[tonemapper][knownvalues]" )
+{
+    // Expected 8-bit outputs generated from VERIFIED reference implementations,
+    // NOT from this codebase:
+    //  - AgX / Golden / Punchy: https://github.com/bWFuanVzYWth/AgX/blob/main/agx.glsl
+    //  - PbrNeutral:            https://github.com/KhronosGroup/ToneMapping/blob/main/PBR_Neutral/pbrNeutral.glsl
+    // The AgX family matches the reference exactly; PbrNeutral may deviate by
+    // ±1 LSB due to the AVX512 approximate reciprocal/pow used in the SIMD path.
+
+    struct KnownCase
+    {
+        float r, g, b, a;
+        uint32_t agx, golden, punchy, pbr;
+    };
+
+    // 18 cases: blacks, dims, midtones, brights, and a diverse HDR spread
+    // (5..100000 with varied magnitudes, per-channel asymmetry, and alpha 0.25..1)
+    const std::vector<KnownCase> cases = {
+        { 0.0f,    0.0f,    0.0f,    1.0f,    0xFF000000, 0xFF000000, 0xFF020203, 0xFF000000 },
+        { 0.05f,   0.05f,   0.05f,   1.0f,    0xFF454649, 0xFF31515E, 0xFF232321, 0xFF212121 },
+        { 0.1f,    0.2f,    0.3f,    1.0f,    0xFF93816D, 0xFF5B8888, 0xFF7B5F35, 0xFF8B6F45 },
+        { 0.5f,    0.5f,    0.5f,    1.0f,    0xFFA6A6B8, 0xFF68A9C9, 0xFF898A93, 0xFFB4B4B4 },
+        { 1.0f,    0.0f,    0.0f,    1.0f,    0xFF4C4CDD, 0xFF385ED5, 0xFF1A19EB, 0xFF2121F1 },
+        { 1.0f,    1.0f,    1.0f,    1.0f,    0xFFBFC0D6, 0xFF75BEE4, 0xFFAAABBA, 0xFFEFEFEF },
+        { 2.0f,    3.0f,    4.0f,    0.5f,    0x7FE0DCEE, 0x7F86D5FB, 0x7FDAD2D9, 0x7FFDE8D1 },
+        { -1.0f,   -0.5f,   -2.0f,   1.0f,    0xFF000000, 0xFF000000, 0xFF020203, 0xFFFDFEFE },
+        { 100.0f,  100.0f,  100.0f,  1.0f,    0xFFECEDFF, 0xFF8DE3FF, 0xFFE9E9FF, 0xFFFEFEFE },
+        { 5.0f,    6.0f,    7.0f,    1.0f,    0xFFE6E5FF, 0xFF89DDFF, 0xFFE1DFF6, 0xFFFDF5EC },
+        { 8.0f,    10.0f,   12.0f,   0.5f,    0x7FEAEAFF, 0x7F8CE1FF, 0x7FE7E5FF, 0x7FFEF7EF },
+        { 20.0f,   30.0f,   40.0f,   1.0f,    0xFFECEDFF, 0xFF8DE3FF, 0xFFE9E9FF, 0xFFFEFAF6 },
+        { 50.0f,   100.0f,  150.0f,  0.25f,   0x3FECEDFF, 0x3F8DE3FF, 0x3FE9E9FF, 0x3FFEFDFB },
+        { 200.0f,  300.0f,  400.0f,  0.75f,   0xBFECEDFF, 0xBF8DE3FF, 0xBFE9E9FF, 0xBFFEFEFE },
+        { 1000.0f, 1000.0f, 1000.0f, 1.0f,    0xFFECEDFF, 0xFF8DE3FF, 0xFFE9E9FF, 0xFFFEFEFE },
+        { 10.0f,   0.5f,    0.25f,   1.0f,    0xFFBBC2FF, 0xFF75C2FF, 0xFF9DA9FF, 0xFFC8C9FE },
+        { 100.0f,  5.0f,    -2.0f,   1.0f,    0xFFE4EBFF, 0xFF89E2FF, 0xFFDAE7FF, 0xFFFAFAFE },
+        { 100000.0f, 100000.0f, 100000.0f, 1.0f,    0xFFECEDFF, 0xFF8DE3FF, 0xFFE9E9FF, 0xFFFEFEFE },
+    };
+
+    const ToneMap::Operator ops[4] = {
+        ToneMap::Operator::AgX,
+        ToneMap::Operator::AgXGolden,
+        ToneMap::Operator::AgXPunchy,
+        ToneMap::Operator::PbrNeutral,
+    };
+
+    for( const auto& c : cases )
+    {
+        const uint32_t expected[4] = { c.agx, c.golden, c.punchy, c.pbr };
+        float src[4] = { c.r, c.g, c.b, c.a };
+
+        for( int op = 0; op < 4; op++ )
+        {
+            uint32_t dst[1];
+            ToneMap::Process( ops[op], dst, src, 1 );
+
+            // Each 8-bit channel must match the verified reference within ±1 LSB
+            for( int ch = 0; ch < 4; ch++ )
+            {
+                const int shift = ch * 8;
+                const int actual = ( dst[0] >> shift ) & 0xFF;
+                const int ref = ( expected[op] >> shift ) & 0xFF;
+                REQUIRE( actual - ref >= -1 );
+                REQUIRE( actual - ref <= 1 );
+            }
         }
     }
 }

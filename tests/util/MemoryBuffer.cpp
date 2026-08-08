@@ -1,5 +1,6 @@
 #include "TestUtils.hpp"
 #include <catch2/catch_all.hpp>
+#include <errno.h>
 #include <fcntl.h>
 #include <src/util/DataBuffer.hpp>
 #include <src/util/MemoryBuffer.hpp>
@@ -155,6 +156,77 @@ TEST_CASE( "MemoryBuffer functionality", "[memorybuffer][buffer]" )
         REQUIRE( result[1] == 'i' );
         REQUIRE( result[2] == '\0' );
         REQUIRE( result[7] == 'e' );
+    }
+}
+
+TEST_CASE( "MemoryBuffer BorrowTag", "[memorybuffer][borrow]" )
+{
+    SECTION( "BorrowTag reads content and leaves fd open" )
+    {
+        const char* testContent = "borrowed content";
+        int fd = createTempFileWithContent( testContent, strlen( testContent ) );
+        REQUIRE( fd >= 0 );
+
+        MemoryBuffer memBuffer( fd, MemoryBuffer::Borrow );
+
+        // Content is read correctly
+        REQUIRE( memBuffer.data() != nullptr );
+        REQUIRE( memBuffer.size() == strlen( testContent ) );
+        REQUIRE( memcmp( memBuffer.data(), testContent, strlen( testContent ) ) == 0 );
+
+        // fd must remain open: reading from it again succeeds
+        char buf[32];
+        REQUIRE( lseek( fd, 0, SEEK_SET ) == 0 );
+        const auto n = read( fd, buf, sizeof( buf ) );
+        REQUIRE( n == static_cast<ssize_t>( strlen( testContent ) ) );
+        REQUIRE( memcmp( buf, testContent, n ) == 0 );
+
+        // and close succeeds, proving the buffer did not close it
+        REQUIRE( close( fd ) == 0 );
+    }
+
+    SECTION( "Owning constructor closes the fd" )
+    {
+        const char* testContent = "owning content";
+        int fd = createTempFileWithContent( testContent, strlen( testContent ) );
+        REQUIRE( fd >= 0 );
+
+        MemoryBuffer memBuffer( fd );
+
+        // Content is read correctly
+        REQUIRE( memBuffer.data() != nullptr );
+        REQUIRE( memBuffer.size() == strlen( testContent ) );
+        REQUIRE( memcmp( memBuffer.data(), testContent, strlen( testContent ) ) == 0 );
+
+        // fd must be closed: reading fails with EBADF
+        char buf[16];
+        errno = 0;
+        REQUIRE( read( fd, buf, sizeof( buf ) ) == -1 );
+        REQUIRE( errno == EBADF );
+
+        // close returns -1, confirming it was already closed
+        REQUIRE( close( fd ) == -1 );
+    }
+
+    SECTION( "BorrowTag with invalid fd produces an empty buffer" )
+    {
+        MemoryBuffer memBuffer( -1, MemoryBuffer::Borrow );
+
+        REQUIRE( memBuffer.data() == nullptr );
+        REQUIRE( memBuffer.size() == 0 );
+    }
+
+    SECTION( "BorrowTag with empty file produces an empty buffer and keeps fd open" )
+    {
+        int fd = createTempFileWithContent( nullptr, 0 );
+        REQUIRE( fd >= 0 );
+
+        MemoryBuffer memBuffer( fd, MemoryBuffer::Borrow );
+
+        REQUIRE( memBuffer.data() == nullptr );
+        REQUIRE( memBuffer.size() == 0 );
+
+        REQUIRE( close( fd ) == 0 );
     }
 }
 

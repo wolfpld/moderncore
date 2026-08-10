@@ -1,3 +1,5 @@
+#include <unistd.h>
+
 #include "WaylandOutput.hpp"
 #include "util/Invoke.hpp"
 #include "util/Logs.hpp"
@@ -132,6 +134,7 @@ void WaylandOutput::ColorDone( wp_image_description_info_v1* info )
 
 void WaylandOutput::ColorFile( wp_image_description_info_v1* info, int32_t icc, uint32_t size )
 {
+    close( icc );
 }
 
 void WaylandOutput::ColorPrimaries( wp_image_description_info_v1* info, int32_t rx, int32_t ry, int32_t gx, int32_t gy, int32_t bx, int32_t by, int32_t wx, int32_t wy )

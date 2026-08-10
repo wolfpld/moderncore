@@ -584,6 +584,11 @@ void Viewport::KeyDown( uint32_t key, int mods )
             }
 
             SaveImage( str.c_str(), type, tex, *m_device, m_td.get() );
+
+            std::lock_guard lock( m_lock );
+            m_origin = str.substr( str.find_last_of( '/' ) + 1 );
+            m_updateTitle = true;
+            WantRender();
         }
     }
     else if( key == KEY_F )

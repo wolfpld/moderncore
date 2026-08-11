@@ -129,6 +129,16 @@ void WaylandKeyboard::Modifiers( wl_keyboard* kbd, uint32_t serial, uint32_t mod
 
 void WaylandKeyboard::RepeatInfo( wl_keyboard* kbd, int32_t rate, int32_t delay )
 {
+    CheckPanic( rate >= 0 && delay >= 0, "Invalid repeat info" );
+    if( rate == 0 )
+    {
+        m_repeatPeriod = 0;
+    }
+    else
+    {
+        m_repeatPeriod = 1.f / rate;
+        m_repeatDelay = delay / 1000.f;
+    }
 }
 
 xkb_keysym_t WaylandKeyboard::Compose( const xkb_keysym_t sym )

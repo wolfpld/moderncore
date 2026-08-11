@@ -43,4 +43,7 @@ private:
     xkb_mod_index_t m_ctrl, m_alt, m_shift, m_super;
 
     int m_modState = 0;
+
+    float m_repeatPeriod = 0;
+    float m_repeatDelay = 0;
 };

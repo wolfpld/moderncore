@@ -6,7 +6,7 @@
 #include "util/Panic.hpp"
 
 template<typename T>
-static inline T* RegistryBindImpl( wl_registry* reg, uint32_t name, const char* interfaceName, const wl_interface* interface, uint32_t version, uint32_t versionMin = 1, uint32_t versionMax = 1 )
+static inline T* RegistryBindImpl( wl_registry* reg, uint32_t name, const char* interfaceName, const wl_interface* interface, uint32_t& version, uint32_t versionMin = 1, uint32_t versionMax = 1 )
 {
     CheckPanic( version >= versionMin, "Wayland interface %s version %u is too old (minimum required is %u)", interfaceName, version, versionMin );
     if( version > versionMax )

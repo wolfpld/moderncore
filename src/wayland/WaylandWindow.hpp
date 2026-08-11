@@ -28,6 +28,7 @@ class VlkInstance;
 class VlkSemaphore;
 enum class WaylandCursor;
 class WaylandDisplay;
+enum class WaylandKeyState;
 struct WaylandScroll;
 
 class WaylandWindow : public GarbageChute
@@ -54,7 +55,7 @@ public:
         void (*OnClipboard)( void* ptr, const unordered_flat_set<std::string>& mimeTypes );
         void (*OnDrag)( void* ptr, const unordered_flat_set<std::string>& mimeTypes );
         void (*OnDrop)( void* ptr, int fd, const char* mime );
-        void (*OnKeyEvent)( void* ptr, uint32_t key, int mods, bool pressed );
+        void (*OnKeyEvent)( void* ptr, uint32_t key, int mods, WaylandKeyState state );
         void (*OnCharacter)( void* ptr, const char* character );
         void (*OnMouseEnter)( void* ptr, float x, float y );
         void (*OnMouseLeave)( void* ptr );
@@ -133,7 +134,7 @@ private:
     void InvokeClipboard( const unordered_flat_set<std::string>& mimeTypes );
     void InvokeDrag( const unordered_flat_set<std::string>& mimeTypes );
     void InvokeDrop( int fd, const char* mime );
-    void InvokeKeyEvent( uint32_t key, int mods, bool pressed );
+    void InvokeKeyEvent( uint32_t key, int mods, WaylandKeyState state );
     void InvokeCharacter( const char* character );
     void InvokeMouseEnter( float x, float y );
     void InvokeMouseLeave();

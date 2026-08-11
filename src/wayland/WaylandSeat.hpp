@@ -16,6 +16,7 @@ enum class WaylandCursor;
 class WaylandDataOffer;
 class WaylandDisplay;
 class WaylandKeyboard;
+enum class WaylandKeyState;
 struct WaylandScroll;
 class WaylandPointer;
 class WaylandWindow;
@@ -52,7 +53,7 @@ public:
 
 private:
     void KeyboardLeave( wl_surface* surf );
-    void KeyEvent( wl_surface* surf, uint32_t key, int mods, bool pressed );
+    void KeyEvent( wl_surface* surf, uint32_t key, int mods, WaylandKeyState state );
     void CharacterEntered( wl_surface* surf, const char* character );
 
     void PointerEntered( wl_surface* surf, wl_fixed_t x, wl_fixed_t y );

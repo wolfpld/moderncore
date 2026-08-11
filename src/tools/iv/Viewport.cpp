@@ -518,15 +518,19 @@ static void SaveImage( const char* path, ImageType type, const std::shared_ptr<T
     bmp->SavePng( path );
 }
 
-void Viewport::KeyEvent( uint32_t key, int mods, bool pressed )
+void Viewport::KeyEvent( uint32_t key, int mods, WaylandKeyState state )
 {
-    if( pressed )
+    switch( state )
     {
-        KeyDown( key, mods );
-    }
-    else
-    {
+    case WaylandKeyState::Release:
         KeyUp( key, mods );
+        break;
+    case WaylandKeyState::Press:
+        KeyDown( key, mods );
+        break;
+    case WaylandKeyState::Repeat:
+        KeyRepeat( key, mods );
+        break;
     }
 }
 
@@ -702,6 +706,10 @@ void Viewport::KeyDown( uint32_t key, int mods )
 }
 
 void Viewport::KeyUp( uint32_t key, int mods )
+{
+}
+
+void Viewport::KeyRepeat( uint32_t key, int mods )
 {
 }
 

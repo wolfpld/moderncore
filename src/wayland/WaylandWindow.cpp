@@ -537,9 +537,9 @@ void WaylandWindow::InvokeDrop( int fd, const char* mime )
     Invoke( OnDrop, fd, mime );
 }
 
-void WaylandWindow::InvokeKeyEvent( uint32_t key, int mods, bool pressed )
+void WaylandWindow::InvokeKeyEvent( uint32_t key, int mods, WaylandKeyState state )
 {
-    Invoke( OnKeyEvent, key, mods, pressed );
+    Invoke( OnKeyEvent, key, mods, state );
 }
 
 void WaylandWindow::InvokeCharacter( const char* character )

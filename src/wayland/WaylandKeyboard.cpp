@@ -94,13 +94,19 @@ void WaylandKeyboard::Key( wl_keyboard* kbd, uint32_t serial, uint32_t time, uin
 {
     m_seat.SetInputSerial( serial );
 
-    if( state == WL_KEYBOARD_KEY_STATE_PRESSED )
+    switch( state )
     {
-        m_seat.KeyEvent( m_activeWindow, key, m_modState, true );
-    }
-    else if( state == WL_KEYBOARD_KEY_STATE_RELEASED )
-    {
-        m_seat.KeyEvent( m_activeWindow, key, m_modState, false );
+    case WL_KEYBOARD_KEY_STATE_RELEASED:
+        m_seat.KeyEvent( m_activeWindow, key, m_modState, WaylandKeyState::Release );
+        return;
+    case WL_KEYBOARD_KEY_STATE_PRESSED:
+        m_seat.KeyEvent( m_activeWindow, key, m_modState, WaylandKeyState::Press );
+        break;
+    case WL_KEYBOARD_KEY_STATE_REPEATED:
+        m_seat.KeyEvent( m_activeWindow, key, m_modState, WaylandKeyState::Repeat );
+        break;
+    default:
+        CheckPanic( false, "Unknown key state" );
         return;
     }
 

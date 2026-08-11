@@ -21,6 +21,7 @@ class Texture;
 class VlkDevice;
 class VlkInstance;
 class WaylandDisplay;
+enum class WaylandKeyState;
 struct WaylandScroll;
 class WaylandWindow;
 
@@ -49,7 +50,7 @@ private:
     void Clipboard( const unordered_flat_set<std::string>& mimeTypes );
     void Drag( const unordered_flat_set<std::string>& mimeTypes );
     void Drop( int fd, const char* mime );
-    void KeyEvent( uint32_t key, int mods, bool pressed );
+    void KeyEvent( uint32_t key, int mods, WaylandKeyState state );
     void MouseEnter( float x, float y );
     void MouseLeave();
     void MouseMove( float x, float y );
@@ -58,6 +59,7 @@ private:
 
     void KeyDown( uint32_t key, int mods );
     void KeyUp( uint32_t key, int mods );
+    void KeyRepeat( uint32_t key, int mods );
 
     void SetMousePointer();
 

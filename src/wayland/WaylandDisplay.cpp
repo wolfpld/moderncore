@@ -1,3 +1,5 @@
+#include <errno.h>
+#include <poll.h>
 #include <string.h>
 #include <tracy/Tracy.hpp>
 
@@ -60,7 +62,36 @@ void WaylandDisplay::Roundtrip()
 
 void WaylandDisplay::Run()
 {
-    while( m_keepRunning && wl_display_dispatch( m_dpy ) != -1 ) {}
+    pollfd fd = {
+        .fd = wl_display_get_fd( m_dpy ),
+        .events = POLLIN
+    };
+
+    while( m_keepRunning )
+    {
+        while( wl_display_prepare_read( m_dpy ) != 0 ) if( wl_display_dispatch_pending( m_dpy ) == -1 ) return;
+        wl_display_flush( m_dpy );
+
+        if( poll( &fd, 1, -1 ) < 0 )
+        {
+            const auto err = errno;
+            wl_display_cancel_read( m_dpy );
+            if( err == EINTR ) continue;
+            return;
+        }
+
+        if( fd.revents & POLLIN )
+        {
+            if( wl_display_read_events( m_dpy ) == -1 ) return;
+        }
+        else
+        {
+            wl_display_cancel_read( m_dpy );
+            if( fd.revents & ( POLLERR | POLLHUP | POLLNVAL ) ) return;
+        }
+
+        if( wl_display_dispatch_pending( m_dpy ) == -1 ) return;
+    }
 }
 
 void WaylandDisplay::RegistryGlobalShim( wl_registry* reg, uint32_t name, const char* interface, uint32_t version )

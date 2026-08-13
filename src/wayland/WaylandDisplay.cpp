@@ -70,7 +70,24 @@ void WaylandDisplay::Run()
     while( m_keepRunning )
     {
         while( wl_display_prepare_read( m_dpy ) != 0 ) if( wl_display_dispatch_pending( m_dpy ) == -1 ) return;
-        wl_display_flush( m_dpy );
+        for(;;)
+        {
+            if( wl_display_flush( m_dpy ) >= 0 ) break;
+            if( errno == EINTR ) continue;
+            if( errno != EAGAIN ) break;
+            pollfd wfd = { .fd = fd.fd, .events = POLLOUT };
+            if( poll( &wfd, 1, -1 ) < 0 )
+            {
+                if( errno == EINTR ) continue;
+                wl_display_cancel_read( m_dpy );
+                return;
+            }
+            if( wfd.revents & ( POLLERR | POLLHUP | POLLNVAL ) )
+            {
+                wl_display_cancel_read( m_dpy );
+                return;
+            }
+        }
 
         if( poll( &fd, 1, -1 ) < 0 )
         {

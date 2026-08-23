@@ -60,6 +60,8 @@ private:
     void XdgWmPing( xdg_wm_base* shell, uint32_t serial );
     void IconManagerSize( xdg_toplevel_icon_manager_v1* manager, int32_t size );
 
+    void LogFatal( uint32_t revents = 0 );
+
     wl_display* m_dpy = nullptr;
     wl_compositor* m_compositor = nullptr;
     wl_shm* m_shm = nullptr;

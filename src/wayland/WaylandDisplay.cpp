@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <inttypes.h>
 #include <poll.h>
 #include <string.h>
 #include <sys/eventfd.h>
@@ -72,6 +73,30 @@ void WaylandDisplay::Stop()
     eventfd_write( m_wakeupFd, 1 );
 }
 
+void WaylandDisplay::LogFatal( uint32_t revents )
+{
+    const auto err = wl_display_get_error( m_dpy );
+    const struct wl_interface* iface = nullptr;
+    uint32_t id = 0;
+    const auto code = wl_display_get_protocol_error( m_dpy, &iface, &id );
+    if( iface )
+    {
+        mclog( LogLevel::Error, "Wayland protocol error on %s #%" PRIu32 " (code %" PRIu32 ")", iface->name, id, code );
+    }
+    else if( err == EPIPE || ( revents & ( POLLERR | POLLHUP ) ) )
+    {
+        mclog( LogLevel::Error, "Wayland compositor disconnected" );
+    }
+    else if( err )
+    {
+        mclog( LogLevel::Error, "Wayland display error: %s", strerror( err ) );
+    }
+    else if( revents & POLLNVAL )
+    {
+        mclog( LogLevel::Error, "Wayland file descriptor is invalid" );
+    }
+}
+
 void WaylandDisplay::Run()
 {
     pollfd fds[2] = {
@@ -81,7 +106,14 @@ void WaylandDisplay::Run()
 
     while( m_keepRunning )
     {
-        while( wl_display_prepare_read( m_dpy ) != 0 ) if( wl_display_dispatch_pending( m_dpy ) == -1 ) return;
+        while( wl_display_prepare_read( m_dpy ) != 0 )
+        {
+            if( wl_display_dispatch_pending( m_dpy ) == -1 )
+            {
+                LogFatal();
+                return;
+            }
+        }
         for(;;)
         {
             if( wl_display_flush( m_dpy ) >= 0 ) break;
@@ -89,6 +121,7 @@ void WaylandDisplay::Run()
             if( errno != EAGAIN ) break;
             if( wl_display_get_error( m_dpy ) != 0 )
             {
+                LogFatal();
                 wl_display_cancel_read( m_dpy );
                 return;
             }
@@ -99,11 +132,13 @@ void WaylandDisplay::Run()
             if( poll( wfds, 2, -1 ) < 0 )
             {
                 if( errno == EINTR ) continue;
+                mclog( LogLevel::Error, "poll() failed: %s", strerror( errno ) );
                 wl_display_cancel_read( m_dpy );
                 return;
             }
             if( wfds[0].revents & ( POLLERR | POLLHUP | POLLNVAL ) )
             {
+                LogFatal( wfds[0].revents );
                 wl_display_cancel_read( m_dpy );
                 return;
             }
@@ -119,20 +154,33 @@ void WaylandDisplay::Run()
             const auto err = errno;
             wl_display_cancel_read( m_dpy );
             if( err == EINTR ) continue;
+            mclog( LogLevel::Error, "poll() failed: %s", strerror( err ) );
             return;
         }
 
         if( fds[0].revents & POLLIN )
         {
-            if( wl_display_read_events( m_dpy ) == -1 ) return;
+            if( wl_display_read_events( m_dpy ) == -1 )
+            {
+                LogFatal();
+                return;
+            }
         }
         else
         {
             wl_display_cancel_read( m_dpy );
-            if( fds[0].revents & ( POLLERR | POLLHUP | POLLNVAL ) ) return;
+            if( fds[0].revents & ( POLLERR | POLLHUP | POLLNVAL ) )
+            {
+                LogFatal( fds[0].revents );
+                return;
+            }
         }
 
-        if( wl_display_dispatch_pending( m_dpy ) == -1 ) return;
+        if( wl_display_dispatch_pending( m_dpy ) == -1 )
+        {
+            LogFatal();
+            return;
+        }
         if( fds[1].revents & POLLIN ) return;
     }
 }

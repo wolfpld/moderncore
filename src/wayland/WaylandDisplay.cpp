@@ -75,6 +75,11 @@ void WaylandDisplay::Run()
             if( wl_display_flush( m_dpy ) >= 0 ) break;
             if( errno == EINTR ) continue;
             if( errno != EAGAIN ) break;
+            if( wl_display_get_error( m_dpy ) != 0 )
+            {
+                wl_display_cancel_read( m_dpy );
+                return;
+            }
             pollfd wfd = { .fd = fd.fd, .events = POLLOUT };
             if( poll( &wfd, 1, -1 ) < 0 )
             {

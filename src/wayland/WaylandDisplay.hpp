@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <memory>
 #include <vector>
 #include <wayland-client.h>
@@ -30,7 +31,7 @@ public:
     void Roundtrip();
 
     void Run();
-    void Stop() { m_keepRunning = false; }
+    void Stop();
 
     [[nodiscard]] wl_display* Display() { return m_dpy; }
     [[nodiscard]] wl_compositor* Compositor() { return m_compositor; }
@@ -74,7 +75,8 @@ private:
     wp_color_manager_v1* m_colorManager = nullptr;
     wp_pointer_warp_v1* m_pointerWarp = nullptr;
 
-    bool m_keepRunning = true;
+    int m_wakeupFd = -1;
+    std::atomic<bool> m_keepRunning = true;
 
     std::vector<int32_t> m_iconSizes;
     std::vector<std::shared_ptr<WaylandOutput>> m_outputs;

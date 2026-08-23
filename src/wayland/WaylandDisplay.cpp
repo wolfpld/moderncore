@@ -1,6 +1,8 @@
 #include <errno.h>
 #include <poll.h>
 #include <string.h>
+#include <sys/eventfd.h>
+#include <unistd.h>
 #include <tracy/Tracy.hpp>
 
 #include "WaylandDisplay.hpp"
@@ -13,6 +15,9 @@
 WaylandDisplay::WaylandDisplay()
 {
     ZoneScoped;
+
+    m_wakeupFd = eventfd( 0, EFD_NONBLOCK | EFD_CLOEXEC );
+    CheckPanic( m_wakeupFd != -1, "Failed to create wakeup eventfd" );
 
     m_dpy = wl_display_connect( nullptr );
     CheckPanic( m_dpy, "Failed to connect to Wayland display" );
@@ -53,6 +58,7 @@ WaylandDisplay::~WaylandDisplay()
     if( m_shm ) wl_shm_destroy( m_shm );
     if( m_compositor ) wl_compositor_destroy( m_compositor );
     if( m_dpy ) wl_display_disconnect( m_dpy );
+    close( m_wakeupFd );
 }
 
 void WaylandDisplay::Roundtrip()
@@ -60,11 +66,17 @@ void WaylandDisplay::Roundtrip()
     wl_display_roundtrip( m_dpy );
 }
 
+void WaylandDisplay::Stop()
+{
+    m_keepRunning = false;
+    eventfd_write( m_wakeupFd, 1 );
+}
+
 void WaylandDisplay::Run()
 {
-    pollfd fd = {
-        .fd = wl_display_get_fd( m_dpy ),
-        .events = POLLIN
+    pollfd fds[2] = {
+        { .fd = wl_display_get_fd( m_dpy ), .events = POLLIN },
+        { .fd = m_wakeupFd, .events = POLLIN }
     };
 
     while( m_keepRunning )
@@ -80,21 +92,29 @@ void WaylandDisplay::Run()
                 wl_display_cancel_read( m_dpy );
                 return;
             }
-            pollfd wfd = { .fd = fd.fd, .events = POLLOUT };
-            if( poll( &wfd, 1, -1 ) < 0 )
+            pollfd wfds[2] = {
+                { .fd = fds[0].fd, .events = POLLOUT },
+                { .fd = fds[1].fd, .events = POLLIN }
+            };
+            if( poll( wfds, 2, -1 ) < 0 )
             {
                 if( errno == EINTR ) continue;
                 wl_display_cancel_read( m_dpy );
                 return;
             }
-            if( wfd.revents & ( POLLERR | POLLHUP | POLLNVAL ) )
+            if( wfds[0].revents & ( POLLERR | POLLHUP | POLLNVAL ) )
+            {
+                wl_display_cancel_read( m_dpy );
+                return;
+            }
+            if( wfds[1].revents & POLLIN )
             {
                 wl_display_cancel_read( m_dpy );
                 return;
             }
         }
 
-        if( poll( &fd, 1, -1 ) < 0 )
+        if( poll( fds, 2, -1 ) < 0 )
         {
             const auto err = errno;
             wl_display_cancel_read( m_dpy );
@@ -102,17 +122,18 @@ void WaylandDisplay::Run()
             return;
         }
 
-        if( fd.revents & POLLIN )
+        if( fds[0].revents & POLLIN )
         {
             if( wl_display_read_events( m_dpy ) == -1 ) return;
         }
         else
         {
             wl_display_cancel_read( m_dpy );
-            if( fd.revents & ( POLLERR | POLLHUP | POLLNVAL ) ) return;
+            if( fds[0].revents & ( POLLERR | POLLHUP | POLLNVAL ) ) return;
         }
 
         if( wl_display_dispatch_pending( m_dpy ) == -1 ) return;
+        if( fds[1].revents & POLLIN ) return;
     }
 }
 

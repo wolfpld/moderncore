@@ -379,8 +379,9 @@ void WaylandSeat::DrainDnd()
 
 WaylandWindow* WaylandSeat::GetFocusedWindow() const
 {
+    if( !m_keyboard ) return nullptr;
     auto kbdFocus = m_keyboard->ActiveWindow();
-    CheckPanic( kbdFocus, "No keyboard focus!" );
+    if( !kbdFocus ) return nullptr;
     return GetWindow( kbdFocus );
 }
 

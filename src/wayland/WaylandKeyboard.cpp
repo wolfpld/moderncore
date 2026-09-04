@@ -92,7 +92,7 @@ void WaylandKeyboard::Enter( wl_keyboard* kbd, uint32_t serial, wl_surface* surf
 
 void WaylandKeyboard::Leave( wl_keyboard* kbd, uint32_t serial, wl_surface* surf )
 {
-    CheckPanic( m_activeWindow == surf, "Unknown window left!" );
+    if( m_activeWindow != surf ) return;
     m_seat.KeyboardLeave( surf );
     m_activeWindow = nullptr;
 }

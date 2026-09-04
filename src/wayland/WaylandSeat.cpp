@@ -176,6 +176,10 @@ void WaylandSeat::SetClipboard( const char* const* mime, size_t count, const Way
     }
 }
 
+void WaylandSeat::KeyboardEnter( wl_surface* surf )
+{
+}
+
 void WaylandSeat::KeyboardLeave( wl_surface* surf )
 {
     if( m_selectionOffer )

@@ -52,6 +52,7 @@ public:
     void SetClipboard( const char* const* mime, size_t count, const WaylandDataSource::Listener* listener, void* listenerPtr );
 
 private:
+    void KeyboardEnter( wl_surface* surf );
     void KeyboardLeave( wl_surface* surf );
     void KeyEvent( wl_surface* surf, uint32_t key, int mods, WaylandKeyState state );
     void CharacterEntered( wl_surface* surf, const char* character );

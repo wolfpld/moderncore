@@ -79,6 +79,12 @@ void WaylandSeat::RemoveWindow( WaylandWindow* window )
     CheckPanic( m_cursorMap.contains( surface ), "Window not added!" );
     m_cursorMap.erase( surface );
     if( m_dndSurface == surface ) DrainDnd();
+
+    if( m_keyboard && m_keyboard->ActiveWindow() == surface )
+    {
+        m_keyboard->ManualLeave( surface );
+        m_selectionOffer.reset();
+    }
 }
 
 WaylandCursor WaylandSeat::GetCursor( wl_surface* window )

@@ -34,6 +34,12 @@ WaylandKeyboard::~WaylandKeyboard()
     wl_keyboard_destroy( m_keyboard );
 }
 
+void WaylandKeyboard::ManualLeave( wl_surface* surf )
+{
+    CheckPanic( m_activeWindow == surf, "Leaving invalid window!" );
+    m_activeWindow = nullptr;
+}
+
 void WaylandKeyboard::Keymap( wl_keyboard* kbd, uint32_t format, int32_t fd, uint32_t size )
 {
     if( format != WL_KEYBOARD_KEYMAP_FORMAT_XKB_V1 )

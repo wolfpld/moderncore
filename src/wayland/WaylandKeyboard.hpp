@@ -19,6 +19,8 @@ public:
 
     [[nodiscard]] wl_surface* ActiveWindow() const { return m_activeWindow; }
 
+    void ManualLeave( wl_surface* surf );
+
 private:
     wl_keyboard* m_keyboard;
     WaylandSeat& m_seat;

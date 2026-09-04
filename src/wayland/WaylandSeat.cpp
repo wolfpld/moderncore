@@ -341,6 +341,7 @@ void WaylandSeat::DataDrop( wl_data_device* dev )
 
 void WaylandSeat::DataSelection( wl_data_device* dev, wl_data_offer* offer )
 {
+    auto window = GetFocusedWindow();
     if( offer )
     {
         CheckPanic( *m_nextOffer == offer, "Offer mismatch!" );
@@ -348,13 +349,13 @@ void WaylandSeat::DataSelection( wl_data_device* dev, wl_data_offer* offer )
         m_nextOffer.reset();
 
         mclog( LogLevel::Debug, "Data selection offer with %zu mime types", m_selectionOffer->MimeTypes().size() );
-        GetFocusedWindow()->InvokeClipboard( m_selectionOffer->MimeTypes() );
+        if( window ) window->InvokeClipboard( m_selectionOffer->MimeTypes() );
     }
     else
     {
         mclog( LogLevel::Debug, "Data selection clear" );
         m_selectionOffer.reset();
-        GetFocusedWindow()->InvokeClipboard( {} );
+        if( window ) window->InvokeClipboard( {} );
     }
 }
 

@@ -33,6 +33,7 @@ private:
     void RepeatInfo( wl_keyboard* kbd, int32_t rate, int32_t delay );
 
     xkb_keysym_t Compose( const xkb_keysym_t sym );
+    void ApplyModifiers();
 
     wl_surface* m_activeWindow = nullptr;
 
@@ -45,6 +46,11 @@ private:
     xkb_mod_index_t m_ctrl, m_alt, m_shift, m_super;
 
     int m_modState = 0;
+
+    uint32_t m_modsDepressed = 0;
+    uint32_t m_modsLatched = 0;
+    uint32_t m_modsLocked = 0;
+    uint32_t m_group = 0;
 
     float m_repeatPeriod = 0;
     float m_repeatDelay = 0;

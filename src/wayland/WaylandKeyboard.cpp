@@ -131,7 +131,18 @@ void WaylandKeyboard::Key( wl_keyboard* kbd, uint32_t serial, uint32_t time, uin
 
 void WaylandKeyboard::Modifiers( wl_keyboard* kbd, uint32_t serial, uint32_t mods_depressed, uint32_t mods_latched, uint32_t mods_locked, uint32_t group )
 {
-    xkb_state_update_mask( m_state, mods_depressed, mods_latched, mods_locked, 0, 0, group );
+    m_modsDepressed = mods_depressed;
+    m_modsLatched = mods_latched;
+    m_modsLocked = mods_locked;
+    m_group = group;
+
+    if( m_state ) ApplyModifiers();
+}
+
+void WaylandKeyboard::ApplyModifiers()
+{
+    CheckPanic( m_state, "No keymap available!" );
+    xkb_state_update_mask( m_state, m_modsDepressed, m_modsLatched, m_modsLocked, 0, 0, m_group );
 
     m_modState = 0;
     if( xkb_state_mod_index_is_active( m_state, m_ctrl, XKB_STATE_MODS_EFFECTIVE ) ) m_modState |= CtrlBit;

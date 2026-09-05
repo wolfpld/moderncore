@@ -581,7 +581,7 @@ void WaylandWindow::ResumeIfIdle()
         if( !idle ) return;
     }
 
-    wl_surface_commit( m_surface );
+    Commit();
 }
 
 void WaylandWindow::SetClipboard( const char* const* mime, size_t count, const WaylandDataSource::Listener* listener, void* listenerPtr )
@@ -722,7 +722,7 @@ void WaylandWindow::XdgSurfaceConfigure( struct xdg_surface *xdg_surface, uint32
     {
         Update();
         Invoke( OnRender );
-        wl_surface_commit( m_surface );
+        Commit();
         m_idle.store( false, std::memory_order_release );
     }
 }

@@ -74,6 +74,7 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu, b
     ZoneScoped;
 
     NFD_Init();
+    NFD_SetWaylandDisplay( display.Display() );
 
     static constexpr WaylandWindow::Listener listener = {
         .OnClose = Method( Close ),
@@ -564,6 +565,10 @@ void Viewport::KeyDown( uint32_t key, int mods )
         nfdsavedialogu8args_t args = {
             .filterList = filters.data(),
             .filterCount = (nfdfiltersize_t)filters.size(),
+            .parentWindow = {
+                .type = NFD_WINDOW_HANDLE_TYPE_WAYLAND,
+                .handle = m_window->Surface()
+            }
         };
 
         nfdu8char_t* path;

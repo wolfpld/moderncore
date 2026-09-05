@@ -81,6 +81,8 @@ void WaylandKeyboard::Keymap( wl_keyboard* kbd, uint32_t format, int32_t fd, uin
     m_alt = xkb_keymap_mod_get_index( m_keymap, XKB_MOD_NAME_ALT );
     m_shift = xkb_keymap_mod_get_index( m_keymap, XKB_MOD_NAME_SHIFT );
     m_super = xkb_keymap_mod_get_index( m_keymap, XKB_MOD_NAME_LOGO );
+
+    ApplyModifiers();
 }
 
 void WaylandKeyboard::Enter( wl_keyboard* kbd, uint32_t serial, wl_surface* surf, wl_array* keys )

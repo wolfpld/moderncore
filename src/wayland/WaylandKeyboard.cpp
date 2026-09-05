@@ -119,6 +119,7 @@ void WaylandKeyboard::Key( wl_keyboard* kbd, uint32_t serial, uint32_t time, uin
         return;
     }
 
+    if( !m_state ) return;
     const xkb_keysym_t* keysyms;
     if( xkb_state_key_get_syms( m_state, key + 8, &keysyms ) == 1 )
     {

@@ -208,6 +208,7 @@ private:
     bool m_fullscreen = false;
 
     std::atomic<bool> m_idle;
+    std::atomic<bool> m_needCommit;
     std::atomic<WaylandCursor> m_cursor;
 
     std::string m_title;

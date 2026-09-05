@@ -36,6 +36,7 @@ WaylandWindow::WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance )
     , m_extent {}
     , m_bounds {}
     , m_idle( false )
+    , m_needCommit( false )
     , m_cursor( WaylandCursor::Default )
 {
     ZoneScoped;
@@ -518,8 +519,15 @@ void WaylandWindow::InvokeRender()
     wl_callback_add_listener( cb, &listener, this );
 
     CheckPanic( !m_idle.load( std::memory_order_acquire ), "Window is rendering, but is idle?" );
-    const auto idle = !InvokeRet( OnRender, false );
-    if( idle ) m_idle.store( true, std::memory_order_release );
+    const bool didRender = InvokeRet( OnRender, false );
+    if( didRender )
+    {
+        m_needCommit.store( false, std::memory_order_release );
+    }
+    else
+    {
+        m_idle.store( true, std::memory_order_release );
+    }
 }
 
 void WaylandWindow::InvokeClipboard( const unordered_flat_set<std::string>& mimeTypes )
@@ -718,12 +726,19 @@ void WaylandWindow::XdgSurfaceConfigure( struct xdg_surface *xdg_surface, uint32
     xdg_surface_ack_configure( xdg_surface, serial );
     if( !m_vkSurface ) m_vkSurface = std::make_shared<VlkSurface>( m_vkInstance, m_display.Display(), m_surface );
 
-    if( m_extent.width != 0 && m_idle.load( std::memory_order_acquire ) )
+    if( m_extent.width == 0 ) return;
+
+    if( m_idle.load( std::memory_order_acquire ) )
     {
         Update();
         Invoke( OnRender );
         Commit();
+        m_needCommit.store( false, std::memory_order_release );
         m_idle.store( false, std::memory_order_release );
+    }
+    else
+    {
+        m_needCommit.store( true, std::memory_order_release );
     }
 }
 
@@ -785,4 +800,10 @@ void WaylandWindow::FrameDone( struct wl_callback* cb, uint32_t time )
 {
     wl_callback_destroy( cb );
     InvokeRender();
+
+    if( m_needCommit.exchange( false, std::memory_order_acq_rel ) )
+    {
+        m_idle.store( false, std::memory_order_release );
+        Commit();
+    }
 }

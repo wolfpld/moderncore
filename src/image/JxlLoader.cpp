@@ -1,3 +1,4 @@
+#include <jxl/cms.h>
 #include <jxl/cms_interface.h>
 #include <jxl/color_encoding.h>
 #include <jxl/decode.h>
@@ -201,8 +202,11 @@ bool JxlLoader::Open()
             JxlDecoderGetBasicInfo( m_dec, &m_info );
             JxlResizableParallelRunnerSetThreads( m_runner, JxlResizableParallelRunnerSuggestThreads( m_info.xsize, m_info.ysize ) );
 
+            const auto def = JxlGetDefaultCms();
             const JxlCmsInterface cmsInterface
             {
+                .set_fields_data = def->set_fields_data,
+                .set_fields_from_icc = def->set_fields_from_icc,
                 .init_data = &m_cms,
                 .init = CmsInit,
                 .get_src_buf = CmsGetSrcBuffer,

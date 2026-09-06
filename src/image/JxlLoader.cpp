@@ -103,6 +103,17 @@ float* CmsGetDstBuffer( void* data, size_t thread )
 JXL_BOOL CmsRun( void* data, size_t thread, const float* input, float* output, size_t num_pixels )
 {
     auto cms = (JxlLoader::CmsData*)data;
+    if( !cms->transform ) return false;
+
+    // libjxl passes CMYK as 0 = max ink, 1 = no ink; lcms float CMYK is 0 = no ink, 100 = max ink.
+    if( cms->profileIn && cmsGetColorSpace( cms->profileIn ) == cmsSigCmykData )
+    {
+        auto src = const_cast<float*>( input );    // buffer allocated in CmsInit
+        for( size_t i=0; i<num_pixels * 4; i++ )
+        {
+            src[i] = 100.f - 100.f * src[i];
+        }
+    }
     cmsDoTransform( cms->transform, input, output, num_pixels );
     return true;
 }

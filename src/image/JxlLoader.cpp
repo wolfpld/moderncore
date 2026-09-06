@@ -40,7 +40,8 @@ constexpr JxlColorEncoding bt2020 = {
 
 void* CmsInit( void* data, size_t num_threads, size_t pixels_per_thread, const JxlColorProfile* input_profile, const JxlColorProfile* output_profile, float intensity_target )
 {
-    auto cms = (JxlLoader::CmsData*)data;
+    auto cms = new JxlLoader::CmsData();
+    cms->transform = nullptr;
 
     cms->srcBuf.resize( num_threads );
     cms->dstBuf.resize( num_threads );
@@ -87,6 +88,7 @@ void CmsDestroy( void* data )
 
     for( auto& buf : cms->srcBuf ) delete[] buf;
     for( auto& buf : cms->dstBuf ) delete[] buf;
+    delete cms;
 }
 }
 
@@ -207,7 +209,6 @@ bool JxlLoader::Open()
             {
                 .set_fields_data = def->set_fields_data,
                 .set_fields_from_icc = def->set_fields_from_icc,
-                .init_data = &m_cms,
                 .init = CmsInit,
                 .get_src_buf = CmsGetSrcBuffer,
                 .get_dst_buf = CmsGetDstBuffer,

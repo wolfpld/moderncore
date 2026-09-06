@@ -38,23 +38,52 @@ constexpr JxlColorEncoding bt2020 = {
     .rendering_intent = JXL_RENDERING_INTENT_PERCEPTUAL
 };
 
+static cmsUInt32Number CmsTypeFor( cmsHPROFILE p )
+{
+    switch( cmsGetColorSpace( p ) )
+    {
+    case cmsSigGrayData: return TYPE_GRAY_FLT;
+    case cmsSigRgbData:  return TYPE_RGB_FLT;
+    case cmsSigCmykData: return TYPE_CMYK_FLT;
+    default: return 0;
+    }
+}
+
 void* CmsInit( void* data, size_t num_threads, size_t pixels_per_thread, const JxlColorProfile* input_profile, const JxlColorProfile* output_profile, float intensity_target )
 {
     auto cms = new JxlLoader::CmsData();
     cms->transform = nullptr;
 
-    cms->srcBuf.resize( num_threads );
-    cms->dstBuf.resize( num_threads );
-
-    for( size_t i=0; i<num_threads; i++ )
-    {
-        cms->srcBuf[i] = new float[pixels_per_thread * 3];
-        cms->dstBuf[i] = new float[pixels_per_thread * 3];
-    }
-
     cms->profileIn = cmsOpenProfileFromMem( input_profile->icc.data, input_profile->icc.size );
     cms->profileOut = cmsOpenProfileFromMem( output_profile->icc.data, output_profile->icc.size );
-    cms->transform = cmsCreateTransform( cms->profileIn, TYPE_RGB_FLT, cms->profileOut, TYPE_RGB_FLT, INTENT_PERCEPTUAL, 0 );
+    const auto typeIn = cms->profileIn ? CmsTypeFor( cms->profileIn ) : 0;
+    const auto typeOut = cms->profileOut ? CmsTypeFor( cms->profileOut ) : 0;
+    if( !typeIn || !typeOut )
+    {
+        if( cms->profileIn ) cmsCloseProfile( cms->profileIn );
+        if( cms->profileOut ) cmsCloseProfile( cms->profileOut );
+        delete cms;
+        return nullptr;
+    }
+    const auto intent = cmsUInt32Number( output_profile->color_encoding.rendering_intent );
+    const uint32_t flags = cmsFLAGS_NOCACHE | cmsFLAGS_BLACKPOINTCOMPENSATION | cmsFLAGS_HIGHRESPRECALC;
+    cms->transform = cmsCreateTransform( cms->profileIn, typeIn, cms->profileOut, typeOut, intent, flags );
+    if( !cms->transform )
+    {
+        cmsCloseProfile( cms->profileIn );
+        cmsCloseProfile( cms->profileOut );
+        delete cms;
+        return nullptr;
+    }
+
+    const size_t chIn = T_CHANNELS( typeIn ), chOut = T_CHANNELS( typeOut );
+    cms->srcBuf.resize( num_threads );
+    cms->dstBuf.resize( num_threads );
+    for( size_t i=0; i<num_threads; i++ )
+    {
+        cms->srcBuf[i] = new float[pixels_per_thread * chIn];
+        cms->dstBuf[i] = new float[pixels_per_thread * chOut];
+    }
 
     return cms;
 }

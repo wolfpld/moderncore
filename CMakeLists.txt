@@ -641,5 +641,10 @@ if(BUILD_TESTS)
     )
 
     include(Catch)
-    catch_discover_tests(mcoreutil_tests)
+    if(COVERAGE)
+        catch_discover_tests(mcoreutil_tests
+            PROPERTIES ENVIRONMENT "LLVM_PROFILE_FILE=${COVERAGE_DIR}/mcoreutil_tests.%p.profraw")
+    else()
+        catch_discover_tests(mcoreutil_tests)
+    endif()
 endif()

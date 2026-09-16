@@ -1,5 +1,8 @@
 {
-    "coverage-gutters.coverageFileNames": [
-        "build-coverage/coverage.lcov"
+    "cmake.useCMakePresets": "always",
+    "cmake.preRunCoverageTarget": "coverage-reset",
+    "cmake.postRunCoverageTarget": "coverage-export",
+    "cmake.coverageInfoFiles": [
+        "${command:cmake.buildDirectory}/coverage.lcov"
     ]
 }

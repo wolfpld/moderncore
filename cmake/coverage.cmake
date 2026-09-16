@@ -51,3 +51,18 @@ add_custom_target(coverage-clean
     COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/default.profraw
     COMMENT "Cleaning coverage files"
 )
+
+add_custom_target(coverage-reset
+    COMMAND ${CMAKE_COMMAND} -E rm -rf ${COVERAGE_DIR}
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${COVERAGE_DIR}
+    COMMENT "Resetting coverage data"
+)
+
+add_custom_target(coverage-export
+    COMMAND ${LLVM_PROFDATA} merge -sparse ${COVERAGE_DIR}/*.profraw -o ${COVERAGE_PROFRAW}
+    COMMAND ${LLVM_COV} export -format=lcov $<TARGET_FILE:mcoreutil_tests>
+            -instr-profile=${COVERAGE_PROFRAW}
+            -ignore-filename-regex="tests/.*|contrib/.*|build.*/.*|\.cache/.*|/usr/.*"
+            > ${COVERAGE_LCOV}
+    COMMENT "Exporting coverage.lcov from latest test run"
+)

@@ -123,6 +123,7 @@ void CloseTerminal()
 std::string QueryTerminal( const char* query )
 {
     CheckPanic( s_writeFd >= 0, "Terminal not open" );
+    tcflush( s_writeFd, TCIFLUSH );
 
     const auto sz = strlen( query );
     if( write( s_writeFd, query, sz ) != sz ) return {};

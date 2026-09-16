@@ -1,5 +1,6 @@
 {
     "cmake.useCMakePresets": "always",
+    "cmake.ctest.allowParallelJobs": true,
     "cmake.preRunCoverageTarget": "coverage-reset",
     "cmake.postRunCoverageTarget": "coverage-export",
     "cmake.coverageInfoFiles": [

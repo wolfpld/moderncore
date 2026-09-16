@@ -24,7 +24,7 @@ set(COVERAGE_HTML ${CMAKE_BINARY_DIR}/coverage_html)
 add_custom_target(coverage-report
     COMMAND ${CMAKE_COMMAND} -E make_directory ${COVERAGE_DIR}
     COMMAND ${CMAKE_COMMAND} -E env LLVM_PROFILE_FILE=${COVERAGE_DIR}/%p.profraw
-            ${CMAKE_CTEST_COMMAND} --output-on-failure --test-dir ${CMAKE_BINARY_DIR}
+            ${CMAKE_CTEST_COMMAND} --output-on-failure --parallel --test-dir ${CMAKE_BINARY_DIR}
     COMMAND ${LLVM_PROFDATA} merge -sparse ${COVERAGE_DIR}/*.profraw -o ${COVERAGE_PROFRAW}
     COMMAND ${CMAKE_COMMAND} -E rm -f ${COVERAGE_DIR}/*.profraw
     COMMAND ${LLVM_COV} report $<TARGET_FILE:mcoreutil_tests>

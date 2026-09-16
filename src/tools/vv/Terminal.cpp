@@ -2,6 +2,7 @@
 #include <fcntl.h>
 #include <poll.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <termios.h>
 #include <unistd.h>
 
@@ -23,6 +24,40 @@ static void ResetFds()
     s_termFd = s_readFd = s_writeFd = -1;
 }
 
+static bool PickInheritedFds()
+{
+    int writeFd = -1;
+    for( auto fd : { STDOUT_FILENO, STDERR_FILENO } )
+    {
+        if( isatty( fd ) )
+        {
+            writeFd = fd;
+            break;
+        }
+    }
+    if( writeFd < 0 ) return false;
+
+    struct stat wst;
+    if( fstat( writeFd, &wst ) != 0 ) return false;
+
+    for( auto fd : termFileNo )
+    {
+        if( !isatty( fd ) ) continue;
+
+        struct stat rst;
+        if( fstat( fd, &rst ) != 0 || rst.st_rdev != wst.st_rdev ) continue;
+
+        const int acc = fcntl( fd, F_GETFL );
+        if( acc != -1 && ( acc & O_ACCMODE ) != O_WRONLY )
+        {
+            s_readFd = fd;
+            s_writeFd = writeFd;
+            return true;
+        }
+    }
+    return false;
+}
+
 bool OpenTerminal()
 {
     CheckPanic( s_readFd < 0, "Terminal already open" );
@@ -39,13 +74,24 @@ bool OpenTerminal()
                 {
                     mclog( LogLevel::Info, "Opened terminal: %s", name );
                     s_termFd = fd;
-                    s_readFd = s_writeFd = fd;
                     break;
                 }
             }
         }
     }
-    if( s_termFd < 0 ) return false;
+
+    if( s_termFd >= 0 )
+    {
+        s_readFd = s_writeFd = s_termFd;
+    }
+    else if( PickInheritedFds() )
+    {
+        mclog( LogLevel::Info, "Terminal not re-openable, using inherited fds: read %d, write %d", s_readFd, s_writeFd );
+    }
+    else
+    {
+        return false;
+    }
 
     if( tcgetattr( s_writeFd, &s_termSave ) != 0 )
     {

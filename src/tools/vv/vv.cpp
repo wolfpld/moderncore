@@ -580,6 +580,11 @@ int main( int argc, char** argv )
         }
     }
 
+    mclog( LogLevel::Info, "Graphics mode: %s",
+        gfxMode == GfxMode::Kitty ? "kitty" :
+        gfxMode == GfxMode::Sixel ? "sixel" :
+        gfxMode == GfxMode::Block ? "block" : "file" );
+
     imageThread.join();
     if( !bitmap && !anim && !vectorImage )
     {

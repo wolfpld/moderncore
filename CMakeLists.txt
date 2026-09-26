@@ -68,7 +68,7 @@ if(BUILD_IV)
     CPMAddPackage(
         NAME vma
         GITHUB_REPOSITORY GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
-        GIT_TAG v3.3.0
+        GIT_TAG v3.4.0
         EXCLUDE_FROM_ALL TRUE
     )
 

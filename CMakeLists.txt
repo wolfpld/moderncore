@@ -176,7 +176,7 @@ add_custom_command(
 function(EmbedShader LIST NAME FILE)
     add_custom_command(
         OUTPUT _tmp/${NAME}.spv
-        COMMAND ${GLSLC} -MD -MF _tmp/${NAME}.spv.d --target-env=vulkan1.3 -O -o _tmp/${NAME}.spv ${CMAKE_CURRENT_LIST_DIR}/${FILE}
+        COMMAND ${GLSLC} -MD -MF _tmp/${NAME}.spv.d --target-env=vulkan1.4 -O -o _tmp/${NAME}.spv ${CMAKE_CURRENT_LIST_DIR}/${FILE}
         DEPENDS _tmp ${GLSLC} ${CMAKE_CURRENT_LIST_DIR}/${FILE}
         DEPFILE _tmp/${NAME}.spv.d
     )

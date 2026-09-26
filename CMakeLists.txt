@@ -48,7 +48,7 @@ CPMAddPackage(
 CPMAddPackage(
     NAME stb
     GITHUB_REPOSITORY nothings/stb
-    GIT_TAG f1c79c02822848a9bed4315b12c8c8f3761e1296
+    GIT_TAG 2c980bb59875b0d32144a71867fbdebb2f77cd20
     DOWNLOAD_ONLY TRUE
 )
 

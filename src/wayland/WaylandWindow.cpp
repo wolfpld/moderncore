@@ -29,6 +29,15 @@
 #include "wayland/WaylandCursor.hpp"
 #include "wayland/WaylandOutput.hpp"
 
+struct WaylandWindow::FrameData
+{
+    std::shared_ptr<VlkCommandBuffer> commandBuffer;
+    std::shared_ptr<VlkSemaphore> imageAvailable;
+    std::shared_ptr<VlkSemaphore> renderFinished;
+    std::shared_ptr<VlkFence> renderFence;
+    std::shared_ptr<VlkFence> presentFence;
+};
+
 WaylandWindow::WaylandWindow( WaylandDisplay& display, VlkInstance& vkInstance )
     : m_display( display )
     , m_vkInstance( vkInstance )

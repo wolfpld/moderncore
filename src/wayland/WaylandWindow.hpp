@@ -25,7 +25,6 @@ class VlkCommandBuffer;
 class VlkDevice;
 class VlkFence;
 class VlkInstance;
-class VlkSemaphore;
 enum class WaylandCursor;
 class WaylandDisplay;
 enum class WaylandKeyState;
@@ -35,14 +34,7 @@ class WaylandWindow : public GarbageChute
 {
     friend class WaylandSeat;
 
-    struct FrameData
-    {
-        std::shared_ptr<VlkCommandBuffer> commandBuffer;
-        std::shared_ptr<VlkSemaphore> imageAvailable;
-        std::shared_ptr<VlkSemaphore> renderFinished;
-        std::shared_ptr<VlkFence> renderFence;
-        std::shared_ptr<VlkFence> presentFence;
-    };
+    struct FrameData;
 
 public:
     struct Listener

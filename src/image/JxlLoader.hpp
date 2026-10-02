@@ -4,7 +4,6 @@
 #include <jxl/decode.h>
 #include <memory>
 #include <stdint.h>
-#include <vector>
 
 #include "ImageLoader.hpp"
 #include "util/NoCopy.hpp"
@@ -13,22 +12,10 @@ class Bitmap;
 class BitmapHdr;
 class FileBuffer;
 class FileWrapper;
-typedef void* cmsHPROFILE;
-typedef void* cmsHTRANSFORM;
 
 class JxlLoader : public ImageLoader
 {
 public:
-    struct CmsData
-    {
-        std::vector<float*> srcBuf;
-        std::vector<float*> dstBuf;
-
-        cmsHPROFILE profileIn;
-        cmsHPROFILE profileOut;
-        cmsHTRANSFORM transform;
-    };
-
     explicit JxlLoader( std::shared_ptr<FileWrapper> file );
     ~JxlLoader() override;
     NoCopy( JxlLoader );

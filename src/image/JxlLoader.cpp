@@ -4,6 +4,7 @@
 #include <jxl/decode.h>
 #include <jxl/resizable_parallel_runner.h>
 #include <lcms2.h>
+#include <vector>
 
 #include "JxlLoader.hpp"
 #include "util/Bitmap.hpp"
@@ -14,6 +15,16 @@
 
 namespace
 {
+struct CmsData
+{
+    std::vector<float*> srcBuf;
+    std::vector<float*> dstBuf;
+
+    cmsHPROFILE profileIn;
+    cmsHPROFILE profileOut;
+    cmsHTRANSFORM transform;
+};
+
 constexpr JxlColorEncoding srgb = {
     .color_space = JXL_COLOR_SPACE_RGB,
     .white_point = JXL_WHITE_POINT_D65,
@@ -51,7 +62,7 @@ static cmsUInt32Number CmsTypeFor( cmsHPROFILE p )
 
 void* CmsInit( void* data, size_t num_threads, size_t pixels_per_thread, const JxlColorProfile* input_profile, const JxlColorProfile* output_profile, float intensity_target )
 {
-    auto cms = new JxlLoader::CmsData();
+    auto cms = new CmsData();
     cms->transform = nullptr;
 
     cms->profileIn = cmsOpenProfileFromMem( input_profile->icc.data, input_profile->icc.size );
@@ -90,19 +101,19 @@ void* CmsInit( void* data, size_t num_threads, size_t pixels_per_thread, const J
 
 float* CmsGetSrcBuffer( void* data, size_t thread )
 {
-    auto cms = (JxlLoader::CmsData*)data;
+    auto cms = (CmsData*)data;
     return cms->srcBuf[thread];
 }
 
 float* CmsGetDstBuffer( void* data, size_t thread )
 {
-    auto cms = (JxlLoader::CmsData*)data;
+    auto cms = (CmsData*)data;
     return cms->dstBuf[thread];
 }
 
 JXL_BOOL CmsRun( void* data, size_t thread, const float* input, float* output, size_t num_pixels )
 {
-    auto cms = (JxlLoader::CmsData*)data;
+    auto cms = (CmsData*)data;
     if( !cms->transform ) return false;
 
     // libjxl passes CMYK as 0 = max ink, 1 = no ink; lcms float CMYK is 0 = no ink, 100 = max ink.
@@ -120,7 +131,7 @@ JXL_BOOL CmsRun( void* data, size_t thread, const float* input, float* output, s
 
 void CmsDestroy( void* data )
 {
-    auto cms = (JxlLoader::CmsData*)data;
+    auto cms = (CmsData*)data;
 
     cmsDeleteTransform( cms->transform );
     cmsCloseProfile( cms->profileOut );

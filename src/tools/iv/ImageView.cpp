@@ -31,6 +31,12 @@
 #include "shader/TexturingAlphaPqFrag.hpp"
 #include "shader/TexturingVert.hpp"
 
+struct ImageView::Vertex
+{
+    float x, y;
+    float u, v;
+};
+
 struct PushConstant
 {
     float screenSize[2];

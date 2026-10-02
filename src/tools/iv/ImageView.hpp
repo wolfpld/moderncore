@@ -25,11 +25,7 @@ class VlkShader;
 // Must be externally synchronized.
 class ImageView
 {
-    struct Vertex
-    {
-        float x, y;
-        float u, v;
-    };
+    struct Vertex;
 
     enum class FitMode
     {

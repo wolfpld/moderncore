@@ -357,6 +357,7 @@ target_include_directories(mcorevulkan PUBLIC
 # mcorewayland
 
 set(MCOREWAYLAND_SRC
+    src/wayland/TimerRegistry.cpp
     src/wayland/WaylandDataOffer.cpp
     src/wayland/WaylandDataSource.cpp
     src/wayland/WaylandDisplay.cpp
@@ -364,6 +365,7 @@ set(MCOREWAYLAND_SRC
     src/wayland/WaylandOutput.cpp
     src/wayland/WaylandPointer.cpp
     src/wayland/WaylandSeat.cpp
+    src/wayland/WaylandTimer.cpp
     src/wayland/WaylandWindow.cpp
 )
 
@@ -651,5 +653,34 @@ if(BUILD_TESTS)
             PROPERTIES ENVIRONMENT "LLVM_PROFILE_FILE=${COVERAGE_DIR}/mcoreutil_tests.%p.profraw")
     else()
         catch_discover_tests(mcoreutil_tests)
+    endif()
+
+    # tests - mcorewayland
+    if(BUILD_IV)
+        set(WAYLAND_TESTS_SRC
+            tests/wayland/TimerRegistry.cpp
+        )
+        add_executable(mcorewayland_tests ${WAYLAND_TESTS_SRC})
+        target_link_libraries(mcorewayland_tests PRIVATE
+            Catch2::Catch2WithMain
+        )
+        if(NOT BUILD_SHARED_LIBS)
+            target_link_libraries(mcorewayland_tests PRIVATE
+                "$<LINK_LIBRARY:WHOLE_ARCHIVE,mcorewayland>"
+                "$<LINK_LIBRARY:WHOLE_ARCHIVE,mcoreutil>"
+            )
+        else()
+            target_link_libraries(mcorewayland_tests PRIVATE
+                mcorewayland
+                mcoreutil
+            )
+        endif()
+
+        if(COVERAGE)
+            catch_discover_tests(mcorewayland_tests
+                PROPERTIES ENVIRONMENT "LLVM_PROFILE_FILE=${COVERAGE_DIR}/mcorewayland_tests.%p.profraw")
+        else()
+            catch_discover_tests(mcorewayland_tests)
+        endif()
     endif()
 endif()

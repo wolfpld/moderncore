@@ -10,6 +10,17 @@
 #include "util/MemoryBuffer.hpp"
 #include "util/TaskDispatch.hpp"
 
+struct ImageProvider::Job
+{
+    int64_t id;
+    std::string path;
+    int fd;
+    bool hdr;
+    Callback callback;
+    void* userData;
+    Flags flags;
+};
+
 ImageProvider::ImageProvider( TaskDispatch& td )
     : m_shutdown( false )
     , m_currentJob( -1 )

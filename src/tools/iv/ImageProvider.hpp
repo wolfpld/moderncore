@@ -51,16 +51,7 @@ public:
     void CancelAll();
 
 private:
-    struct Job
-    {
-        int64_t id;
-        std::string path;
-        int fd;
-        bool hdr;
-        Callback callback;
-        void* userData;
-        Flags flags;
-    };
+    struct Job;
 
     void Worker();
 

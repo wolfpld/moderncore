@@ -6,6 +6,8 @@
 #include <wayland-client.h>
 
 #include "util/NoCopy.hpp"
+#include "TimerRegistry.hpp"
+#include "WaylandTimer.hpp"
 
 #include "wayland-color-management-client-protocol.h"
 #include "wayland-cursor-shape-client-protocol.h"
@@ -50,6 +52,9 @@ public:
     [[nodiscard]] WaylandSeat& Seat() { return *m_seat; }
     [[nodiscard]] const WaylandSeat& Seat() const { return *m_seat; }
 
+    [[nodiscard]] std::unique_ptr<WaylandTimer> AddTimer( uint32_t delayMs, TimerCallback cb );
+    [[nodiscard]] std::unique_ptr<WaylandTimer> AddRepeatingTimer( uint32_t intervalMs, TimerCallback cb );
+
 protected:
     void RegistryGlobal( wl_registry* reg, uint32_t name, const char* interface, uint32_t version );
     void RegistryGlobalRemove( wl_registry* reg, uint32_t name );
@@ -61,6 +66,8 @@ private:
     void IconManagerSize( xdg_toplevel_icon_manager_v1* manager, int32_t size );
 
     void LogFatal( uint32_t revents = 0 );
+
+    std::shared_ptr<TimerRegistry> m_timerRegistry = std::make_shared<TimerRegistry>();
 
     wl_display* m_dpy = nullptr;
     wl_compositor* m_compositor = nullptr;

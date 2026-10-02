@@ -10,6 +10,8 @@
 #include "WaylandOutput.hpp"
 #include "WaylandRegistry.hpp"
 #include "WaylandSeat.hpp"
+#include "WaylandTimer.hpp"
+#include "util/Clock.hpp"
 #include "util/Invoke.hpp"
 #include "util/Panic.hpp"
 
@@ -44,6 +46,7 @@ WaylandDisplay::WaylandDisplay()
 
 WaylandDisplay::~WaylandDisplay()
 {
+    m_timerRegistry->Shutdown();
     m_outputs.clear();
     m_seat.reset();
     if( m_pointerWarp ) wp_pointer_warp_v1_destroy( m_pointerWarp );
@@ -99,9 +102,10 @@ void WaylandDisplay::LogFatal( uint32_t revents )
 
 void WaylandDisplay::Run()
 {
-    pollfd fds[2] = {
+    pollfd fds[3] = {
         { .fd = wl_display_get_fd( m_dpy ), .events = POLLIN },
-        { .fd = m_wakeupFd, .events = POLLIN }
+        { .fd = m_wakeupFd, .events = POLLIN },
+        { .fd = m_timerRegistry->PollFd(), .events = POLLIN }
     };
 
     while( m_keepRunning )
@@ -125,11 +129,12 @@ void WaylandDisplay::Run()
                 wl_display_cancel_read( m_dpy );
                 return;
             }
-            pollfd wfds[2] = {
+            pollfd wfds[3] = {
                 { .fd = fds[0].fd, .events = POLLOUT },
-                { .fd = fds[1].fd, .events = POLLIN }
+                { .fd = fds[1].fd, .events = POLLIN },
+                { .fd = m_timerRegistry->PollFd(), .events = POLLIN }
             };
-            if( poll( wfds, 2, -1 ) < 0 )
+            if( poll( wfds, 3, m_timerRegistry->TimeoutMs( 1 ) ) < 0 )
             {
                 if( errno == EINTR ) continue;
                 mclog( LogLevel::Error, "poll() failed: %s", strerror( errno ) );
@@ -147,14 +152,32 @@ void WaylandDisplay::Run()
                 wl_display_cancel_read( m_dpy );
                 return;
             }
+            if( wfds[2].revents & ( POLLERR | POLLNVAL ) )
+            {
+                mclog( LogLevel::Error, "Timerfd poll error (revents %u)", static_cast<unsigned>( wfds[2].revents ) );
+                wl_display_cancel_read( m_dpy );
+                return;
+            }
+            if( wfds[2].revents & POLLIN )
+            {
+                // A timer is due. Don't handle it here: leave the flush loop so the
+                // bottom of the loop body can fire the callbacks and drain the fd.
+                break;
+            }
         }
 
-        if( poll( fds, 2, -1 ) < 0 )
+        if( poll( fds, 3, m_timerRegistry->TimeoutMs( 0 ) ) < 0 )
         {
             const auto err = errno;
             wl_display_cancel_read( m_dpy );
             if( err == EINTR ) continue;
             mclog( LogLevel::Error, "poll() failed: %s", strerror( err ) );
+            return;
+        }
+        if( fds[2].revents & ( POLLERR | POLLNVAL ) )
+        {
+            mclog( LogLevel::Error, "Timerfd poll error (revents %u)", static_cast<unsigned>( fds[2].revents ) );
+            wl_display_cancel_read( m_dpy );
             return;
         }
 
@@ -182,6 +205,13 @@ void WaylandDisplay::Run()
             return;
         }
         if( fds[1].revents & POLLIN ) return;
+
+        const uint64_t now = GetTimeMicro();
+        const auto expired = m_timerRegistry->Earliest();
+        if( ( expired && *expired <= now ) || ( fds[2].revents & POLLIN ) )
+        {
+            m_timerRegistry->FireDue( now, [this] { return m_keepRunning.load(); } );
+        }
     }
 }
 
@@ -287,4 +317,15 @@ void WaylandDisplay::XdgWmPing( xdg_wm_base* shell, uint32_t serial )
 void WaylandDisplay::IconManagerSize( xdg_toplevel_icon_manager_v1* manager, int32_t size )
 {
     m_iconSizes.emplace_back( size );
+}
+
+std::unique_ptr<WaylandTimer> WaylandDisplay::AddTimer( uint32_t delayMs, TimerCallback cb )
+{
+    return m_timerRegistry->Add( delayMs, 0, std::move( cb ) );
+}
+
+std::unique_ptr<WaylandTimer> WaylandDisplay::AddRepeatingTimer( uint32_t intervalMs, TimerCallback cb )
+{
+    CheckPanic( intervalMs > 0, "Repeating timer interval must be positive" );
+    return m_timerRegistry->Add( intervalMs, intervalMs, std::move( cb ) );
 }

@@ -210,6 +210,7 @@ set(MCOREUTIL_SRC
     src/util/Logs.cpp
     src/util/MemoryBuffer.cpp
     src/util/TaskDispatch.cpp
+    src/util/TimerQueue.cpp
     src/util/Tonemapper.cpp
     src/util/TonemapperAgx.cpp
     src/util/TonemapperPbr.cpp
@@ -621,6 +622,7 @@ if(BUILD_TESTS)
         tests/util/PixelBytes.cpp
         tests/util/RobinHood.cpp
         tests/util/TaskDispatch.cpp
+        tests/util/TimerQueue.cpp
         tests/util/Vector2.cpp
         tests/util/VectorImage.cpp
         tests/util/Tonemapper.cpp

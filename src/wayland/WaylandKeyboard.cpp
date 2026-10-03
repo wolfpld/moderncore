@@ -106,18 +106,24 @@ void WaylandKeyboard::Key( wl_keyboard* kbd, uint32_t serial, uint32_t time, uin
     switch( state )
     {
     case WL_KEYBOARD_KEY_STATE_RELEASED:
-        m_seat.KeyEvent( m_activeWindow, key, m_modState, WaylandKeyState::Release );
+        DeliverKey( key, WaylandKeyState::Release );
         return;
     case WL_KEYBOARD_KEY_STATE_PRESSED:
-        m_seat.KeyEvent( m_activeWindow, key, m_modState, WaylandKeyState::Press );
-        break;
+        DeliverKey( key, WaylandKeyState::Press );
+        return;
     case WL_KEYBOARD_KEY_STATE_REPEATED:
-        m_seat.KeyEvent( m_activeWindow, key, m_modState, WaylandKeyState::Repeat );
-        break;
+        DeliverKey( key, WaylandKeyState::Repeat );
+        return;
     default:
         CheckPanic( false, "Unknown key state" );
         return;
     }
+}
+
+void WaylandKeyboard::DeliverKey( uint32_t key, WaylandKeyState state )
+{
+    m_seat.KeyEvent( m_activeWindow, key, m_modState, state );
+    if( state == WaylandKeyState::Release ) return;
 
     if( !m_state ) return;
     const xkb_keysym_t* keysyms;

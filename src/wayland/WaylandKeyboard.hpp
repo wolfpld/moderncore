@@ -8,6 +8,7 @@
 class WaylandSeat;
 struct xkb_compose_table;
 struct xkb_compose_state;
+enum class WaylandKeyState;
 
 class WaylandKeyboard
 {
@@ -34,6 +35,8 @@ private:
 
     xkb_keysym_t Compose( const xkb_keysym_t sym );
     void ApplyModifiers();
+
+    void DeliverKey( uint32_t key, WaylandKeyState state );
 
     wl_surface* m_activeWindow = nullptr;
 

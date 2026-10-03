@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <xkbcommon/xkbcommon-compose.h>
 
+#include "WaylandDisplay.hpp"
 #include "WaylandKeyboard.hpp"
 #include "WaylandKeys.hpp"
 #include "WaylandSeat.hpp"
@@ -37,6 +38,7 @@ WaylandKeyboard::~WaylandKeyboard()
 void WaylandKeyboard::ManualLeave( wl_surface* surf )
 {
     CheckPanic( m_activeWindow == surf, "Leaving invalid window!" );
+    StopRepeat();
     m_activeWindow = nullptr;
 }
 
@@ -95,6 +97,7 @@ void WaylandKeyboard::Enter( wl_keyboard* kbd, uint32_t serial, wl_surface* surf
 void WaylandKeyboard::Leave( wl_keyboard* kbd, uint32_t serial, wl_surface* surf )
 {
     if( m_activeWindow != surf ) return;
+    StopRepeat();
     m_seat.KeyboardLeave( surf );
     m_activeWindow = nullptr;
 }
@@ -106,10 +109,12 @@ void WaylandKeyboard::Key( wl_keyboard* kbd, uint32_t serial, uint32_t time, uin
     switch( state )
     {
     case WL_KEYBOARD_KEY_STATE_RELEASED:
+        if( m_repeatKey == key ) StopRepeat();
         DeliverKey( key, WaylandKeyState::Release );
         return;
     case WL_KEYBOARD_KEY_STATE_PRESSED:
         DeliverKey( key, WaylandKeyState::Press );
+        ArmRepeat( key );
         return;
     case WL_KEYBOARD_KEY_STATE_REPEATED:
         DeliverKey( key, WaylandKeyState::Repeat );
@@ -136,6 +141,35 @@ void WaylandKeyboard::DeliverKey( uint32_t key, WaylandKeyState state )
             m_seat.CharacterEntered( m_activeWindow, txt );
         }
     }
+}
+
+void WaylandKeyboard::ArmRepeat( uint32_t key )
+{
+    if( m_repeatPeriod == 0 ) return;
+
+    StopRepeat();
+
+    if( !m_keymap || !xkb_keymap_key_repeats( m_keymap, key + 8 ) ) return;
+
+    m_repeatKey = key;
+    m_repeatTimer = m_seat.m_dpy.AddTimer( m_repeatDelay, [this] { RepeatFired(); } );
+}
+
+void WaylandKeyboard::StopRepeat()
+{
+    m_repeatTimer.reset();
+}
+
+void WaylandKeyboard::RepeatFired()
+{
+    if( !m_keymap || !xkb_keymap_key_repeats( m_keymap, m_repeatKey + 8 ) )
+    {
+        StopRepeat();
+        return;
+    }
+
+    m_repeatTimer->Reset( m_repeatPeriod );
+    DeliverKey( m_repeatKey, WaylandKeyState::Repeat );
 }
 
 void WaylandKeyboard::Modifiers( wl_keyboard* kbd, uint32_t serial, uint32_t mods_depressed, uint32_t mods_latched, uint32_t mods_locked, uint32_t group )
@@ -166,11 +200,13 @@ void WaylandKeyboard::RepeatInfo( wl_keyboard* kbd, int32_t rate, int32_t delay 
     if( rate == 0 )
     {
         m_repeatPeriod = 0;
+        StopRepeat();
     }
     else
     {
-        m_repeatPeriod = 1.f / rate;
-        m_repeatDelay = delay / 1000.f;
+        const uint32_t period = 1000u / static_cast<uint32_t>( rate );
+        m_repeatPeriod = period != 0 ? period : 1;
+        m_repeatDelay = static_cast<uint32_t>( delay );
     }
 }
 

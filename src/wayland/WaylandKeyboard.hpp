@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include <xkbcommon/xkbcommon.h>
 #include <wayland-client.h>
 
@@ -8,6 +10,8 @@
 class WaylandSeat;
 struct xkb_compose_table;
 struct xkb_compose_state;
+
+class WaylandTimer;
 enum class WaylandKeyState;
 
 class WaylandKeyboard
@@ -37,6 +41,9 @@ private:
     void ApplyModifiers();
 
     void DeliverKey( uint32_t key, WaylandKeyState state );
+    void ArmRepeat( uint32_t key );
+    void StopRepeat();
+    void RepeatFired();
 
     wl_surface* m_activeWindow = nullptr;
 
@@ -55,6 +62,8 @@ private:
     uint32_t m_modsLocked = 0;
     uint32_t m_group = 0;
 
-    float m_repeatPeriod = 0;
-    float m_repeatDelay = 0;
+    uint32_t m_repeatDelay = 0;
+    uint32_t m_repeatPeriod = 0;
+    uint32_t m_repeatKey = 0;
+    std::unique_ptr<WaylandTimer> m_repeatTimer;
 };

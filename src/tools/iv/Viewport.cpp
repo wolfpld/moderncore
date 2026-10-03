@@ -708,6 +708,14 @@ void Viewport::KeyUp( uint32_t key, int mods )
 
 void Viewport::KeyRepeat( uint32_t key, int mods )
 {
+    if( mods == 0 && key == KEY_RIGHT )
+    {
+        NextImage();
+    }
+    else if( mods == 0 && key == KEY_LEFT )
+    {
+        PrevImage();
+    }
 }
 
 void Viewport::NextImage()

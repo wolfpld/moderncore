@@ -61,6 +61,9 @@ private:
     void KeyUp( uint32_t key, int mods );
     void KeyRepeat( uint32_t key, int mods );
 
+    void NextImage();
+    void PrevImage();
+
     void SetMousePointer();
 
     bool SendClipboard( const char* mimeType, int32_t fd );

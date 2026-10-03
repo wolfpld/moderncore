@@ -684,19 +684,11 @@ void Viewport::KeyDown( uint32_t key, int mods )
     }
     else if( mods == 0 && key == KEY_RIGHT )
     {
-        if( m_fileList.size() > 1 )
-        {
-            m_fileIndex = ( m_fileIndex + 1 ) % m_fileList.size();
-            LoadImage( m_fileList[m_fileIndex].c_str(), false );
-        }
+        NextImage();
     }
     else if( mods == 0 && key == KEY_LEFT )
     {
-        if( m_fileList.size() > 1 )
-        {
-            m_fileIndex = ( m_fileIndex + m_fileList.size() - 1 ) % m_fileList.size();
-            LoadImage( m_fileList[m_fileIndex].c_str(), false );
-        }
+        PrevImage();
     }
     else if( mods == 0 && key == KEY_H )
     {
@@ -716,6 +708,24 @@ void Viewport::KeyUp( uint32_t key, int mods )
 
 void Viewport::KeyRepeat( uint32_t key, int mods )
 {
+}
+
+void Viewport::NextImage()
+{
+    if( m_fileList.size() > 1 )
+    {
+        m_fileIndex = ( m_fileIndex + 1 ) % m_fileList.size();
+        LoadImage( m_fileList[m_fileIndex].c_str(), false );
+    }
+}
+
+void Viewport::PrevImage()
+{
+    if( m_fileList.size() > 1 )
+    {
+        m_fileIndex = ( m_fileIndex + m_fileList.size() - 1 ) % m_fileList.size();
+        LoadImage( m_fileList[m_fileIndex].c_str(), false );
+    }
 }
 
 void Viewport::MouseEnter( float x, float y )

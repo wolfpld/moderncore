@@ -75,7 +75,7 @@ if(BUILD_IV)
     CPMAddPackage(
         NAME nfd
         GITHUB_REPOSITORY btzy/nativefiledialog-extended
-        GIT_TAG v1.4.0
+        GIT_TAG v1.4.1
         EXCLUDE_FROM_ALL TRUE
         PATCHES
             "${CMAKE_SOURCE_DIR}/cmake/nfd-xdg-foreign-v2.patch"

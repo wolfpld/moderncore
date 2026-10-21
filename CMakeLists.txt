@@ -48,7 +48,14 @@ CPMAddPackage(
 CPMAddPackage(
     NAME stb
     GITHUB_REPOSITORY nothings/stb
-    GIT_TAG 2c980bb59875b0d32144a71867fbdebb2f77cd20
+    GIT_TAG a7d4c2175630e1ea5b6f8dd00ab96fed0b97b96d
+    DOWNLOAD_ONLY TRUE
+)
+
+CPMAddPackage(
+    NAME stb_image_resize
+    GITHUB_REPOSITORY nothings/stb_image_resize
+    GIT_TAG 2768987dbd7119eb840104b7a3f96ff09d21a7b4
     DOWNLOAD_ONLY TRUE
 )
 
@@ -246,7 +253,7 @@ target_include_directories(mcoreutil PUBLIC
     ${EXR_INCLUDE_DIRS}
     ${LCMS_INCLUDE_DIRS}
     ${LZ4_INCLUDE_DIRS}
-    ${stb_SOURCE_DIR}
+    ${stb_image_resize_SOURCE_DIR}
     ${PNG_INCLUDE_DIRS}
 )
 if(APPLE)

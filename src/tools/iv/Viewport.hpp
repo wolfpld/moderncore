@@ -124,4 +124,5 @@ private:
     float m_viewScale;
 
     bool m_hdr;
+    bool m_nfdInit;
 };

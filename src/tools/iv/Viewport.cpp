@@ -73,8 +73,8 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu, b
 {
     ZoneScoped;
 
-    NFD_Init();
-    NFD_SetWaylandDisplay( display.Display() );
+    m_nfdInit = NFD_Init() == NFD_OKAY;
+    if( m_nfdInit ) NFD_SetWaylandDisplay( display.Display() );
 
     static constexpr WaylandWindow::Listener listener = {
         .OnClose = Method( Close ),
@@ -173,7 +173,7 @@ Viewport::~Viewport()
         }
     }
 
-    NFD_Quit();
+    if( m_nfdInit ) NFD_Quit();
 }
 
 void Viewport::LoadImage( const char* path, bool scanDirectory )
@@ -554,6 +554,8 @@ void Viewport::KeyDown( uint32_t key, int mods )
     }
     else if( mods & CtrlBit && key == KEY_S )
     {
+        if( !m_nfdInit ) return;
+
         auto tex = m_view->GetTexture();
         if( !tex ) return;
 

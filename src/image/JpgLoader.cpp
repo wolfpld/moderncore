@@ -29,6 +29,9 @@ JpgLoader::JpgLoader( std::shared_ptr<FileWrapper> file, TaskDispatch* td )
     , m_td( td )
     , m_cinfo( nullptr )
     , m_iccData( nullptr )
+    , m_cmyk( false )
+    , m_grayScale( false )
+    , m_gainMapOffset( -1 )
 {
     fseek( *m_file, 0, SEEK_SET );
     uint8_t hdr[2];

@@ -591,6 +591,17 @@ static void ApplyGainMapGray( float* dst, const float* sdr, const float* gm, siz
     td->Sync();
 }
 
+static void BuildGainMapLut( const Channel& ch, float* lut )
+{
+    if( ch.gamma == 1.f )
+    {
+        for( int i = 0; i < 256; i++ ) lut[i] = i / 255.f;
+        return;
+    }
+    const auto revGamma = 1.0f / ch.gamma;
+    for( int i = 0; i < 256; i++ ) lut[i] = powf( i / 255.f, revGamma );
+}
+
 static void ResizePlane( TaskDispatch* td, float*& plane, size_t inW, size_t inH, size_t outW, size_t outH )
 {
     auto data = PixelAlloc<float>( outW, outH, 1 );
@@ -870,15 +881,9 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
         auto plane = PixelAlloc<float>( gmW, gmH, 1 );
         auto dstP = plane;
         auto n = PixelCount( gmW, gmH );
-        if( ch[0].gamma == 1.f )
-        {
-            while( n-- > 0 ) *dstP++ = *src++ / 255.f;
-        }
-        else
-        {
-            const auto revGamma = 1.0f / ch[0].gamma;
-            while( n-- > 0 ) *dstP++ = powf( *src++ / 255.f, revGamma );
-        }
+        float lut[256];
+        BuildGainMapLut( ch[0], lut );
+        while( n-- > 0 ) *dstP++ = lut[*src++];
         delete[] gainMap;
 
         if( gmW != baseFloat->Width() || gmH != baseFloat->Height() )
@@ -904,30 +909,16 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
 
     auto dst = gmFloat->Data();
     auto sz = PixelCount( gmW, gmH );
-    if( ch[0].gamma == 1.f &&
-        ch[1].gamma == 1.f &&
-        ch[2].gamma == 1.f )
+    float luts[3][256];
+    BuildGainMapLut( ch[0], luts[0] );
+    BuildGainMapLut( ch[1], luts[1] );
+    BuildGainMapLut( ch[2], luts[2] );
+    while( sz-- > 0 )
     {
-        while( sz-- > 0 )
-        {
-            *dst++ = *src++ / 255.f;
-            *dst++ = *src++ / 255.f;
-            *dst++ = *src++ / 255.f;
-            *dst++ = 1.f;
-        }
-    }
-    else
-    {
-        const auto revGammaR = 1.0f / ch[0].gamma;
-        const auto revGammaG = 1.0f / ch[1].gamma;
-        const auto revGammaB = 1.0f / ch[2].gamma;
-        while( sz-- > 0 )
-        {
-            *dst++ = powf( *src++ / 255.f, revGammaR );
-            *dst++ = powf( *src++ / 255.f, revGammaG );
-            *dst++ = powf( *src++ / 255.f, revGammaB );
-            *dst++ = 1.f;
-        }
+        *dst++ = luts[0][*src++];
+        *dst++ = luts[1][*src++];
+        *dst++ = luts[2][*src++];
+        *dst++ = 1.f;
     }
     delete[] gainMap;
 

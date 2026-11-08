@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <string>
 #include <string.h>
+#include <string_view>
 
 #include "Callstack.hpp"
 #include "Logs.hpp"
@@ -16,16 +17,107 @@ static bool callstackShowExternal = false;
 
 #include "contrib/libbacktrace/backtrace.h"
 
-constexpr const char* TypesList[] = {
-    "bool ", "char ", "double ", "float ", "int ", "long ", "short ",
-    "signed ", "unsigned ", "void ", "wchar_t ", "size_t ", "int8_t ",
-    "int16_t ", "int32_t ", "int64_t ", "intptr_t ", "uint8_t ", "uint16_t ",
-    "uint32_t ", "uint64_t ", "ptrdiff_t ", nullptr
-};
-
 static bool IsPathExternal( const char* path )
 {
     return strncmp( path, "/usr/", 5 ) == 0 || strncmp( path, "/lib/", 5 ) == 0;
+}
+
+static bool IsOperatorBracket( std::string_view name, size_t i )
+{
+    size_t run = 0;
+    while( i > 0 && name[i-1] == '<' && run < 2 )
+    {
+        i--;
+        run++;
+    }
+    if( run > 1 ) return false;
+    if( i < 8 || name.substr( i-8, 8 ) != "operator" ) return false;
+    return i == 8 || name[i-9] == ' ' || name[i-9] == ':';
+}
+
+static std::string ShortenFunctionName( std::string_view name )
+{
+    std::string out;
+    out.reserve( name.size() );
+    for( size_t i = 0; i < name.size(); )
+    {
+        const char c = name[i];
+        if( c != '<' && c != '(' )
+        {
+            out += c;
+            i++;
+            continue;
+        }
+        if( c == '<' && IsOperatorBracket( name, i ) )
+        {
+            out += c;
+            i++;
+            continue;
+        }
+        const char close = c == '<' ? '>' : ')';
+        int depth = 0;
+        size_t j = i;
+        for( ; j < name.size(); j++ )
+        {
+            if( name[j] == c ) depth++;
+            else if( name[j] == close && --depth == 0 )
+            {
+                j++;
+                break;
+            }
+        }
+        out += c;
+        out += close;
+        i = j;
+    }
+    for(;;)
+    {
+        if( out.ends_with( " const" ) ) out.resize( out.size() - 6 );
+        else if( out.ends_with( " volatile" ) || out.ends_with( " noexcept" ) ) out.resize( out.size() - 9 );
+        else break;
+    }
+
+    const size_t params = out.rfind( '(' );
+    if( params != std::string::npos )
+    {
+        for( size_t p = out.rfind( "operator ", params ); p != std::string::npos;
+             p = p > 0 ? out.rfind( "operator ", p - 1 ) : std::string::npos )
+        {
+            if( p > 0 && out[p-1] != ' ' && out[p-1] != ':' ) continue;
+            const std::string_view tail( out.data() + p + 9, params - ( p + 9 ) );
+            if( !tail.starts_with( "new" ) && !tail.starts_with( "delete" ) && !tail.starts_with( "\"\"" ) )
+            {
+                return out;
+            }
+            break;
+        }
+    }
+    for( size_t params2 = out.rfind( '(' ); params2 != std::string::npos; )
+    {
+        size_t s = out.rfind( ' ', params2 );
+        bool erased = false;
+        while( s != std::string::npos )
+        {
+            const size_t prev = s > 0 ? out.rfind( ' ', s - 1 ) : std::string::npos;
+            const size_t wordStart = prev == std::string::npos ? 0 : prev + 1;
+            const std::string_view word( out.data() + wordStart, s - wordStart );
+            std::string_view stem = word;
+            while( !stem.empty() && strchr( "+-*/%^&|~!<>=[](){}\"", stem.back() ) ) stem.remove_suffix( 1 );
+            const bool operatorSpace = ( stem == "operator" ) ||
+                ( stem.size() > 8 && stem.ends_with( "operator" ) && stem[stem.size() - 9] == ':' );
+            if( !operatorSpace )
+            {
+                out.erase( 0, s + 1 );
+                erased = true;
+                break;
+            }
+            if( prev == std::string::npos ) break;
+            s = prev;
+        }
+        if( !erased ) break;
+        params2 = out.rfind( '(' );
+    }
+    return out;
 }
 
 static int CallstackCallback( void*, uintptr_t pc, const char* filename, int lineno, const char* function )
@@ -36,93 +128,12 @@ static int CallstackCallback( void*, uintptr_t pc, const char* filename, int lin
     if( function )
     {
         auto demangled = abi::__cxa_demangle( function, nullptr, nullptr, nullptr );
-        char* shortened = nullptr;
+        std::string shortened;
         if( demangled )
         {
-            const auto size = strlen( demangled );
-            shortened = (char*)malloc( size+1 );
-            auto tmp = (char*)malloc( size+1 );
-
-            auto dst = tmp;
-            auto ptr = demangled;
-            auto end = ptr + size;
-
-            int cnt = 0;
-            for(;;)
-            {
-                auto start = ptr;
-                while( ptr < end && *ptr != '<' ) ptr++;
-                memcpy( dst, start, ptr - start + 1 );
-                dst += ptr - start + 1;
-                if( ptr == end ) break;
-                cnt++;
-                ptr++;
-                while( cnt > 0 )
-                {
-                    if( ptr == end ) break;
-                    if( *ptr == '<' ) cnt++;
-                    else if( *ptr == '>' ) cnt--;
-                    ptr++;
-                }
-                *dst++ = '>';
-            }
-
-            end = dst-1;
-            ptr = tmp;
-            dst = shortened;
-            cnt = 0;
-            for(;;)
-            {
-                auto start = ptr;
-                while( ptr < end && *ptr != '(' ) ptr++;
-                memcpy( dst, start, ptr - start + 1 );
-                dst += ptr - start + 1;
-                if( ptr == end ) break;
-                cnt++;
-                ptr++;
-                while( cnt > 0 )
-                {
-                    if( ptr == end ) break;
-                    if( *ptr == '(' ) cnt++;
-                    else if( *ptr == ')' ) cnt--;
-                    ptr++;
-                }
-                *dst++ = ')';
-            }
-
-            end = dst-1;
-            if( end - shortened > 6 && memcmp( end-6, " const", 6 ) == 0 )
-            {
-                dst[-7] = '\0';
-            }
-
-            ptr = shortened;
-            for(;;)
-            {
-                auto match = TypesList;
-                while( *match )
-                {
-                    auto m = *match;
-                    auto p = ptr;
-                    while( *m )
-                    {
-                        if( *m != *p ) break;
-                        m++;
-                        p++;
-                    }
-                    if( !*m )
-                    {
-                        ptr = p;
-                        break;
-                    }
-                    match++;
-                }
-                if( !*match ) break;
-            }
-
-            free( tmp );
+            shortened = ShortenFunctionName( demangled );
         }
-        auto func = demangled ? shortened : function;
+        const char* func = demangled ? shortened.c_str() : function;
 
         if( filename )
         {
@@ -148,7 +159,6 @@ static int CallstackCallback( void*, uintptr_t pc, const char* filename, int lin
         }
 
         free( demangled );
-        free( shortened );
     }
     else if( filename )
     {

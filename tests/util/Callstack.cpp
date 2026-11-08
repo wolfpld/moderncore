@@ -181,3 +181,78 @@ TEST_CASE( "ShowExternalCallstacks toggles external frames", "[callstack][extern
         ShowExternalCallstacks( false );
     }
 }
+
+namespace
+{
+
+template<typename T>
+struct ShortenProbe
+{
+    static void inner( CallstackData& out )
+    {
+        GetCallstack( data );
+        out = data;
+    }
+
+    static unsigned int multiWord( CallstackData& out )
+    {
+        GetCallstack( data );
+        out = data;
+        return 0;
+    }
+};
+
+struct QualifierProbe
+{
+    void qualified( CallstackData& out ) const noexcept
+    {
+        GetCallstack( data );
+        out = data;
+    }
+};
+
+std::string findFrame( const std::vector<std::string>& frames, const std::string& needle )
+{
+    for( const auto& f : frames )
+    {
+        if( f.find( needle ) != std::string::npos ) return f;
+    }
+    return {};
+}
+
+}
+
+TEST_CASE( "Function names are shortened in frames", "[callstack][shorten]" )
+{
+    SECTION( "Templates and parameters collapse" )
+    {
+        CallstackData d;
+        ShortenProbe<int>::inner( d );
+        auto frame = findFrame( extractFrames( capturePrintCallstack( d, 0 ) ), "inner" );
+        if( frame.empty() ) SKIP( "symbol names unavailable" );
+        CHECK( frame.find( "ShortenProbe<>::inner()" ) != std::string::npos );
+        CHECK( frame.find( "CallstackData&" ) == std::string::npos );
+    }
+
+    SECTION( "Multi-word return types are stripped entirely" )
+    {
+        CallstackData d;
+        ShortenProbe<int>::multiWord( d );
+        auto frame = findFrame( extractFrames( capturePrintCallstack( d, 0 ) ), "multiWord" );
+        if( frame.empty() ) SKIP( "symbol names unavailable" );
+        CHECK( frame.find( "ShortenProbe<>::multiWord()" ) != std::string::npos );
+        CHECK( frame.find( "unsigned" ) == std::string::npos );
+    }
+
+    SECTION( "Trailing member qualifiers are trimmed" )
+    {
+        CallstackData d;
+        QualifierProbe probe;
+        probe.qualified( d );
+        auto frame = findFrame( extractFrames( capturePrintCallstack( d, 0 ) ), "qualified" );
+        if( frame.empty() ) SKIP( "symbol names unavailable" );
+        CHECK( frame.find( "QualifierProbe::qualified()" ) != std::string::npos );
+        CHECK( frame.find( "noexcept" ) == std::string::npos );
+        CHECK( frame.find( " const" ) == std::string::npos );
+    }
+}

@@ -439,17 +439,14 @@ static void ApplyGainMap( float* dst, const float* sdr, const float* gm, size_t 
 #endif
 }
 
-static void ScaleToRefWhite( BitmapHdr* bmp )
+static void SetOpaqueAlpha( BitmapHdr* bmp )
 {
     auto sz = PixelCount( bmp->Width(), bmp->Height() );
     auto ptr = bmp->Data();
     while( sz-- > 0 )
     {
-        // ITU-R BT.2408 reference white is 203 nits
-        *ptr++ *= 2.03f;
-        *ptr++ *= 2.03f;
-        *ptr++ *= 2.03f;
-        *ptr++ = 1.f;
+        ptr[3] = 1.f;
+        ptr += 4;
     }
 }
 
@@ -514,7 +511,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
 
     if( m_gainMapOffset < 0 )
     {
-        ScaleToRefWhite( baseFloat.get() );
+        SetOpaqueAlpha( baseFloat.get() );
         return baseFloat;
     }
 
@@ -530,7 +527,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
     {
         jpeg_destroy_decompress( &gcinfo );
         delete[] gainMap;
-        ScaleToRefWhite( baseFloat.get() );
+        SetOpaqueAlpha( baseFloat.get() );
         return baseFloat;
     }
 
@@ -612,7 +609,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
         {
             mclog( LogLevel::Warning, "JPEG: No XMP metadata found for gain map" );
             jpeg_destroy_decompress( &gcinfo );
-            ScaleToRefWhite( baseFloat.get() );
+            SetOpaqueAlpha( baseFloat.get() );
             return baseFloat;
         }
 
@@ -621,7 +618,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
         {
             mclog( LogLevel::Warning, "JPEG: No gain map metadata found in XMP" );
             jpeg_destroy_decompress( &gcinfo );
-            ScaleToRefWhite( baseFloat.get() );
+            SetOpaqueAlpha( baseFloat.get() );
             return baseFloat;
         }
 
@@ -652,7 +649,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
     {
         mclog( LogLevel::Warning, "JPEG: No gain map metadata found" );
         jpeg_destroy_decompress( &gcinfo );
-        ScaleToRefWhite( baseFloat.get() );
+        SetOpaqueAlpha( baseFloat.get() );
         return baseFloat;
     }
 
@@ -706,7 +703,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
             mclog( LogLevel::Warning, "JPEG: Unsupported gain map format, %d components", gmChannels );
             jpeg_destroy_decompress( &gcinfo );
             delete[] gainMap;
-            ScaleToRefWhite( baseFloat.get() );
+            SetOpaqueAlpha( baseFloat.get() );
             return baseFloat;
         }
         if( ch[0].gamma == 1.f &&

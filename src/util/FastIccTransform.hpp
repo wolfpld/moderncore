@@ -16,12 +16,12 @@ public:
     FastIccTransform( cmsHPROFILE profileIn, cmsHPROFILE profileOut );
     NoCopy( FastIccTransform );
 
-    explicit operator bool() const { return m_valid; }
-    void Run( TaskDispatch* td, const uint8_t* input, float* output, size_t pixels ) const;
+    bool Run( TaskDispatch* td, uint8_t* input, float* output, size_t pixels ) const;
+    bool RunFloat( TaskDispatch* td, const float* input, float* output, size_t pixels ) const;
+    bool RunHalf( TaskDispatch* td, uint16_t* data, size_t pixels ) const;
 
+    explicit operator bool() const { return m_valid; }
     bool SupportsFloat() const { return m_valid && m_linear; }
-    void RunFloat( TaskDispatch* td, const float* input, float* output, size_t pixels ) const;
-    void RunHalf( TaskDispatch* td, uint16_t* data, size_t pixels ) const;
 
 private:
     float m_lut[3][256];

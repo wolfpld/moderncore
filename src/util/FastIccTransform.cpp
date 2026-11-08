@@ -276,8 +276,10 @@ FastIccTransform::FastIccTransform( cmsHPROFILE profileIn, cmsHPROFILE profileOu
     m_valid = true;
 }
 
-void FastIccTransform::Run( TaskDispatch* td, const uint8_t* input, float* output, size_t pixels ) const
+bool FastIccTransform::Run( TaskDispatch* td, uint8_t* input, float* output, size_t pixels ) const
 {
+    if( !m_valid ) return false;
+
     if( !td )
     {
         FastShaperRange( input, output, pixels, m_lut, m_mat );
@@ -297,10 +299,13 @@ void FastIccTransform::Run( TaskDispatch* td, const uint8_t* input, float* outpu
         }
         td->Sync();
     }
+    return true;
 }
 
-void FastIccTransform::RunFloat( TaskDispatch* td, const float* input, float* output, size_t pixels ) const
+bool FastIccTransform::RunFloat( TaskDispatch* td, const float* input, float* output, size_t pixels ) const
 {
+    if( !SupportsFloat() ) return false;
+
     if( !td )
     {
         FloatRange( input, output, pixels, m_mat );
@@ -320,10 +325,13 @@ void FastIccTransform::RunFloat( TaskDispatch* td, const float* input, float* ou
         }
         td->Sync();
     }
+    return true;
 }
 
-void FastIccTransform::RunHalf( TaskDispatch* td, uint16_t* data, size_t pixels ) const
+bool FastIccTransform::RunHalf( TaskDispatch* td, uint16_t* data, size_t pixels ) const
 {
+    if( !SupportsFloat() ) return false;
+
     if( !td )
     {
         HalfRange( data, pixels, m_mat );
@@ -342,4 +350,5 @@ void FastIccTransform::RunHalf( TaskDispatch* td, uint16_t* data, size_t pixels 
         }
         td->Sync();
     }
+    return true;
 }

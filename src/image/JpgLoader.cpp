@@ -459,6 +459,165 @@ static void ApplyGainMap( float* dst, const float* sdr, const float* gm, size_t 
     td->Sync();
 }
 
+static void ApplyGainMapGrayChunk( float* dst, const float* sdr, const float* gm, size_t sz, const Channel* ch )
+{
+#if defined __SSE4_1__ && defined __FMA__
+    const float gainMapMin[4] = { ch[0].gainMapMin, ch[1].gainMapMin, ch[2].gainMapMin, 0 };
+    const float gainMapMax[4] = { ch[0].gainMapMax, ch[1].gainMapMax, ch[2].gainMapMax, 0 };
+    const float offsetSdr[4] = { ch[0].offsetSdr, ch[1].offsetSdr, ch[2].offsetSdr, 0 };
+    const float offsetHdr[4] = { ch[0].offsetHdr, ch[1].offsetHdr, ch[2].offsetHdr, 0 };
+
+    __m128 vGainMapMin = _mm_loadu_ps( gainMapMin );
+    __m128 vGainMapMax = _mm_loadu_ps( gainMapMax );
+    __m128 vOffsetSdr = _mm_loadu_ps( offsetSdr );
+    __m128 vOffsetHdr = _mm_loadu_ps( offsetHdr );
+
+#ifdef __AVX512F__
+    __m512 vGainMapMin512 = _mm512_broadcast_f32x4( vGainMapMin );
+    __m512 vGainMapMax512 = _mm512_broadcast_f32x4( vGainMapMax );
+    __m512 vOffsetSdr512 = _mm512_broadcast_f32x4( vOffsetSdr );
+    __m512 vOffsetHdr512 = _mm512_broadcast_f32x4( vOffsetHdr );
+    const __m512i laneSel = _mm512_setr_epi32( 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3 );
+
+    while( sz >= 4 )
+    {
+        __m512 vGm = _mm512_permutexvar_ps( laneSel, _mm512_castps128_ps512( _mm_loadu_ps( gm ) ) );
+        __m512 vGm1 = _mm512_sub_ps( _mm512_set1_ps( 1.f ), vGm );
+        __m512 vGm2 = _mm512_mul_ps( vGm, vGainMapMax512 );
+        __m512 logBoost = _mm512_fmadd_ps( vGm1, vGainMapMin512, vGm2 );
+        __m512 logBoostExp = _mm512_exp_ps( logBoost );
+
+        __m512 vSdr = _mm512_loadu_ps( sdr );
+        __m512 vSdr1 = _mm512_add_ps( vSdr, vOffsetSdr512 );
+        __m512 vHdr = _mm512_fmsub_ps( vSdr1, logBoostExp, vOffsetHdr512 );
+        __m512 vHdr1 = _mm512_mask_blend_ps( 0x8888, vHdr, _mm512_set1_ps( 1.f ) );
+
+        _mm512_storeu_ps( dst, _mm512_max_ps( vHdr1, _mm512_setzero_ps() ) );
+
+        dst += 16;
+        sdr += 16;
+        gm += 4;
+        sz -= 4;
+    }
+#endif
+
+#ifdef __AVX2__
+    __m256 vGainMapMin256 = _mm256_set_m128( vGainMapMin, vGainMapMin );
+    __m256 vGainMapMax256 = _mm256_set_m128( vGainMapMax, vGainMapMax );
+    __m256 vOffsetSdr256 = _mm256_set_m128( vOffsetSdr, vOffsetSdr );
+    __m256 vOffsetHdr256 = _mm256_set_m128( vOffsetHdr, vOffsetHdr );
+    const __m256i laneSel256 = _mm256_setr_epi32( 0, 0, 0, 0, 1, 1, 1, 1 );
+
+    while( sz >= 2 )
+    {
+        __m256 vGm = _mm256_permutevar8x32_ps( _mm256_castps128_ps256( _mm_castpd_ps( _mm_load_sd( (const double*)gm ) ) ), laneSel256 );
+        __m256 vGm1 = _mm256_sub_ps( _mm256_set1_ps( 1.f ), vGm );
+        __m256 vGm2 = _mm256_mul_ps( vGm, vGainMapMax256 );
+        __m256 logBoost = _mm256_fmadd_ps( vGm1, vGainMapMin256, vGm2 );
+        __m256 logBoostExp = _mm256_exp_ps( logBoost );
+
+        __m256 vSdr = _mm256_loadu_ps( sdr );
+        __m256 vSdr1 = _mm256_add_ps( vSdr, vOffsetSdr256 );
+        __m256 vHdr = _mm256_fmsub_ps( vSdr1, logBoostExp, vOffsetHdr256 );
+        __m256 vHdr1 = _mm256_blend_ps( vHdr, _mm256_set1_ps( 1.f ), 0x88 );
+
+        _mm256_storeu_ps( dst, _mm256_max_ps( vHdr1, _mm256_setzero_ps() ) );
+
+        dst += 8;
+        sdr += 8;
+        gm += 2;
+        sz -= 2;
+    }
+#endif
+
+    while( sz-- > 0 )
+    {
+        __m128 vGm = _mm_set1_ps( *gm++ );
+        __m128 vGm1 = _mm_sub_ps( _mm_set1_ps( 1.f ), vGm );
+        __m128 vGm2 = _mm_mul_ps( vGm, vGainMapMax );
+        __m128 logBoost = _mm_fmadd_ps( vGm1, vGainMapMin, vGm2 );
+        __m128 logBoostExp = _mm_exp_ps( logBoost );
+
+        __m128 vSdr = _mm_loadu_ps( sdr );
+        __m128 vSdr1 = _mm_add_ps( vSdr, vOffsetSdr );
+        __m128 vHdr = _mm_fmsub_ps( vSdr1, logBoostExp, vOffsetHdr );
+        __m128 vHdr1 = _mm_blend_ps( vHdr, _mm_set1_ps( 1.f ), 0x8 );
+
+        _mm_storeu_ps( dst, _mm_max_ps( vHdr1, _mm_setzero_ps() ) );
+
+        dst += 4;
+        sdr += 4;
+    }
+#else
+    while( sz-- > 0 )
+    {
+        const auto g = *gm++;
+
+        const auto logBoostR = ch[0].gainMapMin * ( 1.f - g ) + ch[0].gainMapMax * g;
+        const auto logBoostG = ch[1].gainMapMin * ( 1.f - g ) + ch[1].gainMapMax * g;
+        const auto logBoostB = ch[2].gainMapMin * ( 1.f - g ) + ch[2].gainMapMax * g;
+
+        const auto r = ( *sdr++ + ch[0].offsetSdr ) * exp2( logBoostR ) - ch[0].offsetHdr;
+        const auto g2 = ( *sdr++ + ch[1].offsetSdr ) * exp2( logBoostG ) - ch[1].offsetHdr;
+        const auto b = ( *sdr++ + ch[2].offsetSdr ) * exp2( logBoostB ) - ch[2].offsetHdr;
+        sdr++;
+
+        *dst++ = fmaxf( r, 0.f );
+        *dst++ = fmaxf( g2, 0.f );
+        *dst++ = fmaxf( b, 0.f );
+        *dst++ = 1.0f;
+    }
+#endif
+}
+
+static void ApplyGainMapGray( float* dst, const float* sdr, const float* gm, size_t sz, Channel* ch, TaskDispatch* td )
+{
+    if( !td )
+    {
+        ApplyGainMapGrayChunk( dst, sdr, gm, sz, ch );
+        return;
+    }
+    while( sz > 0 )
+    {
+        auto chunk = std::min<size_t>( sz, 256 * 1024 );
+        td->Queue( [dst, sdr, gm, chunk, ch] {
+            ApplyGainMapGrayChunk( dst, sdr, gm, chunk, ch );
+        } );
+        dst += chunk * 4;
+        sdr += chunk * 4;
+        gm += chunk;
+        sz -= chunk;
+    }
+    td->Sync();
+}
+
+static void ResizePlane( TaskDispatch* td, float*& plane, size_t inW, size_t inH, size_t outW, size_t outH )
+{
+    auto data = PixelAlloc<float>( outW, outH, 1 );
+    STBIR_RESIZE resize;
+    stbir_resize_init( &resize, plane, inW, inH, 0, data, outW, outH, 0, STBIR_1CHANNEL, STBIR_TYPE_FLOAT );
+    if( !td )
+    {
+        CheckPanic( stbir_resize_extended( &resize ), "Failed to resize gain map" );
+    }
+    else
+    {
+        auto threads = td->NumWorkers() + 1;
+        threads = stbir_build_samplers_with_splits( &resize, threads );
+        CheckPanic( threads, "Failed to build resize samplers" );
+        for( size_t i = 0; i < threads; i++ )
+        {
+            td->Queue( [i, &resize, threads] {
+                CheckPanic( stbir_resize_extended_split( &resize, i, 1 ), "Failed to resize gain map" );
+            } );
+        }
+        td->Sync();
+        stbir_free_samplers( &resize );
+    }
+    delete[] plane;
+    plane = data;
+}
+
 static void SetOpaqueAlpha( BitmapHdr* bmp )
 {
     auto sz = PixelCount( bmp->Width(), bmp->Height() );
@@ -701,72 +860,73 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
     }
     jpeg_finish_decompress( &gcinfo );
 
-    auto gmFloat = std::make_unique<BitmapHdr>( gcinfo.output_width, gcinfo.output_height, colorspace );
+    const auto gmW = gcinfo.output_width;
+    const auto gmH = gcinfo.output_height;
     jpeg_destroy_decompress( &gcinfo );
 
     auto src = gainMap;
-    auto dst = gmFloat->Data();
-    auto sz = PixelCount( gmFloat->Width(), gmFloat->Height() );
     if( gmChannels == 1 )
     {
+        auto plane = PixelAlloc<float>( gmW, gmH, 1 );
+        auto dstP = plane;
+        auto n = PixelCount( gmW, gmH );
         if( ch[0].gamma == 1.f )
         {
-            while( sz-- > 0 )
-            {
-                const auto v = *src++ / 255.f;
-                *dst++ = v;
-                *dst++ = v;
-                *dst++ = v;
-                *dst++ = 1.f;
-            }
+            while( n-- > 0 ) *dstP++ = *src++ / 255.f;
         }
         else
         {
             const auto revGamma = 1.0f / ch[0].gamma;
-            while( sz-- > 0 )
-            {
-                const auto v = powf( *src++ / 255.f, revGamma );
-                *dst++ = v;
-                *dst++ = v;
-                *dst++ = v;
-                *dst++ = 1.f;
-            }
+            while( n-- > 0 ) *dstP++ = powf( *src++ / 255.f, revGamma );
+        }
+        delete[] gainMap;
+
+        if( gmW != baseFloat->Width() || gmH != baseFloat->Height() )
+        {
+            ResizePlane( m_td, plane, gmW, gmH, baseFloat->Width(), baseFloat->Height() );
+        }
+
+        auto dstG = baseFloat->Data();
+        ApplyGainMapGray( dstG, dstG, plane, PixelCount( baseFloat->Width(), baseFloat->Height() ), ch, m_td );
+        delete[] plane;
+        return baseFloat;
+    }
+
+    if( gmChannels != 3 )
+    {
+        mclog( LogLevel::Warning, "JPEG: Unsupported gain map format, %d components", gmChannels );
+        delete[] gainMap;
+        if( m_cmyk ) SetOpaqueAlpha( baseFloat.get() );
+        return baseFloat;
+    }
+
+    auto gmFloat = std::make_unique<BitmapHdr>( gmW, gmH, colorspace );
+
+    auto dst = gmFloat->Data();
+    auto sz = PixelCount( gmW, gmH );
+    if( ch[0].gamma == 1.f &&
+        ch[1].gamma == 1.f &&
+        ch[2].gamma == 1.f )
+    {
+        while( sz-- > 0 )
+        {
+            *dst++ = *src++ / 255.f;
+            *dst++ = *src++ / 255.f;
+            *dst++ = *src++ / 255.f;
+            *dst++ = 1.f;
         }
     }
     else
     {
-        if( gmChannels != 3 )
+        const auto revGammaR = 1.0f / ch[0].gamma;
+        const auto revGammaG = 1.0f / ch[1].gamma;
+        const auto revGammaB = 1.0f / ch[2].gamma;
+        while( sz-- > 0 )
         {
-            mclog( LogLevel::Warning, "JPEG: Unsupported gain map format, %d components", gmChannels );
-            jpeg_destroy_decompress( &gcinfo );
-            delete[] gainMap;
-            if( m_cmyk ) SetOpaqueAlpha( baseFloat.get() );
-            return baseFloat;
-        }
-        if( ch[0].gamma == 1.f &&
-            ch[1].gamma == 1.f &&
-            ch[2].gamma == 1.f )
-        {
-            while( sz-- > 0 )
-            {
-                *dst++ = *src++ / 255.f;
-                *dst++ = *src++ / 255.f;
-                *dst++ = *src++ / 255.f;
-                *dst++ = 1.f;
-            }
-        }
-        else
-        {
-            const auto revGammaR = 1.0f / ch[0].gamma;
-            const auto revGammaG = 1.0f / ch[1].gamma;
-            const auto revGammaB = 1.0f / ch[2].gamma;
-            while( sz-- > 0 )
-            {
-                *dst++ = powf( *src++ / 255.f, revGammaR );
-                *dst++ = powf( *src++ / 255.f, revGammaG );
-                *dst++ = powf( *src++ / 255.f, revGammaB );
-                *dst++ = 1.f;
-            }
+            *dst++ = powf( *src++ / 255.f, revGammaR );
+            *dst++ = powf( *src++ / 255.f, revGammaG );
+            *dst++ = powf( *src++ / 255.f, revGammaB );
+            *dst++ = 1.f;
         }
     }
     delete[] gainMap;

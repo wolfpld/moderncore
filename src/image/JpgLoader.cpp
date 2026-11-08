@@ -517,7 +517,8 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
     {
         jpeg_destroy_decompress( &gcinfo );
         delete[] gainMap;
-        return nullptr;
+        ScaleToRefWhite( baseFloat.get() );
+        return baseFloat;
     }
 
     jpeg_create_decompress( &gcinfo );
@@ -598,7 +599,8 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
         {
             mclog( LogLevel::Warning, "JPEG: No XMP metadata found for gain map" );
             jpeg_destroy_decompress( &gcinfo );
-            return nullptr;
+            ScaleToRefWhite( baseFloat.get() );
+            return baseFloat;
         }
 
         auto root = doc->child( "x:xmpmeta" ).child( "rdf:RDF" ).child( "rdf:Description" );
@@ -606,7 +608,8 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
         {
             mclog( LogLevel::Warning, "JPEG: No gain map metadata found in XMP" );
             jpeg_destroy_decompress( &gcinfo );
-            return nullptr;
+            ScaleToRefWhite( baseFloat.get() );
+            return baseFloat;
         }
 
         const auto attrGamma = root.attribute( "hdrgm:Gamma" );
@@ -636,7 +639,8 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
     {
         mclog( LogLevel::Warning, "JPEG: No gain map metadata found" );
         jpeg_destroy_decompress( &gcinfo );
-        return nullptr;
+        ScaleToRefWhite( baseFloat.get() );
+        return baseFloat;
     }
 
     jpeg_start_decompress( &gcinfo );
@@ -684,7 +688,14 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
     }
     else
     {
-        CheckPanic( gmChannels == 3, "Unsupported JPEG gain map format" );
+        if( gmChannels != 3 )
+        {
+            mclog( LogLevel::Warning, "JPEG: Unsupported gain map format, %d components", gmChannels );
+            jpeg_destroy_decompress( &gcinfo );
+            delete[] gainMap;
+            ScaleToRefWhite( baseFloat.get() );
+            return baseFloat;
+        }
         if( ch[0].gamma == 1.f &&
             ch[1].gamma == 1.f &&
             ch[2].gamma == 1.f )

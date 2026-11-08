@@ -345,7 +345,7 @@ static void ApplyGainMap( float* dst, const float* sdr, const float* gm, size_t 
         __m512 vHdr = _mm512_fmsub_ps( vSdr1, logBoostExp, vOffsetHdr512 );
         __m512 vHdr1 = _mm512_mask_blend_ps( 0x8888, vHdr, _mm512_set1_ps( 1.f ) );
 
-        _mm512_storeu_ps( dst, vHdr1 );
+        _mm512_storeu_ps( dst, _mm512_max_ps( vHdr1, _mm512_setzero_ps() ) );
 
         dst += 16;
         gm += 16;
@@ -373,7 +373,7 @@ static void ApplyGainMap( float* dst, const float* sdr, const float* gm, size_t 
         __m256 vHdr = _mm256_fmsub_ps( vSdr1, logBoostExp, vOffsetHdr256 );
         __m256 vHdr1 = _mm256_blend_ps( vHdr, _mm256_set1_ps( 1.f ), 0x88 );
 
-        _mm256_storeu_ps( dst, vHdr1 );
+        _mm256_storeu_ps( dst, _mm256_max_ps( vHdr1, _mm256_setzero_ps() ) );
 
         gm += 8;
         sdr += 8;
@@ -395,7 +395,7 @@ static void ApplyGainMap( float* dst, const float* sdr, const float* gm, size_t 
         __m128 vHdr = _mm_fmsub_ps( vSdr1, logBoostExp, vOffsetHdr );
         __m128 vHdr1 = _mm_blend_ps( vHdr, _mm_set1_ps( 1.f ), 0x8 );
 
-        _mm_storeu_ps( dst, vHdr1 );
+        _mm_storeu_ps( dst, _mm_max_ps( vHdr1, _mm_setzero_ps() ) );
 
         gm += 4;
         sdr += 4;
@@ -418,9 +418,9 @@ static void ApplyGainMap( float* dst, const float* sdr, const float* gm, size_t 
         const auto b = ( *sdr++ + ch[2].offsetSdr ) * exp2( logBoostB ) - ch[2].offsetHdr;
         sdr++;
 
-        *dst++ = r;
-        *dst++ = g;
-        *dst++ = b;
+        *dst++ = fmaxf( r, 0.f );
+        *dst++ = fmaxf( g, 0.f );
+        *dst++ = fmaxf( b, 0.f );
         *dst++ = 1.0f;
     }
 #endif

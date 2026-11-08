@@ -21,8 +21,46 @@ bool HasLinearTrc( cmsHPROFILE profile )
     return true;
 }
 
+#ifdef __AVX512F__
+struct Coeffs
+{
+    __m512 c0, c1, c2;
+    __m512i i0, i1, i2;
+};
+
+Coeffs MakeCoeffs( const float* mat )
+{
+    Coeffs k;
+    auto tile = []( float a, float b, float c )
+    {
+        return _mm512_setr_ps( a, b, c, 0, a, b, c, 0, a, b, c, 0, a, b, c, 0 );
+    };
+    k.c0 = tile( mat[0], mat[3], mat[6] );
+    k.c1 = tile( mat[1], mat[4], mat[7] );
+    k.c2 = tile( mat[2], mat[5], mat[8] );
+    k.i0 = _mm512_setr_epi32( 0, 0, 0, 0, 4, 4, 4, 4, 8, 8, 8, 8, 12, 12, 12, 12 );
+    k.i1 = _mm512_setr_epi32( 1, 1, 1, 1, 5, 5, 5, 5, 9, 9, 9, 9, 13, 13, 13, 13 );
+    k.i2 = _mm512_setr_epi32( 2, 2, 2, 2, 6, 6, 6, 6, 10, 10, 10, 10, 14, 14, 14, 14 );
+    return k;
+}
+#endif
+
 void FloatRange( const float* in, float* out, size_t n, const float* mat )
 {
+#ifdef __AVX512F__
+    const Coeffs k = MakeCoeffs( mat );
+    while( n >= 4 )
+    {
+        const __m512 v = _mm512_loadu_ps( in );
+        __m512 o = _mm512_mul_ps( _mm512_permutexvar_ps( k.i0, v ), k.c0 );
+        o = _mm512_fmadd_ps( _mm512_permutexvar_ps( k.i1, v ), k.c1, o );
+        o = _mm512_fmadd_ps( _mm512_permutexvar_ps( k.i2, v ), k.c2, o );
+        _mm512_storeu_ps( out, _mm512_mask_blend_ps( 0x8888, o, v ) );
+        in += 16;
+        out += 16;
+        n -= 4;
+    }
+#endif
     for( size_t i = 0; i < n; i++ )
     {
         const float r = in[0], g = in[1], b = in[2];
@@ -37,6 +75,20 @@ void FloatRange( const float* in, float* out, size_t n, const float* mat )
 
 void HalfRange( uint16_t* data, size_t n, const float* mat )
 {
+#ifdef __AVX512F__
+    const Coeffs k = MakeCoeffs( mat );
+    while( n >= 4 )
+    {
+        const __m512 v = _mm512_cvtph_ps( _mm256_loadu_si256( (const __m256i*)data ) );
+        __m512 o = _mm512_mul_ps( _mm512_permutexvar_ps( k.i0, v ), k.c0 );
+        o = _mm512_fmadd_ps( _mm512_permutexvar_ps( k.i1, v ), k.c1, o );
+        o = _mm512_fmadd_ps( _mm512_permutexvar_ps( k.i2, v ), k.c2, o );
+        o = _mm512_mask_blend_ps( 0x8888, o, v );
+        _mm256_storeu_si256( (__m256i*)data, _mm512_cvtps_ph( o, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC ) );
+        data += 16;
+        n -= 4;
+    }
+#endif
     for( size_t i = 0; i < n; i++ )
     {
         auto px = (half_float::half*)data;

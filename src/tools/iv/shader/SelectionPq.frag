@@ -12,6 +12,6 @@ void main() {
     float wave = sin( ( gl_FragCoord.x + gl_FragCoord.y - offset ) * div );
     float k = 0.5;
     float ss = smoothstep( -k, k, wave );
-    vec3 color = Pq( vec3( pow( ss, 2.2 ) * 2.03 ) );
+    vec3 color = Pq( vec3( pow( ss, 2.2 ) ) );
     outColor = vec4( color, 1.0 );
 }

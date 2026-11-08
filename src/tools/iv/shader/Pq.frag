@@ -1,6 +1,6 @@
 vec3 Pq( vec3 color )
 {
-    const float NominalLuminance = 100.0;
+    const float NominalLuminance = 203.0;
 
     const float m1 = 1305.0 / 8192.0;
     const float m2 = 2523.0 / 32.0;

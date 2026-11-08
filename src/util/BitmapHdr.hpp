@@ -11,6 +11,7 @@ class Bitmap;
 class BitmapHdrHalf;
 class TaskDispatch;
 
+// Pixel values are linear light in the image's color space, normalized so that 1.0 is the SDR reference white (203 cd/m2).
 class BitmapHdr
 {
 public:

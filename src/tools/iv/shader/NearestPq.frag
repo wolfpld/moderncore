@@ -29,8 +29,8 @@ void main() {
 
     if( outColor.a < 1.0 )
     {
-        const float lo = pow( 0.2, 2.2 );
-        const float hi = pow( 0.3, 2.2 );
+        const float lo = pow( 0.2, 2.2 ) / 2.03;
+        const float hi = pow( 0.3, 2.2 ) / 2.03;
         const vec4 darkColor = vec4( lo, lo, lo, 1.0 );
         const vec4 lightColor = vec4( hi, hi, hi, 1.0 );
         vec4 checkerboard = ( ( int( gl_FragCoord.x * div ) + int( gl_FragCoord.y * div ) ) & 1 ) == 0 ? darkColor : lightColor;

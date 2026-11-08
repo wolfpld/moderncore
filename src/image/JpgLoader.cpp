@@ -154,17 +154,30 @@ std::unique_ptr<Bitmap> JpgLoader::LoadNoColorspace()
     }
     else
     {
-        auto row = new uint8_t[m_cinfo->output_width * 3 + 1];
+        const auto comps = m_cinfo->output_components;
+        auto row = new uint8_t[m_cinfo->output_width * comps + 1];
         while( m_cinfo->output_scanline < m_cinfo->output_height )
         {
             jpeg_read_scanlines( m_cinfo, &row, 1 );
-            for( int i=0; i<m_cinfo->output_width; i++ )
+            if( comps == 1 )
             {
-                uint32_t col;
-                memcpy( &col, row + i * 3, 4 );
-                col |= 0xFF000000;
-                memcpy( ptr, &col, 4 );
-                ptr += 4;
+                for( int i=0; i<m_cinfo->output_width; i++ )
+                {
+                    const uint32_t col = uint32_t( row[i] ) * 0x010101u | 0xFF000000u;
+                    memcpy( ptr, &col, 4 );
+                    ptr += 4;
+                }
+            }
+            else
+            {
+                for( int i=0; i<m_cinfo->output_width; i++ )
+                {
+                    uint32_t col;
+                    memcpy( &col, row + i * 3, 4 );
+                    col |= 0xFF000000;
+                    memcpy( ptr, &col, 4 );
+                    ptr += 4;
+                }
             }
         }
         delete[] row;

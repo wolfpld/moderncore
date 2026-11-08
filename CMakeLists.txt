@@ -93,7 +93,6 @@ endif()
 set(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_SAVE})
 
 pkg_check_modules(CAIRO REQUIRED cairo)
-pkg_check_modules(EXIF REQUIRED libexif)
 pkg_check_modules(EXR REQUIRED OpenEXR)
 pkg_check_modules(HEIF REQUIRED libheif)
 pkg_check_modules(JPEG REQUIRED libjpeg)
@@ -289,7 +288,6 @@ target_link_libraries(mcoreimage PRIVATE
     mcoreutil
     Tracy::TracyClient
     ${CAIRO_LINK_LIBRARIES}
-    ${EXIF_LINK_LIBRARIES}
     ${EXR_LINK_LIBRARIES}
     ${HEIF_LINK_LIBRARIES}
     ${JPEG_LINK_LIBRARIES}
@@ -304,7 +302,6 @@ target_link_libraries(mcoreimage PRIVATE
 )
 target_include_directories(mcoreimage PRIVATE
     ${CAIRO_INCLUDE_DIRS}
-    ${EXIF_INCLUDE_DIRS}
     ${EXR_INCLUDE_DIRS}
     ${HEIF_INCLUDE_DIRS}
     ${JPEG_INCLUDE_DIRS}

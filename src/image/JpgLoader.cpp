@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <jpeglib.h>
 #include <lcms2.h>
-#include <libexif/exif-data.h>
 #include <math.h>
 #include <setjmp.h>
 #include <stb_image_resize2.h>
@@ -16,7 +15,6 @@
 #include "util/Bitmap.hpp"
 #include "util/BitmapHdr.hpp"
 #include "util/EmbedData.hpp"
-#include "util/FileBuffer.hpp"
 #include "util/FileWrapper.hpp"
 #include "util/PixelBytes.hpp"
 #include "util/Panic.hpp"
@@ -853,13 +851,43 @@ static int FindMpfTiffHeader( FILE* file )
     return -1;
 }
 
+static int FindOrientation( jpeg_decompress_struct* cinfo )
+{
+    for( auto marker = cinfo->marker_list; marker; marker = marker->next )
+    {
+        if( marker->marker != JPEG_APP0 + 1 || marker->data_length < 14 || memcmp( marker->data, "Exif\0\0", 6 ) != 0 ) continue;
+        const bool bigEndian = marker->data[6] == 0x4D;
+        if( !bigEndian && marker->data[6] != 0x49 ) continue;
+
+        TiffReader rd{ .base = marker->data + 6, .size = (size_t)marker->data_length - 6, .bigEndian = bigEndian };
+        rd.pos = 2;
+        uint16_t magic = 0, count = 0;
+        uint32_t ifd0 = 0;
+        if( !rd.ReadU16( magic ) || magic != 42 || !rd.ReadU32( ifd0 ) || !rd.Seek( ifd0 ) || !rd.ReadU16( count ) ) continue;
+
+        for( uint16_t i = 0; i < count; i++ )
+        {
+            uint16_t tag = 0, type = 0;
+            uint32_t cnt = 0, value = 0;
+            if( !rd.ReadU16( tag ) || !rd.ReadU16( type ) || !rd.ReadU32( cnt ) || !rd.ReadU32( value ) ) break;
+            if( tag == 0x0112 && cnt == 1 && ( type == 3 || type == 4 ) )
+            {
+                const auto orientation = (int)( type == 4 ? value : ( bigEndian ? value >> 16 : (uint16_t)value ) );
+                mclog( LogLevel::Info, "JPEG orientation: %d", orientation );
+                return orientation;
+            }
+        }
+        return 0;
+    }
+    return 0;
+}
+
 bool JpgLoader::Open()
 {
     CheckPanic( m_valid, "Invalid JPEG file" );
     CheckPanic( !m_cinfo, "Already opened" );
 
     fseek( *m_file, 0, SEEK_SET );
-    m_orientation = LoadOrientation();
 
     m_cinfo = new jpeg_decompress_struct();
 
@@ -873,6 +901,7 @@ bool JpgLoader::Open()
     jpeg_save_markers( m_cinfo, JPEG_APP0 + 1, 0xFFFF );
     jpeg_save_markers( m_cinfo, JPEG_APP0 + 2, 0xFFFF );
     jpeg_read_header( m_cinfo, TRUE );
+    m_orientation = FindOrientation( m_cinfo );
 
     jpeg_read_icc_profile( m_cinfo, &m_iccData, &m_iccSz );
     m_cmyk = m_cinfo->jpeg_color_space == JCS_CMYK || m_cinfo->jpeg_color_space == JCS_YCCK;
@@ -1004,27 +1033,6 @@ bool JpgLoader::Open()
     }
 
     return true;
-}
-
-int JpgLoader::LoadOrientation()
-{
-    int orientation = 0;
-
-    FileBuffer buf( m_file );
-    auto exif = exif_data_new_from_data( (const unsigned char*)buf.data(), buf.size() );
-
-    if( exif )
-    {
-        ExifEntry* entry = exif_content_get_entry( exif->ifd[EXIF_IFD_0], EXIF_TAG_ORIENTATION );
-        if( entry )
-        {
-            orientation = exif_get_short( entry->data, exif_data_get_byte_order( exif ) );
-            mclog( LogLevel::Info, "JPEG orientation: %d", orientation );
-        }
-        exif_data_free( exif );
-    }
-
-    return orientation;
 }
 
 std::unique_ptr<pugi::xml_document> JpgLoader::LoadXmp( jpeg_decompress_struct* cinfo )

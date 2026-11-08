@@ -30,7 +30,6 @@ public:
 private:
     [[nodiscard]] bool Open();
 
-    int LoadOrientation();
     std::unique_ptr<pugi::xml_document> LoadXmp( jpeg_decompress_struct* cinfo );
     [[nodiscard]] std::unique_ptr<Bitmap> LoadNoColorspace();
 

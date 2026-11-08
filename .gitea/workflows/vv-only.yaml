@@ -12,7 +12,7 @@ jobs:
       run: |
         pacman-key --init
         pacman -Syu --noconfirm
-        pacman -S --noconfirm --needed git clang cmake ninja mold python nodejs libpng libjpeg-turbo libjxl libwebp libheif libtiff libraw openexr libsixel cairo librsvg libexif pugixml lz4 lcms2
+        pacman -S --noconfirm --needed git clang cmake ninja mold python nodejs libpng libjpeg-turbo libjxl libwebp libheif libtiff libraw openexr libsixel cairo librsvg pugixml lz4 lcms2
     - uses: actions/checkout@v4
     - name: configure
       run: cmake --preset=release -DBUILD_IV=OFF -DBUILD_TESTS=OFF

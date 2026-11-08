@@ -5,7 +5,6 @@ ModernCore requires the following libraries:
 ### Core Dependencies
 - cairo
 - lcms2
-- libexif
 - libheif
 - libjpeg
 - libjxl

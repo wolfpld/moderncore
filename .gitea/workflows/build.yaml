@@ -12,7 +12,7 @@ jobs:
       run: |
         pacman-key --init
         pacman -Syu --noconfirm
-        pacman -S --noconfirm --needed nodejs git clang cmake ninja shaderc vulkan-headers vulkan-validation-layers vulkan-utility-libraries wayland wayland-protocols libxkbcommon glm libpng libjpeg-turbo libjxl libwebp libheif systemd-libs libdrm libdisplay-info mesa python mold libtiff libraw openexr libsixel cairo librsvg libexif pugixml catch2 llvm
+        pacman -S --noconfirm --needed nodejs git clang cmake ninja shaderc vulkan-headers vulkan-validation-layers vulkan-utility-libraries wayland wayland-protocols libxkbcommon glm libpng libjpeg-turbo libjxl libwebp libheif systemd-libs libdrm libdisplay-info mesa python mold libtiff libraw openexr libsixel cairo librsvg pugixml catch2 llvm
     - uses: actions/checkout@v4
     - name: clang configure
       run: cmake -B build --preset=release -DCMAKE_INSTALL_PREFIX:PATH=/usr

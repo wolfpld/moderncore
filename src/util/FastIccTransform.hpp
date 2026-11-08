@@ -19,8 +19,13 @@ public:
     explicit operator bool() const { return m_valid; }
     void Run( TaskDispatch* td, const uint8_t* input, float* output, size_t pixels ) const;
 
+    bool SupportsFloat() const { return m_valid && m_linear; }
+    void RunFloat( TaskDispatch* td, const float* input, float* output, size_t pixels ) const;
+    void RunHalf( TaskDispatch* td, uint16_t* data, size_t pixels ) const;
+
 private:
     float m_lut[3][256];
     float m_mat[9];
     bool m_valid = false;
+    bool m_linear = false;
 };

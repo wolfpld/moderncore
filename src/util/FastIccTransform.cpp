@@ -5,8 +5,49 @@
 #include <algorithm>
 #include <immintrin.h>
 
+#include "contrib/half.hpp"
+
 namespace
 {
+bool HasLinearTrc( cmsHPROFILE profile )
+{
+    const cmsTagSignature trcTags[3] = { cmsSigRedTRCTag, cmsSigGreenTRCTag, cmsSigBlueTRCTag };
+    for( size_t c = 0; c < 3; c++ )
+    {
+        if( !cmsIsTag( profile, trcTags[c] ) ) continue;
+        const cmsToneCurve* trc = (const cmsToneCurve*)cmsReadTag( profile, trcTags[c] );
+        if( !trc || !cmsIsToneCurveLinear( (cmsToneCurve*)trc ) ) return false;
+    }
+    return true;
+}
+
+void FloatRange( const float* in, float* out, size_t n, const float* mat )
+{
+    for( size_t i = 0; i < n; i++ )
+    {
+        const float r = in[0], g = in[1], b = in[2];
+        out[0] = mat[0]*r + mat[1]*g + mat[2]*b;
+        out[1] = mat[3]*r + mat[4]*g + mat[5]*b;
+        out[2] = mat[6]*r + mat[7]*g + mat[8]*b;
+        out[3] = in[3];
+        in += 4;
+        out += 4;
+    }
+}
+
+void HalfRange( uint16_t* data, size_t n, const float* mat )
+{
+    for( size_t i = 0; i < n; i++ )
+    {
+        auto px = (half_float::half*)data;
+        const float r = float( px[0] ), g = float( px[1] ), b = float( px[2] );
+        px[0] = half_float::half( mat[0]*r + mat[1]*g + mat[2]*b );
+        px[1] = half_float::half( mat[3]*r + mat[4]*g + mat[5]*b );
+        px[2] = half_float::half( mat[6]*r + mat[7]*g + mat[8]*b );
+        data += 4;
+    }
+}
+
 bool GetColorantMatrix( cmsHPROFILE profile, cmsFloat64Number out[9] )
 {
     const cmsCIEXYZ* xyz[3] = {
@@ -157,6 +198,8 @@ FastIccTransform::FastIccTransform( cmsHPROFILE profileIn, cmsHPROFILE profileOu
         }
     }
 
+    m_linear = HasLinearTrc( profileIn ) && HasLinearTrc( profileOut );
+
     cmsFloat64Number mr[9], mo[9];
     if( !GetColorantMatrix( profileIn, mr ) || !GetColorantMatrix( profileOut, mo ) ) return;
 
@@ -198,6 +241,51 @@ void FastIccTransform::Run( TaskDispatch* td, const uint8_t* input, float* outpu
             } );
             input += chunk * 4;
             output += chunk * 4;
+            size -= chunk;
+        }
+        td->Sync();
+    }
+}
+
+void FastIccTransform::RunFloat( TaskDispatch* td, const float* input, float* output, size_t pixels ) const
+{
+    if( !td )
+    {
+        FloatRange( input, output, pixels, m_mat );
+    }
+    else
+    {
+        auto size = pixels;
+        while( size > 0 )
+        {
+            auto chunk = std::min<size_t>( size, 256 * 1024 );
+            td->Queue( [this, input, output, chunk] {
+                FloatRange( input, output, chunk, m_mat );
+            } );
+            input += chunk * 4;
+            output += chunk * 4;
+            size -= chunk;
+        }
+        td->Sync();
+    }
+}
+
+void FastIccTransform::RunHalf( TaskDispatch* td, uint16_t* data, size_t pixels ) const
+{
+    if( !td )
+    {
+        HalfRange( data, pixels, m_mat );
+    }
+    else
+    {
+        auto size = pixels;
+        while( size > 0 )
+        {
+            auto chunk = std::min<size_t>( size, 256 * 1024 );
+            td->Queue( [this, data, chunk] {
+                HalfRange( data, chunk, m_mat );
+            } );
+            data += chunk * 4;
             size -= chunk;
         }
         td->Sync();

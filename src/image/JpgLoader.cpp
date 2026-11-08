@@ -654,12 +654,32 @@ struct MpEntry
     uint16_t dep1, dep2;
 };
 
-struct JpgMarker
+// Returns the file position of the MPF TIFF header (first byte after the 'MPF\0' fourcc), or -1.
+static int FindMpfTiffHeader( FILE* file )
 {
-    uint16_t marker;
-    uint16_t size;
-    uint32_t data;
-};
+    if( fseek( file, 2, SEEK_SET ) ) return -1;  // skip Start-Of-Image
+    for( int steps = 4096; steps > 0; steps-- )  // positions advance monotonically. The cap is only defense in depth
+    {
+        int c;
+        do { c = fgetc( file ); } while( c == 0xFF );
+        if( c == EOF || c == 0x00 ) return -1;
+        const int marker = c;
+        if( marker == 0xDA || marker == 0xD9 ) return -1;  // SOS, EOI
+        if( ( marker >= 0xD0 && marker <= 0xD9 ) || marker == 0x01 ) continue;
+        uint8_t lenBuf[2];
+        if( fread( lenBuf, 1, 2, file ) != 2 ) return -1;
+        const long len = ( lenBuf[0] << 8 ) | lenBuf[1];
+        if( len < 2 ) return -1;
+        const long payload = ftell( file );
+        if( marker == 0xE2 && len >= 6 )
+        {
+            uint32_t fourcc;
+            if( fread( &fourcc, 1, 4, file ) == 4 && memcmp( &fourcc, "MPF\0", 4 ) == 0 ) return (int)ftell( file );
+        }
+        if( fseek( file, payload + len - 2, SEEK_SET ) ) return -1;
+    }
+    return -1;
+}
 
 bool JpgLoader::Open()
 {
@@ -803,29 +823,22 @@ bool JpgLoader::Open()
         }
     }
 
-    // Gain map offset is relative to MFD Endian marker, the location of which is not provided by the library.
-    // Do the incredibly stupid thing and search for it in raw file data.
+    // Gain map offset is relative to the MPF TIFF header, whose location is not reported by libjpeg.
     if( m_gainMapOffset >= 0 )
     {
         const auto filePos = ftell( *m_file );
-        fseek( *m_file, 2, SEEK_SET );  // skip Start-Of-Image
-        for(;;)
+        const int tiffPos = FindMpfTiffHeader( *m_file );
+        if( tiffPos < 0 || (int64_t)m_gainMapOffset + tiffPos > INT32_MAX ) m_gainMapOffset = -1;
+        else m_gainMapOffset += tiffPos;
+        if( m_gainMapOffset >= 0 )  // the resolved entry must point at the secondary image's SOI marker
         {
-            JpgMarker marker;
-            fread( &marker, sizeof( JpgMarker ), 1, *m_file );
-            marker.size = ntohs( marker.size );
-
-            if( marker.marker == 0xE2FF && marker.size > 6 && memcmp( &marker.data, "MPF\0", 4 ) == 0 )
-            {
-                m_gainMapOffset += ftell( *m_file );
-                mclog( LogLevel::Info, "Gain map offset: %d", m_gainMapOffset );
-                break;
-            }
-            else
-            {
-                fseek( *m_file, marker.size - 6, SEEK_CUR );
-            }
+            uint8_t soi[2] = {};
+            if( fseek( *m_file, m_gainMapOffset, SEEK_SET ) ||
+                fread( soi, 1, 2, *m_file ) != 2 || soi[0] != 0xFF || soi[1] != 0xD8 )
+                m_gainMapOffset = -1;
         }
+        if( m_gainMapOffset < 0 ) mclog( LogLevel::Warning, "JPEG: invalid gain map entry" );
+        else mclog( LogLevel::Info, "Gain map offset: %d", m_gainMapOffset );
         fseek( *m_file, filePos, SEEK_SET );
     }
 

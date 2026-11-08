@@ -39,4 +39,5 @@ private:
     void* m_runner;
     JxlDecoder* m_dec;
     JxlBasicInfo m_info;
+    bool m_cmsAnchored;
 };

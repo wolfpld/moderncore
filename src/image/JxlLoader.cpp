@@ -23,6 +23,8 @@ struct CmsData
     cmsHPROFILE profileIn;
     cmsHPROFILE profileOut;
     cmsHTRANSFORM transform;
+    float scale;
+    size_t channelsOut;
 };
 
 constexpr JxlColorEncoding srgb = {
@@ -88,6 +90,15 @@ void* CmsInit( void* data, size_t num_threads, size_t pixels_per_thread, const J
     }
 
     const size_t chIn = T_CHANNELS( typeIn ), chOut = T_CHANNELS( typeOut );
+    // The intensity anchor maps relative linear samples onto the 203 cd/m2 convention;
+    // it must not touch the 8-bit sRGB path, whose output is display-encoded.
+    const bool linearOut = output_profile->color_encoding.transfer_function == JXL_TRANSFER_FUNCTION_LINEAR;
+    cms->scale = ( intensity_target > 255.f && linearOut ) ? intensity_target / 203.f : 1.f;
+    if( cms->scale != 1.f && data )
+    {
+        *(bool*)data = true;
+    }
+    cms->channelsOut = chOut;
     cms->srcBuf.resize( num_threads );
     cms->dstBuf.resize( num_threads );
     for( size_t i=0; i<num_threads; i++ )
@@ -126,6 +137,13 @@ JXL_BOOL CmsRun( void* data, size_t thread, const float* input, float* output, s
         }
     }
     cmsDoTransform( cms->transform, input, output, num_pixels );
+    if( cms->scale != 1.f )
+    {
+        for( size_t i = 0, n = num_pixels * cms->channelsOut; i < n; i++ )
+        {
+            output[i] *= cms->scale;
+        }
+    }
     return true;
 }
 
@@ -147,6 +165,7 @@ JxlLoader::JxlLoader( std::shared_ptr<FileWrapper> file )
     : m_file( std::move( file ) )
     , m_runner( nullptr )
     , m_dec( nullptr )
+    , m_cmsAnchored( false )
 {
     fseek( *m_file, 0, SEEK_SET );
     uint8_t hdr[12];
@@ -213,6 +232,8 @@ std::unique_ptr<BitmapHdr> JxlLoader::LoadHdr( Colorspace colorspace )
 
     auto bmp = std::make_unique<BitmapHdr>( m_info.xsize, m_info.ysize, colorspace );
 
+    m_cmsAnchored = false;
+
     JxlPixelFormat format = { 4, JXL_TYPE_FLOAT, JXL_LITTLE_ENDIAN, 0 };
     if( JxlDecoderSetImageOutBuffer( m_dec, &format, bmp->Data(), bmp->Width() * bmp->Height() * 4 * sizeof( float ) ) != JXL_DEC_SUCCESS ) return nullptr;
 
@@ -225,6 +246,18 @@ std::unique_ptr<BitmapHdr> JxlLoader::LoadHdr( Colorspace colorspace )
         {
             CheckPanic( colorspace == Colorspace::BT709 || colorspace == Colorspace::BT2020, "Invalid colorspace" );
             JxlDecoderSetOutputColorProfile( m_dec, colorspace == Colorspace::BT709 ? &bt709 : &bt2020, nullptr, 0 );
+        }
+    }
+
+    const float floatScale = ( m_info.intensity_target > 255.f && !m_cmsAnchored ) ? m_info.intensity_target / 203.f : 1.f;
+    if( floatScale != 1.f )
+    {
+        auto ptr = bmp->Data();
+        for( size_t i = size_t( m_info.xsize ) * m_info.ysize; i > 0; i--, ptr += 4 )
+        {
+            ptr[0] *= floatScale;
+            ptr[1] *= floatScale;
+            ptr[2] *= floatScale;
         }
     }
 
@@ -260,6 +293,7 @@ bool JxlLoader::Open()
             {
                 .set_fields_data = def->set_fields_data,
                 .set_fields_from_icc = def->set_fields_from_icc,
+                .init_data = &m_cmsAnchored,
                 .init = CmsInit,
                 .get_src_buf = CmsGetSrcBuffer,
                 .get_dst_buf = CmsGetDstBuffer,

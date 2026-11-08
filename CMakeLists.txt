@@ -623,6 +623,7 @@ if(BUILD_TESTS)
         tests/util/DataContainer.cpp
         tests/util/EmbedData.cpp
         tests/util/FastIccTransform.cpp
+        tests/util/IccTransform.cpp
         tests/util/FileBuffer.cpp
         tests/util/Filesystem.cpp
         tests/util/FileWrapper.cpp

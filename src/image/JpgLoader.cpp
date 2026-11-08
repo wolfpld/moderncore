@@ -326,7 +326,7 @@ static bool ReadIsoChannel( BeReader& rd, Channel& out )
     return ValidChannel( out );
 }
 
-static void ApplyGainMap( float* dst, const float* sdr, const float* gm, size_t sz, Channel* ch )
+static void ApplyGainMapChunk( float* dst, const float* sdr, const float* gm, size_t sz, const Channel* ch )
 {
 #if defined __SSE4_1__ && defined __FMA__
     const float gainMapMin[4] = { ch[0].gainMapMin, ch[1].gainMapMin, ch[2].gainMapMin, 0 };
@@ -437,6 +437,27 @@ static void ApplyGainMap( float* dst, const float* sdr, const float* gm, size_t 
         *dst++ = 1.0f;
     }
 #endif
+}
+
+static void ApplyGainMap( float* dst, const float* sdr, const float* gm, size_t sz, Channel* ch, TaskDispatch* td )
+{
+    if( !td )
+    {
+        ApplyGainMapChunk( dst, sdr, gm, sz, ch );
+        return;
+    }
+    while( sz > 0 )
+    {
+        auto chunk = std::min<size_t>( sz, 256 * 1024 );
+        td->Queue( [dst, sdr, gm, chunk, ch] {
+            ApplyGainMapChunk( dst, sdr, gm, chunk, ch );
+        } );
+        dst += chunk * 4;
+        sdr += chunk * 4;
+        gm += chunk * 4;
+        sz -= chunk;
+    }
+    td->Sync();
 }
 
 static void SetOpaqueAlpha( BitmapHdr* bmp )
@@ -746,7 +767,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
     auto sdr = baseFloat->Data();
     auto gm = gmFloat->Data();
 
-    ApplyGainMap( dst, sdr, gm, sz, ch );
+    ApplyGainMap( dst, sdr, gm, sz, ch, m_td );
 
     return bmp;
 }

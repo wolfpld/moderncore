@@ -776,16 +776,14 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
         gmFloat->Resize( baseFloat->Width(), baseFloat->Height(), m_td );
     }
 
-    auto bmp = std::make_unique<BitmapHdr>( baseFloat->Width(), baseFloat->Height(), colorspace, m_orientation );
     sz = PixelCount( baseFloat->Width(), baseFloat->Height() );
 
-    dst = bmp->Data();
-    auto sdr = baseFloat->Data();
+    dst = baseFloat->Data();
     auto gm = gmFloat->Data();
 
-    ApplyGainMap( dst, sdr, gm, sz, ch, m_td );
+    ApplyGainMap( dst, dst, gm, sz, ch, m_td );
 
-    return bmp;
+    return baseFloat;
 }
 
 namespace

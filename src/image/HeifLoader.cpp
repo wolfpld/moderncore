@@ -936,9 +936,15 @@ void HeifLoader::ApplyTransfer( float* ptr, size_t sz, size_t offset )
         case heif_transfer_characteristic_ITU_R_BT_2100_0_HLG:
             do
             {
-                ptr[0] = Hlg( ptr[0] ) * 100.f;
-                ptr[1] = Hlg( ptr[1] ) * 100.f;
-                ptr[2] = Hlg( ptr[2] ) * 100.f;
+                const auto r = Hlg( ptr[0] );
+                const auto g = Hlg( ptr[1] );
+                const auto b = Hlg( ptr[2] );
+                const auto ys = std::powf( std::max( 0.f, 0.2627f * r + 0.6780f * g + 0.0593f * b ), 0.2f );
+                const float scale = 1000.f / 203.f;
+
+                ptr[0] = r * ys * scale;
+                ptr[1] = g * ys * scale;
+                ptr[2] = b * ys * scale;
 
                 ptr += 4;
             }

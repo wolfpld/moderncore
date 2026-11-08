@@ -621,6 +621,7 @@ if(BUILD_TESTS)
         tests/util/DataBuffer.cpp
         tests/util/DataContainer.cpp
         tests/util/EmbedData.cpp
+        tests/util/FastIccTransform.cpp
         tests/util/FileBuffer.cpp
         tests/util/Filesystem.cpp
         tests/util/FileWrapper.cpp
@@ -643,6 +644,7 @@ if(BUILD_TESTS)
     target_link_libraries(mcoreutil_tests PRIVATE
         Catch2::Catch2WithMain
         ${LZ4_LINK_LIBRARIES}
+        ${LCMS_LINK_LIBRARIES}
         ${WAYLAND_SERVER_LINK_LIBRARIES}
     )
     if(NOT BUILD_SHARED_LIBS)

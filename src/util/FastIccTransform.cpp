@@ -227,10 +227,11 @@ void FastShaperRange( const uint8_t* in, float* out, size_t n, const float (*lut
 
 FastIccTransform::FastIccTransform( cmsHPROFILE profileIn, cmsHPROFILE profileOut )
 {
-    if( !profileIn || !cmsIsMatrixShaper( profileIn ) || !cmsIsMatrixShaper( profileOut ) ||
+    if( !profileIn || !profileOut || !cmsIsMatrixShaper( profileIn ) || !cmsIsMatrixShaper( profileOut ) ||
         cmsIsCLUT( profileIn, IccRenderIntent, LCMS_USED_AS_INPUT ) ||
         cmsIsCLUT( profileOut, IccRenderIntent, LCMS_USED_AS_OUTPUT ) ||
-        cmsChannelsOf( cmsGetColorSpace( profileIn ) ) != 3 )
+        cmsChannelsOf( cmsGetColorSpace( profileIn ) ) != 3 ||
+        !HasLinearTrc( profileOut ) )
     {
         return;
     }

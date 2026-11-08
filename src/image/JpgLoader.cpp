@@ -426,6 +426,20 @@ static void ApplyGainMap( float* dst, const float* sdr, const float* gm, size_t 
 #endif
 }
 
+static void ScaleToRefWhite( BitmapHdr* bmp )
+{
+    auto sz = PixelCount( bmp->Width(), bmp->Height() );
+    auto ptr = bmp->Data();
+    while( sz-- > 0 )
+    {
+        // ITU-R BT.2408 reference white is 203 nits
+        *ptr++ *= 2.03f;
+        *ptr++ *= 2.03f;
+        *ptr++ *= 2.03f;
+        *ptr++ = 1.f;
+    }
+}
+
 std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
 {
     if( !IsHdr() ) return nullptr;
@@ -487,16 +501,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
 
     if( m_gainMapOffset < 0 )
     {
-        auto sz = PixelCount( baseFloat->Width(), baseFloat->Height() );
-        auto ptr = baseFloat->Data();
-        while( sz-- > 0 )
-        {
-            // ITU-R BT.2408 reference white is 203 nits
-            *ptr++ *= 2.03f;
-            *ptr++ *= 2.03f;
-            *ptr++ *= 2.03f;
-            *ptr++ = 1.f;
-        }
+        ScaleToRefWhite( baseFloat.get() );
         return baseFloat;
     }
 

@@ -205,6 +205,13 @@ struct BeReader
     const uint8_t* ptr;
     size_t left;
 
+    bool ReadU8( uint8_t& v )
+    {
+        if( left < 1 ) return false;
+        v = *ptr++;
+        left -= 1;
+        return true;
+    }
     bool ReadU16( uint16_t& v )
     {
         if( left < 2 ) return false;
@@ -212,6 +219,22 @@ struct BeReader
         v = ntohs( v );
         ptr += 2;
         left -= 2;
+        return true;
+    }
+    bool ReadU32( uint32_t& v )
+    {
+        if( left < 4 ) return false;
+        memcpy( &v, ptr, 4 );
+        v = ntohl( v );
+        ptr += 4;
+        left -= 4;
+        return true;
+    }
+    bool ReadI32( int32_t& v )
+    {
+        uint32_t u;
+        if( !ReadU32( u ) ) return false;
+        v = (int32_t)u;
         return true;
     }
     bool ReadBytes( void* dst, size_t n )
@@ -224,18 +247,6 @@ struct BeReader
     }
 };
 }
-
-#pragma pack( push, 1 )
-struct IsoHeader
-{
-    uint32_t version;
-    uint8_t flags;
-    uint32_t baseHdrHeadroomNumerator;
-    uint32_t baseHdrHeadroomDenominator;
-    uint32_t alternateHdrHeadroomNumerator;
-    uint32_t alternateHdrHeadroomDenominator;
-};
-#pragma pack( pop )
 
 struct IsoChannel
 {
@@ -504,25 +515,52 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
             if( marker->marker == JPEG_APP0 + 2 && marker->data_length > 28 &&
                 memcmp( marker->data, "urn:iso:std:iso:ts:21496:-1\0", 28 ) == 0 )
             {
-                // C.2.2 block: 4 B version (minimum, writer), flags, base/alternate headroom ratios,
-                // then 40 B per channel. Trailing padding is allowed. Flag bits 0x04/0x08 are
-                // reserved. C.2.3 sanctions ignoring the gain map when reserved bits are set.
+                // C.2.2 block: 4 B version (minimum, writer), flags, headroom ratios, then 40 B
+                // per channel. Trailing padding is allowed. Flag bit 3 marks an older serialization
+                // where every fraction shares one leading denominator and only numerators are
+                // stored, so both variants decode. Any other reserved bit set (0x37) or a nonzero
+                // minimum_version means the block cannot be interpreted and the gain map is
+                // ignored (C.2.3). Bit 6 is accepted and unused here.
                 BeReader rd{ marker->data + 28, (size_t)marker->data_length - 28 };
-                IsoHeader hdr;
-                if( rd.ReadBytes( &hdr, sizeof( hdr ) ) && !( ntohl( hdr.version ) >> 16 ) && !( hdr.flags & 0x3F ) )
+                uint32_t version = 0;
+                uint8_t flags = 0;
+                bool parsed = rd.ReadU32( version ) && !( version >> 16 ) && rd.ReadU8( flags ) && !( flags & 0x37 );
+                const size_t channels = ( flags & 0x80 ) ? 3 : 1;
+                uint32_t tmp = 0;
+                if( parsed )
                 {
-                    if( ReadIsoChannel( rd, ch[0] ) )
+                    if( flags & 0x08 )
                     {
-                        if( hdr.flags & 0x80 )  // is_multichannel
+                        uint32_t den = 0;
+                        parsed = rd.ReadU32( den ) && den != 0 && rd.ReadU32( tmp ) && rd.ReadU32( tmp );  // shared denominator, base/alternate headroom numerators
+                        for( size_t c = 0; c < channels && parsed; c++ )
                         {
-                            if( ReadIsoChannel( rd, ch[1] ) && ReadIsoChannel( rd, ch[2] ) ) loaded = true;
-                        }
-                        else
-                        {
-                            ch[1] = ch[2] = ch[0];
-                            loaded = true;
+                            int32_t minN, maxN, sdrN, hdrN;
+                            uint32_t gamN;
+                            parsed = rd.ReadI32( minN ) && rd.ReadI32( maxN ) && rd.ReadU32( gamN ) &&
+                                rd.ReadI32( sdrN ) && rd.ReadI32( hdrN );
+                            ch[c] = {
+                                .gamma = float( gamN ) / float( den ),
+                                .gainMapMin = float( minN ) / float( den ),
+                                .gainMapMax = float( maxN ) / float( den ),
+                                .offsetSdr = float( sdrN ) / float( den ),
+                                .offsetHdr = float( hdrN ) / float( den )
+                            };
                         }
                     }
+                    else
+                    {
+                        parsed = rd.ReadU32( tmp ) && rd.ReadU32( tmp ) && rd.ReadU32( tmp ) && rd.ReadU32( tmp );  // base/alternate headroom ratios
+                        for( size_t c = 0; c < channels && parsed; c++ )
+                        {
+                            parsed = ReadIsoChannel( rd, ch[c] );
+                        }
+                    }
+                }
+                if( parsed )
+                {
+                    if( channels == 1 ) ch[1] = ch[2] = ch[0];
+                    loaded = true;
                 }
                 break;
             }

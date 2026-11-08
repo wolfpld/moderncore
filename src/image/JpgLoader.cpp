@@ -197,6 +197,34 @@ std::unique_ptr<Bitmap> JpgLoader::Load()
     return bmp;
 }
 
+namespace
+{
+// Bounds-checked big-endian reader for the ISO 21496-1 metadata block.
+struct BeReader
+{
+    const uint8_t* ptr;
+    size_t left;
+
+    bool ReadU16( uint16_t& v )
+    {
+        if( left < 2 ) return false;
+        memcpy( &v, ptr, 2 );
+        v = ntohs( v );
+        ptr += 2;
+        left -= 2;
+        return true;
+    }
+    bool ReadBytes( void* dst, size_t n )
+    {
+        if( left < n ) return false;
+        memcpy( dst, ptr, n );
+        ptr += n;
+        left -= n;
+        return true;
+    }
+};
+}
+
 #pragma pack( push, 1 )
 struct IsoHeader
 {
@@ -230,11 +258,10 @@ struct Channel
     float offsetSdr, offsetHdr;
 };
 
-static Channel ReadIsoChannel( uint8_t*& ptr )
+static bool ReadIsoChannel( BeReader& rd, Channel& out )
 {
     IsoChannel ch;
-    memcpy( &ch, ptr, sizeof( IsoChannel ) );
-    ptr += sizeof( IsoChannel );
+    if( !rd.ReadBytes( &ch, sizeof( IsoChannel ) ) ) return false;
 
     ch.gainMapMinNumerator = ntohl( ch.gainMapMinNumerator );
     ch.gainMapMinDenominator = ntohl( ch.gainMapMinDenominator );
@@ -247,13 +274,14 @@ static Channel ReadIsoChannel( uint8_t*& ptr )
     ch.alternateOffsetNumerator = ntohl( ch.alternateOffsetNumerator );
     ch.alternateOffsetDenominator = ntohl( ch.alternateOffsetDenominator );
 
-    return {
+    out = {
         .gamma = float( ch.gammaNumerator ) / float( ch.gammaDenominator ),
         .gainMapMin = float( ch.gainMapMinNumerator ) / float( ch.gainMapMinDenominator ),
         .gainMapMax = float( ch.gainMapMaxNumerator ) / float( ch.gainMapMaxDenominator ),
         .offsetSdr = float( ch.baseOffsetNumerator ) / float( ch.baseOffsetDenominator ),
         .offsetHdr = float( ch.alternateOffsetNumerator ) / float( ch.alternateOffsetDenominator )
     };
+    return true;
 }
 
 static void ApplyGainMap( float* dst, const float* sdr, const float* gm, size_t sz, Channel* ch )
@@ -476,24 +504,26 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
             if( marker->marker == JPEG_APP0 + 2 && marker->data_length > 28 &&
                 memcmp( marker->data, "urn:iso:std:iso:ts:21496:-1\0", 28 ) == 0 )
             {
-                auto ptr = marker->data + 28;
+                // C.2.2 block: 4 B version (minimum, writer), flags, base/alternate headroom ratios,
+                // then 40 B per channel. Trailing padding is allowed. Flag bits 0x04/0x08 are
+                // reserved. C.2.3 sanctions ignoring the gain map when reserved bits are set.
+                BeReader rd{ marker->data + 28, (size_t)marker->data_length - 28 };
                 IsoHeader hdr;
-                memcpy( &hdr, ptr, sizeof( IsoHeader ) );
-                ptr += sizeof( IsoHeader );
-                const bool multichannel = ( hdr.flags & 0x80 ) != 0;
-
-                ch[0] = ReadIsoChannel( ptr );
-                if( multichannel )
+                if( rd.ReadBytes( &hdr, sizeof( hdr ) ) && !( ntohl( hdr.version ) >> 16 ) && !( hdr.flags & 0x3F ) )
                 {
-                    ch[1] = ReadIsoChannel( ptr );
-                    ch[2] = ReadIsoChannel( ptr );
+                    if( ReadIsoChannel( rd, ch[0] ) )
+                    {
+                        if( hdr.flags & 0x80 )  // is_multichannel
+                        {
+                            if( ReadIsoChannel( rd, ch[1] ) && ReadIsoChannel( rd, ch[2] ) ) loaded = true;
+                        }
+                        else
+                        {
+                            ch[1] = ch[2] = ch[0];
+                            loaded = true;
+                        }
+                    }
                 }
-                else
-                {
-                    ch[1] = ch[2] = ch[0];
-                }
-
-                loaded = true;
                 break;
             }
             marker = marker->next;
@@ -638,21 +668,41 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
     return bmp;
 }
 
-struct Ifd
+namespace
 {
-    uint16_t tag;
-    uint16_t type;
-    uint32_t count;
-    uint32_t value_offset;
-};
+// Bounds-checked reader for the MPF TIFF block. All TIFF/IFD offsets are block-relative.
+struct TiffReader
+{
+    const uint8_t* base;
+    size_t size;
+    size_t pos = 0;
+    bool bigEndian;
 
-struct MpEntry
-{
-    uint32_t attr;
-    uint32_t size;
-    uint32_t offset;
-    uint16_t dep1, dep2;
+    bool Seek( size_t to )
+    {
+        if( to > size ) return false;
+        pos = to;
+        return true;
+    }
+    bool ReadU16( uint16_t& v )
+    {
+        if( size - pos < 2 ) return false;
+        memcpy( &v, base + pos, 2 );
+        if( bigEndian ) v = ntohs( v );
+        pos += 2;
+        return true;
+    }
+    bool ReadU32( uint32_t& v )
+    {
+        if( size - pos < 4 ) return false;
+        memcpy( &v, base + pos, 4 );
+        if( bigEndian ) v = ntohl( v );
+        pos += 4;
+        return true;
+    }
+    void Skip( size_t n ) { pos = size - pos < n ? size : pos + n; }
 };
+}
 
 // Returns the file position of the MPF TIFF header (first byte after the 'MPF\0' fourcc), or -1.
 static int FindMpfTiffHeader( FILE* file )
@@ -716,10 +766,9 @@ bool JpgLoader::Open()
         if( marker->marker == JPEG_APP0 + 2 && marker->data_length > 28 &&
             memcmp( marker->data, "urn:iso:std:iso:ts:21496:-1\0", 28 ) == 0 )
         {
+            BeReader rd{ marker->data + 28, (size_t)marker->data_length - 28 };
             uint16_t version;
-            memcpy( &version, marker->data + 28, 2 );
-            version = ntohs( version );
-            if( version == 0 )
+            if( rd.ReadU16( version ) && version == 0 )  // minimum_version
             {
                 validGainMap = true;
                 m_isIso = true;
@@ -767,54 +816,44 @@ bool JpgLoader::Open()
         auto marker = m_cinfo->marker_list;
         while( marker )
         {
-            if( marker->marker == JPEG_APP0 + 2 && marker->data_length > 4 && memcmp( marker->data, "MPF\0", 4 ) == 0 )
+            if( marker->marker == JPEG_APP0 + 2 && marker->data_length > 8 && memcmp( marker->data, "MPF\0", 4 ) == 0 )
             {
-                auto ptr = marker->data + 4;
-                bool bigEndian = ptr[0] == 0x4D;
-
-                uint32_t offset;
-                memcpy( &offset, ptr + 4, 4 );
-                if( bigEndian ) offset = ntohl( offset );
-
-                uint16_t count;
-                memcpy( &count, ptr + offset, 2 );
-                if( bigEndian ) count = ntohs( count );
-                offset += 2;
-
-                int numImages = 0;
-                while( count-- > 0 )
+                TiffReader rd{ .base = marker->data + 4, .size = (size_t)marker->data_length - 4, .bigEndian = marker->data[4] == 0x4D };
+                rd.pos = 2;  // skip endian indication
+                uint16_t magic = 0, count = 0;
+                uint32_t ifd0 = 0;
+                if( rd.ReadU16( magic ) && magic == 42 && rd.ReadU32( ifd0 ) &&
+                    rd.Seek( ifd0 ) && rd.ReadU16( count ) )
                 {
-                    Ifd ifd;
-                    memcpy( &ifd, ptr + offset, sizeof( Ifd ) );
-                    offset += sizeof( Ifd );
-                    if( bigEndian )
+                    int numImages = 0;
+                    for( int i = 0; i < count; i++ )
                     {
-                        ifd.tag = ntohs( ifd.tag );
-                        ifd.value_offset = ntohl( ifd.value_offset );
-                    }
+                        uint16_t tag = 0, type = 0;
+                        uint32_t cnt = 0, value = 0;
+                        if( !rd.ReadU16( tag ) || !rd.ReadU16( type ) || !rd.ReadU32( cnt ) || !rd.ReadU32( value ) ) break;
 
-                    if( ifd.tag == 0xB001 )
-                    {
-                        numImages = ifd.value_offset;
-                    }
-                    else if( ifd.tag == 0xB002 )
-                    {
-                        auto mpe = ptr + ifd.value_offset;
-                        for( int i=0; i<numImages; i++ )
+                        if( tag == 0xB001 )
                         {
-                            MpEntry entry;
-                            memcpy( &entry, mpe, sizeof( MpEntry ) );
-                            mpe += sizeof( MpEntry );
-                            if( bigEndian ) entry.attr = ntohl( entry.attr );
-
-                            // Undefined or GainMap
-                            if( entry.attr == 0 || ( entry.attr & 0xFFFFFF ) == 0x050000 )
-                            {
-                                m_gainMapOffset = bigEndian ? ntohl( entry.offset ) : entry.offset;
-                                break;
-                            }
+                            numImages = value;
                         }
-                        break;
+                        else if( tag == 0xB002 )
+                        {
+                            if( !rd.Seek( value ) || rd.size - rd.pos < (size_t)std::max( numImages, 0 ) * 16 ) break;
+                            for( int j = 0; j < numImages; j++ )
+                            {
+                                uint32_t attr = 0, size = 0, offset = 0;
+                                if( !rd.ReadU32( attr ) || !rd.ReadU32( size ) || !rd.ReadU32( offset ) ) break;
+                                rd.Skip( 4 );  // dependent entries
+
+                                // Undefined or GainMap
+                                if( attr == 0 || ( attr & 0xFFFFFF ) == 0x050000 )
+                                {
+                                    m_gainMapOffset = (int)offset;
+                                    break;
+                                }
+                            }
+                            break;
+                        }
                     }
                 }
                 break;

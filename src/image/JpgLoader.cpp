@@ -10,7 +10,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "util/FastIccTransform.hpp"
+#include "util/IccTransform.hpp"
 #include "JpgLoader.hpp"
 #include "util/Colorspace.hpp"
 #include "util/Bitmap.hpp"
@@ -499,42 +499,49 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
     {
         profileIn = cmsCreate_sRGBProfile();
     }
-    cmsHTRANSFORM transform = nullptr;
-    const FastIccTransform fs( profileIn, profileOut );
-    if( fs )
+    const auto px = PixelCount( base->Width(), base->Height() );
+    if( !m_cmyk )
     {
-        fs.Run( m_td, base->Data(), baseFloat->Data(), PixelCount( base->Width(), base->Height() ) );
+        const IccTransform icc( profileIn, profileOut );
+        if( !icc.Run( m_td, base->Data(), baseFloat->Data(), px ) )
+        {
+            cmsCloseProfile( profileIn );
+            cmsCloseProfile( profileOut );
+            cmsFreeToneCurve( linear );
+            mclog( LogLevel::Error, "JPEG: Failed to create color transform" );
+            return nullptr;
+        }
     }
     else
     {
-        transform = cmsCreateTransform( profileIn, m_cmyk ? TYPE_CMYK_8_REV : TYPE_RGBA_8,
-            profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, 0 );
+        auto transform = cmsCreateTransform( profileIn, TYPE_CMYK_8_REV, profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, 0 );
         if( transform )
         {
-            CmsTransform( m_td, transform, base->Data(), baseFloat->Data(), PixelCount( base->Width(), base->Height() ) );
+            CmsTransform( m_td, transform, base->Data(), baseFloat->Data(), px );
+            cmsDeleteTransform( transform );
         }
         else
         {
-            const auto sz = PixelCount( base->Width(), base->Height() );
             cmsHPROFILE profileSrgb = cmsCreate_sRGBProfile();
-            transform = cmsCreateTransform( profileIn, m_cmyk ? TYPE_CMYK_8_REV : TYPE_RGBA_8, profileSrgb, TYPE_RGBA_8, INTENT_PERCEPTUAL, 0 );
+            transform = cmsCreateTransform( profileIn, TYPE_CMYK_8_REV, profileSrgb, TYPE_RGBA_8, INTENT_PERCEPTUAL, 0 );
             if( !transform )
             {
+                cmsCloseProfile( profileSrgb );
                 cmsCloseProfile( profileIn );
                 cmsCloseProfile( profileOut );
                 cmsFreeToneCurve( linear );
                 mclog( LogLevel::Error, "JPEG: Failed to create transform to sRGB" );
                 return nullptr;
             }
-            CmsTransform( m_td, transform, base->Data(), base->Data(), sz );
+            CmsTransform( m_td, transform, base->Data(), base->Data(), px );
             cmsDeleteTransform( transform );
             transform = cmsCreateTransform( profileSrgb, TYPE_RGBA_8, profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, 0 );
             CheckPanic( transform, "Failed to create sRGB to HDR transform" );
-            CmsTransform( m_td, transform, base->Data(), baseFloat->Data(), sz );
+            CmsTransform( m_td, transform, base->Data(), baseFloat->Data(), px );
+            cmsDeleteTransform( transform );
             cmsCloseProfile( profileSrgb );
         }
     }
-    if( transform ) cmsDeleteTransform( transform );
     cmsCloseProfile( profileIn );
     cmsCloseProfile( profileOut );
     cmsFreeToneCurve( linear );
@@ -543,7 +550,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
 
     if( m_gainMapOffset < 0 )
     {
-        SetOpaqueAlpha( baseFloat.get() );
+        if( m_cmyk ) SetOpaqueAlpha( baseFloat.get() );
         return baseFloat;
     }
 
@@ -559,7 +566,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
     {
         jpeg_destroy_decompress( &gcinfo );
         delete[] gainMap;
-        SetOpaqueAlpha( baseFloat.get() );
+        if( m_cmyk ) SetOpaqueAlpha( baseFloat.get() );
         return baseFloat;
     }
 
@@ -641,7 +648,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
         {
             mclog( LogLevel::Warning, "JPEG: No XMP metadata found for gain map" );
             jpeg_destroy_decompress( &gcinfo );
-            SetOpaqueAlpha( baseFloat.get() );
+            if( m_cmyk ) SetOpaqueAlpha( baseFloat.get() );
             return baseFloat;
         }
 
@@ -650,7 +657,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
         {
             mclog( LogLevel::Warning, "JPEG: No gain map metadata found in XMP" );
             jpeg_destroy_decompress( &gcinfo );
-            SetOpaqueAlpha( baseFloat.get() );
+            if( m_cmyk ) SetOpaqueAlpha( baseFloat.get() );
             return baseFloat;
         }
 
@@ -681,7 +688,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
     {
         mclog( LogLevel::Warning, "JPEG: No gain map metadata found" );
         jpeg_destroy_decompress( &gcinfo );
-        SetOpaqueAlpha( baseFloat.get() );
+        if( m_cmyk ) SetOpaqueAlpha( baseFloat.get() );
         return baseFloat;
     }
 
@@ -735,7 +742,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
             mclog( LogLevel::Warning, "JPEG: Unsupported gain map format, %d components", gmChannels );
             jpeg_destroy_decompress( &gcinfo );
             delete[] gainMap;
-            SetOpaqueAlpha( baseFloat.get() );
+            if( m_cmyk ) SetOpaqueAlpha( baseFloat.get() );
             return baseFloat;
         }
         if( ch[0].gamma == 1.f &&

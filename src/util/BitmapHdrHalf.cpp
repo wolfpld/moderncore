@@ -16,7 +16,7 @@
 
 #include "BitmapHdr.hpp"
 #include "BitmapHdrHalf.hpp"
-#include "FastIccTransform.hpp"
+#include "IccTransform.hpp"
 #include "Logs.hpp"
 #include "Panic.hpp"
 #include "PixelBytes.hpp"
@@ -211,41 +211,10 @@ void BitmapHdrHalf::SetColorspace( Colorspace colorspace, TaskDispatch* td )
     }
 
     const auto sz = PixelCount( m_width, m_height );
-    const FastIccTransform fs( profileIn, profileOut );
-    if( fs.SupportsFloat() )
+    const IccTransform icc( profileIn, profileOut );
+    if( !icc.RunHalf( td, (uint16_t*)m_data, sz ) )
     {
-        fs.RunHalf( td, (uint16_t*)m_data, sz );
-    }
-    else
-    {
-        auto transform = cmsCreateTransform( profileIn, TYPE_RGBA_HALF_FLT, profileOut, TYPE_RGBA_HALF_FLT, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA );
-        auto ptr = m_data;
-        if( td )
-        {
-            auto left = sz;
-            while( left > 0 )
-            {
-                auto chunk = std::min<size_t>( left, 16 * 1024 );
-                td->Queue( [ptr, chunk, transform] {
-                    cmsDoTransform( transform, ptr, ptr, chunk );
-                } );
-                ptr += chunk * 4;
-                left -= chunk;
-            }
-            td->Sync();
-        }
-        else
-        {
-            auto left = sz;
-            while( left > 0 )
-            {
-                auto chunk = std::min<size_t>( left, UINT32_MAX );
-                cmsDoTransform( transform, ptr, ptr, chunk );
-                ptr += chunk * 4;
-                left -= chunk;
-            }
-        }
-        cmsDeleteTransform( transform );
+        Panic( "Failed to create colorspace transform!" );
     }
 
     cmsCloseProfile( profile709 );

@@ -211,6 +211,7 @@ set(MCOREUTIL_SRC
     src/util/Callstack.cpp
     src/util/Config.cpp
     src/util/EmbedData.cpp
+    src/util/FastIccTransform.cpp
     src/util/FileBuffer.cpp
     src/util/Filesystem.cpp
     src/util/Home.cpp

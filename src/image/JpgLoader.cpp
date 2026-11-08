@@ -97,6 +97,118 @@ static void CmsTransform( TaskDispatch* td, cmsHTRANSFORM transform, const TInpu
 
 namespace
 {
+struct FastShaper
+{
+    float lut[3][256];
+    float mat[9];
+    bool valid = false;
+};
+
+bool GetColorantMatrix( cmsHPROFILE profile, cmsFloat64Number out[9] )
+{
+    const cmsCIEXYZ* xyz[3] = {
+        (const cmsCIEXYZ*)cmsReadTag( profile, cmsSigRedColorantTag ),
+        (const cmsCIEXYZ*)cmsReadTag( profile, cmsSigGreenColorantTag ),
+        (const cmsCIEXYZ*)cmsReadTag( profile, cmsSigBlueColorantTag )
+    };
+    for( auto p : xyz )
+    {
+        if( !p ) return false;
+    }
+    out[0] = xyz[0]->X; out[1] = xyz[1]->X; out[2] = xyz[2]->X;
+    out[3] = xyz[0]->Y; out[4] = xyz[1]->Y; out[5] = xyz[2]->Y;
+    out[6] = xyz[0]->Z; out[7] = xyz[1]->Z; out[8] = xyz[2]->Z;
+    return true;
+}
+
+FastShaper BuildFastShaper( cmsHPROFILE profileIn, cmsHPROFILE profileOut )
+{
+    FastShaper fs;
+    if( !profileIn || !cmsIsMatrixShaper( profileIn ) ||
+        cmsChannelsOf( cmsGetColorSpace( profileIn ) ) != 3 )
+    {
+        return fs;
+    }
+
+    const cmsTagSignature trcTags[3] = { cmsSigRedTRCTag, cmsSigGreenTRCTag, cmsSigBlueTRCTag };
+    for( size_t c = 0; c < 3; c++ )
+    {
+        const cmsToneCurve* trc = nullptr;
+        if( cmsIsTag( profileIn, trcTags[c] ) )
+        {
+            trc = (const cmsToneCurve*)cmsReadTag( profileIn, trcTags[c] );
+            if( !trc ) return fs;
+        }
+        for( int i = 0; i < 256; i++ )
+        {
+            fs.lut[c][i] = trc ? static_cast<float>( cmsEvalToneCurveFloat( trc, i / 255.0 ) ) : i / 255.f;
+        }
+    }
+
+    cmsFloat64Number mr[9], mo[9];
+    if( !GetColorantMatrix( profileIn, mr ) || !GetColorantMatrix( profileOut, mo ) ) return fs;
+
+    const auto det = mo[0] * ( mo[4] * mo[8] - mo[5] * mo[7] ) -
+        mo[1] * ( mo[3] * mo[8] - mo[5] * mo[6] ) +
+        mo[2] * ( mo[3] * mo[7] - mo[4] * mo[6] );
+    if( det < 1e-9 && det > -1e-9 ) return fs;
+
+    cmsFloat64Number inv[9] = {
+        ( mo[4] * mo[8] - mo[5] * mo[7] ) / det, ( mo[2] * mo[7] - mo[1] * mo[8] ) / det, ( mo[1] * mo[5] - mo[2] * mo[4] ) / det,
+        ( mo[5] * mo[6] - mo[3] * mo[8] ) / det, ( mo[0] * mo[8] - mo[2] * mo[6] ) / det, ( mo[2] * mo[3] - mo[0] * mo[5] ) / det,
+        ( mo[3] * mo[7] - mo[4] * mo[6] ) / det, ( mo[1] * mo[6] - mo[0] * mo[7] ) / det, ( mo[0] * mo[4] - mo[1] * mo[3] ) / det
+    };
+    for( int r = 0; r < 3; r++ )
+    {
+        for( int c = 0; c < 3; c++ )
+        {
+            fs.mat[r*3+c] = static_cast<float>(
+                inv[r*3] * mr[c] + inv[r*3+1] * mr[3+c] + inv[r*3+2] * mr[6+c] );
+        }
+    }
+    fs.valid = true;
+    return fs;
+}
+
+void FastShaperTransform( TaskDispatch* td, const FastShaper& fs, const uint8_t* input, float* output, size_t size )
+{
+    auto range = []( const uint8_t* in, float* out, size_t n, const FastShaper& fs )
+    {
+        for( size_t i = 0; i < n; i++ )
+        {
+            const float r = fs.lut[0][in[0]], g = fs.lut[1][in[1]], b = fs.lut[2][in[2]];
+            in += 4;
+            for( int k = 0; k < 3; k++ )
+            {
+                auto v = fs.mat[k*3]*r + fs.mat[k*3+1]*g + fs.mat[k*3+2]*b;
+                if( v < 0.f ) v = 0.f;
+                else if( v > 1.f ) v = 1.f;
+                *out++ = v;
+            }
+            *out++ = 1.f;
+        }
+    };
+
+    if( !td )
+    {
+        range( input, output, size, fs );
+    }
+    else
+    {
+        while( size > 0 )
+        {
+            auto chunk = std::min<size_t>( size, 256 * 1024 );
+            td->Queue( [input, output, chunk, &fs, range] {
+                range( input, output, chunk, fs );
+            } );
+            input += chunk * 4;
+            output += chunk * 4;
+            size -= chunk;
+        }
+        td->Sync();
+    }
+}
+
 bool HasColorspaceExtensions()
 {
 #ifdef JCS_EXTENSIONS
@@ -498,30 +610,40 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
     {
         profileIn = cmsCreate_sRGBProfile();
     }
-    auto transform = cmsCreateTransform( profileIn, m_cmyk ? TYPE_CMYK_8_REV : TYPE_RGBA_8, profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, 0 );
-    if( transform )
+    cmsHTRANSFORM transform = nullptr;
+    const auto fs = m_cmyk ? FastShaper{} : BuildFastShaper( profileIn, profileOut );
+    if( fs.valid )
     {
-        CmsTransform( m_td, transform, base->Data(), baseFloat->Data(), PixelCount( base->Width(), base->Height() ) );
+        FastShaperTransform( m_td, fs, base->Data(), baseFloat->Data(), PixelCount( base->Width(), base->Height() ) );
     }
     else
     {
-        auto sz = PixelCount( base->Width(), base->Height() );
-        cmsHPROFILE profileSrgb = cmsCreate_sRGBProfile();
-        transform = cmsCreateTransform( profileIn, m_cmyk ? TYPE_CMYK_8_REV : TYPE_RGBA_8, profileSrgb, TYPE_RGBA_8, INTENT_PERCEPTUAL, 0 );
-        if( !transform )
+        transform = cmsCreateTransform( profileIn, m_cmyk ? TYPE_CMYK_8_REV : TYPE_RGBA_8,
+            profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, 0 );
+        if( transform )
         {
-            cmsCloseProfile( profileIn );
-            cmsCloseProfile( profileOut );
-            cmsFreeToneCurve( linear );
-            mclog( LogLevel::Error, "JPEG: Failed to create transform to sRGB" );
-            return nullptr;
+            CmsTransform( m_td, transform, base->Data(), baseFloat->Data(), PixelCount( base->Width(), base->Height() ) );
         }
-        CmsTransform( m_td, transform, base->Data(), base->Data(), sz );
-        cmsDeleteTransform( transform );
-        transform = cmsCreateTransform( profileSrgb, TYPE_RGBA_8, profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, 0 );
-        CheckPanic( transform, "Failed to create sRGB to HDR transform" );
-        CmsTransform( m_td, transform, base->Data(), baseFloat->Data(), sz );
-        cmsCloseProfile( profileSrgb );
+        else
+        {
+            const auto sz = PixelCount( base->Width(), base->Height() );
+            cmsHPROFILE profileSrgb = cmsCreate_sRGBProfile();
+            transform = cmsCreateTransform( profileIn, m_cmyk ? TYPE_CMYK_8_REV : TYPE_RGBA_8, profileSrgb, TYPE_RGBA_8, INTENT_PERCEPTUAL, 0 );
+            if( !transform )
+            {
+                cmsCloseProfile( profileIn );
+                cmsCloseProfile( profileOut );
+                cmsFreeToneCurve( linear );
+                mclog( LogLevel::Error, "JPEG: Failed to create transform to sRGB" );
+                return nullptr;
+            }
+            CmsTransform( m_td, transform, base->Data(), base->Data(), sz );
+            cmsDeleteTransform( transform );
+            transform = cmsCreateTransform( profileSrgb, TYPE_RGBA_8, profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, 0 );
+            CheckPanic( transform, "Failed to create sRGB to HDR transform" );
+            CmsTransform( m_td, transform, base->Data(), baseFloat->Data(), sz );
+            cmsCloseProfile( profileSrgb );
+        }
     }
     if( transform ) cmsDeleteTransform( transform );
     cmsCloseProfile( profileIn );

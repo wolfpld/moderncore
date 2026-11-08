@@ -277,6 +277,16 @@ struct Channel
     float offsetSdr, offsetHdr;
 };
 
+// Zero denominators divide to inf/nan and gamma 0 turns into 1/0 in the expansion powf,
+// so finiteness plus a positive gamma reject every malformed value, parsed or computed.
+// log2 gains beyond 32 would overflow exp2 to inf in the boost regardless of base values.
+static bool ValidChannel( const Channel& ch )
+{
+    return isfinite( ch.gamma ) && isfinite( ch.gainMapMin ) && isfinite( ch.gainMapMax ) &&
+        isfinite( ch.offsetSdr ) && isfinite( ch.offsetHdr ) && ch.gamma > 0.f &&
+        fabsf( ch.gainMapMin ) < 32.f && fabsf( ch.gainMapMax ) < 32.f;
+}
+
 static bool ReadIsoChannel( BeReader& rd, Channel& out )
 {
     IsoChannel ch;
@@ -300,7 +310,7 @@ static bool ReadIsoChannel( BeReader& rd, Channel& out )
         .offsetSdr = float( ch.baseOffsetNumerator ) / float( ch.baseOffsetDenominator ),
         .offsetHdr = float( ch.alternateOffsetNumerator ) / float( ch.alternateOffsetDenominator )
     };
-    return true;
+    return ValidChannel( out );
 }
 
 static void ApplyGainMap( float* dst, const float* sdr, const float* gm, size_t sz, Channel* ch )
@@ -554,6 +564,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
                                 .offsetSdr = float( sdrN ) / float( den ),
                                 .offsetHdr = float( hdrN ) / float( den )
                             };
+                            if( !ValidChannel( ch[c] ) ) parsed = false;
                         }
                     }
                     else
@@ -613,7 +624,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
         hdrCapMin = attrHdrCapMin ? attrHdrCapMin.as_float() : 0.0f;
         hdrCapMax = attrHdrCapMax ? attrHdrCapMax.as_float() : 1.0f;     // required value
 
-        loaded = true;
+        loaded = ValidChannel( ch[0] );
     }
 
     if( !loaded )

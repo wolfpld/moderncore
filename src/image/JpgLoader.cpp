@@ -17,6 +17,7 @@
 #include "util/EmbedData.hpp"
 #include "util/FileBuffer.hpp"
 #include "util/FileWrapper.hpp"
+#include "util/PixelBytes.hpp"
 #include "util/Panic.hpp"
 #include "util/Simd.hpp"
 #include "util/TaskDispatch.hpp"
@@ -69,7 +70,7 @@ struct JpgErrorMgr
 };
 
 template<typename TInput, typename TOutput>
-static void CmsTransform( TaskDispatch* td, cmsHTRANSFORM transform, const TInput* input, TOutput* output, uint32_t size )
+static void CmsTransform( TaskDispatch* td, cmsHTRANSFORM transform, const TInput* input, TOutput* output, size_t size )
 {
     if( !td )
     {
@@ -79,7 +80,7 @@ static void CmsTransform( TaskDispatch* td, cmsHTRANSFORM transform, const TInpu
     {
         while( size > 0 )
         {
-            auto chunk = std::min<uint32_t>( size, 16 * 1024 );
+            auto chunk = std::min<size_t>( size, 16 * 1024 );
             td->Queue( [input, output, chunk, transform] {
                 cmsDoTransform( transform, input, output, chunk );
             } );
@@ -191,7 +192,7 @@ std::unique_ptr<Bitmap> JpgLoader::Load()
     if( profileIn ) transform = cmsCreateTransform( profileIn, m_cmyk ? TYPE_CMYK_8_REV : TYPE_RGBA_8, profileOut, TYPE_RGBA_8, INTENT_PERCEPTUAL, 0 );
     if( transform )
     {
-        CmsTransform( m_td, transform, bmp->Data(), bmp->Data(), bmp->Width() * bmp->Height() );
+        CmsTransform( m_td, transform, bmp->Data(), bmp->Data(), PixelCount( bmp->Width(), bmp->Height() ) );
         cmsDeleteTransform( transform );
     }
     if( profileIn ) cmsCloseProfile( profileIn );
@@ -442,11 +443,11 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
     auto transform = cmsCreateTransform( profileIn, m_cmyk ? TYPE_CMYK_8_REV : TYPE_RGBA_8, profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, 0 );
     if( transform )
     {
-        CmsTransform( m_td, transform, base->Data(), baseFloat->Data(), base->Width() * base->Height() );
+        CmsTransform( m_td, transform, base->Data(), baseFloat->Data(), PixelCount( base->Width(), base->Height() ) );
     }
     else
     {
-        auto sz = base->Width() * base->Height();
+        auto sz = PixelCount( base->Width(), base->Height() );
         cmsHPROFILE profileSrgb = cmsCreate_sRGBProfile();
         transform = cmsCreateTransform( profileIn, m_cmyk ? TYPE_CMYK_8_REV : TYPE_RGBA_8, profileSrgb, TYPE_RGBA_8, INTENT_PERCEPTUAL, 0 );
         if( !transform )
@@ -473,7 +474,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
 
     if( m_gainMapOffset < 0 )
     {
-        auto sz = baseFloat->Width() * baseFloat->Height();
+        auto sz = PixelCount( baseFloat->Width(), baseFloat->Height() );
         auto ptr = baseFloat->Data();
         while( sz-- > 0 )
         {
@@ -621,7 +622,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
 
     jpeg_start_decompress( &gcinfo );
     const auto gmChannels = gcinfo.output_components;
-    gainMap = new uint8_t[gcinfo.output_width * gcinfo.output_height * gmChannels];
+    gainMap = new uint8_t[PixelChannelCount( gcinfo.output_width, gcinfo.output_height, gmChannels )];
     auto ptr = gainMap;
     while( gcinfo.output_scanline < gcinfo.output_height )
     {
@@ -635,7 +636,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
 
     auto src = gainMap;
     auto dst = gmFloat->Data();
-    auto sz = gmFloat->Width() * gmFloat->Height();
+    auto sz = PixelCount( gmFloat->Width(), gmFloat->Height() );
     if( gmChannels == 1 )
     {
         if( ch[0].gamma == 1.f )
@@ -699,7 +700,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
     }
 
     auto bmp = std::make_unique<BitmapHdr>( baseFloat->Width(), baseFloat->Height(), colorspace, m_orientation );
-    sz = baseFloat->Width() * baseFloat->Height();
+    sz = PixelCount( baseFloat->Width(), baseFloat->Height() );
 
     dst = bmp->Data();
     auto sdr = baseFloat->Data();

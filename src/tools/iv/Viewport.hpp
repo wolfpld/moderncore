@@ -80,7 +80,7 @@ private:
     [[nodiscard]] std::vector<std::string> FindLoadableImages( const std::vector<std::string>& fileList );
     [[nodiscard]] std::vector<std::string> ListDirectory( const std::string& path );
 
-    void SetFileList( std::vector<std::string>&& fileList, const std::string& origin );
+    void SetFileList( std::vector<std::string>&& fileList, std::string origin );
 
     WaylandDisplay& m_display;
     VlkInstance& m_vkInstance;

@@ -208,7 +208,7 @@ void Viewport::LoadImage( const char* path, bool scanDirectory )
         auto files = FindLoadableImages( ListDirectory( dir ) );
         if( files.empty() ) return;
         mclog( LogLevel::Info, "Found %zu files", files.size() );
-        SetFileList( std::move( files ), origin );
+        SetFileList( std::move( files ), std::move( origin ) );
     }
 }
 
@@ -473,7 +473,7 @@ void Viewport::Drop( int fd, const char* mime )
             else
             {
                 SetFileList( std::move( files ), files[0] );
-                LoadImage( files[0].c_str(), false );
+                LoadImage( m_fileList[m_fileIndex].c_str(), false );
             }
         }
     }
@@ -1092,7 +1092,7 @@ void Viewport::PasteClipboard()
             else
             {
                 SetFileList( std::move( files ), files[0] );
-                LoadImage( files[0].c_str(), false );
+                LoadImage( m_fileList[m_fileIndex].c_str(), false );
             }
             return;
         }
@@ -1206,9 +1206,9 @@ std::vector<std::string> Viewport::FindLoadableImages( const std::vector<std::st
     return ret;
 }
 
-void Viewport::SetFileList( std::vector<std::string>&& fileList, const std::string& origin )
+void Viewport::SetFileList( std::vector<std::string>&& fileList, std::string origin )
 {
-    m_fileList = fileList;
+    m_fileList = std::move( fileList );
     auto it = std::ranges::find( m_fileList, origin );
     CheckPanic( it != m_fileList.end(), "Origin not found in file list" );
     m_fileIndex = std::distance( m_fileList.begin(), it );

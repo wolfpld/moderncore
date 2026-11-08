@@ -932,7 +932,7 @@ bool JpgLoader::Open()
                                 rd.Skip( 4 );  // dependent entries
 
                                 // Undefined or GainMap
-                                if( attr == 0 || ( attr & 0xFFFFFF ) == 0x050000 )
+                                if( j > 0 && ( attr == 0 || ( attr & 0xFFFFFF ) == 0x050000 ) )
                                 {
                                     m_gainMapOffset = (int)offset;
                                     break;

@@ -9,6 +9,7 @@
 #include "StbImageLoader.hpp"
 #include "util/Bitmap.hpp"
 #include "util/BitmapHdr.hpp"
+#include "util/FastIccTransform.hpp"
 #include "util/FileWrapper.hpp"
 #include "util/Panic.hpp"
 
@@ -76,11 +77,17 @@ std::unique_ptr<BitmapHdr> StbImageLoader::LoadHdr( Colorspace colorspace )
 
         auto profileIn = cmsCreateRGBProfile( &white709, &primaries709, linear3 );
         auto profileOut = cmsCreateRGBProfile( &white709, &primaries2020, linear3 );
-        auto transform = cmsCreateTransform( profileIn, TYPE_RGBA_FLT, profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, 0 );
-
-        cmsDoTransform( transform, data, hdr->Data(), w * h );
-
-        cmsDeleteTransform( transform );
+        const FastIccTransform fs( profileIn, profileOut );
+        if( fs.SupportsFloat() )
+        {
+            fs.RunFloat( nullptr, data, hdr->Data(), (size_t)w * h );
+        }
+        else
+        {
+            auto transform = cmsCreateTransform( profileIn, TYPE_RGBA_FLT, profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, 0 );
+            cmsDoTransform( transform, data, hdr->Data(), w * h );
+            cmsDeleteTransform( transform );
+        }
         cmsCloseProfile( profileIn );
         cmsCloseProfile( profileOut );
         cmsFreeToneCurve( linear );

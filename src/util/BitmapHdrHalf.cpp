@@ -16,6 +16,7 @@
 
 #include "BitmapHdr.hpp"
 #include "BitmapHdrHalf.hpp"
+#include "FastIccTransform.hpp"
 #include "Logs.hpp"
 #include "Panic.hpp"
 #include "PixelBytes.hpp"
@@ -197,47 +198,56 @@ void BitmapHdrHalf::SetColorspace( Colorspace colorspace, TaskDispatch* td )
     auto profile709 = cmsCreateRGBProfile( &white709, &primaries709, linear3 );
     auto profile2020 = cmsCreateRGBProfile( &white709, &primaries2020, linear3 );
 
-    cmsHTRANSFORM transform;
+    auto profileIn = profile709;
+    auto profileOut = profile2020;
     if( m_colorspace == Colorspace::BT2020 && colorspace == Colorspace::BT709 )
     {
-        transform = cmsCreateTransform( profile2020, TYPE_RGBA_HALF_FLT, profile709, TYPE_RGBA_HALF_FLT, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA );
+        profileIn = profile2020;
+        profileOut = profile709;
     }
-    else if( m_colorspace == Colorspace::BT709 && colorspace == Colorspace::BT2020 )
-    {
-        transform = cmsCreateTransform( profile709, TYPE_RGBA_HALF_FLT, profile2020, TYPE_RGBA_HALF_FLT, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA );
-    }
-    else
+    else if( m_colorspace != Colorspace::BT709 || colorspace != Colorspace::BT2020 )
     {
         Panic( "Invalid colorspace transform!" );
     }
 
-    auto sz = PixelCount( m_width, m_height );
-    auto ptr = m_data;
-    if( td )
+    const auto sz = PixelCount( m_width, m_height );
+    const FastIccTransform fs( profileIn, profileOut );
+    if( fs.SupportsFloat() )
     {
-        while( sz > 0 )
-        {
-            auto chunk = std::min<size_t>( sz, 16 * 1024 );
-            td->Queue( [ptr, chunk, transform] {
-                cmsDoTransform( transform, ptr, ptr, chunk );
-            } );
-            ptr += chunk * 4;
-            sz -= chunk;
-        }
-        td->Sync();
+        fs.RunHalf( td, (uint16_t*)m_data, sz );
     }
     else
     {
-        while( sz > 0 )
+        auto transform = cmsCreateTransform( profileIn, TYPE_RGBA_HALF_FLT, profileOut, TYPE_RGBA_HALF_FLT, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA );
+        auto ptr = m_data;
+        if( td )
         {
-            auto chunk = std::min<size_t>( sz, UINT32_MAX );
-            cmsDoTransform( transform, ptr, ptr, chunk );
-            ptr += chunk * 4;
-            sz -= chunk;
+            auto left = sz;
+            while( left > 0 )
+            {
+                auto chunk = std::min<size_t>( left, 16 * 1024 );
+                td->Queue( [ptr, chunk, transform] {
+                    cmsDoTransform( transform, ptr, ptr, chunk );
+                } );
+                ptr += chunk * 4;
+                left -= chunk;
+            }
+            td->Sync();
         }
+        else
+        {
+            auto left = sz;
+            while( left > 0 )
+            {
+                auto chunk = std::min<size_t>( left, UINT32_MAX );
+                cmsDoTransform( transform, ptr, ptr, chunk );
+                ptr += chunk * 4;
+                left -= chunk;
+            }
+        }
+        cmsDeleteTransform( transform );
     }
 
-    cmsDeleteTransform( transform );
     cmsCloseProfile( profile709 );
     cmsCloseProfile( profile2020 );
     cmsFreeToneCurve( linear );

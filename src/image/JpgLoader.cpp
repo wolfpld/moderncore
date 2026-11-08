@@ -37,7 +37,11 @@ JpgLoader::JpgLoader( std::shared_ptr<FileWrapper> file, TaskDispatch* td )
 JpgLoader::~JpgLoader()
 {
     free( m_iccData );
-    if( m_cinfo ) jpeg_destroy_decompress( m_cinfo );
+    if( m_cinfo )
+    {
+        jpeg_destroy_decompress( m_cinfo );
+        delete m_cinfo;
+    }
 }
 
 bool JpgLoader::IsValidSignature( const uint8_t* buf, size_t size )

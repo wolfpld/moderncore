@@ -3,6 +3,7 @@
 #include "util/TaskDispatch.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <immintrin.h>
 
 #include "contrib/half.hpp"
@@ -117,12 +118,25 @@ bool GetColorantMatrix( cmsHPROFILE profile, cmsFloat64Number out[9] )
     return true;
 }
 
+#if defined __SSE4_1__ && defined __FMA__
+void StagePlanes( float* planes, const uint8_t* in, size_t count, const float (*lut)[256] )
+{
+    float* pr = planes, *pg = planes + count, *pb = planes + 2*count;
+    for( size_t i = 0; i < count; i++ )
+    {
+        pr[i] = lut[0][in[0]];
+        pg[i] = lut[1][in[1]];
+        pb[i] = lut[2][in[2]];
+        in += 4;
+    }
+}
+#endif
+
 void FastShaperRange( const uint8_t* in, float* out, size_t n, const float (*lut)[256], const float* mat )
 {
 #if defined __SSE4_1__ && defined __FMA__
 #ifdef __AVX512F__
     const __m512 zero = _mm512_setzero_ps(), one = _mm512_set1_ps( 1.f );
-    const __m512i lo8 = _mm512_set1_epi32( 0xff );
     const __m512 m00 = _mm512_set1_ps( mat[0] ), m01 = _mm512_set1_ps( mat[1] ), m02 = _mm512_set1_ps( mat[2] );
     const __m512 m10 = _mm512_set1_ps( mat[3] ), m11 = _mm512_set1_ps( mat[4] ), m12 = _mm512_set1_ps( mat[5] );
     const __m512 m20 = _mm512_set1_ps( mat[6] ), m21 = _mm512_set1_ps( mat[7] ), m22 = _mm512_set1_ps( mat[8] );
@@ -140,35 +154,38 @@ void FastShaperRange( const uint8_t* in, float* out, size_t n, const float (*lut
         idxRG[j] = _mm512_setr_epi32( b, 16+b, 1, 1, b+1, 16+b+1, 1, 1, b+2, 16+b+2, 1, 1, b+3, 16+b+3, 1, 1 );
     }
 
-    while( n >= 16 )
+    alignas(64) float planes512[96];
+    while( n >= 32 )
     {
-        const __m512i px = _mm512_loadu_si512( in );
-        const __m512 r = _mm512_i32gather_ps( _mm512_and_si512( px, lo8 ), lut[0], 4 );
-        const __m512 g = _mm512_i32gather_ps( _mm512_and_si512( _mm512_srli_epi32( px, 8 ), lo8 ), lut[1], 4 );
-        const __m512 b = _mm512_i32gather_ps( _mm512_and_si512( _mm512_srli_epi32( px, 16 ), lo8 ), lut[2], 4 );
-
-        __m512 x = _mm512_fmadd_ps( m00, r, _mm512_fmadd_ps( m01, g, _mm512_mul_ps( m02, b ) ) );
-        __m512 y = _mm512_fmadd_ps( m10, r, _mm512_fmadd_ps( m11, g, _mm512_mul_ps( m12, b ) ) );
-        __m512 z = _mm512_fmadd_ps( m20, r, _mm512_fmadd_ps( m21, g, _mm512_mul_ps( m22, b ) ) );
-        x = _mm512_min_ps( _mm512_max_ps( x, zero ), one );
-        y = _mm512_min_ps( _mm512_max_ps( y, zero ), one );
-        z = _mm512_min_ps( _mm512_max_ps( z, zero ), one );
-
-        for( int j = 0; j < 4; j++ )
+        StagePlanes( planes512, in, 32, lut );
+        for( int h = 0; h < 2; h++ )
         {
-            const __m512 rg = _mm512_permutex2var_ps( x, idxRG[j], y );
-            const __m512 bo = _mm512_mask_blend_ps( 0x00f0, _mm512_permutexvar_ps( idxB[j], z ), one );
-            _mm512_storeu_ps( out + j*16, _mm512_permutex2var_ps( rg, idxOut, bo ) );
+            const __m512 r = _mm512_load_ps( planes512 + h*16 );
+            const __m512 g = _mm512_load_ps( planes512 + 32 + h*16 );
+            const __m512 b = _mm512_load_ps( planes512 + 64 + h*16 );
+
+            __m512 x = _mm512_fmadd_ps( m00, r, _mm512_fmadd_ps( m01, g, _mm512_mul_ps( m02, b ) ) );
+            __m512 y = _mm512_fmadd_ps( m10, r, _mm512_fmadd_ps( m11, g, _mm512_mul_ps( m12, b ) ) );
+            __m512 z = _mm512_fmadd_ps( m20, r, _mm512_fmadd_ps( m21, g, _mm512_mul_ps( m22, b ) ) );
+            x = _mm512_min_ps( _mm512_max_ps( x, zero ), one );
+            y = _mm512_min_ps( _mm512_max_ps( y, zero ), one );
+            z = _mm512_min_ps( _mm512_max_ps( z, zero ), one );
+
+            for( int j = 0; j < 4; j++ )
+            {
+                const __m512 rg = _mm512_permutex2var_ps( x, idxRG[j], y );
+                const __m512 bo = _mm512_mask_blend_ps( 0x00f0, _mm512_permutexvar_ps( idxB[j], z ), one );
+                _mm512_storeu_ps( out + h*64 + j*16, _mm512_permutex2var_ps( rg, idxOut, bo ) );
+            }
         }
-        in += 64;
-        out += 64;
-        n -= 16;
+        in += 128;
+        out += 128;
+        n -= 32;
     }
 #endif
 
 #ifdef __AVX2__
     const __m256 fone = _mm256_set1_ps( 1.f ), fzero = _mm256_setzero_ps();
-    const __m256i lo8x = _mm256_set1_epi32( 0xff );
     const __m256 k00 = _mm256_set1_ps( mat[0] ), k01 = _mm256_set1_ps( mat[1] ), k02 = _mm256_set1_ps( mat[2] );
     const __m256 k10 = _mm256_set1_ps( mat[3] ), k11 = _mm256_set1_ps( mat[4] ), k12 = _mm256_set1_ps( mat[5] );
     const __m256 k20 = _mm256_set1_ps( mat[6] ), k21 = _mm256_set1_ps( mat[7] ), k22 = _mm256_set1_ps( mat[8] );
@@ -177,34 +194,38 @@ void FastShaperRange( const uint8_t* in, float* out, size_t n, const float (*lut
     const __m256i maskG = _mm256_setr_epi32( 0, -1, 0, 0, 0, -1, 0, 0 );
     const __m256i maskB = _mm256_setr_epi32( 0, 0, -1, 0, 0, 0, -1, 0 );
 
-    while( n >= 8 )
+    alignas(32) float planes256[48];
+    while( n >= 16 )
     {
-        const __m256i px = _mm256_loadu_si256( (const __m256i*)in );
-        const __m256 r = _mm256_i32gather_ps( lut[0], _mm256_and_si256( px, lo8x ), 4 );
-        const __m256 g = _mm256_i32gather_ps( lut[1], _mm256_and_si256( _mm256_srli_epi32( px, 8 ), lo8x ), 4 );
-        const __m256 b = _mm256_i32gather_ps( lut[2], _mm256_and_si256( _mm256_srli_epi32( px, 16 ), lo8x ), 4 );
-
-        __m256 x = _mm256_fmadd_ps( k00, r, _mm256_fmadd_ps( k01, g, _mm256_mul_ps( k02, b ) ) );
-        __m256 y = _mm256_fmadd_ps( k10, r, _mm256_fmadd_ps( k11, g, _mm256_mul_ps( k12, b ) ) );
-        __m256 z = _mm256_fmadd_ps( k20, r, _mm256_fmadd_ps( k21, g, _mm256_mul_ps( k22, b ) ) );
-        x = _mm256_min_ps( _mm256_max_ps( x, fzero ), fone );
-        y = _mm256_min_ps( _mm256_max_ps( y, fzero ), fone );
-        z = _mm256_min_ps( _mm256_max_ps( z, fzero ), fone );
-
-        for( int q = 0; q < 4; q++ )
+        StagePlanes( planes256, in, 16, lut );
+        for( int h = 0; h < 2; h++ )
         {
-            const __m256i ir = _mm256_setr_epi32( 2*q, 0, 0, 0, 2*q+1, 0, 0, 0 );
-            const __m256i ig = _mm256_setr_epi32( 0, 2*q, 0, 0, 0, 2*q+1, 0, 0 );
-            const __m256i ib = _mm256_setr_epi32( 0, 0, 2*q, 0, 0, 0, 2*q+1, 0 );
-            const __m256 v = _mm256_or_ps( alpha,
-                _mm256_or_ps( _mm256_and_ps( _mm256_permutevar8x32_ps( x, ir ), _mm256_castsi256_ps( maskR ) ),
-                    _mm256_or_ps( _mm256_and_ps( _mm256_permutevar8x32_ps( y, ig ), _mm256_castsi256_ps( maskG ) ),
-                        _mm256_and_ps( _mm256_permutevar8x32_ps( z, ib ), _mm256_castsi256_ps( maskB ) ) ) ) );
-            _mm256_storeu_ps( out + q*8, v );
+            const __m256 r = _mm256_load_ps( planes256 + h*8 );
+            const __m256 g = _mm256_load_ps( planes256 + 16 + h*8 );
+            const __m256 b = _mm256_load_ps( planes256 + 32 + h*8 );
+
+            __m256 x = _mm256_fmadd_ps( k00, r, _mm256_fmadd_ps( k01, g, _mm256_mul_ps( k02, b ) ) );
+            __m256 y = _mm256_fmadd_ps( k10, r, _mm256_fmadd_ps( k11, g, _mm256_mul_ps( k12, b ) ) );
+            __m256 z = _mm256_fmadd_ps( k20, r, _mm256_fmadd_ps( k21, g, _mm256_mul_ps( k22, b ) ) );
+            x = _mm256_min_ps( _mm256_max_ps( x, fzero ), fone );
+            y = _mm256_min_ps( _mm256_max_ps( y, fzero ), fone );
+            z = _mm256_min_ps( _mm256_max_ps( z, fzero ), fone );
+
+            for( int q = 0; q < 4; q++ )
+            {
+                const __m256i ir = _mm256_setr_epi32( 2*q, 0, 0, 0, 2*q+1, 0, 0, 0 );
+                const __m256i ig = _mm256_setr_epi32( 0, 2*q, 0, 0, 0, 2*q+1, 0, 0 );
+                const __m256i ib = _mm256_setr_epi32( 0, 0, 2*q, 0, 0, 0, 2*q+1, 0 );
+                const __m256 v = _mm256_or_ps( alpha,
+                    _mm256_or_ps( _mm256_and_ps( _mm256_permutevar8x32_ps( x, ir ), _mm256_castsi256_ps( maskR ) ),
+                        _mm256_or_ps( _mm256_and_ps( _mm256_permutevar8x32_ps( y, ig ), _mm256_castsi256_ps( maskG ) ),
+                            _mm256_and_ps( _mm256_permutevar8x32_ps( z, ib ), _mm256_castsi256_ps( maskB ) ) ) ) );
+                _mm256_storeu_ps( out + h*32 + q*8, v );
+            }
         }
-        in += 32;
-        out += 32;
-        n -= 8;
+        in += 64;
+        out += 64;
+        n -= 16;
     }
 #endif
 #endif
@@ -216,8 +237,8 @@ void FastShaperRange( const uint8_t* in, float* out, size_t n, const float (*lut
         for( int k = 0; k < 3; k++ )
         {
             auto v = mat[k*3]*r + mat[k*3+1]*g + mat[k*3+2]*b;
-            if( v < 0.f ) v = 0.f;
-            else if( v > 1.f ) v = 1.f;
+            v = v < 0.f ? 0.f : v;
+            v = v > 1.f ? 1.f : v;
             *out++ = v;
         }
         *out++ = 1.f;

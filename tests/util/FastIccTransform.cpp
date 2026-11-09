@@ -74,6 +74,54 @@ TEST_CASE( "FastIccTransform linear float run matches lcms", "[fasticc][colorspa
     }
 }
 
+TEST_CASE( "FastIccTransform byte run matches lcms", "[fasticc][colorspace]" )
+{
+    ProfilePair pp;
+    const FastIccTransform fs( pp.in, pp.out );
+    REQUIRE( static_cast<bool>( fs ) );
+
+    const size_t px = 600001;
+    std::vector<uint8_t> buf( px * 4 );
+    size_t seed = 54321;
+    for( size_t i = 0; i < px * 4; i += 4 )
+    {
+        seed = seed * 6364136223846793005ULL + 1442695040888963407ULL;
+        buf[i] = (uint8_t)( seed >> 40 );
+        buf[i + 1] = (uint8_t)( seed >> 28 );
+        buf[i + 2] = (uint8_t)( seed >> 16 );
+        buf[i + 3] = 255;
+    }
+
+    std::vector<float> ref( px * 4 );
+    auto transform = cmsCreateTransform( pp.in, TYPE_RGBA_8, pp.out, TYPE_RGBA_FLT, IccRenderIntent, cmsFLAGS_COPY_ALPHA );
+    REQUIRE( transform );
+    cmsDoTransform( transform, buf.data(), ref.data(), (cmsUInt32Number)px );
+    cmsDeleteTransform( transform );
+
+    std::vector<float> out( px * 4 );
+    fs.Run( nullptr, buf.data(), out.data(), px );
+
+    for( size_t i = 0; i < out.size(); i += 4 )
+    {
+        for( int c = 0; c < 3; c++ )
+        {
+            float want = ref[i + c];
+            want = want < 0.f ? 0.f : want;
+            want = want > 1.f ? 1.f : want;
+            CHECK( out[i + c] == Catch::Approx( want ).margin( 1e-5f ) );
+        }
+        CHECK( out[i + 3] == 1.f );
+    }
+
+    TaskDispatch td( 4, "test" );
+    std::vector<float> threaded( px * 4 );
+    fs.Run( &td, buf.data(), threaded.data(), px );
+    for( size_t i = 0; i < out.size(); i++ )
+    {
+        CHECK( threaded[i] == out[i] );
+    }
+}
+
 TEST_CASE( "FastIccTransform float run is placement and thread count agnostic", "[fasticc][colorspace]" )
 {
     ProfilePair pp;

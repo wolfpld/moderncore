@@ -130,11 +130,58 @@ void StagePlanes( float* planes, const uint8_t* in, size_t count, const float (*
         in += 4;
     }
 }
+
+#ifdef __AVX512F__
+void Store512( float* dst, __m512 v, bool nt )
+{
+    if( nt ) _mm512_stream_ps( dst, v );
+    else _mm512_storeu_ps( dst, v );
+}
 #endif
+
+#ifdef __AVX2__
+void Store256( float* dst, __m256 v, bool nt )
+{
+    if( nt ) _mm256_stream_ps( dst, v );
+    else _mm256_storeu_ps( dst, v );
+}
+#endif
+#endif
+
+void FastShaperScalar( const uint8_t* in, float* out, size_t n, const float (*lut)[256], const float* mat )
+{
+    for( size_t i = 0; i < n; i++ )
+    {
+        const float r = lut[0][in[0]], g = lut[1][in[1]], b = lut[2][in[2]];
+        in += 4;
+        for( int k = 0; k < 3; k++ )
+        {
+#if defined __SSE4_1__ && defined __FMA__
+            auto v = fmaf( mat[k*3], r, fmaf( mat[k*3+1], g, mat[k*3+2]*b ) );
+#else
+            auto v = mat[k*3]*r + mat[k*3+1]*g + mat[k*3+2]*b;
+#endif
+            v = v < 0.f ? 0.f : v;
+            v = v > 1.f ? 1.f : v;
+            *out++ = v;
+        }
+        *out++ = 1.f;
+    }
+}
 
 void FastShaperRange( const uint8_t* in, float* out, size_t n, const float (*lut)[256], const float* mat )
 {
 #if defined __SSE4_1__ && defined __FMA__
+    uintptr_t skew = ( (uintptr_t)out ) & 63;
+    const bool nt = !( skew & 15 );
+    if( nt && skew )
+    {
+        const size_t peel = std::min( ( 64 - skew ) / 16, n );
+        FastShaperScalar( in, out, peel, lut, mat );
+        in += peel * 4;
+        out += peel * 4;
+        n -= peel;
+    }
 #ifdef __AVX512F__
     const __m512 zero = _mm512_setzero_ps(), one = _mm512_set1_ps( 1.f );
     const __m512 m00 = _mm512_set1_ps( mat[0] ), m01 = _mm512_set1_ps( mat[1] ), m02 = _mm512_set1_ps( mat[2] );
@@ -175,7 +222,8 @@ void FastShaperRange( const uint8_t* in, float* out, size_t n, const float (*lut
             {
                 const __m512 rg = _mm512_permutex2var_ps( x, idxRG[j], y );
                 const __m512 bo = _mm512_mask_blend_ps( 0x00f0, _mm512_permutexvar_ps( idxB[j], z ), one );
-                _mm512_storeu_ps( out + h*64 + j*16, _mm512_permutex2var_ps( rg, idxOut, bo ) );
+                const __m512 v = _mm512_permutex2var_ps( rg, idxOut, bo );
+                Store512( out + h*64 + j*16, v, nt );
             }
         }
         in += 128;
@@ -189,10 +237,6 @@ void FastShaperRange( const uint8_t* in, float* out, size_t n, const float (*lut
     const __m256 k00 = _mm256_set1_ps( mat[0] ), k01 = _mm256_set1_ps( mat[1] ), k02 = _mm256_set1_ps( mat[2] );
     const __m256 k10 = _mm256_set1_ps( mat[3] ), k11 = _mm256_set1_ps( mat[4] ), k12 = _mm256_set1_ps( mat[5] );
     const __m256 k20 = _mm256_set1_ps( mat[6] ), k21 = _mm256_set1_ps( mat[7] ), k22 = _mm256_set1_ps( mat[8] );
-    const __m256 alpha = _mm256_blend_ps( fzero, fone, 0x88 );
-    const __m256i maskR = _mm256_setr_epi32( -1, 0, 0, 0, -1, 0, 0, 0 );
-    const __m256i maskG = _mm256_setr_epi32( 0, -1, 0, 0, 0, -1, 0, 0 );
-    const __m256i maskB = _mm256_setr_epi32( 0, 0, -1, 0, 0, 0, -1, 0 );
 
     alignas(32) float planes256[48];
     while( n >= 16 )
@@ -211,38 +255,35 @@ void FastShaperRange( const uint8_t* in, float* out, size_t n, const float (*lut
             y = _mm256_min_ps( _mm256_max_ps( y, fzero ), fone );
             z = _mm256_min_ps( _mm256_max_ps( z, fzero ), fone );
 
-            for( int q = 0; q < 4; q++ )
-            {
-                const __m256i ir = _mm256_setr_epi32( 2*q, 0, 0, 0, 2*q+1, 0, 0, 0 );
-                const __m256i ig = _mm256_setr_epi32( 0, 2*q, 0, 0, 0, 2*q+1, 0, 0 );
-                const __m256i ib = _mm256_setr_epi32( 0, 0, 2*q, 0, 0, 0, 2*q+1, 0 );
-                const __m256 v = _mm256_or_ps( alpha,
-                    _mm256_or_ps( _mm256_and_ps( _mm256_permutevar8x32_ps( x, ir ), _mm256_castsi256_ps( maskR ) ),
-                        _mm256_or_ps( _mm256_and_ps( _mm256_permutevar8x32_ps( y, ig ), _mm256_castsi256_ps( maskG ) ),
-                            _mm256_and_ps( _mm256_permutevar8x32_ps( z, ib ), _mm256_castsi256_ps( maskB ) ) ) ) );
-                _mm256_storeu_ps( out + h*32 + q*8, v );
-            }
+            const __m256 p0 = _mm256_unpacklo_ps( x, y );
+            const __m256 p1 = _mm256_unpackhi_ps( x, y );
+            const __m256 s0 = _mm256_unpacklo_ps( z, fone );
+            const __m256 s1 = _mm256_unpackhi_ps( z, fone );
+            const __m256 o0 = _mm256_shuffle_ps( p0, s0, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+            const __m256 o1 = _mm256_shuffle_ps( p0, s0, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+            const __m256 o2 = _mm256_shuffle_ps( p1, s1, _MM_SHUFFLE( 1, 0, 1, 0 ) );
+            const __m256 o3 = _mm256_shuffle_ps( p1, s1, _MM_SHUFFLE( 3, 2, 3, 2 ) );
+
+            float* dst = out + h*32;
+            const __m256 v0 = _mm256_permute2f128_ps( o0, o1, 0x20 );
+            const __m256 v1 = _mm256_permute2f128_ps( o2, o3, 0x20 );
+            const __m256 v2 = _mm256_permute2f128_ps( o0, o1, 0x31 );
+            const __m256 v3 = _mm256_permute2f128_ps( o2, o3, 0x31 );
+            Store256( dst + 0, v0, nt );
+            Store256( dst + 8, v1, nt );
+            Store256( dst + 16, v2, nt );
+            Store256( dst + 24, v3, nt );
         }
         in += 64;
         out += 64;
         n -= 16;
     }
 #endif
+    FastShaperScalar( in, out, n, lut, mat );
+    if( nt ) _mm_sfence();
+#else
+    FastShaperScalar( in, out, n, lut, mat );
 #endif
-
-    for( size_t i = 0; i < n; i++ )
-    {
-        const float r = lut[0][in[0]], g = lut[1][in[1]], b = lut[2][in[2]];
-        in += 4;
-        for( int k = 0; k < 3; k++ )
-        {
-            auto v = mat[k*3]*r + mat[k*3+1]*g + mat[k*3+2]*b;
-            v = v < 0.f ? 0.f : v;
-            v = v > 1.f ? 1.f : v;
-            *out++ = v;
-        }
-        *out++ = 1.f;
-    }
 }
 }
 

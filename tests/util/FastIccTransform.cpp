@@ -5,6 +5,8 @@
 #include <src/util/FastIccTransform.hpp>
 #include <src/util/TaskDispatch.hpp>
 #include <cmath>
+#include <stdint.h>
+#include <stdlib.h>
 #include <vector>
 
 namespace
@@ -120,6 +122,19 @@ TEST_CASE( "FastIccTransform byte run matches lcms", "[fasticc][colorspace]" )
     {
         CHECK( threaded[i] == out[i] );
     }
+
+    std::vector<float> pad( px * 4 + 64 );
+    float* unaligned = (float*)( ( ( (uintptr_t)pad.data() + 64 ) & ~(uintptr_t)63 ) + 32 );
+    void* raw = nullptr;
+    REQUIRE( posix_memalign( &raw, 64, px * 4 * sizeof( float ) ) == 0 );
+    float* aligned = (float*)raw;
+    fs.Run( nullptr, buf.data(), unaligned, px );
+    fs.Run( nullptr, buf.data(), aligned, px );
+    for( size_t i = 0; i < px * 4; i++ )
+    {
+        CHECK( aligned[i] == unaligned[i] );
+    }
+    free( raw );
 }
 
 TEST_CASE( "FastIccTransform float run is placement and thread count agnostic", "[fasticc][colorspace]" )

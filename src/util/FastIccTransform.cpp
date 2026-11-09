@@ -52,6 +52,37 @@ void Store512( float* dst, __m512 v, bool nt )
 }
 #endif
 
+#if defined __AVX2__ && defined __FMA__
+struct Coeffs256
+{
+    __m256 c0, c1, c2;
+    __m256i i0, i1, i2;
+    __m256 keepAlpha;
+};
+
+Coeffs256 MakeCoeffs256( const float* mat )
+{
+    Coeffs256 k;
+    auto tile = []( float a, float b, float c )
+    {
+        return _mm256_setr_ps( a, b, c, 0, a, b, c, 0 );
+    };
+    k.c0 = tile( mat[0], mat[3], mat[6] );
+    k.c1 = tile( mat[1], mat[4], mat[7] );
+    k.c2 = tile( mat[2], mat[5], mat[8] );
+    k.i0 = _mm256_setr_epi32( 0, 0, 0, 0, 4, 4, 4, 4 );
+    k.i1 = _mm256_setr_epi32( 1, 1, 1, 1, 5, 5, 5, 5 );
+    k.i2 = _mm256_setr_epi32( 2, 2, 2, 2, 6, 6, 6, 6 );
+    k.keepAlpha = _mm256_castsi256_ps( _mm256_setr_epi32( 0, 0, 0, -1, 0, 0, 0, -1 ) );
+    return k;
+}
+
+void Store256( float* dst, __m256 v, bool nt )
+{
+    if( nt ) _mm256_stream_ps( dst, v );
+    else _mm256_storeu_ps( dst, v );
+}
+#endif
 
 void FloatPixels( const float* in, float* out, size_t n, const float* mat )
 {
@@ -75,7 +106,7 @@ void FloatPixels( const float* in, float* out, size_t n, const float* mat )
 
 void FloatRange( const float* in, float* out, size_t n, const float* mat )
 {
-#ifdef __AVX512F__
+#if defined __AVX512F__ || ( defined __AVX2__ && defined __FMA__ )
     uintptr_t skew = ( (uintptr_t)out ) & 63;
     const bool nt = ( out != in ) && !( skew & 15 );
     if( nt && skew )
@@ -101,8 +132,22 @@ void FloatRange( const float* in, float* out, size_t n, const float* mat )
         n -= 4;
     }
 #endif
+#if defined __AVX2__ && defined __FMA__
+    const Coeffs256 k2 = MakeCoeffs256( mat );
+    while( n >= 2 )
+    {
+        const __m256 v = _mm256_loadu_ps( in );
+        __m256 o = _mm256_mul_ps( _mm256_permutevar8x32_ps( v, k2.i0 ), k2.c0 );
+        o = _mm256_fmadd_ps( _mm256_permutevar8x32_ps( v, k2.i1 ), k2.c1, o );
+        o = _mm256_fmadd_ps( _mm256_permutevar8x32_ps( v, k2.i2 ), k2.c2, o );
+        Store256( out, _mm256_blendv_ps( o, v, k2.keepAlpha ), nt );
+        in += 8;
+        out += 8;
+        n -= 2;
+    }
+#endif
     FloatPixels( in, out, n, mat );
-#ifdef __AVX512F__
+#if defined __AVX512F__ || ( defined __AVX2__ && defined __FMA__ )
     if( nt ) _mm_sfence();
 #endif
 }
@@ -121,6 +166,20 @@ void HalfRange( uint16_t* data, size_t n, const float* mat )
         _mm256_storeu_si256( (__m256i*)data, _mm512_cvtps_ph( o, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC ) );
         data += 16;
         n -= 4;
+    }
+#endif
+#if defined __AVX2__ && defined __FMA__ && defined __F16C__
+    const Coeffs256 k2 = MakeCoeffs256( mat );
+    while( n >= 2 )
+    {
+        const __m256 v = _mm256_cvtph_ps( _mm_loadu_si128( (const __m128i*)data ) );
+        __m256 o = _mm256_mul_ps( _mm256_permutevar8x32_ps( v, k2.i0 ), k2.c0 );
+        o = _mm256_fmadd_ps( _mm256_permutevar8x32_ps( v, k2.i1 ), k2.c1, o );
+        o = _mm256_fmadd_ps( _mm256_permutevar8x32_ps( v, k2.i2 ), k2.c2, o );
+        o = _mm256_blendv_ps( o, v, k2.keepAlpha );
+        _mm_storeu_si128( (__m128i*)data, _mm256_cvtps_ph( o, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC ) );
+        data += 8;
+        n -= 2;
     }
 #endif
     for( size_t i = 0; i < n; i++ )
@@ -163,14 +222,6 @@ void StagePlanes( float* planes, const uint8_t* in, size_t count, const float (*
         in += 4;
     }
 }
-
-#ifdef __AVX2__
-void Store256( float* dst, __m256 v, bool nt )
-{
-    if( nt ) _mm256_stream_ps( dst, v );
-    else _mm256_storeu_ps( dst, v );
-}
-#endif
 #endif
 
 void FastShaperScalar( const uint8_t* in, float* out, size_t n, const float (*lut)[256], const float* mat )

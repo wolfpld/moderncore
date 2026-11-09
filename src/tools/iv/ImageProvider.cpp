@@ -153,7 +153,7 @@ void ImageProvider::Worker()
             if( loader->IsHdr() && ( job.hdr || loader->PreferHdr() ) )
             {
                 bitmapHdr = loader->LoadHdr( job.hdr ? Colorspace::BT2020 : Colorspace::BT709 );
-                if( !job.hdr )
+                if( bitmapHdr && !job.hdr )
                 {
                     bitmap = std::make_unique<Bitmap>( bitmapHdr->Width(), bitmapHdr->Height() );
                     auto src = bitmapHdr->Data();

@@ -155,6 +155,22 @@ TEST_CASE( "FastIccTransform float run is placement and thread count agnostic", 
         CHECK( dst[i] == inplace[i] );
     }
 
+    std::vector<float> unaligned( src.size() + 4 );
+    fs.RunFloat( nullptr, src.data(), unaligned.data() + 1, px );
+    for( size_t i = 0; i < inplace.size(); i++ )
+    {
+        CHECK( unaligned[i + 1] == inplace[i] );
+    }
+
+    void* raw = nullptr;
+    REQUIRE( posix_memalign( &raw, 64, src.size() * sizeof( float ) ) == 0 );
+    fs.RunFloat( nullptr, src.data(), (float*)raw, px );
+    for( size_t i = 0; i < inplace.size(); i++ )
+    {
+        CHECK( ((const float*)raw)[i] == inplace[i] );
+    }
+    free( raw );
+
     TaskDispatch td( 4, "test" );
     std::vector<float> threaded( src );
     fs.RunFloat( &td, threaded.data(), threaded.data(), px );

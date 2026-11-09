@@ -44,10 +44,49 @@ Coeffs MakeCoeffs( const float* mat )
     k.i2 = _mm512_setr_epi32( 2, 2, 2, 2, 6, 6, 6, 6, 10, 10, 10, 10, 14, 14, 14, 14 );
     return k;
 }
+
+void Store512( float* dst, __m512 v, bool nt )
+{
+    if( nt ) _mm512_stream_ps( dst, v );
+    else _mm512_storeu_ps( dst, v );
+}
 #endif
+
+
+void FloatPixels( const float* in, float* out, size_t n, const float* mat )
+{
+    for( size_t i = 0; i < n; i++ )
+    {
+        const float r = in[0], g = in[1], b = in[2];
+#if defined __SSE4_1__ && defined __FMA__
+        out[0] = fmaf( b, mat[2], fmaf( g, mat[1], r * mat[0] ) );
+        out[1] = fmaf( b, mat[5], fmaf( g, mat[4], r * mat[3] ) );
+        out[2] = fmaf( b, mat[8], fmaf( g, mat[7], r * mat[6] ) );
+#else
+        out[0] = mat[0]*r + mat[1]*g + mat[2]*b;
+        out[1] = mat[3]*r + mat[4]*g + mat[5]*b;
+        out[2] = mat[6]*r + mat[7]*g + mat[8]*b;
+#endif
+        out[3] = in[3];
+        in += 4;
+        out += 4;
+    }
+}
 
 void FloatRange( const float* in, float* out, size_t n, const float* mat )
 {
+#ifdef __AVX512F__
+    uintptr_t skew = ( (uintptr_t)out ) & 63;
+    const bool nt = ( out != in ) && !( skew & 15 );
+    if( nt && skew )
+    {
+        const size_t peel = std::min( ( 64 - skew ) / 16, n );
+        FloatPixels( in, out, peel, mat );
+        in += peel * 4;
+        out += peel * 4;
+        n -= peel;
+    }
+#endif
 #ifdef __AVX512F__
     const Coeffs k = MakeCoeffs( mat );
     while( n >= 4 )
@@ -56,22 +95,16 @@ void FloatRange( const float* in, float* out, size_t n, const float* mat )
         __m512 o = _mm512_mul_ps( _mm512_permutexvar_ps( k.i0, v ), k.c0 );
         o = _mm512_fmadd_ps( _mm512_permutexvar_ps( k.i1, v ), k.c1, o );
         o = _mm512_fmadd_ps( _mm512_permutexvar_ps( k.i2, v ), k.c2, o );
-        _mm512_storeu_ps( out, _mm512_mask_blend_ps( 0x8888, o, v ) );
+        Store512( out, _mm512_mask_blend_ps( 0x8888, o, v ), nt );
         in += 16;
         out += 16;
         n -= 4;
     }
 #endif
-    for( size_t i = 0; i < n; i++ )
-    {
-        const float r = in[0], g = in[1], b = in[2];
-        out[0] = mat[0]*r + mat[1]*g + mat[2]*b;
-        out[1] = mat[3]*r + mat[4]*g + mat[5]*b;
-        out[2] = mat[6]*r + mat[7]*g + mat[8]*b;
-        out[3] = in[3];
-        in += 4;
-        out += 4;
-    }
+    FloatPixels( in, out, n, mat );
+#ifdef __AVX512F__
+    if( nt ) _mm_sfence();
+#endif
 }
 
 void HalfRange( uint16_t* data, size_t n, const float* mat )
@@ -130,14 +163,6 @@ void StagePlanes( float* planes, const uint8_t* in, size_t count, const float (*
         in += 4;
     }
 }
-
-#ifdef __AVX512F__
-void Store512( float* dst, __m512 v, bool nt )
-{
-    if( nt ) _mm512_stream_ps( dst, v );
-    else _mm512_storeu_ps( dst, v );
-}
-#endif
 
 #ifdef __AVX2__
 void Store256( float* dst, __m256 v, bool nt )

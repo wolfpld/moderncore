@@ -94,30 +94,26 @@ std::unique_ptr<Bitmap> PngLoader::Load()
 
         if( bitDepth == 16 ) png_set_strip_16( ctx.png );
 
+        bool trans = png_get_valid( ctx.png, ctx.info, PNG_INFO_tRNS ) != 0;
+        if( trans ) png_set_tRNS_to_alpha( ctx.png );
+
         switch( colorType )
         {
         case PNG_COLOR_TYPE_PALETTE:
             png_set_palette_to_rgb( ctx.png );
-            if( png_get_valid( ctx.png, ctx.info, PNG_INFO_tRNS ) )
-            {
-                png_set_tRNS_to_alpha( ctx.png );
-            }
-            else
-            {
-                png_set_filler( ctx.png, 0xFF, PNG_FILLER_AFTER );
-            }
+            if( !trans ) png_set_filler( ctx.png, 0xFF, PNG_FILLER_AFTER );
             break;
         case PNG_COLOR_TYPE_GRAY:
             if( bitDepth < 8 ) png_set_expand_gray_1_2_4_to_8( ctx.png );
             png_set_gray_to_rgb( ctx.png );
-            png_set_filler( ctx.png, 0xFF, PNG_FILLER_AFTER );
+            if( !trans ) png_set_filler( ctx.png, 0xFF, PNG_FILLER_AFTER );
             break;
         case PNG_COLOR_TYPE_GRAY_ALPHA:
             if( bitDepth < 8 ) png_set_expand_gray_1_2_4_to_8( ctx.png );
             png_set_gray_to_rgb( ctx.png );
             break;
         case PNG_COLOR_TYPE_RGB:
-            png_set_filler( ctx.png, 0xFF, PNG_FILLER_AFTER );
+            if( !trans ) png_set_filler( ctx.png, 0xFF, PNG_FILLER_AFTER );
             break;
         default:
             break;

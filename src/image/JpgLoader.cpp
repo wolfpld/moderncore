@@ -640,12 +640,124 @@ static void SetOpaqueAlpha( BitmapHdr* bmp )
     }
 }
 
+namespace
+{
+cmsHPROFILE CreateLinearProfileFromICC( const void* icc, unsigned int size )
+{
+    auto src = cmsOpenProfileFromMem( icc, size );
+    if( !src ) return nullptr;
+
+    const cmsCIEXYZ* r = (const cmsCIEXYZ*)cmsReadTag( src, cmsSigRedColorantTag );
+    const cmsCIEXYZ* g = (const cmsCIEXYZ*)cmsReadTag( src, cmsSigGreenColorantTag );
+    const cmsCIEXYZ* b = (const cmsCIEXYZ*)cmsReadTag( src, cmsSigBlueColorantTag );
+    const cmsCIEXYZ* wp = (const cmsCIEXYZ*)cmsReadTag( src, cmsSigMediaWhitePointTag );
+
+    cmsHPROFILE out = nullptr;
+    if( r && g && b )
+    {
+        const cmsCIEXYZ* cols[3] = { r, g, b };
+        cmsCIExyYTRIPLE prim;
+        cmsCIExyY* dst[3] = { &prim.Red, &prim.Green, &prim.Blue };
+        bool ok = true;
+        for( int i = 0; i < 3 && ok; i++ )
+        {
+            const auto sum = cols[i]->X + cols[i]->Y + cols[i]->Z;
+            if( sum <= 1e-6 )
+            {
+                ok = false;
+                break;
+            }
+            dst[i]->x = cols[i]->X / sum;
+            dst[i]->y = cols[i]->Y / sum;
+            dst[i]->Y = 1;
+        }
+        if( ok )
+        {
+            cmsCIExyY white = { 0.3457, 0.3585, 1 };
+            if( wp && wp->X + wp->Y + wp->Z > 1e-6 )
+            {
+                const auto sum = wp->X + wp->Y + wp->Z;
+                white.x = wp->X / sum;
+                white.y = wp->Y / sum;
+            }
+            cmsToneCurve* linear = cmsBuildGamma( nullptr, 1 );
+            cmsToneCurve* curves[3] = { linear, linear, linear };
+            out = cmsCreateRGBProfile( &white, &prim, curves );
+            cmsFreeToneCurve( linear );
+        }
+    }
+    cmsCloseProfile( src );
+    return out;
+}
+}
+
+static bool ProbeAlternateSpace( FILE* file, int offset, cmsHPROFILE& altProfile )
+{
+    altProfile = nullptr;
+    if( fseek( file, offset, SEEK_SET ) ) return false;
+
+    jpeg_decompress_struct cinfo;
+    JpgErrorMgr jerr;
+    cinfo.err = jpeg_std_error( &jerr.pub );
+    jerr.pub.error_exit = []( j_common_ptr cinfo ) { longjmp( ((JpgErrorMgr*)cinfo->err)->setjmp_buffer, 1 ); };
+    if( setjmp( jerr.setjmp_buffer ) )
+    {
+        jpeg_destroy_decompress( &cinfo );
+        return false;
+    }
+
+    jpeg_create_decompress( &cinfo );
+    jpeg_stdio_src( &cinfo, file );
+    jpeg_save_markers( &cinfo, JPEG_APP0 + 2, 0xFFFF );
+    jpeg_read_header( &cinfo, TRUE );
+
+    bool alternate = false;
+    auto marker = cinfo.marker_list;
+    while( marker )
+    {
+        if( marker->marker == JPEG_APP0 + 2 && marker->data_length > 28 &&
+            memcmp( marker->data, "urn:iso:std:iso:ts:21496:-1\0", 28 ) == 0 )
+        {
+            BeReader rd{ marker->data + 28, (size_t)marker->data_length - 28 };
+            uint32_t version = 0;
+            uint8_t flags = 0;
+            if( rd.ReadU32( version ) && !( version >> 16 ) && rd.ReadU8( flags ) && !( flags & 0x37 ) )
+            {
+                alternate = ( flags & 0x40 ) == 0;
+            }
+            break;
+        }
+        marker = marker->next;
+    }
+
+    if( alternate )
+    {
+        uint8_t* icc = nullptr;
+        unsigned int size = 0;
+        if( jpeg_read_icc_profile( &cinfo, &icc, &size ) )
+        {
+            altProfile = CreateLinearProfileFromICC( icc, size );
+            free( icc );
+        }
+        if( !altProfile ) mclog( LogLevel::Warning, "JPEG: Gain map selects the alternate colour space without a readable ICC, applying in the baseline colour space" );
+    }
+
+    jpeg_destroy_decompress( &cinfo );
+    return altProfile != nullptr;
+}
+
 std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
 {
     if( !IsHdr() ) return nullptr;
 
     auto base = LoadNoColorspace();
     if( !base ) return nullptr;
+
+    cmsHPROFILE altProfile = nullptr;
+    if( m_isIso && m_gainMapOffset >= 0 && ProbeAlternateSpace( *m_file, m_gainMapOffset, altProfile ) )
+    {
+        mclog( LogLevel::Info, "JPEG: Applying gain map in the alternate colour space" );
+    }
 
     auto baseFloat = std::make_unique<BitmapHdr>( base->Width(), base->Height(), colorspace, m_orientation );
 
@@ -668,13 +780,15 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
         profileIn = cmsCreate_sRGBProfile();
     }
     const auto px = PixelCount( base->Width(), base->Height() );
+    const auto spaceProfile = altProfile ? altProfile : profileOut;
     if( !m_cmyk )
     {
-        const IccTransform icc( profileIn, profileOut );
+        const IccTransform icc( profileIn, spaceProfile );
         if( !icc.Run( m_td, base->Data(), baseFloat->Data(), px ) )
         {
             cmsCloseProfile( profileIn );
             cmsCloseProfile( profileOut );
+            if( altProfile ) cmsCloseProfile( altProfile );
             cmsFreeToneCurve( linear );
             mclog( LogLevel::Error, "JPEG: Failed to create color transform" );
             return nullptr;
@@ -682,7 +796,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
     }
     else
     {
-        auto transform = cmsCreateTransform( profileIn, TYPE_CMYK_8_REV, profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, 0 );
+        auto transform = cmsCreateTransform( profileIn, TYPE_CMYK_8_REV, spaceProfile, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, 0 );
         if( transform )
         {
             CmsTransform( m_td, transform, base->Data(), baseFloat->Data(), px );
@@ -697,13 +811,14 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
                 cmsCloseProfile( profileSrgb );
                 cmsCloseProfile( profileIn );
                 cmsCloseProfile( profileOut );
+                if( altProfile ) cmsCloseProfile( altProfile );
                 cmsFreeToneCurve( linear );
                 mclog( LogLevel::Error, "JPEG: Failed to create transform to sRGB" );
                 return nullptr;
             }
             CmsTransform( m_td, transform, base->Data(), base->Data(), px );
             cmsDeleteTransform( transform );
-            transform = cmsCreateTransform( profileSrgb, TYPE_RGBA_8, profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, 0 );
+            transform = cmsCreateTransform( profileSrgb, TYPE_RGBA_8, spaceProfile, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, 0 );
             CheckPanic( transform, "Failed to create sRGB to HDR transform" );
             CmsTransform( m_td, transform, base->Data(), baseFloat->Data(), px );
             cmsDeleteTransform( transform );
@@ -711,14 +826,28 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
         }
     }
     cmsCloseProfile( profileIn );
-    cmsCloseProfile( profileOut );
     cmsFreeToneCurve( linear );
 
     base.reset();
 
+    auto finishColor = [this, &baseFloat, &altProfile, profileOut, px] {
+        if( altProfile )
+        {
+            const IccTransform icc( altProfile, profileOut );
+            if( !icc.RunFloat( m_td, baseFloat->Data(), baseFloat->Data(), px ) )
+            {
+                mclog( LogLevel::Warning, "JPEG: Failed to convert alternate space output" );
+            }
+            cmsCloseProfile( altProfile );
+            altProfile = nullptr;
+        }
+        cmsCloseProfile( profileOut );
+    };
+
     if( m_gainMapOffset < 0 )
     {
         if( m_cmyk ) SetOpaqueAlpha( baseFloat.get() );
+        finishColor();
         return baseFloat;
     }
 
@@ -735,6 +864,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
         jpeg_destroy_decompress( &gcinfo );
         delete[] gainMap;
         if( m_cmyk ) SetOpaqueAlpha( baseFloat.get() );
+        finishColor();
         return baseFloat;
     }
 
@@ -761,7 +891,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
                 // where every fraction shares one leading denominator and only numerators are
                 // stored, so both variants decode. Any other reserved bit set (0x37) or a nonzero
                 // minimum_version means the block cannot be interpreted and the gain map is
-                // ignored (C.2.3). Bit 6 is accepted and unused here.
+                // ignored (C.2.3).
                 BeReader rd{ marker->data + 28, (size_t)marker->data_length - 28 };
                 uint32_t version = 0;
                 uint8_t flags = 0;
@@ -817,6 +947,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
             mclog( LogLevel::Warning, "JPEG: No XMP metadata found for gain map" );
             jpeg_destroy_decompress( &gcinfo );
             if( m_cmyk ) SetOpaqueAlpha( baseFloat.get() );
+            finishColor();
             return baseFloat;
         }
 
@@ -826,6 +957,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
             mclog( LogLevel::Warning, "JPEG: No gain map metadata found in XMP" );
             jpeg_destroy_decompress( &gcinfo );
             if( m_cmyk ) SetOpaqueAlpha( baseFloat.get() );
+            finishColor();
             return baseFloat;
         }
 
@@ -857,6 +989,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
         mclog( LogLevel::Warning, "JPEG: No gain map metadata found" );
         jpeg_destroy_decompress( &gcinfo );
         if( m_cmyk ) SetOpaqueAlpha( baseFloat.get() );
+        finishColor();
         return baseFloat;
     }
 
@@ -894,6 +1027,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
         auto dstG = baseFloat->Data();
         ApplyGainMapGray( dstG, dstG, plane, PixelCount( baseFloat->Width(), baseFloat->Height() ), ch, m_td );
         delete[] plane;
+        finishColor();
         return baseFloat;
     }
 
@@ -902,6 +1036,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
         mclog( LogLevel::Warning, "JPEG: Unsupported gain map format, %d components", gmChannels );
         delete[] gainMap;
         if( m_cmyk ) SetOpaqueAlpha( baseFloat.get() );
+        finishColor();
         return baseFloat;
     }
 
@@ -934,6 +1069,7 @@ std::unique_ptr<BitmapHdr> JpgLoader::LoadHdr( Colorspace colorspace )
 
     ApplyGainMap( dst, dst, gm, sz, ch, m_td );
 
+    finishColor();
     return baseFloat;
 }
 

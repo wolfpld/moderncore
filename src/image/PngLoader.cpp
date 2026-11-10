@@ -130,7 +130,14 @@ std::unique_ptr<Bitmap> PngLoader::Load()
         }
         png_read_image( ctx.png, rowPtrs.data() );
 
-        png_read_end( ctx.png, ctx.end );
+        try
+        {
+            png_read_end( ctx.png, ctx.end );
+        }
+        catch( const PngError& e )
+        {
+            mclog( LogLevel::Warning, "PNG trailer error: %s", e.what() );
+        }
         return bmp;
     }
     catch( const PngError& e )

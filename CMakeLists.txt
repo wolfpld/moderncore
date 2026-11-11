@@ -48,14 +48,14 @@ CPMAddPackage(
 CPMAddPackage(
     NAME stb
     GITHUB_REPOSITORY nothings/stb
-    GIT_TAG a7d4c2175630e1ea5b6f8dd00ab96fed0b97b96d
+    GIT_TAG 9f755b604db3492df2cbeb39bf84b81e3e3932e3
     DOWNLOAD_ONLY TRUE
 )
 
 CPMAddPackage(
     NAME stb_image_resize
     GITHUB_REPOSITORY nothings/stb_image_resize
-    GIT_TAG 2768987dbd7119eb840104b7a3f96ff09d21a7b4
+    GIT_TAG 703100c5f8a0b75b4861e401db567f1d82d545b8
     DOWNLOAD_ONLY TRUE
 )
 

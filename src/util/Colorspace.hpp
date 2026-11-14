@@ -19,3 +19,9 @@ inline constexpr cmsCIExyYTRIPLE primaries2020 = {
     { 0.170f, 0.797f, 1 },
     { 0.131f, 0.046f, 1 }
 };
+inline constexpr cmsCIExyY whiteDciP3 = { 0.314f, 0.351f, 1 };
+inline constexpr cmsCIExyYTRIPLE primariesDciP3 = {
+    { 0.680f, 0.320f, 1 },
+    { 0.265f, 0.690f, 1 },
+    { 0.150f, 0.060f, 1 }
+};

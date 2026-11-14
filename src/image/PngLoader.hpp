@@ -23,7 +23,13 @@ public:
     [[nodiscard]] std::unique_ptr<Bitmap> Load() override;
 
 private:
+    void QueryHeader();
+
     std::shared_ptr<DataBuffer> m_buf;
     size_t m_offset;
     TaskDispatch* m_td;
+    bool m_headerParsed = false;
+    int m_cicpPrimaries = -1;
+    int m_cicpTransfer = -1;
+    int m_cicpRange = -1;
 };

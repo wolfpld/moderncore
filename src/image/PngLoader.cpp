@@ -5,6 +5,7 @@
 
 #include "PngLoader.hpp"
 #include "util/Bitmap.hpp"
+#include "util/Colorspace.hpp"
 #include "util/FileBuffer.hpp"
 #include "util/FileWrapper.hpp"
 #include "util/IccTransform.hpp"
@@ -56,7 +57,8 @@ void PngWarn( png_structp, png_const_charp msg )
     mclog( LogLevel::Warning, "PNG warning: %s", msg );
 }
 
-int FindPngOrientation( const uint8_t* buf, size_t size )
+template<typename F>
+void WalkPngChunks( const uint8_t* buf, size_t size, F visit )
 {
     size_t pos = 8;
     while( pos + 12 <= size )
@@ -66,18 +68,128 @@ int FindPngOrientation( const uint8_t* buf, size_t size )
         length = ntohl( length );
         if( length > size - pos - 12 ) break;  // chunk extends past the buffer
         const uint8_t* name = buf + pos + 4;
-        if( memcmp( name, "eXIf", 4 ) == 0 )
-        {
-            const int orientation = FindExifOrientation( name + 4, length );
-            if( orientation > 0 ) return orientation;
-        }
-        else if( memcmp( name, "IEND", 4 ) == 0 )
-        {
-            break;
-        }
+        if( !visit( name, name + 4, length ) ) break;
+        if( memcmp( name, "IEND", 4 ) == 0 ) break;
         pos += 12 + length;
     }
-    return 0;
+}
+
+int FindPngOrientation( const uint8_t* buf, size_t size )
+{
+    int orientation = 0;
+    WalkPngChunks( buf, size, [&orientation]( const uint8_t* name, const uint8_t* data, uint32_t length )
+    {
+        if( memcmp( name, "eXIf", 4 ) == 0 )
+        {
+            const int found = FindExifOrientation( data, length );
+            if( found > 0 )
+            {
+                orientation = found;
+                return false;
+            }
+        }
+        return true;
+    } );
+    return orientation;
+}
+
+cmsHPROFILE BuildCicpProfile( int primaries, int transfer )
+{
+    const cmsCIExyY* white = &white709;
+    const cmsCIExyYTRIPLE* primariesXy = &primaries709;
+    switch( primaries )
+    {
+    case 9:
+        primariesXy = &primaries2020;
+        break;
+    case 11:
+        primariesXy = &primariesDciP3;
+        white = &whiteDciP3;
+        break;
+    case 12:
+        primariesXy = &primariesDciP3;
+        break;
+    case 1:
+    case 2:
+        break;
+    default:
+        mclog( LogLevel::Error, "PNG colour primaries %d not implemented, assuming BT.709", primaries );
+        break;
+    }
+
+    cmsFloat64Number srgbParams[] = { 2.4, 1.0 / 1.055, 0.055 / 1.055, 1.0 / 12.92, 0.04045 };
+    cmsFloat64Number bt709Params[] = { 1.0 / 0.45, 1.0 / 1.099, 0.099 / 1.099, 1.0 / 4.5, 0.081 };
+    cmsToneCurve* curve = nullptr;
+    switch( transfer )
+    {
+    case 13:
+        curve = cmsBuildParametricToneCurve( nullptr, 4, srgbParams );
+        break;
+    case 1:
+    case 6:
+    case 14:
+    case 15:
+        curve = cmsBuildParametricToneCurve( nullptr, 4, bt709Params );
+        break;
+    case 4:
+        curve = cmsBuildGamma( nullptr, 2.2 );
+        break;
+    case 5:
+        curve = cmsBuildGamma( nullptr, 2.8 );
+        break;
+    case 8:
+        curve = cmsBuildGamma( nullptr, 1.0 );
+        break;
+    default:
+        mclog( LogLevel::Error, "PNG transfer characteristic %d not implemented, assuming sRGB", transfer );
+        curve = cmsBuildParametricToneCurve( nullptr, 4, srgbParams );
+        break;
+    }
+
+    cmsToneCurve* curves[3] = { curve, curve, curve };
+    auto profile = cmsCreateRGBProfile( white, primariesXy, curves );
+    cmsFreeToneCurve( curve );
+    return profile;
+}
+
+cmsHPROFILE BuildColourProfile( png_structp png, png_infop info, int cicpPrimaries, int cicpTransfer, int cicpRange )
+{
+    if( cicpTransfer >= 0 )
+    {
+        mclog( LogLevel::Info, "PNG cICP: primaries %d, transfer %d", cicpPrimaries, cicpTransfer );
+        if( cicpRange != 1 ) mclog( LogLevel::Warning, "PNG cICP narrow-range flag ignored" );
+        const bool srgbSignalled = ( cicpPrimaries == 1 || cicpPrimaries == 2 ) && cicpTransfer == 13;
+        return srgbSignalled ? nullptr : BuildCicpProfile( cicpPrimaries, cicpTransfer );
+    }
+
+    png_charp iccName = nullptr;
+    png_bytep iccData = nullptr;
+    png_uint_32 iccSize = 0;
+    int compression = 0;
+    int intent = 0;
+    double gamma = 0;
+    double wx = 0, wy = 0, rx = 0, ry = 0, gx = 0, gy = 0, bx = 0, by = 0;
+    if( png_get_iCCP( png, info, &iccName, &compression, &iccData, &iccSize ) )
+    {
+        mclog( LogLevel::Info, "ICC profile size: %u", iccSize );
+        return cmsOpenProfileFromMem( iccData, iccSize );
+    }
+    if( !png_get_sRGB( png, info, &intent ) && png_get_gAMA( png, info, &gamma ) )
+    {
+        cmsCIExyY white = { 0.3127, 0.3290, 1.0 };
+        cmsCIExyYTRIPLE primaries = { { 0.64, 0.33, 1.0 }, { 0.30, 0.60, 1.0 }, { 0.15, 0.06, 1.0 } };
+        if( png_get_cHRM( png, info, &wx, &wy, &rx, &ry, &gx, &gy, &bx, &by ) )
+        {
+            white = { wx, wy, 1.0 };
+            primaries = { { rx, ry, 1.0 }, { gx, gy, 1.0 }, { bx, by, 1.0 } };
+        }
+        cmsToneCurve* curve = cmsBuildGamma( nullptr, (cmsFloat64Number)1.0 / gamma );
+        cmsToneCurve* curves[3] = { curve, curve, curve };
+        auto profile = cmsCreateRGBProfile( &white, &primaries, curves );
+        cmsFreeToneCurve( curve );
+        return profile;
+    }
+    return nullptr;
 }
 
 struct PngReadCtx
@@ -95,6 +207,7 @@ struct PngReadCtx
 std::unique_ptr<Bitmap> PngLoader::Load()
 {
     CheckPanic( m_buf, "Invalid PNG file" );
+    QueryHeader();
 
     PngReadCtx ctx;
     png_uint_32 width = 0, height = 0;
@@ -166,33 +279,7 @@ std::unique_ptr<Bitmap> PngLoader::Load()
             mclog( LogLevel::Warning, "PNG trailer error: %s", e.what() );
         }
 
-        cmsHPROFILE profileIn = nullptr;
-        png_charp iccName = nullptr;
-        png_bytep iccData = nullptr;
-        png_uint_32 iccSize = 0;
-        int compression = 0;
-        int intent = 0;
-        double gamma = 0;
-        double wx = 0, wy = 0, rx = 0, ry = 0, gx = 0, gy = 0, bx = 0, by = 0;
-        if( png_get_iCCP( ctx.png, ctx.info, &iccName, &compression, &iccData, &iccSize ) )
-        {
-            mclog( LogLevel::Info, "ICC profile size: %u", iccSize );
-            profileIn = cmsOpenProfileFromMem( iccData, iccSize );
-        }
-        else if( !png_get_sRGB( ctx.png, ctx.info, &intent ) && png_get_gAMA( ctx.png, ctx.info, &gamma ) )
-        {
-            cmsCIExyY white = { 0.3127, 0.3290, 1.0 };
-            cmsCIExyYTRIPLE primaries = { { 0.64, 0.33, 1.0 }, { 0.30, 0.60, 1.0 }, { 0.15, 0.06, 1.0 } };
-            if( png_get_cHRM( ctx.png, ctx.info, &wx, &wy, &rx, &ry, &gx, &gy, &bx, &by ) )
-            {
-                white = { wx, wy, 1.0 };
-                primaries = { { rx, ry, 1.0 }, { gx, gy, 1.0 }, { bx, by, 1.0 } };
-            }
-            cmsToneCurve* curve = cmsBuildGamma( nullptr, (cmsFloat64Number)1.0 / gamma );
-            cmsToneCurve* curves[3] = { curve, curve, curve };
-            profileIn = cmsCreateRGBProfile( &white, &primaries, curves );
-            cmsFreeToneCurve( curve );
-        }
+        cmsHPROFILE profileIn = BuildColourProfile( ctx.png, ctx.info, m_cicpPrimaries, m_cicpTransfer, m_cicpRange );
         if( profileIn )
         {
             auto profileOut = cmsCreate_sRGBProfile();
@@ -221,4 +308,22 @@ std::unique_ptr<Bitmap> PngLoader::Load()
         mclog( LogLevel::Error, "PNG decode failed: out of memory for %ux%u image", width, height );
     }
     return nullptr;
+}
+
+void PngLoader::QueryHeader()
+{
+    if( m_headerParsed ) return;
+    m_headerParsed = true;
+    if( !IsValid() ) return;
+    WalkPngChunks( (const uint8_t*)m_buf->data(), m_buf->size(), [this]( const uint8_t* name, const uint8_t* data, uint32_t length )
+    {
+        if( memcmp( name, "cICP", 4 ) == 0 && length == 4 )
+        {
+            m_cicpPrimaries = data[0];
+            m_cicpTransfer = data[1];
+            m_cicpRange = data[3];
+            return false;
+        }
+        return true;
+    } );
 }

@@ -126,7 +126,7 @@ std::unique_ptr<Bitmap> PngLoader::Load()
         for( png_uint_32 i=0; i<height; i++ )
         {
             rowPtrs[i] = ptr;
-            ptr += width * 4;
+            ptr += (size_t)width * 4;
         }
         png_read_image( ctx.png, rowPtrs.data() );
 

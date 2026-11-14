@@ -7,7 +7,9 @@
 #include "util/Bitmap.hpp"
 #include "util/FileBuffer.hpp"
 #include "util/FileWrapper.hpp"
+#include "util/IccTransform.hpp"
 #include "util/Panic.hpp"
+#include "util/PixelBytes.hpp"
 #include "TiffReader.hpp"
 
 PngLoader::PngLoader( const std::shared_ptr<FileWrapper>& file, TaskDispatch* td )
@@ -163,6 +165,51 @@ std::unique_ptr<Bitmap> PngLoader::Load()
         {
             mclog( LogLevel::Warning, "PNG trailer error: %s", e.what() );
         }
+
+        cmsHPROFILE profileIn = nullptr;
+        png_charp iccName = nullptr;
+        png_bytep iccData = nullptr;
+        png_uint_32 iccSize = 0;
+        int compression = 0;
+        int intent = 0;
+        double gamma = 0;
+        double wx = 0, wy = 0, rx = 0, ry = 0, gx = 0, gy = 0, bx = 0, by = 0;
+        if( png_get_iCCP( ctx.png, ctx.info, &iccName, &compression, &iccData, &iccSize ) )
+        {
+            mclog( LogLevel::Info, "ICC profile size: %u", iccSize );
+            profileIn = cmsOpenProfileFromMem( iccData, iccSize );
+        }
+        else if( !png_get_sRGB( ctx.png, ctx.info, &intent ) && png_get_gAMA( ctx.png, ctx.info, &gamma ) )
+        {
+            cmsCIExyY white = { 0.3127, 0.3290, 1.0 };
+            cmsCIExyYTRIPLE primaries = { { 0.64, 0.33, 1.0 }, { 0.30, 0.60, 1.0 }, { 0.15, 0.06, 1.0 } };
+            if( png_get_cHRM( ctx.png, ctx.info, &wx, &wy, &rx, &ry, &gx, &gy, &bx, &by ) )
+            {
+                white = { wx, wy, 1.0 };
+                primaries = { { rx, ry, 1.0 }, { gx, gy, 1.0 }, { bx, by, 1.0 } };
+            }
+            cmsToneCurve* curve = cmsBuildGamma( nullptr, (cmsFloat64Number)1.0 / gamma );
+            cmsToneCurve* curves[3] = { curve, curve, curve };
+            profileIn = cmsCreateRGBProfile( &white, &primaries, curves );
+            cmsFreeToneCurve( curve );
+        }
+        if( profileIn )
+        {
+            auto profileOut = cmsCreate_sRGBProfile();
+            auto transform = cmsCreateTransform( profileIn, TYPE_RGBA_8, profileOut, TYPE_RGBA_8, INTENT_PERCEPTUAL, 0 );
+            if( transform )
+            {
+                CmsTransform( m_td, transform, bmp->Data(), bmp->Data(), PixelCount( bmp->Width(), bmp->Height() ) );
+                cmsDeleteTransform( transform );
+            }
+            else
+            {
+                mclog( LogLevel::Warning, "PNG colour profile not transformable, left uncorrected" );
+            }
+            cmsCloseProfile( profileOut );
+            cmsCloseProfile( profileIn );
+        }
+
         return bmp;
     }
     catch( const PngError& e )

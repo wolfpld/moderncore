@@ -373,7 +373,7 @@ std::unique_ptr<Bitmap> BitmapHdr::Tonemap( ToneMap::Operator op )
 {
     ZoneScoped;
     CheckPanic( m_colorspace == Colorspace::BT709, "Tone mapping requires BT.709 colorspace" );
-    auto bmp = std::make_unique<Bitmap>( m_width, m_height );
+    auto bmp = std::make_unique<Bitmap>( m_width, m_height, m_orientation );
     ToneMap::Process( op, (uint32_t*)bmp->Data(), m_data, PixelCount( m_width, m_height ) );
     return bmp;
 }

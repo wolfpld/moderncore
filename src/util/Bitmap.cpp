@@ -433,8 +433,16 @@ void Bitmap::BgrToRgb()
     }
 }
 
-bool Bitmap::SavePng( const char* path ) const
+static bool CheckPngCompression( int compression )
 {
+    if( compression >= -1 && compression <= 9 ) return true;
+    mclog( LogLevel::Error, "PNG save failed: compression level %d out of range", compression );
+    return false;
+}
+
+bool Bitmap::SavePng( const char* path, int compression ) const
+{
+    if( !CheckPngCompression( compression ) ) return false;
     FILE* f = fopen( path, "wb" );
     if( !f )
     {
@@ -443,7 +451,7 @@ bool Bitmap::SavePng( const char* path ) const
     }
 
     mclog( LogLevel::Info, "Saving PNG: %s", path );
-    auto res = SavePng( fileno( f ) );
+    auto res = SavePng( fileno( f ), compression );
     fclose( f );
 
     return res;
@@ -474,9 +482,11 @@ void PngWarnWrite( png_structp, png_const_charp msg )
 
 } // namespace
 
-bool Bitmap::SavePng( int fd ) const
+bool Bitmap::SavePng( int fd, int compression ) const
 {
     ZoneScoped;
+
+    if( !CheckPngCompression( compression ) ) return false;
 
     PngWriteCtx ctx;
     try
@@ -494,6 +504,7 @@ bool Bitmap::SavePng( int fd ) const
             return false;
         }
 
+        png_set_compression_level( ctx.png, compression );
         png_set_write_fn( ctx.png, (png_voidp)(ptrdiff_t)fd, []( png_structp png, png_bytep data, size_t length )
         {
             auto ioPtr = (int)(ptrdiff_t)png_get_io_ptr( png );

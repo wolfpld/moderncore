@@ -906,7 +906,7 @@ bool Viewport::SendClipboard( const char* mimeType, int32_t fd )
         std::thread thread( [bmp = std::move( bmp ), fd]() {
             ZoneScoped;
             signal( SIGPIPE, SIG_IGN );
-            bmp->SavePng( fd );
+            bmp->SavePng( fd, 1 );
             close( fd );
         } );
         thread.detach();

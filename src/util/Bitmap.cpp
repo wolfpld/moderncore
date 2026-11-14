@@ -1,6 +1,7 @@
 #include <stb_image_resize2.h>
 #include <errno.h>
 #include <png.h>
+#include <stdexcept>
 #include <string.h>
 #include <tracy/Tracy.hpp>
 #include <unistd.h>
@@ -448,47 +449,85 @@ bool Bitmap::SavePng( const char* path ) const
     return res;
 }
 
+namespace
+{
+
+struct PngWriteCtx
+{
+    png_structp png = nullptr;
+    png_infop info = nullptr;
+    ~PngWriteCtx()
+    {
+        if( png ) png_destroy_write_struct( &png, &info );
+    }
+};
+
+void PngThrowWrite( png_structp, png_const_charp msg )
+{
+    throw std::runtime_error( msg );
+}
+
+void PngWarnWrite( png_structp, png_const_charp msg )
+{
+    mclog( LogLevel::Warning, "PNG write warning: %s", msg );
+}
+
+} // namespace
+
 bool Bitmap::SavePng( int fd ) const
 {
     ZoneScoped;
 
-    png_structp png_ptr = png_create_write_struct( PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr );
-    png_infop info_ptr = png_create_info_struct( png_ptr );
-    if( setjmp( png_jmpbuf( png_ptr ) ) )
+    PngWriteCtx ctx;
+    try
     {
-        png_destroy_write_struct( &png_ptr, &info_ptr );
+        ctx.png = png_create_write_struct( PNG_LIBPNG_VER_STRING, nullptr, &PngThrowWrite, &PngWarnWrite );
+        if( !ctx.png )
+        {
+            mclog( LogLevel::Error, "PNG save failed: out of memory" );
+            return false;
+        }
+        ctx.info = png_create_info_struct( ctx.png );
+        if( !ctx.info )
+        {
+            mclog( LogLevel::Error, "PNG save failed: out of memory" );
+            return false;
+        }
+
+        png_set_write_fn( ctx.png, (png_voidp)(ptrdiff_t)fd, []( png_structp png, png_bytep data, size_t length )
+        {
+            auto ioPtr = (int)(ptrdiff_t)png_get_io_ptr( png );
+            while( length > 0 )
+            {
+                auto cnt = write( ioPtr, data, length );
+                if( cnt < 0 )
+                {
+                    if( errno == EINTR ) continue;
+                    png_error( png, "Write error" );
+                }
+                if( cnt == 0 ) png_error( png, "Zero-length write" );
+                data += cnt;
+                length -= cnt;
+            }
+        }, nullptr );
+
+        png_set_IHDR( ctx.png, ctx.info, m_width, m_height, 8, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE );
+
+        png_write_info( ctx.png, ctx.info );
+
+        auto ptr = (uint32_t*)m_data;
+        for( int i=0; i<m_height; i++ )
+        {
+            png_write_rows( ctx.png, (png_bytepp)(&ptr), 1 );
+            ptr += m_width;
+        }
+
+        png_write_end( ctx.png, ctx.info );
+        return true;
+    }
+    catch( const std::exception& e )
+    {
+        mclog( LogLevel::Error, "PNG save failed: %s", e.what() );
         return false;
     }
-
-    png_set_write_fn( png_ptr, (png_voidp)(ptrdiff_t)fd, []( png_structp png, png_bytep data, size_t length ) {
-        auto ioPtr = (int)(ptrdiff_t)png_get_io_ptr( png );
-        while( length > 0 )
-        {
-            auto cnt = write( ioPtr, data, length );
-            if( cnt < 0 )
-            {
-                if( errno == EINTR ) continue;
-                png_error( png, "Write error" );
-            }
-            if( cnt == 0 ) png_error( png, "Zero-length write" );
-            data += cnt;
-            length -= cnt;
-        }
-    }, nullptr );
-
-    png_set_IHDR( png_ptr, info_ptr, m_width, m_height, 8, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE );
-
-    png_write_info( png_ptr, info_ptr );
-
-    auto ptr = (uint32_t*)m_data;
-    for( int i=0; i<m_height; i++ )
-    {
-        png_write_rows( png_ptr, (png_bytepp)(&ptr), 1 );
-        ptr += m_width;
-    }
-
-    png_write_end( png_ptr, info_ptr );
-    png_destroy_write_struct( &png_ptr, &info_ptr );
-
-    return true;
 }

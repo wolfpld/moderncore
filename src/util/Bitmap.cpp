@@ -512,6 +512,7 @@ bool Bitmap::SavePng( int fd ) const
         }, nullptr );
 
         png_set_IHDR( ctx.png, ctx.info, m_width, m_height, 8, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE );
+        png_set_sRGB( ctx.png, ctx.info, PNG_sRGB_INTENT_PERCEPTUAL );
 
         png_write_info( ctx.png, ctx.info );
 

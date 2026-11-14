@@ -72,29 +72,6 @@ struct JpgErrorMgr
     jmp_buf setjmp_buffer;
 };
 
-template<typename TInput, typename TOutput>
-static void CmsTransform( TaskDispatch* td, cmsHTRANSFORM transform, const TInput* input, TOutput* output, size_t size )
-{
-    if( !td )
-    {
-        cmsDoTransform( transform, input, output, size );
-    }
-    else
-    {
-        while( size > 0 )
-        {
-            auto chunk = std::min<size_t>( size, 16 * 1024 );
-            td->Queue( [input, output, chunk, transform] {
-                cmsDoTransform( transform, input, output, chunk );
-            } );
-            input += chunk * 4;
-            output += chunk * 4;
-            size -= chunk;
-        }
-        td->Sync();
-    }
-}
-
 namespace
 {
 bool HasColorspaceExtensions()

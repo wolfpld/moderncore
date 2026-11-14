@@ -1,11 +1,13 @@
 #pragma once
 
+#include <algorithm>
 #include <lcms2.h>
 #include <stddef.h>
 #include <stdint.h>
 
 #include "util/FastIccTransform.hpp"
 #include "util/NoCopy.hpp"
+#include "TaskDispatch.hpp"
 
 class TaskDispatch;
 
@@ -37,3 +39,26 @@ private:
     cmsHTRANSFORM m_transforms[count] = {};
     cmsHPROFILE m_srgb = nullptr;
 };
+
+template<typename TInput, typename TOutput>
+static inline void CmsTransform( TaskDispatch* td, cmsHTRANSFORM transform, const TInput* input, TOutput* output, size_t size )
+{
+    if( !td )
+    {
+        cmsDoTransform( transform, input, output, size );
+    }
+    else
+    {
+        while( size > 0 )
+        {
+            auto chunk = std::min<size_t>( size, 16 * 1024 );
+            td->Queue( [input, output, chunk, transform] {
+                cmsDoTransform( transform, input, output, chunk );
+            } );
+            input += chunk * 4;
+            output += chunk * 4;
+            size -= chunk;
+        }
+        td->Sync();
+    }
+}

@@ -134,7 +134,6 @@ std::unique_ptr<Bitmap> PngLoader::Load()
             if( !trans ) png_set_filler( ctx.png, 0xFF, PNG_FILLER_AFTER );
             break;
         case PNG_COLOR_TYPE_GRAY_ALPHA:
-            if( bitDepth < 8 ) png_set_expand_gray_1_2_4_to_8( ctx.png );
             png_set_gray_to_rgb( ctx.png );
             break;
         case PNG_COLOR_TYPE_RGB:

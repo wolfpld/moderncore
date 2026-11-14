@@ -10,12 +10,13 @@
 #include "util/Panic.hpp"
 #include "TiffReader.hpp"
 
-PngLoader::PngLoader( const std::shared_ptr<FileWrapper>& file )
-    : PngLoader( std::make_shared<FileBuffer>( file ) )
+PngLoader::PngLoader( const std::shared_ptr<FileWrapper>& file, TaskDispatch* td )
+    : PngLoader( std::make_shared<FileBuffer>( file ), td )
 {
 }
 
-PngLoader::PngLoader( std::shared_ptr<DataBuffer> buf )
+PngLoader::PngLoader( std::shared_ptr<DataBuffer> buf, TaskDispatch* td )
+    : m_td( td )
 {
     if( buf->size() < 8 ) return;
     if( png_sig_cmp( (png_const_bytep)buf->data(), 0, 8 ) != 0 ) return;

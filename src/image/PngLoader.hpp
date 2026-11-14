@@ -13,8 +13,8 @@ class FileWrapper;
 class PngLoader : public ImageLoader
 {
 public:
-    explicit PngLoader( const std::shared_ptr<FileWrapper>& file );
-    explicit PngLoader( std::shared_ptr<DataBuffer> buf );
+    explicit PngLoader( const std::shared_ptr<FileWrapper>& file, TaskDispatch* td = nullptr );
+    explicit PngLoader( std::shared_ptr<DataBuffer> buf, TaskDispatch* td = nullptr );
     NoCopy( PngLoader );
 
     static bool IsValidSignature( const uint8_t* buf, size_t size );
@@ -25,4 +25,5 @@ public:
 private:
     std::shared_ptr<DataBuffer> m_buf;
     size_t m_offset;
+    TaskDispatch* m_td;
 };

@@ -59,7 +59,7 @@ static inline int FindExifOrientation( const uint8_t* data, size_t size )
             int orientation;
             if( type == 4 ) orientation = (int)value;
             else orientation = bigEndian ? (int)( value >> 16 ) : (int)(uint16_t)value;
-            return orientation;
+            return orientation >= 1 && orientation <= 8 ? orientation : 0;
         }
     }
     return 0;

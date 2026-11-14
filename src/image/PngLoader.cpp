@@ -8,6 +8,7 @@
 #include "util/FileBuffer.hpp"
 #include "util/FileWrapper.hpp"
 #include "util/Panic.hpp"
+#include "TiffReader.hpp"
 
 PngLoader::PngLoader( const std::shared_ptr<FileWrapper>& file )
     : PngLoader( std::make_shared<FileBuffer>( file ) )
@@ -50,6 +51,30 @@ void PngThrow( png_structp, png_const_charp msg )
 void PngWarn( png_structp, png_const_charp msg )
 {
     mclog( LogLevel::Warning, "PNG warning: %s", msg );
+}
+
+int FindPngOrientation( const uint8_t* buf, size_t size )
+{
+    size_t pos = 8;
+    while( pos + 12 <= size )
+    {
+        uint32_t length;
+        memcpy( &length, buf + pos, 4 );
+        length = ntohl( length );
+        if( length > size - pos - 12 ) break;  // chunk extends past the buffer
+        const uint8_t* name = buf + pos + 4;
+        if( memcmp( name, "eXIf", 4 ) == 0 )
+        {
+            const int orientation = FindExifOrientation( name + 4, length );
+            if( orientation > 0 ) return orientation;
+        }
+        else if( memcmp( name, "IEND", 4 ) == 0 )
+        {
+            break;
+        }
+        pos += 12 + length;
+    }
+    return 0;
 }
 
 struct PngReadCtx
@@ -119,7 +144,9 @@ std::unique_ptr<Bitmap> PngLoader::Load()
             break;
         }
 
-        auto bmp = std::make_unique<Bitmap>( width, height );
+        const int orientation = FindPngOrientation( (const uint8_t*)m_buf->data(), m_buf->size() );
+        if( orientation ) mclog( LogLevel::Info, "PNG orientation: %d", orientation );
+        auto bmp = std::make_unique<Bitmap>( width, height, orientation );
 
         std::vector<png_bytep> rowPtrs( height );
         auto ptr = bmp->Data();

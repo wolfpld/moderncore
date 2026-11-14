@@ -1,3 +1,5 @@
+#include <lcms2.h>
+#include <math.h>
 #include <png.h>
 #include <stdexcept>
 #include <string.h>
@@ -204,7 +206,52 @@ struct PngReadCtx
     }
 };
 
+bool IccGamutIsWide( cmsHPROFILE prof )
+{
+    if( cmsGetColorSpace( prof ) != cmsSigRgbData ) return false;
+    const cmsCIEXYZ* wtpt = (const cmsCIEXYZ*)cmsReadTag( prof, cmsSigMediaWhitePointTag );
+    const cmsCIEXYZ* col[3] = {
+        (const cmsCIEXYZ*)cmsReadTag( prof, cmsSigRedColorantTag ),
+        (const cmsCIEXYZ*)cmsReadTag( prof, cmsSigGreenColorantTag ),
+        (const cmsCIEXYZ*)cmsReadTag( prof, cmsSigBlueColorantTag )
+    };
+    if( !wtpt || !col[0] || !col[1] || !col[2] ) return false;
+
+    const cmsCIEXYZ d65 = { white709.x / white709.y, 1, (1 - white709.x - white709.y) / white709.y };
+    const cmsCIExyY tri[3] = { primaries709.Red, primaries709.Green, primaries709.Blue };
+    float px[3], py[3];
+    for( int i = 0; i < 3; i++ )
+    {
+        cmsCIEXYZ native;
+        if( !cmsAdaptToIlluminant( &native, wtpt, &d65, col[i] ) ) return false;
+        float sum = native.X + native.Y + native.Z;
+        if( !(sum > 0) ) return false;
+        px[i] = float( native.X / sum );
+        py[i] = float( native.Y / sum );
+    }
+
+    constexpr float margin = 0.004f;
+    for( int i = 0; i < 3; i++ )
+    {
+        const cmsCIExyY& a = tri[i];
+        const cmsCIExyY& b = tri[(i + 1) % 3];
+        const float ex = b.x - a.x, ey = b.y - a.y;
+        const float len = sqrtf( ex * ex + ey * ey );
+        for( int k = 0; k < 3; k++ )
+            if( ex * (py[k] - a.y) - ey * (px[k] - a.x) < -margin * len ) return true;
+    }
+    return false;
+}
+
 } // namespace
+
+void PngLoader::ReadFromBuffer( png_structp png, png_bytep data, png_size_t length )
+{
+    auto self = (PngLoader*)png_get_io_ptr( png );
+    if( self->m_offset + length > self->m_buf->size() ) png_error( png, "Read error" );
+    memcpy( data, self->m_buf->data() + self->m_offset, length );
+    self->m_offset += length;
+}
 
 std::unique_ptr<Bitmap> PngLoader::Load()
 {
@@ -226,13 +273,7 @@ std::unique_ptr<Bitmap> PngLoader::Load()
         ctx.info = png_create_info_struct( ctx.png );
         if( !ctx.png || !ctx.info ) return nullptr;
 
-        png_set_read_fn( ctx.png, this, []( png_structp png, png_bytep data, png_size_t length )
-        {
-            auto self = (PngLoader*)png_get_io_ptr( png );
-            if( self->m_offset + length > self->m_buf->size() ) png_error( png, "Read error" );
-            memcpy( data, self->m_buf->data() + self->m_offset, length );
-            self->m_offset += length;
-        } );
+        png_set_read_fn( ctx.png, this, &PngLoader::ReadFromBuffer );
         png_set_sig_bytes( ctx.png, 8 );
 
         png_read_info( ctx.png, ctx.info );
@@ -341,11 +382,61 @@ void PngLoader::QueryHeader()
     } );
 }
 
+bool PngLoader::HasWideGamutIcc()
+{
+    if( m_iccChecked ) return m_iccWide;
+    m_iccChecked = true;
+    if( !IsValid() ) return false;
+
+    const size_t savedOffset = m_offset;
+    PngReadCtx ctx;
+    auto probe = [&]() -> bool
+    {
+        ctx.png = png_create_read_struct( PNG_LIBPNG_VER_STRING, nullptr, &PngThrow, &PngWarn );
+        ctx.info = png_create_info_struct( ctx.png );
+        if( !ctx.png || !ctx.info ) return false;
+        if( setjmp( png_jmpbuf( ctx.png ) ) ) return false;
+        png_set_read_fn( ctx.png, this, &PngLoader::ReadFromBuffer );
+        png_set_sig_bytes( ctx.png, 8 );
+        png_read_info( ctx.png, ctx.info );
+
+        png_charp name;
+        int compressionType;
+        png_bytep profile;
+        png_uint_32 size;
+        if( !png_get_iCCP( ctx.png, ctx.info, &name, &compressionType, &profile, &size ) ) return false;
+
+        cmsHPROFILE prof = cmsOpenProfileFromMem( profile, size );
+        if( !prof ) return false;
+        const bool wide = IccGamutIsWide( prof );
+        cmsCloseProfile( prof );
+        return wide;
+    };
+
+    bool wide = false;
+    try
+    {
+        wide = probe();
+    }
+    catch( const PngError& e )
+    {
+        mclog( LogLevel::Warning, "PNG ICC inspection failed: %s", e.what() );
+    }
+    catch( const std::bad_alloc& )
+    {
+        mclog( LogLevel::Warning, "PNG ICC inspection failed: out of memory" );
+    }
+    m_offset = savedOffset;
+    m_iccWide = wide;
+    return wide;
+}
+
 bool PngLoader::IsHdr()
 {
     QueryHeader();
     if( m_bitDepth == 16 || m_cicpTransfer == 16 || m_cicpTransfer == 18 ) return true;
-    return m_cicpPrimaries == 9 || m_cicpPrimaries == 11 || m_cicpPrimaries == 12;
+    if( m_cicpPrimaries >= 0 ) return m_cicpPrimaries == 9 || m_cicpPrimaries == 11 || m_cicpPrimaries == 12;
+    return HasWideGamutIcc();
 }
 
 std::unique_ptr<BitmapHdr> PngLoader::LoadHdr( Colorspace colorspace )
@@ -361,13 +452,7 @@ std::unique_ptr<BitmapHdr> PngLoader::LoadHdr( Colorspace colorspace )
         ctx.info = png_create_info_struct( ctx.png );
         if( !ctx.png || !ctx.info ) return nullptr;
 
-        png_set_read_fn( ctx.png, this, []( png_structp png, png_bytep data, png_size_t length )
-        {
-            auto self = (PngLoader*)png_get_io_ptr( png );
-            if( self->m_offset + length > self->m_buf->size() ) png_error( png, "Read error" );
-            memcpy( data, self->m_buf->data() + self->m_offset, length );
-            self->m_offset += length;
-        } );
+        png_set_read_fn( ctx.png, this, &PngLoader::ReadFromBuffer );
         png_set_sig_bytes( ctx.png, 8 );
 
         png_read_info( ctx.png, ctx.info );

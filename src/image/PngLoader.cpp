@@ -81,10 +81,9 @@ struct PngReadCtx
 {
     png_structp png = nullptr;
     png_infop info = nullptr;
-    png_infop end = nullptr;
     ~PngReadCtx()
     {
-        if( png ) png_destroy_read_struct( &png, &info, &end );
+        if( png ) png_destroy_read_struct( &png, &info, nullptr );
     }
 };
 
@@ -100,8 +99,7 @@ std::unique_ptr<Bitmap> PngLoader::Load()
     {
         ctx.png = png_create_read_struct( PNG_LIBPNG_VER_STRING, nullptr, &PngThrow, &PngWarn );
         ctx.info = png_create_info_struct( ctx.png );
-        ctx.end = png_create_info_struct( ctx.png );
-        if( !ctx.png || !ctx.info || !ctx.end ) return nullptr;
+        if( !ctx.png || !ctx.info ) return nullptr;
 
         png_set_read_fn( ctx.png, this, []( png_structp png, png_bytep data, png_size_t length )
         {
@@ -158,7 +156,7 @@ std::unique_ptr<Bitmap> PngLoader::Load()
 
         try
         {
-            png_read_end( ctx.png, ctx.end );
+            png_read_end( ctx.png, nullptr );
         }
         catch( const PngError& e )
         {

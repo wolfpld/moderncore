@@ -12,11 +12,12 @@ class Bitmap;
 class BitmapHdr;
 class FileBuffer;
 class FileWrapper;
+class TaskDispatch;
 
 class JxlLoader : public ImageLoader
 {
 public:
-    explicit JxlLoader( std::shared_ptr<FileWrapper> file );
+    explicit JxlLoader( std::shared_ptr<FileWrapper> file, TaskDispatch* td );
     ~JxlLoader() override;
     NoCopy( JxlLoader );
 
@@ -34,10 +35,10 @@ private:
 
     bool m_valid;
     std::shared_ptr<FileWrapper> m_file;
+    TaskDispatch* m_td;
     std::unique_ptr<FileBuffer> m_buf;
 
     void* m_runner;
     JxlDecoder* m_dec;
     JxlBasicInfo m_info;
-    bool m_cmsAnchored;
 };

@@ -3,8 +3,7 @@
 #include <jxl/color_encoding.h>
 #include <jxl/decode.h>
 #include <jxl/resizable_parallel_runner.h>
-#include <lcms2.h>
-#include <vector>
+#include <algorithm>
 
 #include "JxlLoader.hpp"
 #include "util/Bitmap.hpp"
@@ -12,21 +11,10 @@
 #include "util/FileBuffer.hpp"
 #include "util/FileWrapper.hpp"
 #include "util/Panic.hpp"
+#include "util/TaskDispatch.hpp"
 
 namespace
 {
-struct CmsData
-{
-    std::vector<float*> srcBuf;
-    std::vector<float*> dstBuf;
-
-    cmsHPROFILE profileIn;
-    cmsHPROFILE profileOut;
-    cmsHTRANSFORM transform;
-    float scale;
-    size_t channelsOut;
-};
-
 constexpr JxlColorEncoding srgb = {
     .color_space = JXL_COLOR_SPACE_RGB,
     .white_point = JXL_WHITE_POINT_D65,
@@ -50,122 +38,13 @@ constexpr JxlColorEncoding bt2020 = {
     .transfer_function = JXL_TRANSFER_FUNCTION_LINEAR,
     .rendering_intent = JXL_RENDERING_INTENT_PERCEPTUAL
 };
-
-static cmsUInt32Number CmsTypeFor( cmsHPROFILE p )
-{
-    switch( cmsGetColorSpace( p ) )
-    {
-    case cmsSigGrayData: return TYPE_GRAY_FLT;
-    case cmsSigRgbData:  return TYPE_RGB_FLT;
-    case cmsSigCmykData: return TYPE_CMYK_FLT;
-    default: return 0;
-    }
 }
 
-void* CmsInit( void* data, size_t num_threads, size_t pixels_per_thread, const JxlColorProfile* input_profile, const JxlColorProfile* output_profile, float intensity_target )
-{
-    auto cms = new CmsData();
-    cms->transform = nullptr;
-
-    cms->profileIn = cmsOpenProfileFromMem( input_profile->icc.data, input_profile->icc.size );
-    cms->profileOut = cmsOpenProfileFromMem( output_profile->icc.data, output_profile->icc.size );
-    const auto typeIn = cms->profileIn ? CmsTypeFor( cms->profileIn ) : 0;
-    const auto typeOut = cms->profileOut ? CmsTypeFor( cms->profileOut ) : 0;
-    if( !typeIn || !typeOut )
-    {
-        if( cms->profileIn ) cmsCloseProfile( cms->profileIn );
-        if( cms->profileOut ) cmsCloseProfile( cms->profileOut );
-        delete cms;
-        return nullptr;
-    }
-    const auto intent = cmsUInt32Number( output_profile->color_encoding.rendering_intent );
-    const uint32_t flags = cmsFLAGS_NOCACHE | cmsFLAGS_BLACKPOINTCOMPENSATION | cmsFLAGS_HIGHRESPRECALC;
-    cms->transform = cmsCreateTransform( cms->profileIn, typeIn, cms->profileOut, typeOut, intent, flags );
-    if( !cms->transform )
-    {
-        cmsCloseProfile( cms->profileIn );
-        cmsCloseProfile( cms->profileOut );
-        delete cms;
-        return nullptr;
-    }
-
-    const size_t chIn = T_CHANNELS( typeIn ), chOut = T_CHANNELS( typeOut );
-    // The intensity anchor maps relative linear samples onto the 203 cd/m2 convention;
-    // it must not touch the 8-bit sRGB path, whose output is display-encoded.
-    const bool linearOut = output_profile->color_encoding.transfer_function == JXL_TRANSFER_FUNCTION_LINEAR;
-    cms->scale = ( intensity_target > 255.f && linearOut ) ? intensity_target / 203.f : 1.f;
-    if( cms->scale != 1.f && data )
-    {
-        *(bool*)data = true;
-    }
-    cms->channelsOut = chOut;
-    cms->srcBuf.resize( num_threads );
-    cms->dstBuf.resize( num_threads );
-    for( size_t i=0; i<num_threads; i++ )
-    {
-        cms->srcBuf[i] = new float[pixels_per_thread * chIn];
-        cms->dstBuf[i] = new float[pixels_per_thread * chOut];
-    }
-
-    return cms;
-}
-
-float* CmsGetSrcBuffer( void* data, size_t thread )
-{
-    auto cms = (CmsData*)data;
-    return cms->srcBuf[thread];
-}
-
-float* CmsGetDstBuffer( void* data, size_t thread )
-{
-    auto cms = (CmsData*)data;
-    return cms->dstBuf[thread];
-}
-
-JXL_BOOL CmsRun( void* data, size_t thread, const float* input, float* output, size_t num_pixels )
-{
-    auto cms = (CmsData*)data;
-    if( !cms->transform ) return false;
-
-    // libjxl passes CMYK as 0 = max ink, 1 = no ink; lcms float CMYK is 0 = no ink, 100 = max ink.
-    if( cms->profileIn && cmsGetColorSpace( cms->profileIn ) == cmsSigCmykData )
-    {
-        auto src = const_cast<float*>( input );    // buffer allocated in CmsInit
-        for( size_t i=0; i<num_pixels * 4; i++ )
-        {
-            src[i] = 100.f - 100.f * src[i];
-        }
-    }
-    cmsDoTransform( cms->transform, input, output, num_pixels );
-    if( cms->scale != 1.f )
-    {
-        for( size_t i = 0, n = num_pixels * cms->channelsOut; i < n; i++ )
-        {
-            output[i] *= cms->scale;
-        }
-    }
-    return true;
-}
-
-void CmsDestroy( void* data )
-{
-    auto cms = (CmsData*)data;
-
-    cmsDeleteTransform( cms->transform );
-    cmsCloseProfile( cms->profileOut );
-    cmsCloseProfile( cms->profileIn );
-
-    for( auto& buf : cms->srcBuf ) delete[] buf;
-    for( auto& buf : cms->dstBuf ) delete[] buf;
-    delete cms;
-}
-}
-
-JxlLoader::JxlLoader( std::shared_ptr<FileWrapper> file )
+JxlLoader::JxlLoader( std::shared_ptr<FileWrapper> file, TaskDispatch* td )
     : m_file( std::move( file ) )
+    , m_td( td )
     , m_runner( nullptr )
     , m_dec( nullptr )
-    , m_cmsAnchored( false )
 {
     fseek( *m_file, 0, SEEK_SET );
     uint8_t hdr[12];
@@ -232,8 +111,6 @@ std::unique_ptr<BitmapHdr> JxlLoader::LoadHdr( Colorspace colorspace )
 
     auto bmp = std::make_unique<BitmapHdr>( m_info.xsize, m_info.ysize, colorspace );
 
-    m_cmsAnchored = false;
-
     JxlPixelFormat format = { 4, JXL_TYPE_FLOAT, JXL_LITTLE_ENDIAN, 0 };
     if( JxlDecoderSetImageOutBuffer( m_dec, &format, bmp->Data(), bmp->Width() * bmp->Height() * 4 * sizeof( float ) ) != JXL_DEC_SUCCESS ) return nullptr;
 
@@ -249,15 +126,36 @@ std::unique_ptr<BitmapHdr> JxlLoader::LoadHdr( Colorspace colorspace )
         }
     }
 
-    const float floatScale = ( m_info.intensity_target > 255.f && !m_cmsAnchored ) ? m_info.intensity_target / 203.f : 1.f;
+    // libjxl's default CMS applies intensity_target only to PQ/HLG encodings and leaves relative-luminance
+    // linear output unanchored, so this pass is the sole owner of the 203 cd/m² convention
+    const float floatScale = ( m_info.intensity_target > 255.f ) ? m_info.intensity_target / 203.f : 1.f;
     if( floatScale != 1.f )
     {
-        auto ptr = bmp->Data();
-        for( size_t i = size_t( m_info.xsize ) * m_info.ysize; i > 0; i--, ptr += 4 )
+        const auto scale = [floatScale]( float* p, size_t pixels )
         {
-            ptr[0] *= floatScale;
-            ptr[1] *= floatScale;
-            ptr[2] *= floatScale;
+            for( size_t i = pixels; i > 0; i--, p += 4 )
+            {
+                p[0] *= floatScale;
+                p[1] *= floatScale;
+                p[2] *= floatScale;
+            }
+        };
+        auto ptr = bmp->Data();
+        size_t sz = size_t( m_info.xsize ) * m_info.ysize;
+        if( m_td )
+        {
+            while( sz > 0 )
+            {
+                const auto chunk = std::min( sz, size_t( 16 * 1024 ) );
+                m_td->Queue( [ptr, chunk, scale]{ scale( ptr, chunk ); } );
+                ptr += chunk * 4;
+                sz -= chunk;
+            }
+            m_td->Sync();
+        }
+        else
+        {
+            scale( ptr, sz );
         }
     }
 
@@ -273,12 +171,23 @@ bool JxlLoader::Open()
     m_runner = JxlResizableParallelRunnerCreate( nullptr );
 
     m_dec = JxlDecoderCreate( nullptr );
-    if( JxlDecoderSubscribeEvents( m_dec, JXL_DEC_BASIC_INFO | JXL_DEC_COLOR_ENCODING | JXL_DEC_FULL_IMAGE ) != JXL_DEC_SUCCESS ) return false;
-    if( JxlDecoderSetParallelRunner( m_dec, JxlResizableParallelRunner, m_runner ) != JXL_DEC_SUCCESS ) return false;
-    if( JxlDecoderSetUnpremultiplyAlpha( m_dec, JXL_TRUE ) != JXL_DEC_SUCCESS ) return false;
+    if( JxlDecoderSubscribeEvents( m_dec, JXL_DEC_BASIC_INFO | JXL_DEC_COLOR_ENCODING | JXL_DEC_FULL_IMAGE ) != JXL_DEC_SUCCESS ||
+        JxlDecoderSetParallelRunner( m_dec, JxlResizableParallelRunner, m_runner ) != JXL_DEC_SUCCESS ||
+        JxlDecoderSetCms( m_dec, *JxlGetDefaultCms() ) != JXL_DEC_SUCCESS ||
+        JxlDecoderSetUnpremultiplyAlpha( m_dec, JXL_TRUE ) != JXL_DEC_SUCCESS ||
+        JxlDecoderSetInput( m_dec, (const uint8_t*)m_buf->data(), m_buf->size() ) != JXL_DEC_SUCCESS )
+    {
+        // Roll back to the pre-Open state: callers re-enter Open() while m_dec is null, and its
+        // already-opened check trips on a leftover m_buf.
+        JxlDecoderDestroy( m_dec );
+        m_dec = nullptr;
+        JxlResizableParallelRunnerDestroy( m_runner );
+        m_runner = nullptr;
+        m_buf.reset();
+        return false;
+    }
 
-    JxlDecoderSetInput( m_dec, (const uint8_t*)m_buf->data(), m_buf->size() );
-    JxlDecoderCloseInput( m_dec );
+    JxlDecoderCloseInput( m_dec ); // void by contract, nothing to check
 
     for(;;)
     {
@@ -286,22 +195,8 @@ bool JxlLoader::Open()
         if( res == JXL_DEC_ERROR || res == JXL_DEC_NEED_MORE_INPUT || res == JXL_DEC_SUCCESS || res == JXL_DEC_FULL_IMAGE ) return false;
         if( res == JXL_DEC_BASIC_INFO )
         {
-            JxlDecoderGetBasicInfo( m_dec, &m_info );
+            CheckPanic( JxlDecoderGetBasicInfo( m_dec, &m_info ) == JXL_DEC_SUCCESS, "Failed to read JPEG XL basic info" );
             JxlResizableParallelRunnerSetThreads( m_runner, JxlResizableParallelRunnerSuggestThreads( m_info.xsize, m_info.ysize ) );
-
-            const auto def = JxlGetDefaultCms();
-            const JxlCmsInterface cmsInterface
-            {
-                .set_fields_data = def->set_fields_data,
-                .set_fields_from_icc = def->set_fields_from_icc,
-                .init_data = &m_cmsAnchored,
-                .init = CmsInit,
-                .get_src_buf = CmsGetSrcBuffer,
-                .get_dst_buf = CmsGetDstBuffer,
-                .run = CmsRun,
-                .destroy = CmsDestroy
-            };
-            if( JxlDecoderSetCms( m_dec, cmsInterface ) != JXL_DEC_SUCCESS ) return false;
 
             return true;
         }

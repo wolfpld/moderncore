@@ -275,6 +275,7 @@ bool JxlLoader::Open()
     m_dec = JxlDecoderCreate( nullptr );
     if( JxlDecoderSubscribeEvents( m_dec, JXL_DEC_BASIC_INFO | JXL_DEC_COLOR_ENCODING | JXL_DEC_FULL_IMAGE ) != JXL_DEC_SUCCESS ) return false;
     if( JxlDecoderSetParallelRunner( m_dec, JxlResizableParallelRunner, m_runner ) != JXL_DEC_SUCCESS ) return false;
+    if( JxlDecoderSetUnpremultiplyAlpha( m_dec, JXL_TRUE ) != JXL_DEC_SUCCESS ) return false;
 
     JxlDecoderSetInput( m_dec, (const uint8_t*)m_buf->data(), m_buf->size() );
     JxlDecoderCloseInput( m_dec );

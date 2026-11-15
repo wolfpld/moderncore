@@ -628,6 +628,7 @@ if(BUILD_TESTS)
         tests/util/Listener.cpp
         tests/util/Logs.cpp
         tests/util/MemoryBuffer.cpp
+        tests/util/NaturalSort.cpp
         tests/util/PathNormalize.cpp
         tests/util/PixelBytes.cpp
         tests/util/RobinHood.cpp

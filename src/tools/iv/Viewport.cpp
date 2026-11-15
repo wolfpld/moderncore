@@ -31,6 +31,7 @@
 #include "util/Home.hpp"
 #include "util/Invoke.hpp"
 #include "util/MemoryBuffer.hpp"
+#include "util/NaturalSort.hpp"
 #include "util/Panic.hpp"
 #include "util/TaskDispatch.hpp"
 #include "util/Url.hpp"
@@ -1239,6 +1240,6 @@ std::vector<std::string> Viewport::ListDirectory( const std::string& path )
         }
     }
     closedir( dir );
-    std::ranges::sort( ret );
+    std::ranges::sort( ret, NaturalLess{} );
     return ret;
 }

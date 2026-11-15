@@ -74,7 +74,7 @@ std::unique_ptr<Bitmap> RawLoader::Load()
     auto bmp = std::make_unique<Bitmap>( img->width, img->height );
     auto src = img->data;
     auto dst = (uint32_t*)bmp->Data();
-    auto sz = img->width * img->height;
+    auto sz = size_t( img->width ) * img->height;
 
     switch( img->colors )
     {
@@ -143,7 +143,7 @@ std::unique_ptr<BitmapHdr> RawLoader::LoadHdr( Colorspace colorspace )
     auto bmp = std::make_unique<BitmapHdr>( img->width, img->height, colorspace );
     auto src = (uint16_t*)img->data;
     auto dst = bmp->Data();
-    auto sz = img->width * img->height;
+    auto sz = size_t( img->width ) * img->height;
 
     auto color = m_raw->imgdata.color;
     const auto div = 1.f / color.maximum;

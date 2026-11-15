@@ -145,8 +145,7 @@ std::unique_ptr<BitmapHdr> RawLoader::LoadHdr( Colorspace colorspace )
     auto dst = bmp->Data();
     auto sz = size_t( img->width ) * img->height;
 
-    auto color = m_raw->imgdata.color;
-    const auto div = 1.f / color.maximum;
+    const float div = 1.f / 65535.f;
 
     switch( img->colors )
     {

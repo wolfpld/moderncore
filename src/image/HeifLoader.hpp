@@ -52,6 +52,7 @@ private:
     [[nodiscard]] bool GetGainMapHeadroom( heif_image_handle* handle );
 
     bool m_valid;
+    bool m_opened;
     ToneMap::Operator m_tonemap;
     std::shared_ptr<FileWrapper> m_file;
     std::unique_ptr<FileBuffer> m_buf;

@@ -92,6 +92,7 @@ static void ApplyGainMap( float* ptr, size_t sz, const float* gptr, float headro
 
 HeifLoader::HeifLoader( std::shared_ptr<FileWrapper> file, ToneMap::Operator tonemap, TaskDispatch* td )
     : m_valid( false )
+    , m_opened( false )
     , m_tonemap( tonemap )
     , m_file( std::move( file ) )
     , m_ctx( nullptr )
@@ -143,7 +144,7 @@ bool HeifLoader::IsValid() const
 
 bool HeifLoader::IsHdr()
 {
-    if( !m_buf && !Open() ) return false;
+    if( !m_opened && !Open() ) return false;
     if( m_handleGainMap ) return true;
     if( m_nclx )
     {
@@ -156,7 +157,7 @@ bool HeifLoader::IsHdr()
 
 std::unique_ptr<Bitmap> HeifLoader::Load()
 {
-    if( !m_buf && !Open() ) return nullptr;
+    if( !m_opened && !Open() ) return nullptr;
 
     if( !IsHdr() || m_handleGainMap )
     {
@@ -233,7 +234,7 @@ std::unique_ptr<Bitmap> HeifLoader::Load()
 
 std::unique_ptr<BitmapHdr> HeifLoader::LoadHdr( Colorspace colorspace )
 {
-    if( !m_buf && !Open() ) return nullptr;
+    if( !m_opened && !Open() ) return nullptr;
     if( !SetupDecode( true, colorspace ) ) return nullptr;
 
     auto bmp = std::make_unique<BitmapHdr>( m_width, m_height, colorspace );
@@ -271,16 +272,26 @@ std::unique_ptr<BitmapHdr> HeifLoader::LoadHdr( Colorspace colorspace )
 bool HeifLoader::Open()
 {
     CheckPanic( m_valid, "Invalid HEIF file" );
-    CheckPanic( !m_buf, "Already opened" );
+    CheckPanic( !m_opened, "Already opened" );
 
     m_buf = std::make_unique<FileBuffer>( m_file );
 
     m_ctx = heif_context_alloc();
     auto err = heif_context_read_from_memory_without_copy( m_ctx, m_buf->data(), m_buf->size(), nullptr );
-    if( err.code != heif_error_Ok ) return false;
+    if( err.code != heif_error_Ok )
+    {
+        heif_context_free( m_ctx );
+        m_ctx = nullptr;
+        return false;
+    }
 
     err = heif_context_get_primary_image_handle( m_ctx, &m_handle );
-    if( err.code != heif_error_Ok ) return false;
+    if( err.code != heif_error_Ok )
+    {
+        heif_context_free( m_ctx );
+        m_ctx = nullptr;
+        return false;
+    }
 
     err = heif_image_handle_get_nclx_color_profile( m_handle, &m_nclx );
     if( err.code == heif_error_Color_profile_does_not_exist ) mclog( LogLevel::Info, "HEIF: No handle-level nclx color profile found" );
@@ -294,11 +305,35 @@ bool HeifLoader::Open()
     {
         m_iccData = new char[m_iccSize];
         err = heif_image_handle_get_raw_color_profile( m_handle, m_iccData );
-        CheckPanic( err.code == heif_error_Ok, "HEIF: Failed to read ICC profile" );
+        if( err.code != heif_error_Ok )
+        {
+            mclog( LogLevel::Warning, "HEIF: Failed to read ICC profile, continuing without" );
+            delete[] m_iccData;
+            m_iccData = nullptr;
+            m_iccSize = 0;
+        }
     }
 
     m_width = heif_image_handle_get_width( m_handle );
     m_height = heif_image_handle_get_height( m_handle );
+    if( m_width <= 0 || m_height <= 0 )
+    {
+        mclog( LogLevel::Error, "HEIF: Invalid primary image dimensions %dx%d", m_width, m_height );
+        heif_image_handle_release( m_handle );
+        m_handle = nullptr;
+        heif_context_free( m_ctx );
+        m_ctx = nullptr;
+        // m_opened stays false, so a retry re-reads the color profiles; release what this attempt took.
+        if( m_nclx )
+        {
+            heif_nclx_color_profile_free( m_nclx );
+            m_nclx = nullptr;
+        }
+        delete[] m_iccData;
+        m_iccData = nullptr;
+        m_iccSize = 0;
+        return false;
+    }
 
     constexpr int filter = LIBHEIF_AUX_IMAGE_FILTER_OMIT_ALPHA | LIBHEIF_AUX_IMAGE_FILTER_OMIT_DEPTH;
     const auto auxnum = heif_image_handle_get_number_of_auxiliary_images( m_handle, filter );
@@ -309,11 +344,19 @@ bool HeifLoader::Open()
 
         for( auto item : aux )
         {
-            heif_image_handle* auxHandle;
-            heif_image_handle_get_auxiliary_image_handle( m_handle, item, &auxHandle );
-            const char* type;
-            heif_image_handle_get_auxiliary_type( auxHandle, &type );
-            const auto match = strcmp( type, "urn:com:apple:photo:2020:aux:hdrgainmap" ) == 0;
+            heif_image_handle* auxHandle = nullptr;
+            auto auxErr = heif_image_handle_get_auxiliary_image_handle( m_handle, item, &auxHandle );
+            if( auxErr.code != heif_error_Ok ) continue;
+
+            const char* type = nullptr;
+            auxErr = heif_image_handle_get_auxiliary_type( auxHandle, &type );
+            if( auxErr.code != heif_error_Ok )
+            {
+                heif_image_handle_release( auxHandle );
+                continue;
+            }
+
+            const auto match = type && strcmp( type, "urn:com:apple:photo:2020:aux:hdrgainmap" ) == 0;
             heif_image_handle_release_auxiliary_type( auxHandle, &type );
             if( match )
             {
@@ -332,6 +375,7 @@ bool HeifLoader::Open()
         }
     }
 
+    m_opened = true;
     return true;
 }
 

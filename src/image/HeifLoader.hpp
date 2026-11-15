@@ -87,6 +87,7 @@ private:
     void* m_profileIn;
     void* m_profileOut;
     void* m_transform;
+    bool m_identityTransform;
 
     TaskDispatch* m_td;
 };

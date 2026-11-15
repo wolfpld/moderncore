@@ -111,6 +111,21 @@ static void ApplyGainMap( float* ptr, size_t sz, const float* gptr, float headro
 }
 
 
+static void QuantizeRgba( const float* in, uint8_t* out, size_t n )
+{
+    while( n-- )
+    {
+        for( int c = 0; c < 4; c++ )
+        {
+            const float f = std::min( std::max( in[c], 0.f ), 1.f );
+            out[c] = static_cast<uint8_t>( std::lroundf( 255.f * f ) );
+        }
+        in += 4;
+        out += 4;
+    }
+}
+
+
 HeifLoader::HeifLoader( std::shared_ptr<FileWrapper> file, ToneMap::Operator tonemap, TaskDispatch* td )
     : m_valid( false )
     , m_opened( false )
@@ -126,6 +141,7 @@ HeifLoader::HeifLoader( std::shared_ptr<FileWrapper> file, ToneMap::Operator ton
     , m_profileIn( nullptr )
     , m_profileOut( nullptr )
     , m_transform( nullptr )
+    , m_identityTransform( false )
     , m_linearizeFirst( false )
     , m_td( td )
 {
@@ -199,7 +215,8 @@ std::unique_ptr<Bitmap> HeifLoader::Load()
                     auto ptr = (float*)alloca( chunk * 4 * sizeof( float ) );
                     LoadYCbCr( ptr, chunk, offset );
                     ConvertYCbCrToRGB( ptr, chunk );
-                    cmsDoTransform( m_transform, ptr, out, chunk );
+                    if( m_identityTransform ) QuantizeRgba( ptr, (uint8_t*)out, chunk );
+                    else cmsDoTransform( m_transform, ptr, out, chunk );
                 } );
                 out += chunk;
                 sz -= chunk;
@@ -212,7 +229,8 @@ std::unique_ptr<Bitmap> HeifLoader::Load()
             auto tmp = std::make_unique<BitmapHdr>( m_width, m_height, Colorspace::BT709 );
             LoadYCbCr( tmp->Data(), m_width * m_height, 0 );
             ConvertYCbCrToRGB( tmp->Data(), m_width * m_height );
-            cmsDoTransform( m_transform, tmp->Data(), out, m_width * m_height );
+            if( m_identityTransform ) QuantizeRgba( tmp->Data(), (uint8_t*)out, m_width * m_height );
+            else cmsDoTransform( m_transform, tmp->Data(), out, m_width * m_height );
         }
 
         return bmp;
@@ -401,6 +419,7 @@ bool HeifLoader::Open()
 
 bool HeifLoader::SetupDecode( bool hdr, Colorspace colorspace )
 {
+    m_identityTransform = false;
     if( m_transform )
     {
         cmsDeleteTransform( m_transform );
@@ -572,24 +591,42 @@ bool HeifLoader::SetupDecode( bool hdr, Colorspace colorspace )
     }
     cmsToneCurve* sdrCurve3[3] = { sdrCurve, sdrCurve, sdrCurve };
 
+    // A profile that fails to open or to yield a transform must not fail the load: files may carry both
+    // ICC and nclx, and the nclx path below stays fully functional
     if( m_iccData )
     {
         m_profileIn = cmsOpenProfileFromMem( m_iccData, m_iccSize );
-        int outType;
-        if( hdr )
+        if( !m_profileIn )
         {
-            CheckPanic( colorspace == Colorspace::BT709 || colorspace == Colorspace::BT2020, "Invalid colorspace" );
-            m_profileOut = cmsCreateRGBProfile( &white709, colorspace == Colorspace::BT709 ? &primaries709 : &primaries2020, linear3 );
-            outType = TYPE_RGBA_FLT;
+            mclog( LogLevel::Warning, "HEIF: Failed to open ICC profile, continuing without" );
         }
         else
         {
-            m_profileOut = cmsCreate_sRGBProfile();
-            outType = TYPE_RGBA_8;
+            int outType;
+            if( hdr )
+            {
+                CheckPanic( colorspace == Colorspace::BT709 || colorspace == Colorspace::BT2020, "Invalid colorspace" );
+                m_profileOut = cmsCreateRGBProfile( &white709, colorspace == Colorspace::BT709 ? &primaries709 : &primaries2020, linear3 );
+                outType = TYPE_RGBA_FLT;
+            }
+            else
+            {
+                m_profileOut = cmsCreate_sRGBProfile();
+                outType = TYPE_RGBA_8;
+            }
+            m_transform = cmsCreateTransform( m_profileIn, TYPE_RGBA_FLT, m_profileOut, outType, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA );
+            if( !m_transform )
+            {
+                mclog( LogLevel::Warning, "HEIF: Failed to create ICC color transform, continuing without" );
+                cmsCloseProfile( m_profileOut );
+                m_profileOut = nullptr;
+                cmsCloseProfile( m_profileIn );
+                m_profileIn = nullptr;
+            }
         }
-        m_transform = cmsCreateTransform( m_profileIn, TYPE_RGBA_FLT, m_profileOut, outType, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA );
     }
-    else if( m_nclx )
+
+    if( !m_transform && m_nclx )
     {
         const cmsCIExyY white = { m_nclx->color_primary_white_x, m_nclx->color_primary_white_y, 1 };
         const cmsCIExyYTRIPLE primaries = {
@@ -616,6 +653,13 @@ bool HeifLoader::SetupDecode( bool hdr, Colorspace colorspace )
                 m_transform = cmsCreateTransform( m_profileIn, TYPE_RGBA_FLT, m_profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA );
             }
         }
+        else if( ( m_nclx->transfer_characteristics == heif_transfer_characteristic_IEC_61966_2_1 ||
+                   m_nclx->transfer_characteristics == heif_transfer_characteristic_unspecified ) &&
+                 SameRgbPrimaries( primaries, primaries709 ) && SameWhite( white, white709 ) )
+        {
+            mclog( LogLevel::Info, "HEIF: SDR transform is identity, skipping color management" );
+            m_identityTransform = true;
+        }
         else
         {
             m_profileIn = cmsCreateRGBProfile( &white, &primaries, sdrCurve3 );
@@ -623,21 +667,21 @@ bool HeifLoader::SetupDecode( bool hdr, Colorspace colorspace )
             m_transform = cmsCreateTransform( m_profileIn, TYPE_RGBA_FLT, m_profileOut, TYPE_RGBA_8, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA );
         }
     }
-    else
+    else if( !m_transform )
     {
-        // HDR reaches this branch only for gain-map images without color profiles, so no color management applies
+        // HDR reaches this branch only for gain-map images with no usable color profile, so no color
+        // management applies
         if( !hdr )
         {
-            m_profileIn = cmsCreateRGBProfile( &white709, &primaries709, sdrCurve3 );
-            m_profileOut = cmsCreate_sRGBProfile();
-            m_transform = cmsCreateTransform( m_profileIn, TYPE_RGBA_FLT, m_profileOut, TYPE_RGBA_8, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA );
+            mclog( LogLevel::Info, "HEIF: SDR transform is identity, skipping color management" );
+            m_identityTransform = true;
         }
     }
 
     cmsFreeToneCurve( linear );
     cmsFreeToneCurve( sdrCurve );
 
-    if( !m_transform && ( !hdr || m_profileOut ) )
+    if( !m_transform && !m_identityTransform && ( !hdr || m_profileOut ) )
     {
         mclog( LogLevel::Error, "HEIF: Failed to create color transform" );
         return false;

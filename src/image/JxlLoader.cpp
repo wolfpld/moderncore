@@ -219,7 +219,7 @@ std::unique_ptr<Bitmap> JxlLoader::Load()
         if( res == JXL_DEC_SUCCESS || res == JXL_DEC_FULL_IMAGE ) break;
         if( res == JXL_DEC_COLOR_ENCODING )
         {
-            JxlDecoderSetOutputColorProfile( m_dec, &srgb, nullptr, 0 );
+            if( JxlDecoderSetOutputColorProfile( m_dec, &srgb, nullptr, 0 ) != JXL_DEC_SUCCESS ) return nullptr;
         }
     }
 
@@ -245,7 +245,7 @@ std::unique_ptr<BitmapHdr> JxlLoader::LoadHdr( Colorspace colorspace )
         if( res == JXL_DEC_COLOR_ENCODING )
         {
             CheckPanic( colorspace == Colorspace::BT709 || colorspace == Colorspace::BT2020, "Invalid colorspace" );
-            JxlDecoderSetOutputColorProfile( m_dec, colorspace == Colorspace::BT709 ? &bt709 : &bt2020, nullptr, 0 );
+            if( JxlDecoderSetOutputColorProfile( m_dec, colorspace == Colorspace::BT709 ? &bt709 : &bt2020, nullptr, 0 ) != JXL_DEC_SUCCESS ) return nullptr;
         }
     }
 
@@ -273,8 +273,8 @@ bool JxlLoader::Open()
     m_runner = JxlResizableParallelRunnerCreate( nullptr );
 
     m_dec = JxlDecoderCreate( nullptr );
-    JxlDecoderSubscribeEvents( m_dec, JXL_DEC_BASIC_INFO | JXL_DEC_COLOR_ENCODING | JXL_DEC_FULL_IMAGE );
-    JxlDecoderSetParallelRunner( m_dec, JxlResizableParallelRunner, m_runner );
+    if( JxlDecoderSubscribeEvents( m_dec, JXL_DEC_BASIC_INFO | JXL_DEC_COLOR_ENCODING | JXL_DEC_FULL_IMAGE ) != JXL_DEC_SUCCESS ) return false;
+    if( JxlDecoderSetParallelRunner( m_dec, JxlResizableParallelRunner, m_runner ) != JXL_DEC_SUCCESS ) return false;
 
     JxlDecoderSetInput( m_dec, (const uint8_t*)m_buf->data(), m_buf->size() );
     JxlDecoderCloseInput( m_dec );
@@ -300,7 +300,7 @@ bool JxlLoader::Open()
                 .run = CmsRun,
                 .destroy = CmsDestroy
             };
-            JxlDecoderSetCms( m_dec, cmsInterface );
+            if( JxlDecoderSetCms( m_dec, cmsInterface ) != JXL_DEC_SUCCESS ) return false;
 
             return true;
         }

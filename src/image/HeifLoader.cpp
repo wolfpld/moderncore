@@ -400,6 +400,29 @@ bool HeifLoader::Open()
 
 bool HeifLoader::SetupDecode( bool hdr, Colorspace colorspace )
 {
+    if( m_transform )
+    {
+        cmsDeleteTransform( m_transform );
+        m_transform = nullptr;
+    }
+    if( m_profileOut )
+    {
+        cmsCloseProfile( m_profileOut );
+        m_profileOut = nullptr;
+    }
+    if( m_profileIn )
+    {
+        cmsCloseProfile( m_profileIn );
+        m_profileIn = nullptr;
+    }
+    if( m_image )
+    {
+        heif_image_release( m_image );
+        m_image = nullptr;
+    }
+    delete[] m_gainMap;
+    m_gainMap = nullptr;
+
     auto err = heif_decode_image( m_handle, &m_image, heif_colorspace_YCbCr, heif_chroma_444, nullptr );
     if( err.code != heif_error_Ok ) return false;
 

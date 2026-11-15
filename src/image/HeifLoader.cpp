@@ -406,20 +406,39 @@ bool HeifLoader::SetupDecode( bool hdr, Colorspace colorspace )
         heif_image_get_raw_color_profile( m_image, m_iccData );
     }
 
+    if( hdr && !m_nclx && !m_handleGainMap )
+    {
+        mclog( LogLevel::Error, "HEIF: HDR requested without nclx color profile or gain map" );
+        return false;
+    }
+
     int strideY, strideCb, strideCr, strideA;
     m_planeY  = heif_image_get_plane_readonly( m_image, heif_channel_Y, &strideY );
     m_planeCb = heif_image_get_plane_readonly( m_image, heif_channel_Cb, &strideCb );
     m_planeCr = heif_image_get_plane_readonly( m_image, heif_channel_Cr, &strideCr );
     m_planeA  = heif_image_get_plane_readonly( m_image, heif_channel_Alpha, &strideA );
-    CheckPanic( strideY == strideCb && strideY == strideCr, "Decoded output is not 444" );
-    m_stride = strideY;
 
     if( !m_planeY || !m_planeCb || !m_planeCr ) return false;
+    if( strideY != strideCb || strideY != strideCr || ( m_planeA && strideA != strideY ) )
+    {
+        mclog( LogLevel::Error, "HEIF: Decoded output is not 444 (strides %d/%d/%d/%d)", strideY, strideCb, strideCr, strideA );
+        return false;
+    }
+    m_stride = strideY;
 
     const auto bppY = heif_image_get_bits_per_pixel_range( m_image, heif_channel_Y );
     const auto bppCb = heif_image_get_bits_per_pixel_range( m_image, heif_channel_Cb );
     const auto bppCr = heif_image_get_bits_per_pixel_range( m_image, heif_channel_Cr );
-    CheckPanic( bppY == bppCb && bppY == bppCr, "Decoded output has mixed bit width" );
+    if( bppY != bppCb || bppY != bppCr )
+    {
+        mclog( LogLevel::Error, "HEIF: Decoded output has mixed bit width (%d/%d/%d)", bppY, bppCb, bppCr );
+        return false;
+    }
+    if( bppY < 8 || bppY > 16 )
+    {
+        mclog( LogLevel::Error, "HEIF: Unsupported bit depth %d", bppY );
+        return false;
+    }
 
     m_bpp = bppY;
     m_bppDiv = 1.f / ( ( 1 << bppY ) - 1 );
@@ -533,15 +552,23 @@ bool HeifLoader::SetupDecode( bool hdr, Colorspace colorspace )
     }
     else
     {
-        CheckPanic( !hdr, "Can't be HDR here" );
-
-        m_profileIn = cmsCreateRGBProfile( &white709, &primaries709, gamma3 );
-        m_profileOut = cmsCreate_sRGBProfile();
-        m_transform = cmsCreateTransform( m_profileIn, TYPE_RGBA_FLT, m_profileOut, TYPE_RGBA_8, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA );
+        // HDR reaches this branch only for gain-map images without color profiles; no color management applies
+        if( !hdr )
+        {
+            m_profileIn = cmsCreateRGBProfile( &white709, &primaries709, gamma3 );
+            m_profileOut = cmsCreate_sRGBProfile();
+            m_transform = cmsCreateTransform( m_profileIn, TYPE_RGBA_FLT, m_profileOut, TYPE_RGBA_8, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA );
+        }
     }
 
     cmsFreeToneCurve( linear );
     cmsFreeToneCurve( gamma );
+
+    if( !m_transform && ( !hdr || m_profileOut ) )
+    {
+        mclog( LogLevel::Error, "HEIF: Failed to create color transform" );
+        return false;
+    }
 
     if( hdr && m_handleGainMap )
     {
@@ -559,7 +586,12 @@ bool HeifLoader::SetupDecode( bool hdr, Colorspace colorspace )
 
         const auto w = heif_image_handle_get_width( m_handleGainMap );
         const auto h = heif_image_handle_get_height( m_handleGainMap );
-        CheckPanic( w == m_width / 2 && h == m_height / 2, "Invalid gain map size" );
+        if( w != m_width / 2 || h != m_height / 2 )
+        {
+            mclog( LogLevel::Error, "HEIF: Invalid gain map size %dx%d for %dx%d", w, h, m_width, m_height );
+            heif_image_release( gainMap );
+            return false;
+        }
 
         std::vector<float> tmp( w * h );
         auto dst = tmp.data();

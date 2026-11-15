@@ -226,7 +226,7 @@ std::unique_ptr<Bitmap> HeifLoader::Load()
         else
         {
             std::unique_ptr<BitmapHdr> hdr = LoadHdr( Colorspace::BT709 );
-            return hdr->Tonemap( m_tonemap );
+            return hdr ? hdr->Tonemap( m_tonemap ) : nullptr;
         }
     }
 }

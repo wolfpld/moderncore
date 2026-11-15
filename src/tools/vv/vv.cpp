@@ -137,7 +137,7 @@ static void FillBackground( Bitmap& bitmap, uint32_t bg )
     const auto bgb = ( bg >> 16 ) & 0xFF;
 
     auto px = (uint32_t*)bitmap.Data();
-    auto sz = bitmap.Width() * bitmap.Height();
+    auto sz = size_t( bitmap.Width() ) * bitmap.Height();
     while( sz-- )
     {
         const auto a = *px >> 24;
@@ -260,7 +260,7 @@ static void PrintBitmapBlock( Bitmap& bitmap )
 
 static bool UploadKittyImage( Bitmap& bitmap, const char* queryPart, bool anim = false )
 {
-    const auto bmpSize = bitmap.Width() * bitmap.Height() * 4;
+    const size_t bmpSize = size_t( bitmap.Width() ) * bitmap.Height() * 4;
 
     z_stream strm = {};
     deflateInit( &strm, Z_BEST_SPEED );
@@ -477,22 +477,25 @@ int main( int argc, char** argv )
             else if( loader->IsHdr() && loader->PreferHdr() )
             {
                 auto hdr = loader->LoadHdr();
-                bitmap = std::make_unique<Bitmap>( hdr->Width(), hdr->Height() );
-
-                auto src = hdr->Data();
-                auto dst = bitmap->Data();
-                size_t sz = hdr->Width() * hdr->Height();
-                while( sz > 0 )
+                if( hdr )
                 {
-                    const auto chunk = std::min( sz, size_t( 16 * 1024 ) );
-                    td.Queue( [src, dst, chunk, tonemap] {
-                        ToneMap::Process( tonemap, (uint32_t*)dst, src, chunk );
-                    } );
-                    src += chunk * 4;
-                    dst += chunk * 4;
-                    sz -= chunk;
+                    bitmap = std::make_unique<Bitmap>( hdr->Width(), hdr->Height() );
+
+                    auto src = hdr->Data();
+                    auto dst = bitmap->Data();
+                    size_t sz = size_t( hdr->Width() ) * hdr->Height();
+                    while( sz > 0 )
+                    {
+                        const auto chunk = std::min( sz, size_t( 16 * 1024 ) );
+                        td.Queue( [src, dst, chunk, tonemap] {
+                            ToneMap::Process( tonemap, (uint32_t*)dst, src, chunk );
+                        } );
+                        src += chunk * 4;
+                        dst += chunk * 4;
+                        sz -= chunk;
+                    }
+                    td.Sync();
                 }
-                td.Sync();
             }
             else
             {

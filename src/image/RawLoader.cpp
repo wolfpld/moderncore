@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include <libraw.h>
 #include <stdint.h>
 #include <string.h>
@@ -152,10 +154,15 @@ std::unique_ptr<BitmapHdr> RawLoader::LoadHdr( Colorspace colorspace )
     case 1:
         do
         {
-            const auto v = *src++;
-            *dst++ = v * div;
-            *dst++ = v * div;
-            *dst++ = v * div;
+            float v = *src++ * div;
+            if( v > 0.75f )
+            {
+                const float t = ( v - 0.75f ) * 4.f;
+                v *= 1.f + 3.f * t * t;
+            }
+            *dst++ = v;
+            *dst++ = v;
+            *dst++ = v;
             *dst++ = 1;
         }
         while( --sz );
@@ -163,9 +170,18 @@ std::unique_ptr<BitmapHdr> RawLoader::LoadHdr( Colorspace colorspace )
     case 3:
         do
         {
-            *dst++ = *src++ * div;
-            *dst++ = *src++ * div;
-            *dst++ = *src++ * div;
+            const float r = *src++ * div;
+            const float g = *src++ * div;
+            const float b = *src++ * div;
+            float gain = 1.f;
+            if( const float m = std::max( { r, g, b } ); m > 0.75f )
+            {
+                const float t = ( m - 0.75f ) * 4.f;
+                gain = 1.f + 3.f * t * t;
+            }
+            *dst++ = r * gain;
+            *dst++ = g * gain;
+            *dst++ = b * gain;
             *dst++ = 1;
         }
         while( --sz );

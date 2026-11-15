@@ -67,6 +67,7 @@ private:
     int m_width, m_height;
     int m_stride, m_bpp;
     float m_bppDiv;
+    float m_bppDivA;
     float m_gainMapHeadroom;
 
     Conversion m_matrix;

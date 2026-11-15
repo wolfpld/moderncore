@@ -488,6 +488,18 @@ bool HeifLoader::SetupDecode( bool hdr, Colorspace colorspace )
     m_bppDiv = 1.f / ( ( 1 << bppY ) - 1 );
     mclog( LogLevel::Info, "HEIF: %d bpp", bppY );
 
+    m_bppDivA = m_bppDiv;
+    if( m_planeA )
+    {
+        const auto bppA = heif_image_get_bits_per_pixel_range( m_image, heif_channel_Alpha );
+        if( bppA < 8 || bppA > 16 )
+        {
+            mclog( LogLevel::Error, "HEIF: Unsupported alpha bit depth %d", bppA );
+            return false;
+        }
+        m_bppDivA = 1.f / ( ( 1 << bppA ) - 1 );
+    }
+
     if( bppY > 8 ) m_stride /= 2;
 
     // libheif normalises decoded planes to full range and reports the result on the image-level nclx,
@@ -686,7 +698,7 @@ bool HeifLoader::SetupDecode( bool hdr, Colorspace colorspace )
 }
 
 template<typename T>
-static inline void ProcessYCbCrAlpha( float* ptr, const T* srcY, const T* srcCb, const T* srcCr, const T* srcA, size_t sz, size_t offset, size_t width, size_t stride, float div )
+static inline void ProcessYCbCrAlpha( float* ptr, const T* srcY, const T* srcCb, const T* srcCr, const T* srcA, size_t sz, size_t offset, size_t width, size_t stride, float div, float divA )
 {
     const auto gap = stride - width;
 
@@ -707,7 +719,7 @@ static inline void ProcessYCbCrAlpha( float* ptr, const T* srcY, const T* srcCb,
             *ptr++ = float(*srcY++) * div;
             *ptr++ = float(*srcCb++) * div - 0.5f;
             *ptr++ = float(*srcCr++) * div - 0.5f;
-            *ptr++ = float(*srcA++) * div;
+            *ptr++ = float(*srcA++) * divA;
         }
         if( sz == 0 ) break;
         px = 0;
@@ -757,11 +769,11 @@ void HeifLoader::LoadYCbCr( float* ptr, size_t sz, size_t offset )
     {
         if( m_bpp > 8 )
         {
-            ProcessYCbCrAlpha( ptr, (uint16_t*)m_planeY, (uint16_t*)m_planeCb, (uint16_t*)m_planeCr, (uint16_t*)m_planeA, sz, offset, m_width, m_stride, m_bppDiv );
+            ProcessYCbCrAlpha( ptr, (uint16_t*)m_planeY, (uint16_t*)m_planeCb, (uint16_t*)m_planeCr, (uint16_t*)m_planeA, sz, offset, m_width, m_stride, m_bppDiv, m_bppDivA );
         }
         else
         {
-            ProcessYCbCrAlpha( ptr, m_planeY, m_planeCb, m_planeCr, m_planeA, sz, offset, m_width, m_stride, m_bppDiv );
+            ProcessYCbCrAlpha( ptr, m_planeY, m_planeCb, m_planeCr, m_planeA, sz, offset, m_width, m_stride, m_bppDiv, m_bppDivA );
         }
     }
     else

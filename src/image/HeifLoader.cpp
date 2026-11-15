@@ -18,6 +18,7 @@
 #include "util/Simd.hpp"
 #include "util/TaskDispatch.hpp"
 #include "util/Tonemapper.hpp"
+#include "util/TransferCurve.hpp"
 
 static void ApplyGainMap( float* ptr, size_t sz, const float* gptr, float headroom )
 {
@@ -486,7 +487,7 @@ bool HeifLoader::SetupDecode( bool hdr, Colorspace colorspace )
         case heif_transfer_characteristic_ITU_R_BT_709_5:
         case heif_transfer_characteristic_unspecified:
         case heif_transfer_characteristic_IEC_61966_2_1:
-            mclog( LogLevel::Debug, "HEIF: Ignoring non-HDR transfer function" );
+            mclog( LogLevel::Debug, "HEIF: Applying SDR transfer function" );
             break;
         case heif_transfer_characteristic_ITU_R_BT_2100_0_PQ:
             mclog( LogLevel::Info, "HEIF: Applying PQ transfer function" );
@@ -503,9 +504,10 @@ bool HeifLoader::SetupDecode( bool hdr, Colorspace colorspace )
     cmsToneCurve* linear = cmsBuildGamma( nullptr, 1 );
     cmsToneCurve* linear3[3] = { linear, linear, linear };
 
-    // cmsCreate_sRGBProfile() uses 2.2 gamma internally, not the proper 61966-2-1 transfer function
-    cmsToneCurve* gamma = cmsBuildGamma( nullptr, 2.2f );
-    cmsToneCurve* gamma3[3] = { gamma, gamma, gamma };
+    // H.273 (07/24), Table 3: the input profile needs the coded transfer curve, and sRGB in the absence of nclx
+    const int transfer = m_nclx ? m_nclx->transfer_characteristics : heif_transfer_characteristic_IEC_61966_2_1;
+    cmsToneCurve* sdrCurve = BuildTransferToneCurve( transfer, "HEIF" );
+    cmsToneCurve* sdrCurve3[3] = { sdrCurve, sdrCurve, sdrCurve };
 
     if( m_iccData )
     {
@@ -545,24 +547,24 @@ bool HeifLoader::SetupDecode( bool hdr, Colorspace colorspace )
         }
         else
         {
-            m_profileIn = cmsCreateRGBProfile( &white, &primaries, gamma3 );
+            m_profileIn = cmsCreateRGBProfile( &white, &primaries, sdrCurve3 );
             m_profileOut = cmsCreate_sRGBProfile();
             m_transform = cmsCreateTransform( m_profileIn, TYPE_RGBA_FLT, m_profileOut, TYPE_RGBA_8, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA );
         }
     }
     else
     {
-        // HDR reaches this branch only for gain-map images without color profiles; no color management applies
+        // HDR reaches this branch only for gain-map images without color profiles, so no color management applies
         if( !hdr )
         {
-            m_profileIn = cmsCreateRGBProfile( &white709, &primaries709, gamma3 );
+            m_profileIn = cmsCreateRGBProfile( &white709, &primaries709, sdrCurve3 );
             m_profileOut = cmsCreate_sRGBProfile();
             m_transform = cmsCreateTransform( m_profileIn, TYPE_RGBA_FLT, m_profileOut, TYPE_RGBA_8, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA );
         }
     }
 
     cmsFreeToneCurve( linear );
-    cmsFreeToneCurve( gamma );
+    cmsFreeToneCurve( sdrCurve );
 
     if( !m_transform && ( !hdr || m_profileOut ) )
     {

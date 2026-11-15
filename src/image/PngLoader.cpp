@@ -15,6 +15,7 @@
 #include "util/IccTransform.hpp"
 #include "util/Panic.hpp"
 #include "util/PixelBytes.hpp"
+#include "util/TransferCurve.hpp"
 #include "TiffReader.hpp"
 
 PngLoader::PngLoader( const std::shared_ptr<FileWrapper>& file, ToneMap::Operator tonemap, TaskDispatch* td )
@@ -121,34 +122,7 @@ cmsHPROFILE BuildCicpProfile( int primaries, int transfer )
         break;
     }
 
-    cmsFloat64Number srgbParams[] = { 2.4, 1.0 / 1.055, 0.055 / 1.055, 1.0 / 12.92, 0.04045 };
-    cmsFloat64Number bt709Params[] = { 1.0 / 0.45, 1.0 / 1.099, 0.099 / 1.099, 1.0 / 4.5, 0.081 };
-    cmsToneCurve* curve = nullptr;
-    switch( transfer )
-    {
-    case 13:
-        curve = cmsBuildParametricToneCurve( nullptr, 4, srgbParams );
-        break;
-    case 1:
-    case 6:
-    case 14:
-    case 15:
-        curve = cmsBuildParametricToneCurve( nullptr, 4, bt709Params );
-        break;
-    case 4:
-        curve = cmsBuildGamma( nullptr, 2.2 );
-        break;
-    case 5:
-        curve = cmsBuildGamma( nullptr, 2.8 );
-        break;
-    case 8:
-        curve = cmsBuildGamma( nullptr, 1.0 );
-        break;
-    default:
-        mclog( LogLevel::Error, "PNG transfer characteristic %d not implemented, assuming sRGB", transfer );
-        curve = cmsBuildParametricToneCurve( nullptr, 4, srgbParams );
-        break;
-    }
+    auto curve = BuildTransferToneCurve( transfer, "PNG" );
 
     cmsToneCurve* curves[3] = { curve, curve, curve };
     auto profile = cmsCreateRGBProfile( white, primariesXy, curves );

@@ -447,11 +447,8 @@ bool HeifLoader::SetupDecode( bool hdr, Colorspace colorspace )
 
     if( bppY > 8 ) m_stride /= 2;
 
-    // H.273, 8.3, VideoFullRangeFlag is false if not present
-    if( !m_nclx || !m_nclx->full_range_flag )
-    {
-        mclog( LogLevel::Info, "HEIF: Full range flag not set, converting to full range" );
-    }
+    // libheif normalises decoded planes to full range and reports the result on the image-level nclx,
+    // so the file-level VideoFullRangeFlag must not trigger any further scaling
 
     m_matrix = Conversion::BT601;
     if( m_nclx )
@@ -710,19 +707,6 @@ void HeifLoader::LoadYCbCr( float* ptr, size_t sz, size_t offset )
         else
         {
             ProcessYCbCr( ptr, m_planeY, m_planeCb, m_planeCr, sz, offset, m_width, m_stride, m_bppDiv );
-        }
-    }
-
-    // H.273, 8.3, VideoFullRangeFlag is false if not present
-    if( !m_nclx || !m_nclx->full_range_flag )
-    {
-        constexpr float scale = 255.f / 219.f;
-        constexpr float offset = 16.f / 255.f;
-
-        while( sz-- )
-        {
-            ptr[0] = ( ptr[0] - offset ) * scale;
-            ptr += 4;
         }
     }
 }

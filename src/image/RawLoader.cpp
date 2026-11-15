@@ -6,6 +6,7 @@
 #include "util/Bitmap.hpp"
 #include "util/BitmapHdr.hpp"
 #include "util/FileWrapper.hpp"
+#include "util/Logs.hpp"
 #include "util/Panic.hpp"
 
 class RawLoaderDataStream : public LibRaw_abstract_datastream
@@ -57,9 +58,18 @@ std::unique_ptr<Bitmap> RawLoader::Load()
     auto params = m_raw->output_params_ptr();
     params->use_camera_wb = 1;
 
-    m_raw->unpack();
-    m_raw->dcraw_process();
+    if( m_raw->unpack() != 0 || m_raw->dcraw_process() != 0 )
+    {
+        mclog( LogLevel::Warning, "RAW: failed to decode image" );
+        return nullptr;
+    }
     auto img = m_raw->dcraw_make_mem_image();
+    if( !img || img->bits != 8 || ( img->colors != 1 && img->colors != 3 ) || !img->width || !img->height )
+    {
+        if( img ) LibRaw::dcraw_clear_mem( img );
+        mclog( LogLevel::Warning, "RAW: failed to make image" );
+        return nullptr;
+    }
 
     auto bmp = std::make_unique<Bitmap>( img->width, img->height );
     auto src = img->data;
@@ -117,9 +127,18 @@ std::unique_ptr<BitmapHdr> RawLoader::LoadHdr( Colorspace colorspace )
     params->output_bps = 16;
     params->no_auto_bright = 1;
 
-    m_raw->unpack();
-    m_raw->dcraw_process();
+    if( m_raw->unpack() != 0 || m_raw->dcraw_process() != 0 )
+    {
+        mclog( LogLevel::Warning, "RAW: failed to decode image" );
+        return nullptr;
+    }
     auto img = m_raw->dcraw_make_mem_image();
+    if( !img || img->bits != 16 || ( img->colors != 1 && img->colors != 3 ) || !img->width || !img->height )
+    {
+        if( img ) LibRaw::dcraw_clear_mem( img );
+        mclog( LogLevel::Warning, "RAW: failed to make image" );
+        return nullptr;
+    }
 
     auto bmp = std::make_unique<BitmapHdr>( img->width, img->height, colorspace );
     auto src = (uint16_t*)img->data;

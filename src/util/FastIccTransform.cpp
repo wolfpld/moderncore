@@ -10,6 +10,9 @@
 
 namespace
 {
+// Resolution of the linear -> coded(u8) LUT; shared by PrepareCoded and CodedToU8Range.
+constexpr size_t EncodeGrid = 8192;
+
 bool HasLinearTrc( cmsHPROFILE profile )
 {
     const cmsTagSignature trcTags[3] = { cmsSigRedTRCTag, cmsSigGreenTRCTag, cmsSigBlueTRCTag };
@@ -368,8 +371,7 @@ FastIccTransform::FastIccTransform( cmsHPROFILE profileIn, cmsHPROFILE profileOu
     if( !profileIn || !profileOut || !cmsIsMatrixShaper( profileIn ) || !cmsIsMatrixShaper( profileOut ) ||
         cmsIsCLUT( profileIn, IccRenderIntent, LCMS_USED_AS_INPUT ) ||
         cmsIsCLUT( profileOut, IccRenderIntent, LCMS_USED_AS_OUTPUT ) ||
-        cmsChannelsOf( cmsGetColorSpace( profileIn ) ) != 3 ||
-        !HasLinearTrc( profileOut ) )
+        cmsChannelsOf( cmsGetColorSpace( profileIn ) ) != 3 )
     {
         return;
     }
@@ -412,7 +414,29 @@ FastIccTransform::FastIccTransform( cmsHPROFILE profileIn, cmsHPROFILE profileOu
                 inv[r*3] * mr[c] + inv[r*3+1] * mr[3+c] + inv[r*3+2] * mr[6+c] );
         }
     }
-    m_valid = true;
+    m_valid = HasLinearTrc( profileOut );
+
+    for( size_t c = 0; c < 3; c++ )
+    {
+        if( cmsIsTag( profileIn, trcTags[c] ) )
+        {
+            m_inTrc[c] = cmsDupToneCurve( (const cmsToneCurve*)cmsReadTag( profileIn, trcTags[c] ) );
+            if( !m_inTrc[c] ) return;
+        }
+        if( cmsIsTag( profileOut, trcTags[c] ) )
+        {
+            m_outTrc[c] = cmsDupToneCurve( (const cmsToneCurve*)cmsReadTag( profileOut, trcTags[c] ) );
+            if( !m_outTrc[c] ) return;
+        }
+        if( m_outTrc[c] && ( !cmsIsToneCurveMonotonic( m_outTrc[c] ) || cmsIsToneCurveDescending( m_outTrc[c] ) ) ) return;
+    }
+    m_encodeValid = true;
+}
+
+FastIccTransform::~FastIccTransform()
+{
+    for( auto t : m_inTrc ) if( t ) cmsFreeToneCurve( t );
+    for( auto t : m_outTrc ) if( t ) cmsFreeToneCurve( t );
 }
 
 bool FastIccTransform::Run( TaskDispatch* td, uint8_t* input, float* output, size_t pixels ) const
@@ -485,6 +509,128 @@ bool FastIccTransform::RunHalf( TaskDispatch* td, uint16_t* data, size_t pixels 
                 HalfRange( data, chunk, m_mat );
             } );
             data += chunk * 4;
+            size -= chunk;
+        }
+        td->Sync();
+    }
+    return true;
+}
+
+bool FastIccTransform::PrepareCoded( int bits )
+{
+    m_ready = false;
+    if( !m_encodeValid || bits < 8 || bits > 16 ) return false;
+    if( m_codedBits == bits ) { m_ready = true; return true; }
+    // Drop the depth stamp before rebuilding: a throwing resize below would otherwise leave m_codedBits
+    // describing a layout the buffers no longer have, and a later call for the same depth would mark
+    // those stale (or empty) LUTs ready.
+    m_codedBits = 0;
+
+    const size_t grid = size_t( 1 ) << bits;
+    const size_t stride = grid + 2;
+    m_codedLut.resize( 3 * stride );
+    for( size_t c = 0; c < 3; c++ )
+    {
+        const auto max = double( grid - 1 );
+        auto row = m_codedLut.data() + c * stride + 1;
+        for( size_t k = 0; k < grid; k++ )
+        {
+            row[k] = m_inTrc[c] ?
+                static_cast<float>( cmsEvalToneCurveFloat( m_inTrc[c], double( k ) / max ) ) : k / max;
+        }
+        row[-1] = row[0];
+        row[grid] = row[grid - 1];
+    }
+
+    m_encodeLut.resize( 3 * EncodeGrid );
+    for( size_t c = 0; c < 3; c++ )
+    {
+        float bounds[256];
+        for( size_t v = 0; v < 256; v++ )
+        {
+            auto coded = v / 255.f;
+            bounds[v] = m_outTrc[c] ?
+                static_cast<float>( cmsEvalToneCurveFloat( m_outTrc[c], coded ) ) : coded;
+            bounds[v] = std::min( std::max( bounds[v], 0.f ), 1.f );
+        }
+        auto dst = m_encodeLut.data() + c * EncodeGrid;
+        size_t v = 0;
+        for( size_t j = 0; j < EncodeGrid; j++ )
+        {
+            const float x = j / float( EncodeGrid - 1 );
+            const size_t prev = v;
+            while( v + 1 < 256 && x > 0.5f * ( bounds[v] + bounds[v+1] ) ) v++;
+            // An output band narrower than one grid cell ( pure-gamma TRCs squeeze the darkest codes
+            // below cell width ) makes the walk jump past that code and the LUT would never emit it,
+            // crushing deep shadows. Refuse the coded path instead; the caller falls back to lcms
+            if( v > prev + 1 ) return false;
+            dst[j] = static_cast<uint8_t>( v );
+        }
+        if( v < 255 ) return false; // top band likewise unreachable at this resolution
+    }
+
+    m_codedBits = bits;
+    m_ready = true;
+    return true;
+}
+
+namespace
+{
+void CodedToU8Range( const float* in, uint8_t* out, size_t n, int bits, const float* codedLut,
+                     const uint8_t* encodeLut, const float* mat )
+{
+    const size_t grid = size_t( 1 ) << bits;
+    const size_t stride = grid + 2;
+    const float scale = float( grid - 1 );
+    const float rkMax = float( grid - 1 );
+    for( size_t i = 0; i < n; i++ )
+    {
+        float v[3];
+        for( int c = 0; c < 3; c++ )
+        {
+            const float f = std::min( std::max( in[c], 0.f ), 1.f );
+            const float pos = f * scale;
+            const float rk = std::min( std::max( std::nearbyintf( pos ), 0.f ), rkMax );
+            const float* p = codedLut + c * stride + 1 + size_t( rk );
+            // Lerp towards whichever node pos fell past: below rk the slope runs p[-1] -> p[0],
+            // so reusing the upward difference would mirror the sample away from pos.
+            const float d = pos - rk;
+            v[c] = p[0] + d * ( d >= 0 ? p[1] - p[0] : p[0] - p[-1] );
+        }
+        for( int r = 0; r < 3; r++ )
+        {
+            float x = mat[r*3] * v[0] + mat[r*3+1] * v[1] + mat[r*3+2] * v[2];
+            x = std::min( std::max( x, 0.f ), 1.f );
+            out[r] = encodeLut[size_t( r ) * EncodeGrid + size_t( x * ( EncodeGrid - 1 ) )];
+        }
+        const float a = std::min( std::max( in[3], 0.f ), 1.f );
+        out[3] = static_cast<uint8_t>( std::lroundf( 255.f * a ) );
+        in += 4;
+        out += 4;
+    }
+}
+}
+
+bool FastIccTransform::RunCodedToU8( TaskDispatch* td, const float* input, uint8_t* output, size_t pixels ) const
+{
+    if( !m_ready ) return false;
+
+    const int bits = m_codedBits;
+    if( !td )
+    {
+        CodedToU8Range( input, output, pixels, bits, m_codedLut.data(), m_encodeLut.data(), m_mat );
+    }
+    else
+    {
+        auto size = pixels;
+        while( size > 0 )
+        {
+            auto chunk = std::min<size_t>( size, 256 * 1024 );
+            td->Queue( [this, input, output, chunk, bits] {
+                CodedToU8Range( input, output, chunk, bits, m_codedLut.data(), m_encodeLut.data(), m_mat );
+            } );
+            input += chunk * 4;
+            output += chunk * 4;
             size -= chunk;
         }
         td->Sync();

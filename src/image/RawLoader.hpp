@@ -9,11 +9,12 @@ class Bitmap;
 class FileWrapper;
 class LibRaw;
 class RawLoaderDataStream;
+class TaskDispatch;
 
 class RawLoader : public ImageLoader
 {
 public:
-    explicit RawLoader( const std::shared_ptr<FileWrapper>& file );
+    explicit RawLoader( const std::shared_ptr<FileWrapper>& file, TaskDispatch* td );
     ~RawLoader() override;
     NoCopy( RawLoader );
 
@@ -26,6 +27,7 @@ public:
 private:
     std::unique_ptr<LibRaw> m_raw;
     std::unique_ptr<RawLoaderDataStream> m_stream;
+    TaskDispatch* m_td;
 
     bool m_valid;
 };

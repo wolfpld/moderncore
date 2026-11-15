@@ -2,7 +2,6 @@
 
 #include <libraw.h>
 #include <stdint.h>
-#include <string.h>
 
 #include "RawLoader.hpp"
 #include "util/Bitmap.hpp"
@@ -10,6 +9,7 @@
 #include "util/FileWrapper.hpp"
 #include "util/Logs.hpp"
 #include "util/Panic.hpp"
+#include "util/TaskDispatch.hpp"
 
 class RawLoaderDataStream : public LibRaw_abstract_datastream
 {
@@ -37,9 +37,65 @@ private:
     int64_t sz;
 };
 
-RawLoader::RawLoader( const std::shared_ptr<FileWrapper>& file )
+static void PackMono( const uint8_t* src, uint32_t* dst, size_t count )
+{
+    while( count-- )
+    {
+        const uint32_t v = *src++;
+        *dst++ = v | ( v << 8 ) | ( v << 16 ) | 0xff000000;
+    }
+}
+
+static void PackRgb( const uint8_t* src, uint32_t* dst, size_t count )
+{
+    while( count-- )
+    {
+        const uint32_t r = *src++, g = *src++, b = *src++;
+        *dst++ = r | ( g << 8 ) | ( b << 16 ) | 0xff000000;
+    }
+}
+
+static void ExpandMono( const uint16_t* src, float* dst, size_t count )
+{
+    while( count-- )
+    {
+        float v = *src++ * ( 1.f / 65535.f );
+        if( v > 0.75f )
+        {
+            const float t = ( v - 0.75f ) * 4.f;
+            v *= 1.f + 3.f * t * t;
+        }
+        *dst++ = v;
+        *dst++ = v;
+        *dst++ = v;
+        *dst++ = 1.f;
+    }
+}
+
+static void ExpandRgb( const uint16_t* src, float* dst, size_t count )
+{
+    while( count-- )
+    {
+        const float r = *src++ * ( 1.f / 65535.f );
+        const float g = *src++ * ( 1.f / 65535.f );
+        const float b = *src++ * ( 1.f / 65535.f );
+        float gain = 1.f;
+        if( const float m = std::max( { r, g, b } ); m > 0.75f )
+        {
+            const float t = ( m - 0.75f ) * 4.f;
+            gain = 1.f + 3.f * t * t;
+        }
+        *dst++ = r * gain;
+        *dst++ = g * gain;
+        *dst++ = b * gain;
+        *dst++ = 1.f;
+    }
+}
+
+RawLoader::RawLoader( const std::shared_ptr<FileWrapper>& file, TaskDispatch* td )
     : m_raw( std::make_unique<LibRaw>() )
     , m_stream( std::make_unique<RawLoaderDataStream>( file ) )
+    , m_td( td )
 {
     m_valid = m_raw->open_datastream( m_stream.get() ) == 0;
 }
@@ -74,43 +130,29 @@ std::unique_ptr<Bitmap> RawLoader::Load()
     }
 
     auto bmp = std::make_unique<Bitmap>( img->width, img->height );
-    auto src = img->data;
+    const uint8_t* src = img->data;
     auto dst = (uint32_t*)bmp->Data();
-    auto sz = size_t( img->width ) * img->height;
+    const auto sz = size_t( img->width ) * img->height;
+    const auto convert = img->colors == 1 ? PackMono : PackRgb;
 
-    switch( img->colors )
+    if( m_td )
     {
-    case 1:
-        do
+        const uint8_t* s = src;
+        uint32_t* d = dst;
+        auto rest = sz;
+        while( rest > 0 )
         {
-            const auto v = *src++;
-            *dst++ = v | (v << 8) | (v << 16) | 0xff000000;
+            const auto chunk = std::min( rest, size_t( 16 * 1024 ) );
+            m_td->Queue( [s, d, chunk, convert] { convert( s, d, chunk ); } );
+            s += chunk * img->colors;
+            d += chunk;
+            rest -= chunk;
         }
-        while( --sz );
-        break;
-    case 3:
-        {
-            if( sz > 1 )
-            {
-                sz--;
-                do
-                {
-                    uint32_t v;
-                    memcpy( &v, src, 4 );
-                    *dst++ = v | 0xff000000;
-                    src += 3;
-                }
-                while( --sz );
-            }
-
-            const auto r = *src++;
-            const auto g = *src++;
-            const auto b = *src;
-            *dst = r | (g << 8) | (b << 16) | 0xff000000;
-        }
-        break;
-    default:
-        break;
+        m_td->Sync();
+    }
+    else
+    {
+        convert( src, dst, sz );
     }
 
     LibRaw::dcraw_clear_mem( img );
@@ -143,51 +185,29 @@ std::unique_ptr<BitmapHdr> RawLoader::LoadHdr( Colorspace colorspace )
     }
 
     auto bmp = std::make_unique<BitmapHdr>( img->width, img->height, colorspace );
-    auto src = (uint16_t*)img->data;
+    const uint16_t* src = (const uint16_t*)img->data;
     auto dst = bmp->Data();
-    auto sz = size_t( img->width ) * img->height;
+    const auto sz = size_t( img->width ) * img->height;
+    const auto convert = img->colors == 1 ? ExpandMono : ExpandRgb;
 
-    const float div = 1.f / 65535.f;
-
-    switch( img->colors )
+    if( m_td )
     {
-    case 1:
-        do
+        const uint16_t* s = src;
+        float* d = dst;
+        auto rest = sz;
+        while( rest > 0 )
         {
-            float v = *src++ * div;
-            if( v > 0.75f )
-            {
-                const float t = ( v - 0.75f ) * 4.f;
-                v *= 1.f + 3.f * t * t;
-            }
-            *dst++ = v;
-            *dst++ = v;
-            *dst++ = v;
-            *dst++ = 1;
+            const auto chunk = std::min( rest, size_t( 16 * 1024 ) );
+            m_td->Queue( [s, d, chunk, convert] { convert( s, d, chunk ); } );
+            s += chunk * img->colors;
+            d += chunk * 4;
+            rest -= chunk;
         }
-        while( --sz );
-        break;
-    case 3:
-        do
-        {
-            const float r = *src++ * div;
-            const float g = *src++ * div;
-            const float b = *src++ * div;
-            float gain = 1.f;
-            if( const float m = std::max( { r, g, b } ); m > 0.75f )
-            {
-                const float t = ( m - 0.75f ) * 4.f;
-                gain = 1.f + 3.f * t * t;
-            }
-            *dst++ = r * gain;
-            *dst++ = g * gain;
-            *dst++ = b * gain;
-            *dst++ = 1;
-        }
-        while( --sz );
-        break;
-    default:
-        break;
+        m_td->Sync();
+    }
+    else
+    {
+        convert( src, dst, sz );
     }
 
     LibRaw::dcraw_clear_mem( img );

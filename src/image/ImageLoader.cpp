@@ -110,7 +110,7 @@ std::unique_ptr<ImageLoader> GetImageLoader( const char* path, ToneMap::Operator
     if( auto loader = CheckImageLoader<PcxLoader>( buf, sz, file ); loader ) return loader;
     if( auto loader = CheckImageLoader<StbImageLoader>( file ); loader ) return loader;
     if( auto loader = CheckImageLoader<ExrLoader>( buf, sz, file, tonemap, td ); loader ) return loader;
-    if( auto loader = CheckImageLoader<RawLoader>( file ); loader ) return loader;
+    if( auto loader = CheckImageLoader<RawLoader>( file, td ); loader ) return loader;
     if( auto loader = CheckImageLoader<TiffLoader>( buf, sz, file ); loader ) return loader;
     if( auto loader = CheckImageLoader<XCursorLoader>( buf, sz, file ); loader ) return loader;
 

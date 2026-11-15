@@ -48,6 +48,7 @@ private:
     void LoadYCbCr( float* ptr, size_t sz, size_t offset );
     void ConvertYCbCrToRGB( float* ptr, size_t sz );
     void ApplyTransfer( float* ptr, size_t sz, size_t offset );
+    void TransformAndTransfer( float* ptr, size_t sz, size_t offset );
 
     [[nodiscard]] bool GetGainMapHeadroom( heif_image_handle* handle );
 
@@ -70,6 +71,7 @@ private:
 
     Conversion m_matrix;
     Colorspace m_colorspace;
+    bool m_linearizeFirst;
 
     size_t m_iccSize;
     char* m_iccData;

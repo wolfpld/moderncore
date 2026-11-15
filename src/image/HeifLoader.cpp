@@ -20,6 +20,26 @@
 #include "util/Tonemapper.hpp"
 #include "util/TransferCurve.hpp"
 
+static bool SameCoordinate( float a, float b )
+{
+    // nclx coordinates are 16-bit fixed point ( 1/65535 ), so this absorbs ~33 quanta of storage
+    // rounding while staying far below the narrowest gap between distinct primaries sets
+    // ( P3-D65 red differs from BT.709 red by 0.04 )
+    return fabsf( a - b ) < 0.0005f;
+}
+
+static bool SameRgbPrimaries( const cmsCIExyYTRIPLE& a, const cmsCIExyYTRIPLE& b )
+{
+    return SameCoordinate( a.Red.x, b.Red.x ) && SameCoordinate( a.Red.y, b.Red.y ) &&
+        SameCoordinate( a.Green.x, b.Green.x ) && SameCoordinate( a.Green.y, b.Green.y ) &&
+        SameCoordinate( a.Blue.x, b.Blue.x ) && SameCoordinate( a.Blue.y, b.Blue.y );
+}
+
+static bool SameWhite( const cmsCIExyY& a, const cmsCIExyY& b )
+{
+    return SameCoordinate( a.x, b.x ) && SameCoordinate( a.y, b.y );
+}
+
 static void ApplyGainMap( float* ptr, size_t sz, const float* gptr, float headroom )
 {
     const float hadj = headroom - 1.f;
@@ -106,6 +126,7 @@ HeifLoader::HeifLoader( std::shared_ptr<FileWrapper> file, ToneMap::Operator ton
     , m_profileIn( nullptr )
     , m_profileOut( nullptr )
     , m_transform( nullptr )
+    , m_linearizeFirst( false )
     , m_td( td )
 {
     fseek( *m_file, 0, SEEK_SET );
@@ -214,8 +235,7 @@ std::unique_ptr<Bitmap> HeifLoader::Load()
                     auto ptr = (float*)alloca( chunk * 4 * sizeof( float ) );
                     LoadYCbCr( ptr, chunk, offset );
                     ConvertYCbCrToRGB( ptr, chunk );
-                    if( m_transform ) cmsDoTransform( m_transform, ptr, ptr, chunk );
-                    ApplyTransfer( ptr, chunk, offset );
+                    TransformAndTransfer( ptr, chunk, offset );
                     ToneMap::Process( m_tonemap, out, ptr, chunk );
                 } );
                 out += chunk;
@@ -250,8 +270,7 @@ std::unique_ptr<BitmapHdr> HeifLoader::LoadHdr( Colorspace colorspace )
             m_td->Queue( [this, ptr, chunk, offset] {
                 LoadYCbCr( ptr, chunk, offset );
                 ConvertYCbCrToRGB( ptr, chunk );
-                if( m_transform ) cmsDoTransform( m_transform, ptr, ptr, chunk );
-                ApplyTransfer( ptr, chunk, offset );
+                TransformAndTransfer( ptr, chunk, offset );
             } );
             ptr += chunk * 4;
             sz -= chunk;
@@ -263,8 +282,7 @@ std::unique_ptr<BitmapHdr> HeifLoader::LoadHdr( Colorspace colorspace )
     {
         LoadYCbCr( bmp->Data(), m_width * m_height, 0 );
         ConvertYCbCrToRGB( bmp->Data(), m_width * m_height );
-        if( m_transform ) cmsDoTransform( m_transform, bmp->Data(), bmp->Data(), m_width * m_height );
-        ApplyTransfer( bmp->Data(), m_width * m_height, 0 );
+        TransformAndTransfer( bmp->Data(), m_width * m_height, 0 );
     }
 
     return bmp;
@@ -386,6 +404,7 @@ bool HeifLoader::SetupDecode( bool hdr, Colorspace colorspace )
     if( err.code != heif_error_Ok ) return false;
 
     m_colorspace = colorspace;
+    m_linearizeFirst = false;
 
     if( !m_nclx )
     {
@@ -501,9 +520,20 @@ bool HeifLoader::SetupDecode( bool hdr, Colorspace colorspace )
     cmsToneCurve* linear = cmsBuildGamma( nullptr, 1 );
     cmsToneCurve* linear3[3] = { linear, linear, linear };
 
-    // H.273 (07/24), Table 3: the input profile needs the coded transfer curve, and sRGB in the absence of nclx
-    const int transfer = m_nclx ? m_nclx->transfer_characteristics : heif_transfer_characteristic_IEC_61966_2_1;
-    cmsToneCurve* sdrCurve = BuildTransferToneCurve( transfer, "HEIF" );
+    // H.273 (07/24), Table 3: the SDR input profile needs the coded transfer curve, and sRGB in the absence
+    // of nclx. The HDR branches use linear TRCs (the EOTF is applied to the samples) or the ICC's own response
+    cmsToneCurve* sdrCurve = nullptr;
+    if( !hdr )
+    {
+        // PQ/HLG reach the SDR branch only as the fallback base of a gain map file, which is rendered
+        // with the sRGB convention on purpose; fold the transfer here so the assumption does not log
+        // as unimplemented
+        int transfer = m_nclx ? m_nclx->transfer_characteristics : heif_transfer_characteristic_IEC_61966_2_1;
+        if( transfer == heif_transfer_characteristic_ITU_R_BT_2100_0_PQ ||
+            transfer == heif_transfer_characteristic_ITU_R_BT_2100_0_HLG )
+            transfer = heif_transfer_characteristic_IEC_61966_2_1;
+        sdrCurve = BuildTransferToneCurve( transfer, "HEIF" );
+    }
     cmsToneCurve* sdrCurve3[3] = { sdrCurve, sdrCurve, sdrCurve };
 
     if( m_iccData )
@@ -534,11 +564,19 @@ bool HeifLoader::SetupDecode( bool hdr, Colorspace colorspace )
 
         if( hdr )
         {
-            m_profileIn = cmsCreateRGBProfile( &white, &primaries, linear3 );
-            if( m_nclx->color_primaries != heif_color_primaries_ITU_R_BT_709_5 )
+            CheckPanic( colorspace == Colorspace::BT709 || colorspace == Colorspace::BT2020, "Invalid colorspace" );
+            // colour management of PQ/HLG data has to happen in linear light, so run the EOTF before the
+            // primaries matrix. Gain map math runs on the transformed base and ICC profiles carry their
+            // own tone response, both keep the historical order
+            m_linearizeFirst = !m_handleGainMap &&
+                ( m_nclx->transfer_characteristics == heif_transfer_characteristic_ITU_R_BT_2100_0_PQ ||
+                  m_nclx->transfer_characteristics == heif_transfer_characteristic_ITU_R_BT_2100_0_HLG );
+
+            const cmsCIExyYTRIPLE* outPrimaries = colorspace == Colorspace::BT709 ? &primaries709 : &primaries2020;
+            if( !SameRgbPrimaries( primaries, *outPrimaries ) || !SameWhite( white, white709 ) )
             {
-                CheckPanic( colorspace == Colorspace::BT709 || colorspace == Colorspace::BT2020, "Invalid colorspace" );
-                m_profileOut = cmsCreateRGBProfile( &white709, colorspace == Colorspace::BT709 ? &primaries709 : &primaries2020, linear3 );
+                m_profileIn = cmsCreateRGBProfile( &white, &primaries, linear3 );
+                m_profileOut = cmsCreateRGBProfile( &white709, outPrimaries, linear3 );
                 m_transform = cmsCreateTransform( m_profileIn, TYPE_RGBA_FLT, m_profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA );
             }
         }
@@ -856,6 +894,20 @@ void HeifLoader::ApplyTransfer( float* ptr, size_t sz, size_t offset )
         default:
             break;
         }
+    }
+}
+
+void HeifLoader::TransformAndTransfer( float* ptr, size_t sz, size_t offset )
+{
+    if( m_linearizeFirst )
+    {
+        ApplyTransfer( ptr, sz, offset );
+        if( m_transform ) cmsDoTransform( m_transform, ptr, ptr, sz );
+    }
+    else
+    {
+        if( m_transform ) cmsDoTransform( m_transform, ptr, ptr, sz );
+        ApplyTransfer( ptr, sz, offset );
     }
 }
 

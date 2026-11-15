@@ -717,12 +717,11 @@ void HeifLoader::LoadYCbCr( float* ptr, size_t sz, size_t offset )
         constexpr float scale = 255.f / 219.f;
         constexpr float offset = 16.f / 255.f;
 
-        do
+        while( sz-- )
         {
             ptr[0] = ( ptr[0] - offset ) * scale;
             ptr += 4;
         }
-        while( --sz );
     }
 }
 
@@ -730,7 +729,7 @@ void HeifLoader::ConvertYCbCrToRGB( float* ptr, size_t sz )
 {
     if( m_matrix == Conversion::GBR )
     {
-        do
+        while( sz-- )
         {
             const auto g = ptr[0];
             const auto b = ptr[1] + 0.5f;
@@ -742,7 +741,6 @@ void HeifLoader::ConvertYCbCrToRGB( float* ptr, size_t sz )
 
             ptr += 4;
         }
-        while( --sz );
     }
     else
     {
@@ -822,7 +820,7 @@ void HeifLoader::ConvertYCbCrToRGB( float* ptr, size_t sz )
             __m128 y = _mm_shuffle_ps( px0, px0, _MM_SHUFFLE( 0, 0, 0, 0 ) );
             __m128 rgb0 = _mm_add_ps( y, add );
             __m128 rgb = _mm_blend_ps( rgb0, px0, 8 );
-            _mm_store_ps( ptr, rgb );
+            _mm_storeu_ps( ptr, rgb );
 
             ptr += 4;
             sz--;

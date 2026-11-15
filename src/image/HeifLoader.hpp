@@ -1,9 +1,11 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <stdint.h>
 
 #include "ImageLoader.hpp"
+#include "util/FastIccTransform.hpp"
 #include "util/NoCopy.hpp"
 
 class Bitmap;
@@ -88,6 +90,7 @@ private:
     void* m_profileOut;
     void* m_transform;
     bool m_identityTransform;
+    std::optional<FastIccTransform> m_fast;
 
     TaskDispatch* m_td;
 };

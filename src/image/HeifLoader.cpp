@@ -216,7 +216,7 @@ std::unique_ptr<Bitmap> HeifLoader::Load()
                     LoadYCbCr( ptr, chunk, offset );
                     ConvertYCbCrToRGB( ptr, chunk );
                     if( m_identityTransform ) QuantizeRgba( ptr, (uint8_t*)out, chunk );
-                    else cmsDoTransform( m_transform, ptr, out, chunk );
+                    else if( !m_fast || !m_fast->RunCodedToU8( nullptr, ptr, (uint8_t*)out, chunk ) ) cmsDoTransform( m_transform, ptr, out, chunk );
                 } );
                 out += chunk;
                 sz -= chunk;
@@ -230,7 +230,7 @@ std::unique_ptr<Bitmap> HeifLoader::Load()
             LoadYCbCr( tmp->Data(), m_width * m_height, 0 );
             ConvertYCbCrToRGB( tmp->Data(), m_width * m_height );
             if( m_identityTransform ) QuantizeRgba( tmp->Data(), (uint8_t*)out, m_width * m_height );
-            else cmsDoTransform( m_transform, tmp->Data(), out, m_width * m_height );
+            else if( !m_fast || !m_fast->RunCodedToU8( nullptr, tmp->Data(), (uint8_t*)out, m_width * m_height ) ) cmsDoTransform( m_transform, tmp->Data(), out, m_width * m_height );
         }
 
         return bmp;
@@ -420,6 +420,7 @@ bool HeifLoader::Open()
 bool HeifLoader::SetupDecode( bool hdr, Colorspace colorspace )
 {
     m_identityTransform = false;
+    m_fast.reset();
     if( m_transform )
     {
         cmsDeleteTransform( m_transform );
@@ -651,6 +652,7 @@ bool HeifLoader::SetupDecode( bool hdr, Colorspace colorspace )
                 m_profileIn = cmsCreateRGBProfile( &white, &primaries, linear3 );
                 m_profileOut = cmsCreateRGBProfile( &white709, outPrimaries, linear3 );
                 m_transform = cmsCreateTransform( m_profileIn, TYPE_RGBA_FLT, m_profileOut, TYPE_RGBA_FLT, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA );
+                m_fast.emplace( m_profileIn, m_profileOut );
             }
         }
         else if( ( m_nclx->transfer_characteristics == heif_transfer_characteristic_IEC_61966_2_1 ||
@@ -665,6 +667,8 @@ bool HeifLoader::SetupDecode( bool hdr, Colorspace colorspace )
             m_profileIn = cmsCreateRGBProfile( &white, &primaries, sdrCurve3 );
             m_profileOut = cmsCreate_sRGBProfile();
             m_transform = cmsCreateTransform( m_profileIn, TYPE_RGBA_FLT, m_profileOut, TYPE_RGBA_8, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA );
+            m_fast.emplace( m_profileIn, m_profileOut );
+            if( !m_fast->PrepareCoded( m_bpp ) ) m_fast.reset();
         }
     }
     else if( !m_transform )
@@ -986,11 +990,13 @@ void HeifLoader::TransformAndTransfer( float* ptr, size_t sz, size_t offset )
     if( m_linearizeFirst )
     {
         ApplyTransfer( ptr, sz, offset );
-        if( m_transform ) cmsDoTransform( m_transform, ptr, ptr, sz );
+        if( m_fast && m_fast->SupportsFloat() ) m_fast->RunFloat( nullptr, ptr, ptr, sz );
+        else if( m_transform ) cmsDoTransform( m_transform, ptr, ptr, sz );
     }
     else
     {
-        if( m_transform ) cmsDoTransform( m_transform, ptr, ptr, sz );
+        if( m_fast && m_fast->SupportsFloat() ) m_fast->RunFloat( nullptr, ptr, ptr, sz );
+        else if( m_transform ) cmsDoTransform( m_transform, ptr, ptr, sz );
         ApplyTransfer( ptr, sz, offset );
     }
 }

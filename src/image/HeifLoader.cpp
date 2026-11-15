@@ -385,6 +385,7 @@ bool HeifLoader::Open()
                 if( width == m_width / 2 && height == m_height / 2 && bitDepth == 8 )
                 {
                     if( GetGainMapHeadroom( auxHandle ) ) m_handleGainMap = auxHandle;
+                    else heif_image_handle_release( auxHandle );
                     break;
                 }
                 mclog( LogLevel::Warning, "HEIF: Invalid gain map %dx%d, %d bpp", width, height, bitDepth );
@@ -652,29 +653,33 @@ bool HeifLoader::SetupDecode( bool hdr, Colorspace colorspace )
             heif_image_release( gainMap );
             return false;
         }
+        if( stride < w )
+        {
+            mclog( LogLevel::Error, "HEIF: Gain map stride %d too small for width %d", stride, w );
+            heif_image_release( gainMap );
+            return false;
+        }
 
+        // Apple scales the map to image size before inverting its Rec.709 gamma, so interpolation
+        // runs on coded values, see "Applying Apple HDR effect to your photos"
         std::vector<float> tmp( w * h );
         auto dst = tmp.data();
-        for( int i=0; i<h; i++ )
+        for( int y=0; y<h; y++ )
         {
-            for( int i=0; i<w; i++ )
+            for( int x=0; x<w; x++ )
             {
-                const auto v = *src++ / 255.f;
-                if( v < 0.081f )
-                {
-                    *dst++ = v / 4.5f;
-                }
-                else
-                {
-                    *dst++ = std::powf( ( v + 0.099f ) / 1.099f, 1.f / 0.45f );
-                }
+                *dst++ = float( src[y*stride + x] ) / 255.f;
             }
-            src += stride - w;
         }
         heif_image_release( gainMap );
 
         m_gainMap = new float[m_width * m_height];
         stbir_resize_float_linear( tmp.data(), w, h, 0, m_gainMap, m_width, m_height, 0, STBIR_1CHANNEL );
+        for( size_t i=0; i<size_t( m_width ) * m_height; i++ )
+        {
+            auto& v = m_gainMap[i];
+            v = v < 0.081f ? v / 4.5f : std::powf( ( v + 0.099f ) / 1.099f, 1.f / 0.45f );
+        }
     }
 
     return true;
@@ -961,7 +966,13 @@ bool HeifLoader::GetGainMapHeadroom( heif_image_handle* handle )
                     const auto headroom = desc.child( "HDRGainMap:HDRGainMapHeadroom" );
                     if( headroom )
                     {
-                        m_gainMapHeadroom = headroom.text().as_float();
+                        const auto value = headroom.text().as_float();
+                        if( !( value > 1.f ) )
+                        {
+                            mclog( LogLevel::Error, "HEIF: Invalid gain map headroom %f", value );
+                            return false;
+                        }
+                        m_gainMapHeadroom = value;
                         mclog( LogLevel::Info, "HEIF: Gain map headroom found: %f", m_gainMapHeadroom );
                         return true;
                     }

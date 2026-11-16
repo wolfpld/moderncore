@@ -158,7 +158,7 @@ void ImageProvider::Worker()
                     bitmap = std::make_unique<Bitmap>( bitmapHdr->Width(), bitmapHdr->Height() );
                     auto src = bitmapHdr->Data();
                     auto dst = bitmap->Data();
-                    size_t sz = bitmapHdr->Width() * bitmapHdr->Height();
+                    size_t sz = size_t( bitmapHdr->Width() ) * bitmapHdr->Height();
                     while( sz > 0 )
                     {
                         const auto chunk = std::min( sz, size_t( 16 * 1024 ) );

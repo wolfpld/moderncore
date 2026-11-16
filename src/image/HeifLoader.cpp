@@ -475,14 +475,22 @@ bool HeifLoader::SetupDecode( bool hdr, Colorspace colorspace )
     if( imgIccSize > 0 )
     {
         mclog( LogLevel::Info, "HEIF: Found image level ICC color profile" );
-        if( m_iccData )
+        auto imgIccData = std::make_unique<char[]>( imgIccSize );
+        if( heif_image_get_raw_color_profile( m_image, imgIccData.get() ).code != heif_error_Ok )
         {
-            mclog( LogLevel::Info, "HEIF: Multiple ICC profiles found, using image level (handle level: %zu bytes, image level: %zu bytes)", m_iccSize, imgIccSize );
-            delete[] m_iccData;
+            mclog( LogLevel::Warning, "HEIF: Failed to read image level ICC profile, keeping %s",
+                   m_iccData ? "handle level" : "nclx" );
         }
-        m_iccData = new char[imgIccSize];
-        m_iccSize = imgIccSize;
-        heif_image_get_raw_color_profile( m_image, m_iccData );
+        else
+        {
+            if( m_iccData )
+            {
+                mclog( LogLevel::Info, "HEIF: Multiple ICC profiles found, using image level (handle level: %zu bytes, image level: %zu bytes)", m_iccSize, imgIccSize );
+            }
+            delete[] m_iccData;
+            m_iccData = imgIccData.release();
+            m_iccSize = imgIccSize;
+        }
     }
 
     if( hdr && !m_nclx && !m_handleGainMap )

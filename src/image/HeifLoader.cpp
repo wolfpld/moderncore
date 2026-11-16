@@ -147,6 +147,7 @@ HeifLoader::HeifLoader( std::shared_ptr<FileWrapper> file, ToneMap::Operator ton
     , m_transform( nullptr )
     , m_identityTransform( false )
     , m_linearizeFirst( false )
+    , m_limited( false )
     , m_td( td )
 {
     fseek( *m_file, 0, SEEK_SET );
@@ -450,24 +451,36 @@ bool HeifLoader::SetupDecode( bool hdr, Colorspace colorspace )
 
     m_rgb = m_nclx && m_nclx->matrix_coefficients == heif_matrix_coefficients_RGB_GBR;
     const auto rgbChroma = heif_image_handle_has_alpha_channel( m_handle ) ? heif_chroma_interleaved_RRGGBBAA_LE : heif_chroma_interleaved_RRGGBB_LE;
+    auto* opts = heif_decoding_options_alloc();
+    opts->output_image_nclx_profile_passthrough = 1;
     auto err = heif_decode_image( m_handle, &m_image, m_rgb ? heif_colorspace_RGB : heif_colorspace_YCbCr,
-        m_rgb ? rgbChroma : heif_chroma_444, nullptr );
+        m_rgb ? rgbChroma : heif_chroma_444, opts );
+    heif_decoding_options_free( opts );
     if( err.code != heif_error_Ok ) return false;
+
+    heif_color_profile_nclx* imgNclx = nullptr;
+    if( heif_image_get_nclx_color_profile( m_image, &imgNclx ).code == heif_error_Ok && imgNclx )
+    {
+        if( m_nclx ) heif_nclx_color_profile_free( m_nclx );
+        m_nclx = imgNclx;
+    }
+    else if( !m_nclx )
+    {
+        mclog( LogLevel::Info, "HEIF: No nclx color profile found" );
+    }
 
     m_colorspace = colorspace;
     m_linearizeFirst = false;
 
-    if( !m_nclx )
-    {
-        auto err = heif_image_get_nclx_color_profile( m_image, &m_nclx );
-        if( err.code == heif_error_Color_profile_does_not_exist ) mclog( LogLevel::Info, "HEIF: No image-level nclx color profile found" );
-    }
     if( !m_rgb && m_nclx && m_nclx->matrix_coefficients == heif_matrix_coefficients_RGB_GBR )
     {
         m_rgb = true;
         heif_image_release( m_image );
         m_image = nullptr;
-        err = heif_decode_image( m_handle, &m_image, heif_colorspace_RGB, rgbChroma, nullptr );
+        opts = heif_decoding_options_alloc();
+        opts->output_image_nclx_profile_passthrough = 1;
+        err = heif_decode_image( m_handle, &m_image, heif_colorspace_RGB, rgbChroma, opts );
+        heif_decoding_options_free( opts );
         if( err.code != heif_error_Ok ) return false;
     }
 
@@ -526,6 +539,7 @@ bool HeifLoader::SetupDecode( bool hdr, Colorspace colorspace )
         m_bpp = bppRGB;
         m_bppDiv = 1.f / ( ( 1 << bppRGB ) - 1 );
         m_bppDivA = m_bppDiv;
+        m_limited = false;
         m_planeY = m_planeCb = m_planeCr = m_planeA = nullptr;
         mclog( LogLevel::Info, "HEIF: %d bpp identity-matrix RGB%s", bppRGB, m_samples == 4 ? "A" : "" );
     }
@@ -569,7 +583,8 @@ bool HeifLoader::SetupDecode( bool hdr, Colorspace colorspace )
 
         m_bpp = bppY;
         m_bppDiv = 1.f / ( ( 1 << bppY ) - 1 );
-        mclog( LogLevel::Info, "HEIF: %d bpp", bppY );
+        m_limited = m_nclx && !m_nclx->full_range_flag;
+        mclog( LogLevel::Info, "HEIF: %d bpp%s", bppY, m_limited ? ", limited range" : "" );
 
         m_bppDivA = m_bppDiv;
         if( m_planeA )
@@ -585,9 +600,6 @@ bool HeifLoader::SetupDecode( bool hdr, Colorspace colorspace )
 
         if( bppY > 8 ) m_stride /= 2;
     }
-
-    // libheif normalises decoded planes to full range and reports the result on the image-level nclx,
-    // so the file-level VideoFullRangeFlag must not trigger any further scaling
 
     m_matrix = Conversion::BT601;
     if( m_nclx )
@@ -933,6 +945,22 @@ void HeifLoader::LoadYCbCr( float* ptr, size_t sz, size_t offset )
 void HeifLoader::ConvertYCbCrToRGB( float* ptr, size_t sz )
 {
     if( m_rgb ) return;
+
+    if( m_limited )
+    {
+        const double full = ( 1 << m_bpp ) - 1;
+        const auto scale = std::ldexp( 1.0, m_bpp - 8 );
+        const auto yOff = float( 16.0 * scale / full );
+        const auto yMul = float( full / ( 219.0 * scale ) );
+        const auto cOff = float( 0.5 - 128.0 * scale / full );
+        const auto cMul = float( full / ( 224.0 * scale ) );
+        for( auto p = ptr, end = ptr + sz * 4; p != end; p += 4 )
+        {
+            p[0] = ( p[0] - yOff ) * yMul;
+            p[1] = ( p[1] + cOff ) * cMul;
+            p[2] = ( p[2] + cOff ) * cMul;
+        }
+    }
 
     float a, b, c, d;
     switch( m_matrix )

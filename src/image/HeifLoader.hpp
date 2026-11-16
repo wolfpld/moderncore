@@ -75,6 +75,7 @@ private:
     Conversion m_matrix;
     Colorspace m_colorspace;
     bool m_linearizeFirst;
+    bool m_limited;
 
     size_t m_iccSize;
     char* m_iccData;

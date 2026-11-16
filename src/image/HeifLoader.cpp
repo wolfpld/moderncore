@@ -137,6 +137,10 @@ HeifLoader::HeifLoader( std::shared_ptr<FileWrapper> file, ToneMap::Operator ton
     , m_image( nullptr )
     , m_nclx( nullptr )
     , m_gainMap( nullptr )
+    , m_rgb( false )
+    , m_samples( 3 )
+    , m_strideRGB( 0 )
+    , m_planeRGB( nullptr )
     , m_iccData( nullptr )
     , m_profileIn( nullptr )
     , m_profileOut( nullptr )
@@ -444,7 +448,10 @@ bool HeifLoader::SetupDecode( bool hdr, Colorspace colorspace )
     delete[] m_gainMap;
     m_gainMap = nullptr;
 
-    auto err = heif_decode_image( m_handle, &m_image, heif_colorspace_YCbCr, heif_chroma_444, nullptr );
+    m_rgb = m_nclx && m_nclx->matrix_coefficients == heif_matrix_coefficients_RGB_GBR;
+    const auto rgbChroma = heif_image_handle_has_alpha_channel( m_handle ) ? heif_chroma_interleaved_RRGGBBAA_LE : heif_chroma_interleaved_RRGGBB_LE;
+    auto err = heif_decode_image( m_handle, &m_image, m_rgb ? heif_colorspace_RGB : heif_colorspace_YCbCr,
+        m_rgb ? rgbChroma : heif_chroma_444, nullptr );
     if( err.code != heif_error_Ok ) return false;
 
     m_colorspace = colorspace;
@@ -454,6 +461,14 @@ bool HeifLoader::SetupDecode( bool hdr, Colorspace colorspace )
     {
         auto err = heif_image_get_nclx_color_profile( m_image, &m_nclx );
         if( err.code == heif_error_Color_profile_does_not_exist ) mclog( LogLevel::Info, "HEIF: No image-level nclx color profile found" );
+    }
+    if( !m_rgb && m_nclx && m_nclx->matrix_coefficients == heif_matrix_coefficients_RGB_GBR )
+    {
+        m_rgb = true;
+        heif_image_release( m_image );
+        m_image = nullptr;
+        err = heif_decode_image( m_handle, &m_image, heif_colorspace_RGB, rgbChroma, nullptr );
+        if( err.code != heif_error_Ok ) return false;
     }
 
     const auto imgIccSize = heif_image_get_raw_color_profile_size( m_image );
@@ -476,51 +491,92 @@ bool HeifLoader::SetupDecode( bool hdr, Colorspace colorspace )
         return false;
     }
 
-    int strideY, strideCb, strideCr, strideA;
-    m_planeY  = heif_image_get_plane_readonly( m_image, heif_channel_Y, &strideY );
-    m_planeCb = heif_image_get_plane_readonly( m_image, heif_channel_Cb, &strideCb );
-    m_planeCr = heif_image_get_plane_readonly( m_image, heif_channel_Cr, &strideCr );
-    m_planeA  = heif_image_get_plane_readonly( m_image, heif_channel_Alpha, &strideA );
-
-    if( !m_planeY || !m_planeCb || !m_planeCr ) return false;
-    if( strideY != strideCb || strideY != strideCr || ( m_planeA && strideA != strideY ) )
+    if( m_rgb )
     {
-        mclog( LogLevel::Error, "HEIF: Decoded output is not 444 (strides %d/%d/%d/%d)", strideY, strideCb, strideCr, strideA );
-        return false;
-    }
-    m_stride = strideY;
-
-    const auto bppY = heif_image_get_bits_per_pixel_range( m_image, heif_channel_Y );
-    const auto bppCb = heif_image_get_bits_per_pixel_range( m_image, heif_channel_Cb );
-    const auto bppCr = heif_image_get_bits_per_pixel_range( m_image, heif_channel_Cr );
-    if( bppY != bppCb || bppY != bppCr )
-    {
-        mclog( LogLevel::Error, "HEIF: Decoded output has mixed bit width (%d/%d/%d)", bppY, bppCb, bppCr );
-        return false;
-    }
-    if( bppY < 8 || bppY > 16 )
-    {
-        mclog( LogLevel::Error, "HEIF: Unsupported bit depth %d", bppY );
-        return false;
-    }
-
-    m_bpp = bppY;
-    m_bppDiv = 1.f / ( ( 1 << bppY ) - 1 );
-    mclog( LogLevel::Info, "HEIF: %d bpp", bppY );
-
-    m_bppDivA = m_bppDiv;
-    if( m_planeA )
-    {
-        const auto bppA = heif_image_get_bits_per_pixel_range( m_image, heif_channel_Alpha );
-        if( bppA < 8 || bppA > 16 )
+        int strideRGB;
+        m_planeRGB = heif_image_get_plane_readonly( m_image, heif_channel_interleaved, &strideRGB );
+        if( !m_planeRGB ) return false;
+        const auto chroma = heif_image_get_chroma_format( m_image );
+        if( chroma != heif_chroma_interleaved_RRGGBB_LE && chroma != heif_chroma_interleaved_RRGGBBAA_LE )
         {
-            mclog( LogLevel::Error, "HEIF: Unsupported alpha bit depth %d", bppA );
+            mclog( LogLevel::Error, "HEIF: Identity-matrix decode returned chroma %d", (int)chroma );
             return false;
         }
-        m_bppDivA = 1.f / ( ( 1 << bppA ) - 1 );
+        m_samples = chroma == heif_chroma_interleaved_RRGGBBAA_LE ? 4 : 3;
+        const auto bppRGB = heif_image_get_bits_per_pixel_range( m_image, heif_channel_interleaved );
+        if( bppRGB < 8 || bppRGB > 16 )
+        {
+            mclog( LogLevel::Error, "HEIF: Unsupported bit depth %d", bppRGB );
+            return false;
+        }
+        if( strideRGB < m_width * m_samples * 2 )
+        {
+            mclog( LogLevel::Error, "HEIF: Interleaved RGB stride %d too small", strideRGB );
+            return false;
+        }
+        m_strideRGB = strideRGB;
+        m_bpp = bppRGB;
+        m_bppDiv = 1.f / ( ( 1 << bppRGB ) - 1 );
+        m_bppDivA = m_bppDiv;
+        m_planeY = m_planeCb = m_planeCr = m_planeA = nullptr;
+        mclog( LogLevel::Info, "HEIF: %d bpp identity-matrix RGB%s", bppRGB, m_samples == 4 ? "A" : "" );
     }
+    else
+    {
+        int strideY, strideCb, strideCr, strideA = 0;
+        m_planeY  = heif_image_get_plane_readonly( m_image, heif_channel_Y, &strideY );
+        m_planeCb = heif_image_get_plane_readonly( m_image, heif_channel_Cb, &strideCb );
+        m_planeCr = heif_image_get_plane_readonly( m_image, heif_channel_Cr, &strideCr );
+        m_planeA  = heif_image_get_plane_readonly( m_image, heif_channel_Alpha, &strideA );
 
-    if( bppY > 8 ) m_stride /= 2;
+        if( !m_planeY || !m_planeCb || !m_planeCr ) return false;
+        if( strideY != strideCb || strideY != strideCr || ( m_planeA && strideA != strideY ) )
+        {
+            mclog( LogLevel::Error, "HEIF: Decoded output is not 444 (strides %d/%d/%d/%d)", strideY, strideCb, strideCr, strideA );
+            return false;
+        }
+        m_stride = strideY;
+
+        const auto bppY = heif_image_get_bits_per_pixel_range( m_image, heif_channel_Y );
+        const auto bppCb = heif_image_get_bits_per_pixel_range( m_image, heif_channel_Cb );
+        const auto bppCr = heif_image_get_bits_per_pixel_range( m_image, heif_channel_Cr );
+        if( bppY != bppCb || bppY != bppCr )
+        {
+            mclog( LogLevel::Error, "HEIF: Decoded output has mixed bit width (%d/%d/%d)", bppY, bppCb, bppCr );
+            return false;
+        }
+        if( bppY < 8 || bppY > 16 )
+        {
+            mclog( LogLevel::Error, "HEIF: Unsupported bit depth %d", bppY );
+            return false;
+        }
+        if( strideY < m_width * ( bppY > 8 ? 2 : 1 ) )
+        {
+            // ProcessYCbCr walks rows by ( stride - width ) in size_t; a plane narrower than the
+            // handle width would wrap the row offset into a wild pointer. Strides are equal across
+            // planes, so checking Y covers all of them
+            mclog( LogLevel::Error, "HEIF: Y plane stride %d too small for width %d", strideY, m_width );
+            return false;
+        }
+
+        m_bpp = bppY;
+        m_bppDiv = 1.f / ( ( 1 << bppY ) - 1 );
+        mclog( LogLevel::Info, "HEIF: %d bpp", bppY );
+
+        m_bppDivA = m_bppDiv;
+        if( m_planeA )
+        {
+            const auto bppA = heif_image_get_bits_per_pixel_range( m_image, heif_channel_Alpha );
+            if( bppA < 8 || bppA > 16 )
+            {
+                mclog( LogLevel::Error, "HEIF: Unsupported alpha bit depth %d", bppA );
+                return false;
+            }
+            m_bppDivA = 1.f / ( ( 1 << bppA ) - 1 );
+        }
+
+        if( bppY > 8 ) m_stride /= 2;
+    }
 
     // libheif normalises decoded planes to full range and reports the result on the image-level nclx,
     // so the file-level VideoFullRangeFlag must not trigger any further scaling
@@ -531,7 +587,7 @@ bool HeifLoader::SetupDecode( bool hdr, Colorspace colorspace )
         switch( m_nclx->matrix_coefficients )
         {
         case heif_matrix_coefficients_RGB_GBR:
-            m_matrix = Conversion::GBR;
+            // identity matrix: decoded through the interleaved RGB path, so no conversion applies
             mclog( LogLevel::Info, "HEIF: Matrix coefficients GBR" );
             break;
         case heif_matrix_coefficients_ITU_R_BT_709_5:
@@ -811,8 +867,37 @@ static inline void ProcessYCbCr( float* ptr, const T* srcY, const T* srcCb, cons
     }
 }
 
+void HeifLoader::LoadRGB( float* ptr, size_t sz, size_t offset )
+{
+    const auto* src = reinterpret_cast< const uint16_t* >( m_planeRGB );
+    const size_t rowSamples = m_strideRGB / 2;
+    size_t px = offset % m_width;
+    src += ( offset / m_width ) * rowSamples + px * m_samples;
+    for(;;)
+    {
+        auto line = std::min( sz, size_t( m_width ) - px );
+        sz -= line;
+        while( line-- )
+        {
+            *ptr++ = float( src[0] ) * m_bppDiv;
+            *ptr++ = float( src[1] ) * m_bppDiv;
+            *ptr++ = float( src[2] ) * m_bppDiv;
+            *ptr++ = m_samples == 4 ? float( src[3] ) * m_bppDivA : 1.f;
+            src += m_samples;
+        }
+        if( sz == 0 ) break;
+        px = 0;
+        src += rowSamples - size_t( m_width ) * m_samples;
+    }
+}
+
 void HeifLoader::LoadYCbCr( float* ptr, size_t sz, size_t offset )
 {
+    if( m_rgb )
+    {
+        LoadRGB( ptr, sz, offset );
+        return;
+    }
     if( m_planeA )
     {
         if( m_bpp > 8 )
@@ -839,124 +924,108 @@ void HeifLoader::LoadYCbCr( float* ptr, size_t sz, size_t offset )
 
 void HeifLoader::ConvertYCbCrToRGB( float* ptr, size_t sz )
 {
-    if( m_matrix == Conversion::GBR )
+    if( m_rgb ) return;
+
+    float a, b, c, d;
+    switch( m_matrix )
     {
-        while( sz-- )
-        {
-            const auto g = ptr[0];
-            const auto b = ptr[1] + 0.5f;
-            const auto r = ptr[2] + 0.5f;
-
-            ptr[0] = r;
-            ptr[1] = g;
-            ptr[2] = b;
-
-            ptr += 4;
-        }
+    case Conversion::BT601:
+        a = 1.402f;
+        b = -0.344136f;
+        c = -0.714136f;
+        d = 1.772f;
+        break;
+    case Conversion::BT709:
+        a = 1.5748f;
+        b = -0.1873f;
+        c = -0.4681f;
+        d = 1.8556f;
+        break;
+    case Conversion::BT2020:
+        a = 1.4746f;
+        b = -0.16455312684366f;
+        c = -0.57135312684366f;
+        d = 1.8814f;
+        break;
+    default:
+        Panic( "Invalid conversion matrix" );
+        break;
     }
-    else
-    {
-        float a, b, c, d;
-        switch( m_matrix )
-        {
-        case Conversion::BT601:
-            a = 1.402f;
-            b = -0.344136f;
-            c = -0.714136f;
-            d = 1.772f;
-            break;
-        case Conversion::BT709:
-            a = 1.5748f;
-            b = -0.1873f;
-            c = -0.4681f;
-            d = 1.8556f;
-            break;
-        case Conversion::BT2020:
-            a = 1.4746f;
-            b = -0.16455312684366f;
-            c = -0.57135312684366f;
-            d = 1.8814f;
-            break;
-        default:
-            Panic( "Invalid conversion matrix" );
-            break;
-        }
 
 #ifdef __AVX512F__
-        __m512 abcd16 = _mm512_set_ps( c, d, b, a, c, d, b, a, c, d, b, a, c, d, b, a );
-        while( sz >= 4 )
-        {
-            __m512 px0 = _mm512_loadu_ps( ptr );
-            __m512 px1 = _mm512_shuffle_ps( px0, px0, _MM_SHUFFLE( 2, 1, 1, 2 ) );
-            __m512 mul = _mm512_mul_ps( px1, abcd16 );
-            __m512 a0 = _mm512_shuffle_ps( mul, mul, _MM_SHUFFLE( 3, 3, 3, 3 ) );
-            __m512 a1 = _mm512_mask_blend_ps( 0x2222, _mm512_setzero_ps(), a0 );
-            __m512 add = _mm512_add_ps( mul, a1 );
-            __m512 y = _mm512_shuffle_ps( px0, px0, _MM_SHUFFLE( 0, 0, 0, 0 ) );
-            __m512 rgb0 = _mm512_add_ps( y, add );
-            __m512 rgb = _mm512_mask_blend_ps( 0x8888, rgb0, px0 );
-            _mm512_storeu_ps( ptr, rgb );
+    __m512 abcd16 = _mm512_set_ps( c, d, b, a, c, d, b, a, c, d, b, a, c, d, b, a );
+    while( sz >= 4 )
+    {
+        __m512 px0 = _mm512_loadu_ps( ptr );
+        __m512 px1 = _mm512_shuffle_ps( px0, px0, _MM_SHUFFLE( 2, 1, 1, 2 ) );
+        __m512 mul = _mm512_mul_ps( px1, abcd16 );
+        __m512 a0 = _mm512_shuffle_ps( mul, mul, _MM_SHUFFLE( 3, 3, 3, 3 ) );
+        __m512 a1 = _mm512_mask_blend_ps( 0x2222, _mm512_setzero_ps(), a0 );
+        __m512 add = _mm512_add_ps( mul, a1 );
+        __m512 y = _mm512_shuffle_ps( px0, px0, _MM_SHUFFLE( 0, 0, 0, 0 ) );
+        __m512 rgb0 = _mm512_add_ps( y, add );
+        __m512 rgb = _mm512_mask_blend_ps( 0x8888, rgb0, px0 );
+        _mm512_storeu_ps( ptr, rgb );
 
-            sz -= 4;
-            ptr += 16;
-        }
+        sz -= 4;
+        ptr += 16;
+    }
 #endif
 #ifdef __AVX2__
-        __m256 abcd8 = _mm256_set_ps( c, d, b, a, c, d, b, a );
-        while( sz >= 2 )
-        {
-            __m256 px0 = _mm256_loadu_ps( ptr );
-            __m256 px1 = _mm256_shuffle_ps( px0, px0, _MM_SHUFFLE( 2, 1, 1, 2 ) );
-            __m256 mul = _mm256_mul_ps( px1, abcd8 );
-            __m256 a0 = _mm256_shuffle_ps( mul, mul, _MM_SHUFFLE( 3, 3, 3, 3 ) );
-            __m256 a1 = _mm256_blend_ps( _mm256_setzero_ps(), a0, 0x22 );
-            __m256 add = _mm256_add_ps( mul, a1 );
-            __m256 y = _mm256_shuffle_ps( px0, px0, _MM_SHUFFLE( 0, 0, 0, 0 ) );
-            __m256 rgb0 = _mm256_add_ps( y, add );
-            __m256 rgb = _mm256_blend_ps( rgb0, px0, 0x88 );
-            _mm256_storeu_ps( ptr, rgb );
+    __m256 abcd8 = _mm256_set_ps( c, d, b, a, c, d, b, a );
+    while( sz >= 2 )
+    {
+        __m256 px0 = _mm256_loadu_ps( ptr );
+        __m256 px1 = _mm256_shuffle_ps( px0, px0, _MM_SHUFFLE( 2, 1, 1, 2 ) );
+        __m256 mul = _mm256_mul_ps( px1, abcd8 );
+        __m256 a0 = _mm256_shuffle_ps( mul, mul, _MM_SHUFFLE( 3, 3, 3, 3 ) );
+        __m256 a1 = _mm256_blend_ps( _mm256_setzero_ps(), a0, 0x22 );
+        __m256 add = _mm256_add_ps( mul, a1 );
+        __m256 y = _mm256_shuffle_ps( px0, px0, _MM_SHUFFLE( 0, 0, 0, 0 ) );
+        __m256 rgb0 = _mm256_add_ps( y, add );
+        __m256 rgb = _mm256_blend_ps( rgb0, px0, 0x88 );
+        _mm256_storeu_ps( ptr, rgb );
 
-            sz -= 2;
-            ptr += 8;
-        }
+        sz -= 2;
+        ptr += 8;
+    }
 #endif
 #ifdef __SSE4_1__
-        __m128 abcd4 = _mm_set_ps( c, d, b, a );
-        while( sz > 0 )
-        {
-            __m128 px0 = _mm_loadu_ps( ptr );
-            __m128 px1 = _mm_shuffle_ps( px0, px0, _MM_SHUFFLE( 2, 1, 1, 2 ) );
-            __m128 mul = _mm_mul_ps( px1, abcd4 );
-            __m128 a0 = _mm_insert_ps( _mm_setzero_ps(), mul, 0xdd );
-            __m128 add = _mm_add_ps( mul, a0 );
-            __m128 y = _mm_shuffle_ps( px0, px0, _MM_SHUFFLE( 0, 0, 0, 0 ) );
-            __m128 rgb0 = _mm_add_ps( y, add );
-            __m128 rgb = _mm_blend_ps( rgb0, px0, 8 );
-            _mm_storeu_ps( ptr, rgb );
+    __m128 abcd4 = _mm_set_ps( c, d, b, a );
+    while( sz > 0 )
+    {
+        __m128 px0 = _mm_loadu_ps( ptr );
+        __m128 px1 = _mm_shuffle_ps( px0, px0, _MM_SHUFFLE( 2, 1, 1, 2 ) );
+        __m128 mul = _mm_mul_ps( px1, abcd4 );
+        __m128 a0 = _mm_insert_ps( _mm_setzero_ps(), mul, 0xdd );
+        __m128 add = _mm_add_ps( mul, a0 );
+        __m128 y = _mm_shuffle_ps( px0, px0, _MM_SHUFFLE( 0, 0, 0, 0 ) );
+        __m128 rgb0 = _mm_add_ps( y, add );
+        __m128 rgb = _mm_blend_ps( rgb0, px0, 8 );
+        _mm_storeu_ps( ptr, rgb );
 
-            ptr += 4;
-            sz--;
-        }
-#else
-        while( sz > 0 )
-        {
-            const auto Y = ptr[0];
-            const auto Cb = ptr[1];
-            const auto Cr = ptr[2];
-
-            const auto r = Y + a * Cr;
-            const auto g = Y + b * Cb + c * Cr;
-            const auto b = Y + d * Cb;
-
-            ptr[0] = r;
-            ptr[1] = g;
-            ptr[2] = b;
-
-            ptr += 4;
-            sz--;
-        }
-#endif
+        ptr += 4;
+        sz--;
     }
+#else
+    while( sz > 0 )
+    {
+        const auto Y = ptr[0];
+        const auto Cb = ptr[1];
+        const auto Cr = ptr[2];
+
+        const auto r = Y + a * Cr;
+        const auto g = Y + b * Cb + c * Cr;
+        const auto b = Y + d * Cb;
+
+        ptr[0] = r;
+        ptr[1] = g;
+        ptr[2] = b;
+
+        ptr += 4;
+        sz--;
+    }
+#endif
 }
 
 void HeifLoader::ApplyTransfer( float* ptr, size_t sz, size_t offset )

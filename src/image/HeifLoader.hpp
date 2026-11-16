@@ -23,10 +23,9 @@ class HeifLoader : public ImageLoader
 {
     enum class Conversion
     {
-        GBR,
         BT601,
         BT709,
-        BT2020
+        BT2020,
     };
 
 public:
@@ -48,6 +47,7 @@ private:
     [[nodiscard]] bool SetupDecode( bool hdr, Colorspace colorspace );
 
     void LoadYCbCr( float* ptr, size_t sz, size_t offset );
+    void LoadRGB( float* ptr, size_t sz, size_t offset );
     void ConvertYCbCrToRGB( float* ptr, size_t sz );
     void ApplyTransfer( float* ptr, size_t sz, size_t offset );
     void TransformAndTransfer( float* ptr, size_t sz, size_t offset );
@@ -81,6 +81,10 @@ private:
 
     float* m_gainMap;
 
+    bool m_rgb;
+    int m_samples;
+    int m_strideRGB;
+    const uint8_t* m_planeRGB;
     const uint8_t* m_planeY;
     const uint8_t* m_planeCb;
     const uint8_t* m_planeCr;

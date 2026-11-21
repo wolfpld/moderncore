@@ -13,6 +13,7 @@
 #include "util/NoCopy.hpp"
 #include "util/Panic.hpp"
 
+class VlkStagingRing;
 class VlkCommandBuffer;
 class VlkCommandPool;
 class VlkGarbage;
@@ -55,6 +56,8 @@ public:
 
     [[nodiscard]] bool UseHostImageCopy() const { return m_hostImageCopy; }
 
+    [[nodiscard]] VlkStagingRing& GetStagingRing();
+
     operator VkDevice() const { return m_device; }
     operator VkPhysicalDevice() const { return *m_physDev; }
     operator VmaAllocator() const { return m_allocator; }
@@ -78,6 +81,8 @@ private:
     std::array<std::shared_ptr<std::mutex>, 4> m_queueLock;
 
     bool m_hostImageCopy;
+    std::mutex m_stagingRingLock;
+    std::unique_ptr<VlkStagingRing> m_stagingRing;
 
 #ifdef TRACY_ENABLE
     TracyVkCtx m_tracyCtx = nullptr;

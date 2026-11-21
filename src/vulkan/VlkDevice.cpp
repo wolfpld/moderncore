@@ -1,4 +1,5 @@
 #include <array>
+#include <cstdlib>
 #include <format>
 #include <ranges>
 #include <string.h>
@@ -12,6 +13,7 @@
 #include "VlkGarbage.hpp"
 #include "VlkInstance.hpp"
 #include "VlkPhysicalDevice.hpp"
+#include "vulkan/VlkStagingRing.hpp"
 #include "vulkan/ext/Tracy.hpp"
 
 VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> physDev, int flags, VkSurfaceKHR presentSurface )
@@ -472,15 +474,23 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
 
 VlkDevice::~VlkDevice()
 {
+    m_stagingRing.reset();
+    m_garbage.reset();
+
 #ifdef TRACY_ENABLE
     TracyVkDestroy( m_tracyCtx );
 #endif
 
-    m_garbage.reset();
-
     for( auto& pool : m_commandPool ) pool.reset();
     vmaDestroyAllocator( m_allocator );
     vkDestroyDevice( m_device, nullptr );
+}
+
+VlkStagingRing& VlkDevice::GetStagingRing()
+{
+    std::lock_guard lock( m_stagingRingLock );
+    if( !m_stagingRing ) m_stagingRing = std::make_unique<VlkStagingRing>( *this );
+    return *m_stagingRing;
 }
 
 void VlkDevice::Submit( const VlkCommandBuffer& cmdbuf, VkFence fence )

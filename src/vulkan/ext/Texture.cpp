@@ -141,7 +141,7 @@ static void HostCopy( VlkDevice& device, VlkImage& image, const std::vector<MipD
         if( level < mipLevels-1 )
         {
             ZoneScopedN( "Mip downscale" );
-            ZoneTextF( "Level %u, %u x %u, %u bytes", level, mipChain[level+1].width, mipChain[level+1].height, mipChain[level+1].size );
+            ZoneTextF( "Level %u, %u x %u, %llu bytes", level, mipChain[level+1].width, mipChain[level+1].height, (unsigned long long)mipChain[level+1].size );
 
             tmp = bmpptr->ResizeNew( mipChain[level+1].width, mipChain[level+1].height, td );
             bmpptr = tmp.get();

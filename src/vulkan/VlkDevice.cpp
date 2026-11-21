@@ -301,6 +301,10 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
     const auto& txInfo = m_queueInfo[(int)QueueType::Transfer];
     m_hostImageCopy = m_physDev->HasHostImageCopy() && ( txInfo.shareCompute || txInfo.shareGraphic );
 
+#ifndef NDEBUG
+    if( getenv( "MCORE_FORCE_STAGING" ) ) m_hostImageCopy = false;
+#endif
+
     VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT featuresSwapchainMaintenance1 = {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SWAPCHAIN_MAINTENANCE_1_FEATURES_EXT,
         .swapchainMaintenance1 = VK_TRUE

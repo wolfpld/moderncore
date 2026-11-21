@@ -327,6 +327,7 @@ set(MCOREVULKAN_SRC
     src/vulkan/VlkAllocator.cpp
     src/vulkan/VlkBuffer.cpp
     src/vulkan/VlkCommandBuffer.cpp
+    src/vulkan/VlkCommandBufferPool.cpp
     src/vulkan/VlkCommandPool.cpp
     src/vulkan/VlkDescriptorSetLayout.cpp
     src/vulkan/VlkDevice.cpp

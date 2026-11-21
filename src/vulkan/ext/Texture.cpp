@@ -6,6 +6,7 @@
 #include <tracy/TracyVulkan.hpp>
 
 #include "Texture.hpp"
+#include "vulkan/VlkStagingRing.hpp"
 #include "util/Bitmap.hpp"
 #include "util/BitmapHdr.hpp"
 #include "util/BitmapHdrHalf.hpp"
@@ -21,38 +22,40 @@ struct MipData
 {
     uint32_t width;
     uint32_t height;
-    uint64_t offset;
     uint64_t size;
 };
 
-static std::vector<MipData> CalcMipLevels( uint32_t width, uint32_t height, uint32_t bpp, uint64_t& total )
+static std::vector<MipData> CalcMipLevels( uint32_t width, uint32_t height, uint32_t bpp )
 {
     const auto mipLevels = (uint32_t)std::floor( std::log2( std::max( width, height ) ) ) + 1;
-    uint64_t offset = 0;
     std::vector<MipData> levels( mipLevels );
     for( uint32_t i=0; i<mipLevels; i++ )
     {
-        const uint64_t size = uint64_t( width ) * height * bpp;
-        levels[i] = { width, height, offset, size };
+        levels[i] = {
+            .width = width,
+            .height = height,
+            .size = uint64_t( width ) * height * bpp
+        };
         width = std::max( 1u, width / 2 );
         height = std::max( 1u, height / 2 );
-        offset += size;
     }
-    total = offset;
     return levels;
 }
 
-static std::vector<MipData> GetMipChain( bool mips, uint32_t width, uint32_t height, uint32_t bpp, uint64_t& bufsize )
+static std::vector<MipData> GetMipChain( bool mips, uint32_t width, uint32_t height, uint32_t bpp )
 {
     std::vector<MipData> mipChain;
     if( mips )
     {
-        mipChain = CalcMipLevels( width, height, bpp, bufsize );
+        mipChain = CalcMipLevels( width, height, bpp );
     }
     else
     {
-        bufsize = width * height * bpp;
-        mipChain.emplace_back( width, height, 0, bufsize );
+        mipChain.push_back( {
+            .width = width,
+            .height = height,
+            .size = uint64_t( width ) * height * bpp
+        } );
     }
     return mipChain;
 }
@@ -97,28 +100,6 @@ static inline VkBufferCreateInfo GetStagingBufferInfo( uint64_t size, VkBufferUs
         .usage = usage,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE
     };
-}
-
-template<typename T>
-static void FillStagingBuffer( const std::vector<MipData>& mipChain, std::unique_ptr<T>&& tmp, const T* bmpptr, const std::shared_ptr<VlkBuffer>& stagingBuffer, TaskDispatch* td )
-{
-    const auto mipLevels = (uint32_t)mipChain.size();
-    auto bufptr = (uint8_t*)stagingBuffer->Ptr();
-    for( uint32_t level = 0; level < mipLevels; level++ )
-    {
-        const MipData& mipdata = mipChain[level];
-        memcpy( bufptr, bmpptr->Data(), mipdata.size );
-        bufptr += mipdata.size;
-        if( level < mipLevels-1 )
-        {
-            ZoneScopedN( "Mip downscale" );
-            ZoneTextF( "Level %u, %u x %u, %u bytes", level, mipChain[level+1].width, mipChain[level+1].height, mipChain[level+1].size );
-
-            tmp = bmpptr->ResizeNew( mipChain[level+1].width, mipChain[level+1].height, td );
-            bmpptr = tmp.get();
-        }
-    }
-    stagingBuffer->Flush();
 }
 
 template<typename T>
@@ -263,6 +244,32 @@ static void ReadbackHost( VlkDevice& device, std::shared_ptr<T>& bitmap, VkImage
     vkTransitionImageLayout( device, 1, &transition );
 }
 
+template<typename T>
+void Texture::Upload( VlkDevice& device, const std::vector<MipData>& mipChain, uint32_t bpp,
+                      const T* bmpptr, std::unique_ptr<T>&& tmp, TaskDispatch* td,
+                      std::vector<std::shared_ptr<VlkFence>>& fencesOut )
+{
+    const auto mipLevels = (uint32_t)mipChain.size();
+    auto& ring = device.GetStagingRing();
+    for( uint32_t level = 0; level < mipLevels; level++ )
+    {
+        const MipData& mipdata = mipChain[level];
+        ring.Level( *m_image, level, mipdata.width, mipdata.height, bpp, bmpptr->Data(),
+            [this, level]( VkCommandBuffer cmdbuf ) { WriteBarrier( cmdbuf, level ); } );
+
+        if( level < mipLevels-1 )
+        {
+            ZoneScopedN( "Mip downscale" );
+            ZoneTextF( "Level %u, %u x %u, %llu bytes", level+1, mipChain[level+1].width, mipChain[level+1].height, (unsigned long long)mipChain[level+1].size );
+
+            tmp = bmpptr->ResizeNew( mipChain[level+1].width, mipChain[level+1].height, td );
+            bmpptr = tmp.get();
+        }
+    }
+
+    FinishUpload( device, mipLevels, fencesOut );
+}
+
 Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format, bool mips, std::vector<std::shared_ptr<VlkFence>>& fencesOut, TaskDispatch* td )
     : m_format( format )
     , m_width( bitmap.Width() )
@@ -270,8 +277,7 @@ Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format, bool
 {
     ZoneScoped;
 
-    uint64_t bufsize;
-    const auto mipChain = GetMipChain( mips, bitmap.Width(), bitmap.Height(), 4, bufsize );
+    const auto mipChain = GetMipChain( mips, bitmap.Width(), bitmap.Height(), 4 );
     const auto mipLevels = (uint32_t)mipChain.size();
     const auto hostImageCopy = device.UseHostImageCopy();
 
@@ -284,10 +290,7 @@ Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format, bool
     }
     else
     {
-        auto stagingBuffer = std::make_shared<VlkBuffer>( device, GetStagingBufferInfo( bufsize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT ), VlkBuffer::WillWrite | VlkBuffer::PreferHost );
-
-        FillStagingBuffer( mipChain, std::unique_ptr<Bitmap>(), &bitmap, stagingBuffer, td );
-        Upload( device, mipChain, std::move( stagingBuffer ), fencesOut );
+        Upload( device, mipChain, 4, &bitmap, std::unique_ptr<Bitmap>(), td, fencesOut );
     }
 }
 
@@ -299,8 +302,7 @@ Texture::Texture( VlkDevice& device, const BitmapHdr& bitmap, VkFormat format, b
     ZoneScoped;
 
     const bool half = format == VK_FORMAT_R16G16B16A16_SFLOAT;
-    uint64_t bufsize;
-    const auto mipChain = GetMipChain( mips, bitmap.Width(), bitmap.Height(), half ? 8 : 16, bufsize );
+    const auto mipChain = GetMipChain( mips, bitmap.Width(), bitmap.Height(), half ? 8 : 16 );
     const auto mipLevels = (uint32_t)mipChain.size();
     const auto hostImageCopy = device.UseHostImageCopy();
 
@@ -322,20 +324,16 @@ Texture::Texture( VlkDevice& device, const BitmapHdr& bitmap, VkFormat format, b
     }
     else
     {
-        auto stagingBuffer = std::make_shared<VlkBuffer>( device, GetStagingBufferInfo( bufsize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT ), VlkBuffer::WillWrite | VlkBuffer::PreferHost );
-
         if( half )
         {
             auto tmp = std::make_unique<BitmapHdrHalf>( bitmap );
             auto bmpptr = tmp.get();
-            FillStagingBuffer( mipChain, std::move( tmp ), bmpptr, stagingBuffer, td );
+            Upload( device, mipChain, 8, bmpptr, std::move( tmp ), td, fencesOut );
         }
         else
         {
-            FillStagingBuffer( mipChain, std::unique_ptr<BitmapHdr>(), &bitmap, stagingBuffer, td );
+            Upload( device, mipChain, 16, &bitmap, std::unique_ptr<BitmapHdr>(), td, fencesOut );
         }
-
-        Upload( device, mipChain, std::move( stagingBuffer ), fencesOut );
     }
 }
 
@@ -383,36 +381,24 @@ std::shared_ptr<BitmapHdrHalf> Texture::ReadbackHdr( VlkDevice& device ) const
     return ret;
 }
 
-void Texture::Upload( VlkDevice& device, const std::vector<MipData>& mipChain, std::shared_ptr<VlkBuffer>&& stagingBuffer, std::vector<std::shared_ptr<VlkFence>>& fencesOut )
+void Texture::FinishUpload( VlkDevice& device, uint32_t mipLevels, std::vector<std::shared_ptr<VlkFence>>& fencesOut )
 {
-    const auto mipLevels = (uint32_t)mipChain.size();
-
-    auto cmdTx = std::make_unique<VlkCommandBuffer>( *device.GetCommandPool( QueueType::Transfer ) );
-    cmdTx->Begin( VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT );
-
-    for( uint32_t level = 0; level < mipLevels; level++ )
-    {
-        ZoneVk( device, *cmdTx, "Texture upload", true );
-        WriteBarrier( *cmdTx, level );
-        const MipData& mipdata = mipChain[level];
-        const VkBufferImageCopy region = {
-            .bufferOffset = mipdata.offset,
-            .imageSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, level, 0, 1 },
-            .imageExtent = { mipdata.width, mipdata.height, 1 }
-        };
-        vkCmdCopyBufferToImage( *cmdTx, *stagingBuffer, *m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region );
-    }
-
     const auto shareQueue = device.GetQueueInfo( QueueType::Graphic ).shareTransfer;
     const auto txQueue = device.GetQueueInfo( QueueType::Transfer ).idx;
     const auto gfxQueue = device.GetQueueInfo( QueueType::Graphic ).idx;
-    if( shareQueue )
+    auto cmdTx = std::make_unique<VlkCommandBuffer>( *device.GetCommandPool( QueueType::Transfer ) );
+    cmdTx->Begin( VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT );
     {
-        ReadBarrier( *cmdTx, mipLevels );
-    }
-    else
-    {
-        ReadBarrierTx( *cmdTx, mipLevels, txQueue, gfxQueue );
+        ZoneVk( device, *cmdTx, "Texture upload finalize", true );
+
+        if( shareQueue )
+        {
+            ReadBarrier( *cmdTx, mipLevels );
+        }
+        else
+        {
+            ReadBarrierTx( *cmdTx, mipLevels, txQueue, gfxQueue );
+        }
     }
     cmdTx->End();
 
@@ -420,7 +406,6 @@ void Texture::Upload( VlkDevice& device, const std::vector<MipData>& mipChain, s
     device.Submit( *cmdTx, *fenceTrn );
     device.GetGarbage()->Recycle( fenceTrn, {
         std::move( cmdTx ),
-        std::move( stagingBuffer ),
         m_image
     } );
     fencesOut.emplace_back( std::move( fenceTrn ) );

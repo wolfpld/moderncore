@@ -14,7 +14,6 @@ class BitmapHdr;
 class BitmapHdrHalf;
 struct MipData;
 class TaskDispatch;
-class VlkBuffer;
 class VlkDevice;
 class VlkFence;
 
@@ -34,7 +33,9 @@ public:
     operator VkImageView() const { return *m_imageView; }
 
 private:
-    void Upload( VlkDevice& device, const std::vector<MipData>& mipChain, std::shared_ptr<VlkBuffer>&& stagingBuffer, std::vector<std::shared_ptr<VlkFence>>& fencesOut );
+    template<typename T>
+    void Upload( VlkDevice& device, const std::vector<MipData>& mipChain, uint32_t bpp, const T* bmpptr, std::unique_ptr<T>&& tmp, TaskDispatch* td, std::vector<std::shared_ptr<VlkFence>>& fencesOut );
+    void FinishUpload( VlkDevice& device, uint32_t mipLevels, std::vector<std::shared_ptr<VlkFence>>& fencesOut );
 
     void WriteBarrier( VkCommandBuffer cmdbuf, uint32_t mip );
     void ReadBarrier( VkCommandBuffer cmdbuf, uint32_t mipLevels );

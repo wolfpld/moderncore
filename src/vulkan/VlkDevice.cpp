@@ -485,9 +485,14 @@ VlkDevice::~VlkDevice()
 
 void VlkDevice::Submit( const VlkCommandBuffer& cmdbuf, VkFence fence )
 {
+    Submit( cmdbuf, (QueueType)cmdbuf, fence );
+}
+
+void VlkDevice::Submit( VkCommandBuffer cmdBuf, QueueType type, VkFence fence )
+{
     const VkCommandBufferSubmitInfo cmdbufInfo = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
-        .commandBuffer = cmdbuf
+        .commandBuffer = cmdBuf
     };
     const VkSubmitInfo2 submitInfo = {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
@@ -495,7 +500,7 @@ void VlkDevice::Submit( const VlkCommandBuffer& cmdbuf, VkFence fence )
         .pCommandBufferInfos = &cmdbufInfo
     };
 
-    lock( cmdbuf );
-    VkVerify( vkQueueSubmit2( GetQueue( cmdbuf ), 1, &submitInfo, fence ) );
-    unlock( cmdbuf );
+    lock( type );
+    VkVerify( vkQueueSubmit2( GetQueue( type ), 1, &submitInfo, fence ) );
+    unlock( type );
 }

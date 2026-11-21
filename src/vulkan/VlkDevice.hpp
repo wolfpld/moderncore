@@ -45,6 +45,7 @@ public:
     NoCopy( VlkDevice );
 
     void Submit( const VlkCommandBuffer& cmdbuf, VkFence fence );
+    void Submit( VkCommandBuffer cmdBuf, QueueType type, VkFence fence );
 
     [[nodiscard]] auto& GetQueueInfo( QueueType type ) const { return m_queueInfo[(int)type]; }
     [[nodiscard]] auto GetQueue( QueueType type ) const { CheckPanic( m_queue[(int)type] != VK_NULL_HANDLE, "Queue does not exist" ); return m_queue[(int)type]; }

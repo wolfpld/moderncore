@@ -344,6 +344,7 @@ set(MCOREVULKAN_SRC
     src/vulkan/VlkSemaphore.cpp
     src/vulkan/VlkShader.cpp
     src/vulkan/VlkShaderModule.cpp
+    src/vulkan/VlkStagingRing.cpp
     src/vulkan/VlkSurface.cpp
     src/vulkan/VlkSwapchain.cpp
     src/vulkan/VlkSwapchainProperties.cpp

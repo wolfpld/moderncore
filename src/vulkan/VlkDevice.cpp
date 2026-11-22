@@ -502,14 +502,37 @@ void VlkDevice::Submit( const VlkCommandBuffer& cmdbuf, VkFence fence )
 
 void VlkDevice::Submit( VkCommandBuffer cmdBuf, QueueType type, VkFence fence )
 {
+    Submit( cmdBuf, type, fence, VK_NULL_HANDLE, VK_PIPELINE_STAGE_2_NONE, VK_NULL_HANDLE, VK_PIPELINE_STAGE_2_NONE );
+}
+
+void VlkDevice::Submit( VkCommandBuffer cmdBuf, QueueType type, VkFence fence,
+    VkSemaphore waitSemaphore, VkPipelineStageFlags2 waitStage,
+    VkSemaphore signalSemaphore, VkPipelineStageFlags2 signalStage )
+{
     const VkCommandBufferSubmitInfo cmdbufInfo = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
         .commandBuffer = cmdBuf
     };
+
+    const VkSemaphoreSubmitInfo wait = {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+        .semaphore = waitSemaphore,
+        .stageMask = waitStage
+    };
+    const VkSemaphoreSubmitInfo signal = {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+        .semaphore = signalSemaphore,
+        .stageMask = signalStage
+    };
+
     const VkSubmitInfo2 submitInfo = {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
+        .waitSemaphoreInfoCount = waitSemaphore != VK_NULL_HANDLE ? 1u : 0u,
+        .pWaitSemaphoreInfos = waitSemaphore != VK_NULL_HANDLE ? &wait : nullptr,
         .commandBufferInfoCount = 1,
-        .pCommandBufferInfos = &cmdbufInfo
+        .pCommandBufferInfos = &cmdbufInfo,
+        .signalSemaphoreInfoCount = signalSemaphore != VK_NULL_HANDLE ? 1u : 0u,
+        .pSignalSemaphoreInfos = signalSemaphore != VK_NULL_HANDLE ? &signal : nullptr
     };
 
     lock( type );

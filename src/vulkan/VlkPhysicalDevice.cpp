@@ -56,7 +56,7 @@ bool VlkPhysicalDevice::IsGraphicCapable() const
 bool VlkPhysicalDevice::IsComputeCapable() const
 {
     ZoneScoped;
-    return std::ranges::any_of( m_queueFamilyProperties, []( const auto& v ) { return ( v.queueFlags & VK_QUEUE_GRAPHICS_BIT ) != 0; } );
+    return std::ranges::any_of( m_queueFamilyProperties, []( const auto& v ) { return ( v.queueFlags & VK_QUEUE_COMPUTE_BIT ) != 0; } );
 }
 
 bool VlkPhysicalDevice::IsSwapchainCapable() const

@@ -309,6 +309,8 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
     if( getenv( "MCORE_FORCE_STAGING" ) ) m_hostImageCopy = false;
 #endif
 
+    mclog( LogLevel::Info, "Host image copy: %s", m_hostImageCopy ? "enabled" : "disabled" );
+
     VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT featuresSwapchainMaintenance1 = {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SWAPCHAIN_MAINTENANCE_1_FEATURES_EXT,
         .swapchainMaintenance1 = VK_TRUE

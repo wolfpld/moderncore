@@ -25,9 +25,9 @@ VlkCommandBuffer::~VlkCommandBuffer()
 
 void VlkCommandBuffer::Begin( VkCommandBufferUsageFlags flags, bool _lock )
 {
-    constexpr VkCommandBufferBeginInfo begin = {
+    const VkCommandBufferBeginInfo begin = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
+        .flags = flags
     };
 
     if( _lock ) lock();

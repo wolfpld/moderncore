@@ -322,6 +322,7 @@ if(BUILD_IV)
 
 set(MCOREVULKAN_SRC
     src/vulkan/ext/DeviceInfo.cpp
+    src/vulkan/ext/ImageSync.cpp
     src/vulkan/ext/PhysDevSel.cpp
     src/vulkan/ext/Texture.cpp
     src/vulkan/VlkAllocator.cpp

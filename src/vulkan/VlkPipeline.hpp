@@ -9,6 +9,7 @@ class VlkPipeline : public VlkBase
 {
 public:
     VlkPipeline( VkDevice device, const VkGraphicsPipelineCreateInfo& createInfo );
+    VlkPipeline( VkDevice device, const VkComputePipelineCreateInfo& createInfo );
     ~VlkPipeline();
 
     NoCopy( VlkPipeline );

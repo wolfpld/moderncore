@@ -137,7 +137,8 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
         {
             if( ( (int)idx != m_queueInfo[(int)QueueType::Graphic].idx ) &&
                 ( (int)idx != m_queueInfo[(int)QueueType::Compute].idx ) &&
-                ( qfp[idx].queueFlags & ( VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT ) ) )
+                ( qfp[idx].queueFlags & ( VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT ) ) &&
+                qfp[idx].minImageTransferGranularity.height != 0 )
             {
                 break;
             }
@@ -146,7 +147,8 @@ VlkDevice::VlkDevice( VlkInstance& instance, std::shared_ptr<VlkPhysicalDevice> 
         {
             for( idx=0; idx<sz; idx++ )
             {
-                if( qfp[idx].queueFlags & ( VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT ) )
+                if( ( qfp[idx].queueFlags & ( VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT ) ) &&
+                    qfp[idx].minImageTransferGranularity.height != 0 )
                 {
                     break;
                 }

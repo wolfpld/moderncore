@@ -64,8 +64,20 @@ static std::vector<MipData> GetMipChain( bool mips, uint32_t width, uint32_t hei
     return mipChain;
 }
 
+static MipGen* CullMipGen( VlkDevice& device, MipGen* mipGen, VkFormat format, uint32_t width, uint32_t height, uint32_t mipLevels, bool hostImageCopy )
+{
+    if( !mipGen || mipLevels < 2 ) return nullptr;
+    if( !mipGen->Supports( format, width, height ) ) return nullptr;
+    if( hostImageCopy && !device.GetPhysicalDevice()->HasHostImageCopyStorage( MipGen::StorageViewFormat( format ), format ) ) return nullptr;
+    return mipGen;
+}
+
 static inline VkImageCreateInfo GetImageCreateInfo( VkFormat format, uint32_t width, uint32_t height, uint32_t mipLevels, bool hostImageCopy, bool mipStorage )
 {
+    const auto transferUsage = hostImageCopy ?
+        VK_IMAGE_USAGE_HOST_TRANSFER_BIT :
+        VkImageUsageFlags( VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT );
+
     return {
         .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
         .flags = mipStorage ? VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT : VkImageCreateFlags( 0 ),
@@ -76,26 +88,38 @@ static inline VkImageCreateInfo GetImageCreateInfo( VkFormat format, uint32_t wi
         .arrayLayers = 1,
         .samples = VK_SAMPLE_COUNT_1_BIT,
         .tiling = VK_IMAGE_TILING_OPTIMAL,
-        .usage = VkImageUsageFlags( VK_IMAGE_USAGE_SAMPLED_BIT |
-            ( hostImageCopy ?
-                VK_IMAGE_USAGE_HOST_TRANSFER_BIT :
-                ( VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
-                    ( mipStorage ? VK_IMAGE_USAGE_STORAGE_BIT : 0u ) )
-            ) ),
+        .usage = VkImageUsageFlags( VK_IMAGE_USAGE_SAMPLED_BIT | transferUsage |
+            ( mipStorage ? VK_IMAGE_USAGE_STORAGE_BIT : 0u ) ),
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED
     };
 }
 
-static inline VkImageViewCreateInfo GetImageViewCreateInfo( VkImage image, VkFormat format, uint32_t mipLevels, bool restrictStorage )
+static inline VkImageViewCreateInfo GetImageViewCreateInfo( VkImage image, VkFormat format, uint32_t mipLevels, bool restrictStorage, bool hostImageCopy )
 {
-    static constexpr VkImageViewUsageCreateInfo usage = {
+    static constexpr VkImageViewUsageCreateInfo usageStaging = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_USAGE_CREATE_INFO,
         .usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT
     };
+    static constexpr VkImageViewUsageCreateInfo usageHost = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_USAGE_CREATE_INFO,
+        .usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_HOST_TRANSFER_BIT
+    };
+    const void* restriction = nullptr;
+    if( restrictStorage )
+    {
+        if( hostImageCopy )
+        {
+            restriction = &usageHost;
+        }
+        else
+        {
+            restriction = &usageStaging;
+        }
+    }
     return {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-        .pNext = restrictStorage ? &usage : nullptr,
+        .pNext = restriction,
         .image = image,
         .viewType = VK_IMAGE_VIEW_TYPE_2D,
         .format = format,
@@ -113,6 +137,37 @@ static inline VkBufferCreateInfo GetStagingBufferInfo( uint64_t size, VkBufferUs
     };
 }
 
+static void HostCopyLevel( VlkDevice& device, VkImage image, uint32_t level, uint32_t width, uint32_t height, const void* data )
+{
+    VkHostImageLayoutTransitionInfo transition = {
+        .sType = VK_STRUCTURE_TYPE_HOST_IMAGE_LAYOUT_TRANSITION_INFO,
+        .image = image,
+        .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .newLayout = VK_IMAGE_LAYOUT_GENERAL,
+        .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, level, 1, 0, 1 }
+    };
+    vkTransitionImageLayout( device, 1, &transition );
+
+    VkMemoryToImageCopy region = {
+        .sType = VK_STRUCTURE_TYPE_MEMORY_TO_IMAGE_COPY,
+        .pHostPointer = data,
+        .imageSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, level, 0, 1 },
+        .imageExtent = { width, height, 1 },
+    };
+    VkCopyMemoryToImageInfo copy = {
+        .sType = VK_STRUCTURE_TYPE_COPY_MEMORY_TO_IMAGE_INFO,
+        .dstImage = image,
+        .dstImageLayout = VK_IMAGE_LAYOUT_GENERAL,
+        .regionCount = 1,
+        .pRegions = &region
+    };
+    vkCopyMemoryToImage( device, &copy );
+
+    transition.oldLayout = VK_IMAGE_LAYOUT_GENERAL;
+    transition.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    vkTransitionImageLayout( device, 1, &transition );
+}
+
 template<typename T>
 static void HostCopy( VlkDevice& device, VlkImage& image, const std::vector<MipData>& mipChain, std::unique_ptr<T>&& tmp, const T* bmpptr, TaskDispatch* td )
 {
@@ -120,34 +175,7 @@ static void HostCopy( VlkDevice& device, VlkImage& image, const std::vector<MipD
     for( uint32_t level = 0; level < mipLevels; level++ )
     {
         const MipData& mipdata = mipChain[level];
-
-        VkHostImageLayoutTransitionInfo transition = {
-            .sType = VK_STRUCTURE_TYPE_HOST_IMAGE_LAYOUT_TRANSITION_INFO,
-            .image = image,
-            .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-            .newLayout = VK_IMAGE_LAYOUT_GENERAL,
-            .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, level, 1, 0, 1 }
-        };
-        vkTransitionImageLayout( device, 1, &transition );
-
-        VkMemoryToImageCopy region = {
-            .sType = VK_STRUCTURE_TYPE_MEMORY_TO_IMAGE_COPY,
-            .pHostPointer = bmpptr->Data(),
-            .imageSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, level, 0, 1 },
-            .imageExtent = { mipdata.width, mipdata.height, 1 },
-        };
-        VkCopyMemoryToImageInfo copy = {
-            .sType = VK_STRUCTURE_TYPE_COPY_MEMORY_TO_IMAGE_INFO,
-            .dstImage = image,
-            .dstImageLayout = VK_IMAGE_LAYOUT_GENERAL,
-            .regionCount = 1,
-            .pRegions = &region
-        };
-        vkCopyMemoryToImage( device, &copy );
-
-        transition.oldLayout = VK_IMAGE_LAYOUT_GENERAL;
-        transition.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        vkTransitionImageLayout( device, 1, &transition );
+        HostCopyLevel( device, image, level, mipdata.width, mipdata.height, bmpptr->Data() );
 
         if( level < mipLevels-1 )
         {
@@ -269,7 +297,7 @@ void Texture::Upload( VlkDevice& device, const std::vector<MipData>& mipChain, u
         ring.Level( *m_image, 0, mipdata.width, mipdata.height, bpp, bmpptr->Data(),
             [this]( VkCommandBuffer cmdbuf ) { WriteBarrier( cmdbuf, 0 ); } );
 
-        FinishUploadGpu( device, *mipGen, mipLevels, fencesOut );
+        FinishUploadGpu( device, *mipGen, mipLevels, fencesOut, false );
         return;
     }
 
@@ -302,15 +330,22 @@ Texture::Texture( VlkDevice& device, const Bitmap& bitmap, VkFormat format, bool
     const auto mipChain = GetMipChain( mips, bitmap.Width(), bitmap.Height(), 4 );
     const auto mipLevels = (uint32_t)mipChain.size();
     const auto hostImageCopy = device.UseHostImageCopy();
-    mipGen = ( mipGen && mipLevels > 1 && !hostImageCopy &&
-        mipGen->Supports( format, bitmap.Width(), bitmap.Height() ) ) ? mipGen : nullptr;
+    mipGen = CullMipGen( device, mipGen, format, bitmap.Width(), bitmap.Height(), mipLevels, hostImageCopy );
 
     m_image = std::make_shared<VlkImage>( device, GetImageCreateInfo( format, bitmap.Width(), bitmap.Height(), mipLevels, hostImageCopy, mipGen != nullptr ) );
-    m_imageView = std::make_unique<VlkImageView>( device, GetImageViewCreateInfo( *m_image, format, mipLevels, mipGen != nullptr ) );
+    m_imageView = std::make_unique<VlkImageView>( device, GetImageViewCreateInfo( *m_image, format, mipLevels, mipGen != nullptr, hostImageCopy ) );
 
     if( hostImageCopy )
     {
-        HostCopy( device, *m_image, mipChain, std::unique_ptr<Bitmap>(), &bitmap, td );
+        if( mipGen )
+        {
+            HostCopyLevel( device, *m_image, 0, bitmap.Width(), bitmap.Height(), bitmap.Data() );
+            FinishUploadGpu( device, *mipGen, mipLevels, fencesOut, true );
+        }
+        else
+        {
+            HostCopy( device, *m_image, mipChain, std::unique_ptr<Bitmap>(), &bitmap, td );
+        }
     }
     else
     {
@@ -329,15 +364,27 @@ Texture::Texture( VlkDevice& device, const BitmapHdr& bitmap, VkFormat format, b
     const auto mipChain = GetMipChain( mips, bitmap.Width(), bitmap.Height(), half ? 8 : 16 );
     const auto mipLevels = (uint32_t)mipChain.size();
     const auto hostImageCopy = device.UseHostImageCopy();
-    mipGen = ( mipGen && mipLevels > 1 && !hostImageCopy &&
-        mipGen->Supports( format, bitmap.Width(), bitmap.Height() ) ) ? mipGen : nullptr;
+    mipGen = CullMipGen( device, mipGen, format, bitmap.Width(), bitmap.Height(), mipLevels, hostImageCopy );
 
     m_image = std::make_shared<VlkImage>( device, GetImageCreateInfo( format, bitmap.Width(), bitmap.Height(), mipLevels, hostImageCopy, mipGen != nullptr ) );
-    m_imageView = std::make_unique<VlkImageView>( device, GetImageViewCreateInfo( *m_image, format, mipLevels, mipGen != nullptr ) );
+    m_imageView = std::make_unique<VlkImageView>( device, GetImageViewCreateInfo( *m_image, format, mipLevels, mipGen != nullptr, hostImageCopy ) );
 
     if( hostImageCopy )
     {
-        if( half )
+        if( mipGen )
+        {
+            if( half )
+            {
+                const auto tmp = std::make_unique<BitmapHdrHalf>( bitmap );
+                HostCopyLevel( device, *m_image, 0, bitmap.Width(), bitmap.Height(), tmp->Data() );
+            }
+            else
+            {
+                HostCopyLevel( device, *m_image, 0, bitmap.Width(), bitmap.Height(), bitmap.Data() );
+            }
+            FinishUploadGpu( device, *mipGen, mipLevels, fencesOut, true );
+        }
+        else if( half )
         {
             auto tmp = std::make_unique<BitmapHdrHalf>( bitmap );
             auto bmpptr = tmp.get();
@@ -453,48 +500,59 @@ void Texture::FinishUpload( VlkDevice& device, uint32_t mipLevels, std::vector<s
     }
 }
 
-void Texture::FinishUploadGpu( VlkDevice& device, MipGen& mipGen, uint32_t mipLevels, std::vector<std::shared_ptr<VlkFence>>& fencesOut )
+void Texture::FinishUploadGpu( VlkDevice& device, MipGen& mipGen, uint32_t mipLevels, std::vector<std::shared_ptr<VlkFence>>& fencesOut, bool hostCopied )
 {
     const auto txQueue = device.GetQueueInfo( QueueType::Transfer ).idx;
     const auto gfxQueue = device.GetQueueInfo( QueueType::Graphic ).idx;
     const auto compQueue = device.GetQueueInfo( QueueType::Compute ).idx;
     const bool txToComp = txQueue != compQueue;
     const bool compToGfx = compQueue != gfxQueue;
-    mclog( LogLevel::Debug, "GPU mip chain: %u levels, queues tx %i comp %i gfx %i",
-        mipLevels, txQueue, compQueue, gfxQueue );
+    mclog( LogLevel::Debug, "GPU mip chain: %u levels, queues tx %i comp %i gfx %i host %i",
+        mipLevels, txQueue, compQueue, gfxQueue, int( hostCopied ) );
 
-    auto cmdTx = std::make_unique<VlkCommandBuffer>( *device.GetCommandPool( QueueType::Transfer ) );
-    cmdTx->Begin( VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT );
-    {
-        ZoneVk( device, *cmdTx, "Texture mipgen start", true );
-        ImageSync::Barrier( *cmdTx, *m_image,
-            VK_PIPELINE_STAGE_2_TRANSFER_BIT, VK_ACCESS_2_TRANSFER_WRITE_BIT,
-            txToComp ? 0 : VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
-            txToComp ? 0 : VK_ACCESS_2_SHADER_READ_BIT,
-            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            txToComp ? VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL : VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL,
-            txToComp ? uint32_t( txQueue ) : VK_QUEUE_FAMILY_IGNORED,
-            txToComp ? uint32_t( compQueue ) : VK_QUEUE_FAMILY_IGNORED, 0, 1 );
-    }
-    cmdTx->End();
-
-    auto fenceTrn = std::make_shared<VlkFence>( device );
     std::shared_ptr<VlkSemaphore> semTx;
-    if( txToComp ) semTx = std::make_shared<VlkSemaphore>( device );
-    device.Submit( *cmdTx, QueueType::Transfer, *fenceTrn,
-        VK_NULL_HANDLE, VK_PIPELINE_STAGE_2_NONE,
-        semTx ? *semTx : VK_NULL_HANDLE, VK_PIPELINE_STAGE_2_TRANSFER_BIT );
-    std::shared_ptr<VlkBase> txObj = std::move( cmdTx );
-    device.GetGarbage()->Recycle( fenceTrn, std::move( txObj ) );
-    fencesOut.emplace_back( std::move( fenceTrn ) );
+    if( !hostCopied )
+    {
+        auto cmdTx = std::make_unique<VlkCommandBuffer>( *device.GetCommandPool( QueueType::Transfer ) );
+        cmdTx->Begin( VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT );
+        {
+            ZoneVk( device, *cmdTx, "Texture mipgen start", true );
+            ImageSync::Barrier( *cmdTx, *m_image,
+                VK_PIPELINE_STAGE_2_TRANSFER_BIT, VK_ACCESS_2_TRANSFER_WRITE_BIT,
+                txToComp ? 0 : VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+                txToComp ? 0 : VK_ACCESS_2_SHADER_READ_BIT,
+                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                txToComp ? VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL : VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL,
+                txToComp ? uint32_t( txQueue ) : VK_QUEUE_FAMILY_IGNORED,
+                txToComp ? uint32_t( compQueue ) : VK_QUEUE_FAMILY_IGNORED, 0, 1 );
+        }
+        cmdTx->End();
+
+        auto fenceTrn = std::make_shared<VlkFence>( device );
+        if( txToComp ) semTx = std::make_shared<VlkSemaphore>( device );
+        device.Submit( *cmdTx, QueueType::Transfer, *fenceTrn,
+            VK_NULL_HANDLE, VK_PIPELINE_STAGE_2_NONE,
+            semTx ? *semTx : VK_NULL_HANDLE, VK_PIPELINE_STAGE_2_TRANSFER_BIT );
+        std::shared_ptr<VlkBase> txObj = std::move( cmdTx );
+        device.GetGarbage()->Recycle( fenceTrn, std::move( txObj ) );
+        fencesOut.emplace_back( std::move( fenceTrn ) );
+    }
 
     auto cmdMip = std::make_unique<VlkCommandBuffer>( *device.GetCommandPool( QueueType::Compute ) );
     cmdMip->Begin( VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT );
     std::vector<std::shared_ptr<VlkBase>> chainViews;
     {
+        if( hostCopied )
+        {
+            ImageSync::Barrier( *cmdMip, *m_image,
+                VK_PIPELINE_STAGE_2_HOST_BIT, VK_ACCESS_2_HOST_WRITE_BIT,
+                VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_READ_BIT,
+                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED, 0, 1 );
+        }
         ZoneVk( device, *cmdMip, "Texture mipgen", true );
         mipGen.GenerateChain( *cmdMip, *m_image, m_format, m_width, m_height, mipLevels,
-            txToComp ? uint32_t( txQueue ) : VK_QUEUE_FAMILY_IGNORED,
+            ( !hostCopied && txToComp ) ? uint32_t( txQueue ) : uint32_t( VK_QUEUE_FAMILY_IGNORED ),
             compToGfx ? uint32_t( gfxQueue ) : VK_QUEUE_FAMILY_IGNORED,
             chainViews );
     }
@@ -504,7 +562,7 @@ void Texture::FinishUploadGpu( VlkDevice& device, MipGen& mipGen, uint32_t mipLe
     std::shared_ptr<VlkSemaphore> semMip;
     if( compToGfx ) semMip = std::make_shared<VlkSemaphore>( device );
     device.Submit( *cmdMip, QueueType::Compute, *fenceMip,
-        txToComp ? *semTx : VK_NULL_HANDLE, VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+        ( !hostCopied && txToComp ) ? *semTx : VK_NULL_HANDLE, VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
         semMip ? *semMip : VK_NULL_HANDLE, VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT );
 
     if( compToGfx )

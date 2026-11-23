@@ -37,7 +37,7 @@ private:
     template<typename T>
     void Upload( VlkDevice& device, const std::vector<MipData>& mipChain, uint32_t bpp, const T* bmpptr, std::unique_ptr<T>&& tmp, TaskDispatch* td, std::vector<std::shared_ptr<VlkFence>>& fencesOut, MipGen* mipGen );
     void FinishUpload( VlkDevice& device, uint32_t mipLevels, std::vector<std::shared_ptr<VlkFence>>& fencesOut );
-    void FinishUploadGpu( VlkDevice& device, MipGen& mipGen, uint32_t mipLevels, std::vector<std::shared_ptr<VlkFence>>& fencesOut );
+    void FinishUploadGpu( VlkDevice& device, MipGen& mipGen, uint32_t mipLevels, std::vector<std::shared_ptr<VlkFence>>& fencesOut, bool hostCopied );
 
     void WriteBarrier( VkCommandBuffer cmdbuf, uint32_t mip );
     void ReadBarrier( VkCommandBuffer cmdbuf, uint32_t mipLevels );

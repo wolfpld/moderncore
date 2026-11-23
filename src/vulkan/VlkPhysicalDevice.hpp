@@ -24,6 +24,7 @@ public:
     [[nodiscard]] bool HasCalibratedTimestamps() const;
     [[nodiscard]] bool HasPciBusInfo() const;
     [[nodiscard]] bool HasHostImageCopy() const;
+    [[nodiscard]] bool HasHostImageCopyStorage( VkFormat storageFormat, VkFormat viewFormat ) const;
 
     [[nodiscard]] bool IsDeviceHardware() const;
 

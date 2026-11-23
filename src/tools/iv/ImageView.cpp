@@ -20,6 +20,7 @@
 #include "vulkan/VlkShader.hpp"
 #include "vulkan/VlkShaderModule.hpp"
 #include "vulkan/ext/GarbageChute.hpp"
+#include "vulkan/ext/MipGen.hpp"
 #include "vulkan/ext/Texture.hpp"
 #include "vulkan/ext/Tracy.hpp"
 
@@ -46,6 +47,7 @@ struct PushConstant
 ImageView::ImageView( GarbageChute& garbage, std::shared_ptr<VlkDevice> device, VkFormat format, const VkExtent2D& extent, float scale, Selection& selection )
     : m_garbage( garbage )
     , m_device( std::move( device ) )
+    , m_mipGen( std::make_unique<MipGen>( *m_device ) )
     , m_extent( extent )
     , m_filteredNearest( false )
     , m_selection( selection )
@@ -282,7 +284,7 @@ std::shared_ptr<Texture> ImageView::SetBitmap( const std::shared_ptr<Bitmap>& bi
     }
 
     std::vector<std::shared_ptr<VlkFence>> texFences;
-    auto texture = std::make_shared<Texture>( *m_device, *bitmap, SdrFormat, true, texFences, &td );
+    auto texture = std::make_shared<Texture>( *m_device, *bitmap, SdrFormat, true, texFences, &td, m_mipGen.get() );
     for( auto& fence : texFences ) fence->Wait();
 
     SetTexture( texture, bitmap->Width(), bitmap->Height(), newBitmap );
@@ -301,7 +303,7 @@ std::shared_ptr<Texture> ImageView::SetBitmap( const std::shared_ptr<BitmapHdr>&
     }
 
     std::vector<std::shared_ptr<VlkFence>> texFences;
-    auto texture = std::make_shared<Texture>( *m_device, *bitmap, HdrFormat, true, texFences, &td );
+    auto texture = std::make_shared<Texture>( *m_device, *bitmap, HdrFormat, true, texFences, &td, m_mipGen.get() );
     for( auto& fence : texFences ) fence->Wait();
 
     SetTexture( texture, bitmap->Width(), bitmap->Height(), newBitmap );

@@ -10,6 +10,7 @@
 class Bitmap;
 class BitmapHdr;
 class GarbageChute;
+class MipGen;
 class Selection;
 class TaskDispatch;
 class Texture;
@@ -76,6 +77,7 @@ private:
 
     GarbageChute& m_garbage;
     std::shared_ptr<VlkDevice> m_device;
+    std::unique_ptr<MipGen> m_mipGen;
 
     std::shared_ptr<VlkShader> m_shaderMin[2];
     std::shared_ptr<VlkShader> m_shaderExact[2];

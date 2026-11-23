@@ -1,0 +1,133 @@
+#version 450
+
+#include "vulkan/shader/MipGenWeights.h"
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout( binding = 0 ) uniform sampler2D srcImage;
+layout( binding = 1 ) uniform writeonly image2D dstImage;
+
+layout( push_constant ) uniform Push
+{
+    uint srcW;
+    uint srcH;
+    uint dstW;
+    uint dstH;
+    uint encodeSrgb;
+} push;
+
+const int maxTaps = 20;
+const int tapMargin = 8;
+
+shared int sxIdx[8][maxTaps];
+shared float sxW[8][maxTaps];
+shared int sxN[8];
+shared int syIdx[8][maxTaps];
+shared float syW[8][maxTaps];
+shared int syN[8];
+
+void AxisTaps( int o, int srcSize, int dstSize, out int idx[maxTaps], out float w[maxTaps], out int count )
+{
+    int n = Num( srcSize, dstSize );
+    int d = Den( srcSize, dstSize );
+    float ic = ( float( o ) + 0.5 ) * float( d ) / float( n ) - 0.5;
+    int base = int( floor( ic ) );
+
+    float total = 0.0;
+    count = 0;
+    for( int t = -tapMargin; t <= tapMargin; t++ )
+    {
+        int i = base + t;
+        float weight = TapWeight( n, d, o, i, srcSize > dstSize ? 1 : 0 );
+        if( weight != 0.0 )
+        {
+            idx[count] = i;
+            w[count] = weight;
+            total += weight;
+            count++;
+        }
+    }
+
+    if( count == 0 )
+    {
+        idx[0] = 0;
+        w[0] = 0.0;
+        count = 1;
+        return;
+    }
+
+    float tooSmallSum = 1.52587890625e-05 * float( n ) / float( d );
+    if( total < tooSmallSum && total > -tooSmallSum )
+    {
+        idx[0] = 0;
+        w[0] = 0.0;
+        count = 1;
+        return;
+    }
+
+    if( total < ( 1.0 - MIPGEN_TOO_SMALL ) || total > ( 1.0 + MIPGEN_TOO_SMALL ) )
+    {
+        float filterScale = 1.0 / total;
+        for( int k = 0; k < count; k++ ) w[k] = w[k] * filterScale;
+    }
+}
+
+void main()
+{
+    int li = int( gl_LocalInvocationIndex );
+    int cx = int( gl_LocalInvocationID.x );
+    int cy = int( gl_LocalInvocationID.y );
+    if( li < 8 )
+    {
+        int idx[maxTaps]; float w[maxTaps]; int count;
+        AxisTaps( int( gl_WorkGroupID.x ) * 8 + li, int( push.srcW ), int( push.dstW ), idx, w, count );
+        sxN[li] = count;
+        for( int k = 0; k < count; k++ )
+        {
+            sxIdx[li][k] = idx[k];
+            sxW[li][k] = w[k];
+        }
+    }
+    else if( li < 16 )
+    {
+        int idx[maxTaps]; float w[maxTaps]; int count;
+        AxisTaps( int( gl_WorkGroupID.y ) * 8 + ( li - 8 ), int( push.srcH ), int( push.dstH ), idx, w, count );
+        syN[li - 8] = count;
+        for( int k = 0; k < count; k++ )
+        {
+            syIdx[li - 8][k] = idx[k];
+            syW[li - 8][k] = w[k];
+        }
+    }
+    barrier();
+
+    ivec2 dst = ivec2( gl_GlobalInvocationID.xy );
+    if( dst.x >= int( push.dstW ) || dst.y >= int( push.dstH ) ) return;
+
+    int xn = sxN[cx];
+    int yn = syN[cy];
+
+    vec4 acc = vec4( 0.0 );
+    for( int j = 0; j < yn; j++ )
+    {
+        vec4 row = vec4( 0.0 );
+        int sy = clamp( syIdx[cy][j], 0, int( push.srcH ) - 1 );
+        for( int i = 0; i < xn; i++ )
+        {
+            int sx = clamp( sxIdx[cx][i], 0, int( push.srcW ) - 1 );
+            vec4 s = texelFetch( srcImage, ivec2( sx, sy ), 0 );
+            row += sxW[cx][i] * vec4( s.rgb * s.a, s.a );
+        }
+        acc += syW[cy][j] * row;
+    }
+
+    vec4 outColor = acc;
+    if( acc.a >= MIPGEN_ALPHA_TOO_SMALL ) outColor.rgb = acc.rgb * ( 1.0 / acc.a );
+
+    if( push.encodeSrgb != 0u )
+    {
+        outColor.rgb = vec3( SrgbEncode( outColor.r ), SrgbEncode( outColor.g ), SrgbEncode( outColor.b ) );
+    }
+
+    imageStore( dstImage, dst, outColor );
+}

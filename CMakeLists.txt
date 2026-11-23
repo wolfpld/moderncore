@@ -185,7 +185,7 @@ add_custom_command(
 function(EmbedShader LIST NAME FILE)
     add_custom_command(
         OUTPUT _tmp/${NAME}.spv
-        COMMAND ${GLSLC} -MD -MF _tmp/${NAME}.spv.d --target-env=vulkan1.4 -O -o _tmp/${NAME}.spv ${CMAKE_CURRENT_LIST_DIR}/${FILE}
+        COMMAND ${GLSLC} -MD -MF _tmp/${NAME}.spv.d --target-env=vulkan1.4 -O -I ${CMAKE_CURRENT_LIST_DIR}/src -o _tmp/${NAME}.spv ${CMAKE_CURRENT_LIST_DIR}/${FILE}
         DEPENDS _tmp/.stamp ${GLSLC} ${CMAKE_CURRENT_LIST_DIR}/${FILE}
         DEPFILE _tmp/${NAME}.spv.d
     )
@@ -323,6 +323,7 @@ if(BUILD_IV)
 set(MCOREVULKAN_SRC
     src/vulkan/ext/DeviceInfo.cpp
     src/vulkan/ext/ImageSync.cpp
+    src/vulkan/ext/MipGen.cpp
     src/vulkan/ext/PhysDevSel.cpp
     src/vulkan/ext/Texture.cpp
     src/vulkan/VlkAllocator.cpp
@@ -350,6 +351,8 @@ set(MCOREVULKAN_SRC
     src/vulkan/VlkSwapchain.cpp
     src/vulkan/VlkSwapchainProperties.cpp
 )
+
+EmbedShader(MCOREVULKAN_SRC MipGenComp src/vulkan/shader/MipGen.comp)
 
 add_library(mcorevulkan ${MCOREVULKAN_SRC})
 target_link_libraries(mcorevulkan PRIVATE
@@ -631,6 +634,7 @@ if(BUILD_TESTS)
         tests/util/Listener.cpp
         tests/util/Logs.cpp
         tests/util/MemoryBuffer.cpp
+        tests/util/MipGen.cpp
         tests/util/NaturalSort.cpp
         tests/util/PathNormalize.cpp
         tests/util/PixelBytes.cpp

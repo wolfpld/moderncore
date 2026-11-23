@@ -115,7 +115,7 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu, b
     }
     else
     {
-        physDevice = PhysDevSel::PickBest( devices, m_window->VkSurface(), PhysDevSel::RequireGraphic );
+        physDevice = PhysDevSel::PickBest( devices, m_window->VkSurface(), PhysDevSel::RequireGraphic | PhysDevSel::RequireCompute );
         CheckPanic( physDevice, "Failed to find suitable Vulkan physical device" );
     }
     mclog( LogLevel::Info, "Selected GPU: %s", physDevice->Properties().deviceName );
@@ -125,7 +125,7 @@ Viewport::Viewport( WaylandDisplay& display, VlkInstance& vkInstance, int gpu, b
     const auto height = cfg.Get( "Window", "Height", 720 );
     const auto maximized = cfg.Get( "Window", "Maximized", 0 );
 
-    m_device = std::make_shared<VlkDevice>( m_vkInstance, physDevice, VlkDevice::RequireGraphic | VlkDevice::RequirePresent, m_window->VkSurface() );
+    m_device = std::make_shared<VlkDevice>( m_vkInstance, physDevice, VlkDevice::RequireGraphic | VlkDevice::RequireCompute | VlkDevice::RequirePresent, m_window->VkSurface() );
     PrintQueueConfig( *m_device );
     m_window->SetDevice( m_device );
     m_window->ResizeNoScale( width, height );
